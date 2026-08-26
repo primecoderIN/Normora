@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, 'Segoe UI', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
