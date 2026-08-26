@@ -1,0 +1,32 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Note: Sub-directories (client/ and server/) have their own .gitignore files
+# specific to their tech stacks (Angular/Node and .NET respectively).

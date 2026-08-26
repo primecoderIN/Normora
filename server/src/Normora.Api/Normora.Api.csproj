@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Normora.Shared\Normora.Shared.csproj" />
+    <ProjectReference Include="..\Normora.Infrastructure\Normora.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Normora.Modules.Auth\Normora.Modules.Auth.csproj" />
+    <ProjectReference Include="..\Modules\Normora.Modules.Tenants\Normora.Modules.Tenants.csproj" />
+    <ProjectReference Include="..\Modules\Normora.Modules.Users\Normora.Modules.Users.csproj" />
+    <ProjectReference Include="..\Modules\Normora.Modules.Documents\Normora.Modules.Documents.csproj" />
+  </ItemGroup>
+
+</Project>
