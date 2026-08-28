@@ -1,0 +1,40 @@
+{
+  "id": "normora",
+  "realm": "normora",
+  "displayName": "Normora Identity",
+  "enabled": true,
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "firstName": "System",
+      "lastName": "Admin"
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "normora-web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost",
+        "http://localhost/*"
+      ],
+      "webOrigins": [
+        "http://localhost",
+        "+"
+      ]
+    }
+  ]
+}
