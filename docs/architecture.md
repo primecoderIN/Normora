@@ -1,0 +1,28 @@
+# Architecture
+
+Normora follows a **Modular Monolith** architecture on the backend and a standard **Single Page Application (SPA)** architecture on the frontend.
+
+## High-Level Tech Stack
+- **Frontend**: Angular, TypeScript, Nginx
+- **Backend**: .NET 10 (ASP.NET Core Web API)
+- **Database**: PostgreSQL 15
+- **Identity Provider**: Keycloak 24
+- **Object Storage**: MinIO
+- **Infrastructure**: Docker & Docker Compose
+
+## Backend Architecture (Modular Monolith)
+The backend is structured into distinct modules to enforce separation of concerns while keeping deployment simple as a single API process.
+- **Normora.Api**: The main entry point (Host).
+- **Normora.Shared**: Common utilities and abstractions.
+- **Normora.Infrastructure**: Database contexts, caching, and external service integrations.
+- **Modules**:
+  - `Normora.Modules.Auth`: Authentication and authorization flows.
+  - `Normora.Modules.Tenants`: Multi-tenancy logic and data isolation.
+  - `Normora.Modules.Users`: User profiles and management.
+  - `Normora.Modules.Documents`: File and document metadata handling (interacts with MinIO).
+
+## Frontend Architecture
+The Angular application resides in the `client/` directory and communicates with the .NET backend via REST APIs. During local development and production, requests to `/api/*` are proxied to the backend.
+
+## Deployment
+The entire stack is containerized. `docker-compose.yml` orchestrates the services, including the PostgreSQL database, Keycloak auth server, MinIO storage, the .NET API, and the Angular client served via Nginx.

@@ -30,3 +30,10 @@ yarn-error.log*
 
 # Note: Sub-directories (client/ and server/) have their own .gitignore files
 # specific to their tech stacks (Angular/Node and .NET respectively).
+
+# Planning / Agent Artifacts
+plan.md
+implementation_plan.md
+task.md
+walkthrough.md
+progress_tracker.md

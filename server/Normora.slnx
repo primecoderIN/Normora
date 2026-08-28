@@ -1,13 +1,11 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Normora.Api/Normora.Api.csproj" />
-    <Project Path="src/Normora.Infrastructure/Normora.Infrastructure.csproj" />
-    <Project Path="src/Normora.Shared/Normora.Shared.csproj" />
-  </Folder>
-  <Folder Name="/src/Modules/">
-    <Project Path="src/Modules/Normora.Modules.Auth/Normora.Modules.Auth.csproj" />
-    <Project Path="src/Modules/Normora.Modules.Documents/Normora.Modules.Documents.csproj" />
-    <Project Path="src/Modules/Normora.Modules.Tenants/Normora.Modules.Tenants.csproj" />
-    <Project Path="src/Modules/Normora.Modules.Users/Normora.Modules.Users.csproj" />
+  <Project Path="Normora.Api/Normora.Api.csproj" />
+  <Project Path="Normora.Infrastructure/Normora.Infrastructure.csproj" />
+  <Project Path="Normora.Shared/Normora.Shared.csproj" />
+  <Folder Name="/Modules/">
+    <Project Path="Modules/Normora.Modules.Auth/Normora.Modules.Auth.csproj" />
+    <Project Path="Modules/Normora.Modules.Documents/Normora.Modules.Documents.csproj" />
+    <Project Path="Modules/Normora.Modules.Tenants/Normora.Modules.Tenants.csproj" />
+    <Project Path="Modules/Normora.Modules.Users/Normora.Modules.Users.csproj" />
   </Folder>
 </Solution>
