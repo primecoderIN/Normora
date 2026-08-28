@@ -33,7 +33,7 @@ Do not add unnecessary navigation or enterprise features until there is a real r
 ### Frontend
 
 - Angular
-- Angular Material
+- PrimeNG
 - Standalone components
 - Strict TypeScript
 - Feature-based architecture
