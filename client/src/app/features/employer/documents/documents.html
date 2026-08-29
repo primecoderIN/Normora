@@ -1,15 +1,241 @@
-<p-toast></p-toast>
+<div class="flex flex-col h-full space-y-6 max-w-350 mx-auto">
+  <p-toast></p-toast>
+  
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-surface-900 tracking-tight">Documents</h1>
+      <p class="text-surface-500 text-sm mt-1">Upload, manage and organize your company documents</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <!-- Search -->
+      <div class="relative">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+        <input type="text" pInputText placeholder="Search documents, categories..." class="pl-9 w-65 h-10 rounded-xl bg-white border border-surface-200 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-shadow">
+        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          <span class="text-[10px] font-mono bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded border border-surface-200">⌘K</span>
+        </div>
+      </div>
+      
+      <!-- Notifications -->
+      <button class="relative w-10 h-10 rounded-xl bg-white border border-surface-200 flex items-center justify-center hover:bg-surface-50 transition-colors">
+        <i class="pi pi-bell text-surface-600"></i>
+        <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+      </button>
 
-<div class="flex flex-col gap-8">
-  <div>
-    <h1 class="text-3xl font-bold text-surface-900 tracking-tight">Documents</h1>
-    <p class="text-surface-500 mt-2">Upload and manage the knowledge base for your company.</p>
+      <!-- Profile Header (Optional if not in sidebar, keeping for exact screenshot match) -->
+      <div class="hidden sm:flex items-center gap-2 ml-2 pl-4 border-l border-surface-200">
+        <img src="https://i.pravatar.cc/150?img=47" class="w-9 h-9 rounded-full border border-surface-200 object-cover" alt="Profile" />
+        <div class="hidden md:block">
+          <div class="text-[13px] font-semibold text-surface-900 leading-tight">Priya Sharma</div>
+          <div class="text-[11px] text-surface-500">Employer</div>
+        </div>
+        <i class="pi pi-chevron-down text-[10px] text-surface-400 ml-1"></i>
+      </div>
+    </div>
   </div>
 
-  <!-- Upload Section -->
-  <div class="bg-white p-6 rounded-2xl shadow-sm border border-surface-200">
-    <h2 class="text-xl font-semibold text-surface-900 mb-4">Upload New Document</h2>
-    <p-fileUpload 
+  <!-- Tabs & Actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+    <div class="flex items-center gap-6 border-b border-surface-200 w-full sm:w-auto">
+      <button class="pb-3 border-b-2 border-indigo-600 text-indigo-600 font-semibold text-sm whitespace-nowrap">All Documents</button>
+      <button class="pb-3 border-b-2 border-transparent text-surface-500 hover:text-surface-700 font-medium text-sm whitespace-nowrap transition-colors">Published</button>
+      <button class="pb-3 border-b-2 border-transparent text-surface-500 hover:text-surface-700 font-medium text-sm whitespace-nowrap transition-colors">Drafts</button>
+      <button class="pb-3 border-b-2 border-transparent text-surface-500 hover:text-surface-700 font-medium text-sm whitespace-nowrap transition-colors">Archived</button>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button class="h-10 px-4 rounded-xl border border-surface-200 bg-white text-surface-700 font-medium text-sm hover:bg-surface-50 transition-colors flex items-center gap-2 shadow-sm">
+        <i class="pi pi-filter text-xs text-surface-500"></i> Filters
+      </button>
+      <button (click)="showUploadDialog = true" class="h-10 px-4 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm">
+        <i class="pi pi-cloud-upload text-sm"></i> Upload Document
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        <i class="pi pi-file text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-surface-500 mb-0.5">Total Documents</div>
+        <div class="text-2xl font-bold text-surface-900">128</div>
+        <div class="text-xs text-emerald-500 font-medium mt-1.5 flex items-center gap-1">
+          <i class="pi pi-arrow-up text-[10px]"></i> 12 this month
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <i class="pi pi-check-circle text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-surface-500 mb-0.5">Published</div>
+        <div class="text-2xl font-bold text-surface-900">98</div>
+        <div class="text-xs text-emerald-500 font-medium mt-1.5 flex items-center gap-1">
+          <i class="pi pi-arrow-up text-[10px]"></i> 10 this month
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+        <i class="pi pi-file-edit text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-surface-500 mb-0.5">Drafts</div>
+        <div class="text-2xl font-bold text-surface-900">18</div>
+        <div class="text-xs text-red-500 font-medium mt-1.5 flex items-center gap-1">
+          <i class="pi pi-arrow-down text-[10px]"></i> 2 this month
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-surface-100 text-surface-600 flex items-center justify-center shrink-0">
+        <i class="pi pi-box text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-surface-500 mb-0.5">Archived</div>
+        <div class="text-2xl font-bold text-surface-900">12</div>
+        <div class="text-xs text-surface-400 font-medium mt-1.5 flex items-center gap-1">
+          <span class="text-[10px]">—</span> No change
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document List Table -->
+  <div class="bg-white rounded-2xl border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden flex-1 flex flex-col">
+    <div class="overflow-x-auto flex-1 custom-scrollbar">
+      <table class="w-full text-left text-sm text-surface-600 min-w-200">
+        <thead class="text-xs text-surface-500 bg-white border-b border-surface-100 uppercase font-semibold">
+          <tr>
+            <th class="px-5 py-4 w-12"><p-checkbox [binary]="true"></p-checkbox></th>
+            <th class="px-5 py-4 font-semibold">Document Name</th>
+            <th class="px-5 py-4 font-semibold">Category</th>
+            <th class="px-5 py-4 font-semibold">Version</th>
+            <th class="px-5 py-4 font-semibold">Status</th>
+            <th class="px-5 py-4 font-semibold flex items-center gap-1 cursor-pointer hover:text-surface-700">Updated On <i class="pi pi-sort-alt text-[10px]"></i></th>
+            <th class="px-5 py-4 font-semibold">Uploaded By</th>
+            <th class="px-5 py-4 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-100">
+          
+          <!-- Dynamic Rows -->
+          @for (doc of documents; track doc.id) {
+          <tr class="hover:bg-surface-50 transition-colors group">
+            <td class="px-5 py-4"><p-checkbox [binary]="true"></p-checkbox></td>
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold shrink-0" [ngClass]="getFileColorClass(doc.fileName)">{{ getFileExtension(doc.fileName) }}</div>
+                <span class="font-semibold text-surface-900 group-hover:text-indigo-600 transition-colors cursor-pointer">{{ doc.fileName }}</span>
+              </div>
+            </td>
+            <td class="px-5 py-4">
+              <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100/50">General</span>
+            </td>
+            <td class="px-5 py-4 font-medium text-surface-500">v1.0</td>
+            <td class="px-5 py-4">
+              <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold"
+                    [ngClass]="{
+                      'bg-emerald-50 text-emerald-600': doc.status === 1,
+                      'bg-surface-100 text-surface-600': doc.status === 0,
+                      'bg-red-50 text-red-600': doc.status === 2
+                    }">
+                {{ getStatusText(doc.status) }}
+              </span>
+            </td>
+            <td class="px-5 py-4 text-surface-600">{{ doc.uploadedAt | date:'mediumDate' }}</td>
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-2">
+                <img src="https://i.pravatar.cc/150?img=47" class="w-6 h-6 rounded-full object-cover" />
+                <span class="font-medium text-surface-700">Priya Sharma</span>
+              </div>
+            </td>
+            <td class="px-5 py-4 text-center">
+              <button class="w-7 h-7 rounded-lg text-surface-400 hover:bg-surface-200 hover:text-surface-700 transition-colors inline-flex items-center justify-center" (click)="deleteDocument(doc.id)">
+                <i class="pi pi-trash text-xs"></i>
+              </button>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="px-5 py-8 text-center text-surface-500">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i class="pi pi-folder-open text-3xl text-surface-300"></i>
+                <p>No documents found.</p>
+              </div>
+            </td>
+          </tr>
+          }
+          
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="px-5 py-4 border-t border-surface-100 flex items-center justify-between">
+      <span class="text-sm text-surface-500">Showing 1 to 8 of 128 documents</span>
+      <div class="flex items-center gap-1">
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:bg-surface-50 transition-colors" disabled><i class="pi pi-chevron-left text-xs"></i></button>
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-600 text-white font-medium text-sm transition-colors">1</button>
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center text-surface-600 hover:bg-surface-50 font-medium text-sm transition-colors">2</button>
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center text-surface-600 hover:bg-surface-50 font-medium text-sm transition-colors">3</button>
+        <span class="px-2 text-surface-400">...</span>
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center text-surface-600 hover:bg-surface-50 font-medium text-sm transition-colors">16</button>
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center text-surface-600 hover:bg-surface-50 transition-colors"><i class="pi pi-chevron-right text-xs"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Area -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+    <!-- Dropzone -->
+    <div class="bg-indigo-50/40 rounded-2xl border border-indigo-100 p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-50 transition-colors shadow-sm" (click)="showUploadDialog = true">
+      <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center text-indigo-500 mb-4 shadow-[0_2px_10px_-4px_rgba(99,102,241,0.2)]">
+        <i class="pi pi-cloud-upload text-2xl"></i>
+      </div>
+      <h3 class="text-sm font-semibold text-surface-900 mb-1">Drag and drop files here, or <span class="text-indigo-600 underline decoration-indigo-200 underline-offset-4">browse</span></h3>
+      <p class="text-[13px] text-surface-500">Supports PDF, DOCX, PPTX, XLSX, TXT (Max 100MB)</p>
+    </div>
+    
+    <!-- Need Help -->
+    <div class="bg-white rounded-2xl border border-surface-200 p-6 flex flex-col sm:flex-row items-center gap-6 justify-between shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
+      <!-- Decorator -->
+      <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-50 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="relative z-10 text-center sm:text-left">
+        <h3 class="text-[17px] font-bold text-surface-900">Need help organizing?</h3>
+        <p class="text-[13px] text-surface-500 mt-1 mb-4">Use categories to organize documents</p>
+        <button class="px-4 py-2 bg-white border border-surface-200 rounded-xl text-sm font-semibold text-surface-700 hover:bg-surface-50 shadow-sm transition-colors flex items-center gap-2 mx-auto sm:mx-0">
+          <i class="pi pi-folder-open text-surface-400"></i> Manage Categories
+        </button>
+      </div>
+
+      <div class="hidden sm:block relative z-10 shrink-0 pr-4">
+        <!-- Abstract Illustration Placeholder -->
+        <div class="w-24 h-24 relative">
+          <div class="absolute inset-0 bg-indigo-100 rounded-2xl transform rotate-6"></div>
+          <div class="absolute inset-0 bg-blue-100 rounded-2xl transform -rotate-3"></div>
+          <div class="absolute inset-0 bg-white border border-surface-100 rounded-2xl shadow-sm flex items-center justify-center p-3">
+            <div class="w-full h-full flex flex-col gap-1.5">
+              <div class="w-3/4 h-2 bg-surface-200 rounded-full"></div>
+              <div class="w-full h-2 bg-surface-100 rounded-full"></div>
+              <div class="w-5/6 h-2 bg-surface-100 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Dialog (hidden component logic remains the same) -->
+  <p-dialog header="Upload Document" [(visible)]="showUploadDialog" [modal]="true" [style]="{ width: '400px' }">
+    <p-fileupload 
       name="file" 
       [url]="uploadUrl"
       (onBeforeUpload)="onBeforeUpload($event)"
@@ -21,66 +247,7 @@
       chooseLabel="Select File"
       uploadLabel="Upload"
       cancelLabel="Cancel"
-      styleClass="p-fileupload-custom">
-      <ng-template pTemplate="content">
-          <ul *ngIf="false"></ul>
-      </ng-template>
-      <ng-template pTemplate="empty">
-          <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-surface-200 rounded-xl bg-surface-50">
-              <i class="pi pi-cloud-upload text-4xl text-surface-400 mb-4"></i>
-              <p class="text-surface-600 font-medium">Drag and drop a file here to upload.</p>
-              <p class="text-surface-400 text-sm mt-2">Only .pdf, .docx, and .txt files are allowed (Max 20MB).</p>
-          </div>
-      </ng-template>
-    </p-fileUpload>
-  </div>
-
-  <!-- Document List Section -->
-  <div class="bg-white rounded-2xl shadow-sm border border-surface-200 overflow-hidden">
-    <div class="p-6 border-b border-surface-200 bg-surface-50/50 flex justify-between items-center">
-      <h2 class="text-xl font-semibold text-surface-900">Your Documents</h2>
-      <span class="text-surface-500 text-sm">{{ documents.length }} document(s) uploaded</span>
-    </div>
-    
-    <p-table [value]="documents" [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-striped">
-      <ng-template pTemplate="header">
-        <tr>
-          <th class="bg-white text-surface-500 font-medium">Document Name</th>
-          <th class="bg-white text-surface-500 font-medium">Status</th>
-          <th class="bg-white text-surface-500 font-medium">Date Uploaded</th>
-          <th class="bg-white text-surface-500 font-medium w-32">Actions</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-doc>
-        <tr class="hover:bg-surface-50 transition-colors">
-          <td class="font-medium text-surface-900">
-            <div class="flex items-center gap-3">
-              <i class="pi" 
-                 [ngClass]="{
-                   'pi-file-pdf text-red-500': doc.fileName.endsWith('.pdf'),
-                   'pi-file-word text-blue-500': doc.fileName.endsWith('.docx'),
-                   'pi-file text-surface-500': doc.fileName.endsWith('.txt')
-                 }" 
-                 class="text-lg"></i>
-              {{ doc.fileName }}
-            </div>
-          </td>
-          <td>
-            <p-tag [value]="getStatusText(doc.status)" [severity]="getSeverity(doc.status)" styleClass="rounded-md font-medium text-xs px-2 py-1"></p-tag>
-          </td>
-          <td class="text-surface-600 font-medium">{{ doc.uploadedAt | date:'medium' }}</td>
-          <td>
-            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" (onClick)="deleteDocument(doc.id)"></p-button>
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="4" class="text-center p-8 text-surface-500">
-            No documents found. Upload your first document above!
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </div>
+      styleClass="p-fileupload-custom w-full">
+    </p-fileupload>
+  </p-dialog>
 </div>

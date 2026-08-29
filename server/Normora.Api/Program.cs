@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Minio;
 using Normora.Infrastructure;
 using System.Reflection;
+using System.Security.Claims;
 using Normora.Api.Infrastructure;
 
 // 1. Create the builder which sets up the configuration and services for the application.
@@ -38,9 +39,14 @@ builder.Services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // The Keycloak realm URL. The API downloads public keys from here to verify
-        // that tokens have not been tampered with.
-        options.Authority = "http://localhost:8080/realms/normora";
+        // The external URL used to validate the token's 'iss' claim
+        var authority = builder.Configuration["Authentication:Authority"] ?? "http://localhost:8080/realms/normora";
+        
+        // The internal URL used by the API to fetch the public signing keys
+        var metadataAddress = builder.Configuration["Authentication:MetadataAddress"] ?? $"{authority}/.well-known/openid-configuration";
+
+        options.Authority = authority;
+        options.MetadataAddress = metadataAddress;
 
         // SECURITY: In production this MUST be true (tokens travel over HTTPS).
         // For local development only, we allow HTTP.
@@ -58,10 +64,37 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             // SECURITY FIX: Validate the issuer so tokens from a different Keycloak
             // realm or a different server are rejected outright.
             ValidateIssuer = true,
-            ValidIssuer = "http://localhost:8080/realms/normora",
+            ValidIssuer = authority,
 
             // Map 'preferred_username' from Keycloak into User.Identity.Name
-            NameClaimType = "preferred_username"
+            NameClaimType = "preferred_username",
+            RoleClaimType = ClaimTypes.Role
+        };
+
+        // SECURITY FIX: Keycloak puts roles inside a nested JSON object called 'realm_access'.
+        // ASP.NET Core expects roles to be in a flat array of 'role' claims.
+        // We intercept the token validation and map them manually.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                if (context.Principal?.Identity is ClaimsIdentity identity)
+                {
+                    var realmAccessClaim = context.Principal.FindFirst("realm_access")?.Value;
+                    if (!string.IsNullOrEmpty(realmAccessClaim))
+                    {
+                        using var jsonDoc = System.Text.Json.JsonDocument.Parse(realmAccessClaim);
+                        if (jsonDoc.RootElement.TryGetProperty("roles", out var rolesElement))
+                        {
+                            foreach (var role in rolesElement.EnumerateArray())
+                            {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, role.GetString() ?? string.Empty));
+                            }
+                        }
+                    }
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 

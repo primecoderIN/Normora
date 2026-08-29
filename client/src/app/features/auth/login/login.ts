@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { ButtonModule } from 'primeng/button';
+import { Button } from 'primeng/button';
+import { Card } from 'primeng/card';
 
 // This is the Login Component. It is responsible for rendering the login page
 // and starting the authentication process.
@@ -8,7 +9,7 @@ import { ButtonModule } from 'primeng/button';
   selector: 'app-login',
   standalone: true,
   // We import the PrimeNG ButtonModule so we can use <p-button> in the HTML template
-  imports: [ButtonModule],
+  imports: [Button, Card],
   styleUrl: './login.css',
   templateUrl: './login.html',
 })

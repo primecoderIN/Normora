@@ -18,17 +18,14 @@ public class DocumentsController(IMediator mediator) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetDocuments()
     {
-        var employerId = GetEmployerId();
-        if (string.IsNullOrEmpty(employerId)) return Unauthorized(ApiResponse.Failure("Unauthorized access."));
-
-        var query = new GetEmployerDocumentsQuery(employerId);
+        var query = new GetEmployerDocumentsQuery();
         var result = await mediator.Send(query);
 
         return Ok(ApiResponse<List<Document>>.Ok(result));
     }
 
     [HttpPost("upload")]
-    [RequestSizeLimit(20_971_520)] // 20 MB max payload size for ASP.NET
+    [RequestSizeLimit(100_971_520)] // 100 MB max payload size for ASP.NET
     public async Task<IActionResult> UploadDocument([FromForm] IFormFile file)
     {
         var employerId = GetEmployerId();

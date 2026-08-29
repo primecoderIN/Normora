@@ -72,6 +72,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-normoradb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-password}
+      - Authentication__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
+      - Minio__Endpoint=minio:9000
     depends_on:
       postgres:
         condition: service_healthy

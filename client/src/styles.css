@@ -1,12 +1,14 @@
 @import "tailwindcss";
+@import "tailwindcss-primeui";
 @import "primeicons/primeicons.css";
-@plugin "tailwindcss-primeui";
+
+@source "./app/**/*.{html,ts}";
 
 html,
 body {
   height: 100%;
   margin: 0;
-  font-family: Inter, 'Segoe UI', sans-serif;
+  font-family: Inter, "Segoe UI", sans-serif;
 }
 
 *,

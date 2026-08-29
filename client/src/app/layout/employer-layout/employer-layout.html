@@ -1,41 +1,109 @@
-<div class="flex h-screen bg-surface-50 text-surface-900">
-  <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r border-surface-200 hidden md:flex flex-col shadow-sm">
-    <div class="h-16 flex items-center px-6 border-b border-surface-200">
-      <div class="flex items-center gap-2">
-        <i class="pi pi-building text-blue-600 text-xl"></i>
-        <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Normora</span>
+<div class="flex h-screen bg-surface-50 text-surface-900 font-sans overflow-hidden">
+  <!-- Dark Sidebar -->
+  <aside class="w-70 bg-[#0b0e14] text-surface-0 flex flex-col shrink-0 transition-all duration-300 relative z-20">
+    <!-- Logo area -->
+    <div class="h-20 flex items-center px-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-lg">
+          N
+        </div>
+        <span class="text-xl font-bold tracking-wide text-white">Nexora</span>
       </div>
+      <!-- Hamburger toggle on right (as per design) -->
+      <button class="ml-auto text-surface-400 hover:text-white transition-colors">
+        <i class="pi pi-bars text-sm"></i>
+      </button>
     </div>
     
-    <nav class="flex-1 p-4 space-y-2">
-      <a routerLink="/employer/dashboard" routerLinkActive="bg-blue-50 text-blue-700 font-semibold" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-surface-600 hover:bg-surface-100 transition-colors cursor-pointer">
-        <i class="pi pi-home"></i>
-        <span>Dashboard</span>
+    <!-- User/Context selector -->
+    <div class="px-6 mb-6 mt-2">
+      <div class="bg-surface-800 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-surface-700 transition-colors border border-surface-700">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded bg-surface-700 flex items-center justify-center text-surface-300 border border-surface-600">
+            <i class="pi pi-building text-sm"></i>
+          </div>
+          <div>
+            <div class="text-sm font-semibold text-white">Acme Corp</div>
+            <div class="text-[11px] text-surface-400">Employer</div>
+          </div>
+        </div>
+        <i class="pi pi-chevron-down text-surface-400 text-xs"></i>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
+      <a routerLink="/employer/dashboard" routerLinkActive="bg-indigo-600 text-white font-medium" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-home text-lg" routerLinkActive="text-white"></i>
+        <span class="text-sm">Overview</span>
       </a>
-      <a routerLink="/employer/documents" routerLinkActive="bg-blue-50 text-blue-700 font-semibold" class="flex items-center gap-3 px-4 py-3 rounded-lg text-surface-600 hover:bg-surface-100 transition-colors cursor-pointer">
-        <i class="pi pi-file"></i>
-        <span>Documents</span>
+      <a routerLink="/employer/documents" routerLinkActive="bg-indigo-600 text-white font-medium" class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-file text-lg" routerLinkActive="text-white"></i>
+        <span class="text-sm">Documents</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-users text-lg"></i>
+        <span class="text-sm">Employees</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-tags text-lg"></i>
+        <span class="text-sm">Categories</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-comments text-lg"></i>
+        <span class="text-sm">Conversations</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-chart-bar text-lg"></i>
+        <span class="text-sm">Analytics</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-link text-lg"></i>
+        <span class="text-sm">Integrations</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-credit-card text-lg"></i>
+        <span class="text-sm">Billing & Plans</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-history text-lg"></i>
+        <span class="text-sm">Audit Logs</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+        <i class="pi pi-cog text-lg"></i>
+        <span class="text-sm">Settings</span>
       </a>
     </nav>
+    
+    <!-- Bottom User Profile & Storage -->
+    <div class="mt-auto px-6 pb-6 pt-4 flex flex-col gap-4">
+      
+      <!-- User Profile -->
+      <div class="flex items-center justify-between cursor-pointer group" (click)="logout()">
+        <div class="flex items-center gap-3">
+          <img src="https://i.pravatar.cc/150?img=47" class="w-10 h-10 rounded-full border border-surface-600 object-cover" alt="Profile" />
+          <div>
+            <div class="text-sm font-semibold text-white">Priya Sharma</div>
+            <div class="text-[11px] text-surface-400">Admin</div>
+          </div>
+        </div>
+        <i class="pi pi-chevron-down text-surface-500 text-xs group-hover:text-surface-300 transition-colors"></i>
+      </div>
+
+      <!-- Help & Support -->
+      <div class="flex items-center justify-between cursor-pointer group mt-2">
+        <div class="flex items-center gap-3 text-surface-400 group-hover:text-white transition-colors">
+          <i class="pi pi-question-circle text-lg"></i>
+          <span class="text-sm font-medium">Help & Support</span>
+        </div>
+        <i class="pi pi-chevron-up text-surface-500 text-xs group-hover:text-surface-300 transition-colors"></i>
+      </div>
+    </div>
   </aside>
 
-  <!-- Main Content -->
-  <div class="flex-1 flex flex-col overflow-hidden">
-    <!-- Topbar -->
-    <header class="h-16 bg-white border-b border-surface-200 flex items-center justify-between px-6 shadow-sm z-10">
-      <div class="flex items-center gap-4">
-        <h2 class="text-lg font-semibold text-surface-800 hidden md:block">Employer Portal</h2>
-      </div>
-      
-      <div class="flex items-center gap-4">
-        <p-avatar icon="pi pi-user" shape="circle" class="bg-blue-100 text-blue-600"></p-avatar>
-        <p-button icon="pi pi-sign-out" [text]="true" severity="secondary" (onClick)="logout()" title="Logout"></p-button>
-      </div>
-    </header>
-
-    <!-- Page Content -->
-    <main class="flex-1 overflow-y-auto p-6 md:p-8 bg-surface-50">
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col min-w-0 bg-surface-50 relative">
+    <main class="flex-1 overflow-y-auto">
       <router-outlet></router-outlet>
     </main>
   </div>

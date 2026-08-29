@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { ButtonModule } from 'primeng/button';
+import { Button } from 'primeng/button';
 
 @Component({
-  imports: [RouterOutlet, ButtonModule],
+  imports: [RouterOutlet, Button],
   selector: 'app-employee-layout',
   styleUrl: './employee-layout.css',
   templateUrl: './employee-layout.html',
