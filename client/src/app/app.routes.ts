@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -12,11 +14,19 @@ export const routes: Routes = [
       {
         path: 'login',
         loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
+      },
+      {
+        // Dedicated OAuth callback route — Keycloak redirects here with ?code=&state=
+        // The AuthCallback component handles the token exchange and navigates to the dashboard.
+        path: 'callback',
+        loadComponent: () => import('./features/auth/callback/callback').then(m => m.AuthCallback)
       }
     ]
   },
   {
     path: 'employer',
+    canActivate: [authGuard, roleGuard],
+    data: { role: 'employer' },
     loadComponent: () => import('./layout/employer-layout/employer-layout').then(m => m.EmployerLayout),
     children: [
       {
@@ -36,6 +46,8 @@ export const routes: Routes = [
   },
   {
     path: 'employee',
+    canActivate: [authGuard, roleGuard],
+    data: { role: 'employee' },
     loadComponent: () => import('./layout/employee-layout/employee-layout').then(m => m.EmployeeLayout),
     children: [
       {

@@ -39,10 +39,10 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 15
 
   minio:
     image: minio/minio:latest
@@ -86,7 +86,7 @@ services:
       dockerfile: Dockerfile
     container_name: normora_client
     ports:
-      - "80:80"
+      - "4200:80"
     depends_on:
       - api
 

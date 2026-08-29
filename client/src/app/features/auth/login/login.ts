@@ -22,4 +22,19 @@ export class Login {
     // and redirect the user's browser there.
     this.oidcSecurityService.authorize();
   }
+
+  // This method tells Keycloak to skip its own login page and go straight to GitHub
+  loginWithGithub() {
+    console.log('Attempting GitHub login...');
+    
+    try {
+      this.oidcSecurityService.authorize(undefined, {
+        customParams: {
+          kc_idp_hint: 'github' // This must match the Alias you gave the provider in Keycloak
+        }
+      });
+    } catch (e) {
+      console.error('Error during authorize call:', e);
+    }
+  }
 }

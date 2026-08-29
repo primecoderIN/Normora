@@ -3,6 +3,86 @@
   "realm": "normora",
   "displayName": "Normora Identity",
   "enabled": true,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      {
+        "name": "employer",
+        "description": "Employer portal access"
+      },
+      {
+        "name": "employee",
+        "description": "Employee portal access"
+      },
+      {
+        "name": "default-roles-normora",
+        "description": "${role_default-roles}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "normora"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "normora-web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+
+      "directAccessGrantsEnabled": false,
+
+      "redirectUris": [
+        "http://localhost:4200/auth/callback",
+        "http://localhost:4200/auth/callback/*",
+        "http://localhost/auth/callback",
+        "http://localhost/auth/callback/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "http://localhost"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/auth/login##http://localhost/auth/login"
+      }
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "github",
+      "providerId": "github",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": true,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "hideOnLoginPage": "false",
+        "clientId": "Iv23liPhumHqGrzXzI1N",
+        "clientSecret": "YOUR_GITHUB_CLIENT_SECRET",
+        "disableUserInfo": "false",
+        "syncMode": "IMPORT",
+        "guiOrder": "1"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "github-employee-role-mapper",
+      "identityProviderAlias": "github",
+      "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "role": "employee"
+      }
+    }
+  ],
   "users": [
     {
       "username": "admin",
@@ -16,24 +96,9 @@
         }
       ],
       "firstName": "System",
-      "lastName": "Admin"
-    }
-  ],
-  "clients": [
-    {
-      "clientId": "normora-web",
-      "enabled": true,
-      "publicClient": true,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
-      "redirectUris": [
-        "http://localhost",
-        "http://localhost/*"
-      ],
-      "webOrigins": [
-        "http://localhost",
-        "+"
+      "lastName": "Admin",
+      "realmRoles": [
+        "employer"
       ]
     }
   ]

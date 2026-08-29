@@ -2,6 +2,9 @@
   <div style="padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background: white; text-align: center;">
     <h2>Welcome to Normora</h2>
     <p style="margin-bottom: 2rem; color: #6c757d;">Please sign in to access the platform</p>
-    <p-button label="Sign In with Keycloak" icon="pi pi-key" (onClick)="login()"></p-button>
+    <p-button label="Sign In with Keycloak" icon="pi pi-key" (onClick)="login()" class="p-button-outlined" [style]="{'margin-bottom': '1rem', 'width': '100%'}"></p-button>
+    <br>
+    <p-button label="Sign In with GitHub" icon="pi pi-github" severity="secondary" (onClick)="loginWithGithub()" [style]="{'width': '100%'}"></p-button>
+    <br><br>
   </div>
 </div>

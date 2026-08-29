@@ -5,7 +5,7 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
-import { provideAuth, authInterceptor } from 'angular-auth-oidc-client';
+import { provideAuth, authInterceptor, LogLevel } from 'angular-auth-oidc-client';
 
 // The appConfig is the central configuration file for our standalone Angular application.
 // It tells Angular what global services (providers) should be available everywhere in the app.
@@ -27,31 +27,45 @@ export const appConfig: ApplicationConfig = {
     provideAuth({
       config: {
         // The URL of our Keycloak server. This is where the app goes to verify identities.
-        authority: 'http://localhost:8080/realms/normora',
-        
-        // Where Keycloak should send the user back to after a successful login
-        redirectUrl: window.location.origin,
-        
-        // Where Keycloak should send the user back to after logging out
-        postLogoutRedirectUri: window.location.origin,
-        
-        // The ID of this specific application registered inside Keycloak
+        authority: `${environment.keycloakUrl}/realms/normora`,
+
+        // A DEDICATED callback route — Keycloak redirects here after login.
+        // Using /auth/callback (not /auth/login) prevents the login form from
+        // briefly flashing during the OAuth round-trip.
+        redirectUrl: window.location.origin + '/auth/callback',
+
+        // Where Keycloak should send the user after logging out
+        postLogoutRedirectUri: window.location.origin + '/auth/login',
+
+        // The ID of this application registered inside Keycloak
         clientId: 'normora-web',
-        
-        // The 'scopes' define what information we are asking Keycloak for.
+
         // 'openid' is required for OIDC. 'profile' and 'email' give us user details.
         scope: 'openid profile email offline_access',
-        
-        // 'code' flow is the most secure modern OAuth2 flow for browser apps (PKCE)
+
+        // Authorization Code Flow — most secure for public browser apps
         responseType: 'code',
-        
-        // Automatically try to get a new token in the background before the current one expires
+
+        // PKCE (Proof Key for Code Exchange) is ON by default in this library —
+        // no property needed. The Keycloak client is also enforcing S256 server-side.
+        // To explicitly disable PKCE (never do this) you would set: disablePkce: true
+
+        // Silently renew the access token before it expires using the refresh token
         silentRenew: true,
         useRefreshToken: true,
-        
-        // This is crucial: It tells the interceptor ONLY to attach our secret token 
-        // when we are talking to our own API. We don't want to accidentally send 
-        // our token to a random third-party API!
+
+        // Required when useRefreshToken=true: prevents nonce mismatch errors
+        // during background token renewal (nonce is only validated on first login)
+        ignoreNonceAfterRefresh: true,
+
+        // Proactively renew 30 seconds before expiry to avoid 401s on in-flight requests
+        renewTimeBeforeTokenExpiresInSeconds: 30,
+
+        // Only suppress logs in production; warn level is safe for dev
+        logLevel: LogLevel.Warn,
+
+        // ONLY attach our Bearer token when calling our own API.
+        // This prevents accidentally leaking the token to third-party services.
         secureRoutes: ['http://localhost:5000/api/', '/api/']
       }
     }),

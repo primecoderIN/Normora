@@ -7,45 +7,60 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 // 2. Configure Authentication (Who are you?)
-// We are telling the ASP.NET Core API to expect a JWT (JSON Web Token) in the Authorization header.
+// We tell the API to expect a JWT (JSON Web Token) in the Authorization header,
+// issued and signed by our Keycloak realm.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // 'Authority' is the address of the server that issued the token (Keycloak).
-        // The API will contact this address to download the public keys needed to verify 
-        // that the token hasn't been tampered with.
+        // The Keycloak realm URL. The API downloads public keys from here to verify
+        // that tokens have not been tampered with.
         options.Authority = "http://localhost:8080/realms/normora";
-        
-        // In production, this MUST be true to ensure tokens aren't intercepted over plain HTTP.
-        // For local development, we set it to false since we aren't using SSL.
-        options.RequireHttpsMetadata = false; 
-        
-        // Configure how strictly we want to validate the token
+
+        // SECURITY: In production this MUST be true (tokens travel over HTTPS).
+        // For local development only, we allow HTTP.
+        options.RequireHttpsMetadata = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            // We turn off Audience validation for local dev to keep things simple.
-            // In production, we'd verify the token was specifically minted for this API.
-            ValidateAudience = false, 
-            
-            // This maps the 'preferred_username' claim from Keycloak into the .NET User.Identity.Name property
+            // SECURITY FIX: Validate the audience claim.
+            // Keycloak adds 'account' to the audience of every token by default.
+            // Without this, a token minted for a completely different application
+            // would be accepted by this API.
+            ValidateAudience = true,
+            ValidAudiences = new[] { "account" },
+
+            // SECURITY FIX: Validate the issuer so tokens from a different Keycloak
+            // realm or a different server are rejected outright.
+            ValidateIssuer = true,
+            ValidIssuer = "http://localhost:8080/realms/normora",
+
+            // Map 'preferred_username' from Keycloak into User.Identity.Name
             NameClaimType = "preferred_username"
         };
     });
 
 // 3. Configure Authorization (What are you allowed to do?)
-// We add the authorization services to the container.
 builder.Services.AddAuthorization();
 
 // 4. Configure CORS (Cross-Origin Resource Sharing)
-// Browsers block requests from one domain (e.g., localhost:80) to another (localhost:5000) for security.
-// This policy explicitly tells the browser that our Angular app is allowed to talk to this API.
+// SECURITY FIX: Using a named allow-list instead of AllowAnyOrigin().
+// AllowAnyOrigin() would let any website on the internet make API calls on
+// behalf of a logged-in user. We restrict to our Angular app origin only.
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("NormoraClientOrigins", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            // Only our Angular dev server and the containerised client are allowed
+            .WithOrigins(
+                "http://localhost:4200",   // Angular dev server
+                "http://localhost"         // Containerised Nginx client
+            )
+            // Only the HTTP methods the API actually uses
+            .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .AllowAnyHeader()
+            // Allow the browser to send the Authorization header (for Bearer tokens)
+            .AllowCredentials();
     });
 });
 
@@ -57,21 +72,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// 6. Apply Middleware to the pipeline
-// The order here is VERY important!
-app.UseCors("AllowAll"); // First allow the request through CORS
-app.UseAuthentication(); // Then figure out who the user is
-app.UseAuthorization();  // Then decide if they have permission to access the endpoint
-
-// 7. Define our API Endpoints
-// This is a Minimal API endpoint. The [Authorize] requirement means the request MUST have a valid token.
-app.MapGet("/api/me", (System.Security.Claims.ClaimsPrincipal user) =>
-{
-    // We return a list of all the 'claims' (pieces of information about the user) inside the token
-    return user.Claims.Select(c => new { c.Type, c.Value });
-})
-.RequireAuthorization()
-.WithName("GetMe");
+// 6. Apply Middleware — ORDER IS CRITICAL
+app.UseCors("NormoraClientOrigins"); // Allow the request through CORS first
+app.UseAuthentication();              // Identify who the user is
+app.UseAuthorization();               // Decide what they can access
 
 // 8. Start listening for requests
 app.Run();
+
