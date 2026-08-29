@@ -1,10 +1,36 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
+using Minio;
+using Normora.Infrastructure;
+using System.Reflection;
+using Normora.Api.Infrastructure;
 
 // 1. Create the builder which sets up the configuration and services for the application.
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+// Register application services via extension method
+builder.Services.AddApplicationServices();
+
+// Register Entity Framework Core with PostgreSQL
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? "Host=localhost;Database=normoradb;Username=postgres;Password=password";
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// Register MinIO Client
+var minioEndpoint = builder.Configuration["Minio:Endpoint"] ?? "localhost:9000";
+var minioAccessKey = builder.Configuration["Minio:AccessKey"] ?? "admin";
+var minioSecretKey = builder.Configuration["Minio:SecretKey"] ?? "password";
+
+builder.Services.AddMinio(configureClient => configureClient
+    .WithEndpoint(minioEndpoint)
+    .WithCredentials(minioAccessKey, minioSecretKey)
+    .WithSSL(false)
+    .Build());
+
+// Register custom services
+builder.Services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>();
 
 // 2. Configure Authentication (Who are you?)
 // We tell the API to expect a JWT (JSON Web Token) in the Authorization header,
@@ -73,9 +99,12 @@ if (app.Environment.IsDevelopment())
 }
 
 // 6. Apply Middleware — ORDER IS CRITICAL
+app.UseExceptionHandler(); // Use the global exception handler
 app.UseCors("NormoraClientOrigins"); // Allow the request through CORS first
 app.UseAuthentication();              // Identify who the user is
 app.UseAuthorization();               // Decide what they can access
+
+app.MapControllers();                 // Map controller endpoints
 
 // 8. Start listening for requests
 app.Run();

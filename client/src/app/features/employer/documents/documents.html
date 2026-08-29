@@ -1,1 +1,86 @@
-<p>documents works!</p>
+<p-toast></p-toast>
+
+<div class="flex flex-col gap-8">
+  <div>
+    <h1 class="text-3xl font-bold text-surface-900 tracking-tight">Documents</h1>
+    <p class="text-surface-500 mt-2">Upload and manage the knowledge base for your company.</p>
+  </div>
+
+  <!-- Upload Section -->
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-surface-200">
+    <h2 class="text-xl font-semibold text-surface-900 mb-4">Upload New Document</h2>
+    <p-fileUpload 
+      name="file" 
+      [url]="uploadUrl"
+      (onBeforeUpload)="onBeforeUpload($event)"
+      (onUpload)="onUpload($event)" 
+      (onError)="onError($event)"
+      [multiple]="false" 
+      accept=".pdf,.docx,.txt" 
+      [maxFileSize]="20971520"
+      chooseLabel="Select File"
+      uploadLabel="Upload"
+      cancelLabel="Cancel"
+      styleClass="p-fileupload-custom">
+      <ng-template pTemplate="content">
+          <ul *ngIf="false"></ul>
+      </ng-template>
+      <ng-template pTemplate="empty">
+          <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-surface-200 rounded-xl bg-surface-50">
+              <i class="pi pi-cloud-upload text-4xl text-surface-400 mb-4"></i>
+              <p class="text-surface-600 font-medium">Drag and drop a file here to upload.</p>
+              <p class="text-surface-400 text-sm mt-2">Only .pdf, .docx, and .txt files are allowed (Max 20MB).</p>
+          </div>
+      </ng-template>
+    </p-fileUpload>
+  </div>
+
+  <!-- Document List Section -->
+  <div class="bg-white rounded-2xl shadow-sm border border-surface-200 overflow-hidden">
+    <div class="p-6 border-b border-surface-200 bg-surface-50/50 flex justify-between items-center">
+      <h2 class="text-xl font-semibold text-surface-900">Your Documents</h2>
+      <span class="text-surface-500 text-sm">{{ documents.length }} document(s) uploaded</span>
+    </div>
+    
+    <p-table [value]="documents" [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="bg-white text-surface-500 font-medium">Document Name</th>
+          <th class="bg-white text-surface-500 font-medium">Status</th>
+          <th class="bg-white text-surface-500 font-medium">Date Uploaded</th>
+          <th class="bg-white text-surface-500 font-medium w-32">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-doc>
+        <tr class="hover:bg-surface-50 transition-colors">
+          <td class="font-medium text-surface-900">
+            <div class="flex items-center gap-3">
+              <i class="pi" 
+                 [ngClass]="{
+                   'pi-file-pdf text-red-500': doc.fileName.endsWith('.pdf'),
+                   'pi-file-word text-blue-500': doc.fileName.endsWith('.docx'),
+                   'pi-file text-surface-500': doc.fileName.endsWith('.txt')
+                 }" 
+                 class="text-lg"></i>
+              {{ doc.fileName }}
+            </div>
+          </td>
+          <td>
+            <p-tag [value]="getStatusText(doc.status)" [severity]="getSeverity(doc.status)" styleClass="rounded-md font-medium text-xs px-2 py-1"></p-tag>
+          </td>
+          <td class="text-surface-600 font-medium">{{ doc.uploadedAt | date:'medium' }}</td>
+          <td>
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" (onClick)="deleteDocument(doc.id)"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4" class="text-center p-8 text-surface-500">
+            No documents found. Upload your first document above!
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
