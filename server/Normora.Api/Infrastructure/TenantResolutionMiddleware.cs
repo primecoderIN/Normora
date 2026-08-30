@@ -38,13 +38,13 @@ public class TenantResolutionMiddleware
                     // 3. Verify that the authenticated user is actually a member of this tenant.
                     var membership = await tenantsDbContext.TenantMemberships
                         .Include(m => m.User)
-                        .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.KeycloakUserId == currentUser.UserId);
+                        .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.KeycloakUserId == currentUser.KeycloakUserId);
 
                     if (membership != null)
                     {
                         // 4. If valid, initialize the ITenantContext so down-stream services (like AppDbContext) 
                         //    and authorization filters ([RequireTenant]) can enforce isolation.
-                        tenantContext.Initialize(tenantId, membership.Role.ToString());
+                        tenantContext.SetContext(tenantId, membership.Role.ToString());
                     }
                 }
             }

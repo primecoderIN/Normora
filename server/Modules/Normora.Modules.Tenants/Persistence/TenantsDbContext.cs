@@ -17,6 +17,7 @@ public class TenantsDbContext : DbContext
     public DbSet<Tenant> Tenants { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<TenantMembership> TenantMemberships { get; set; } = null!;
+    public DbSet<TenantInvitation> TenantInvitations { get; set; } = null!;
 
     /// <summary>
     /// Configures the relational mappings and strict uniqueness constraints required for multi-tenancy.
@@ -65,6 +66,26 @@ public class TenantsDbContext : DbContext
             entity.HasOne(m => m.User)
                   .WithMany(u => u.Memberships)
                   .HasForeignKey(m => m.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // TenantInvitation Configuration
+        modelBuilder.Entity<TenantInvitation>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.Email).IsRequired().HasMaxLength(255);
+            entity.Property(i => i.Status).IsRequired().HasMaxLength(20);
+
+            // The invitation token must be strictly unique globally.
+            entity.HasIndex(i => i.Token).IsUnique();
+
+            // A single email shouldn't have multiple pending invitations for the same tenant.
+            // But they can have revoked/accepted ones. So a composite index could be useful, 
+            // though not strictly unique enforced at DB level without condition.
+
+            entity.HasOne(i => i.Tenant)
+                  .WithMany()
+                  .HasForeignKey(i => i.TenantId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }

@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Modules.Tenants.Application.CreateTenant;
 using Normora.Modules.Tenants.Application.SuspendTenant;
+using Normora.Modules.Tenants.Application.Invitations;
 using Normora.Api.Infrastructure;
+using Normora.Shared;
 
 namespace Normora.Api.Controllers;
 
@@ -42,6 +44,22 @@ public class TenantsController(IMediator mediator) : ControllerBase
 
         return Ok(new { Message = "Tenant suspended successfully." });
     }
+
+    /// <summary>
+    /// Invites a new user to the tenant via email.
+    /// Only users with the 'admin' role within this specific tenant can perform this action.
+    /// </summary>
+    [HttpPost("invitations")]
+    [RequireTenant("admin")]
+    public async Task<IActionResult> InviteEmployee([FromBody] InviteEmployeeRequest request)
+    {
+        var command = new InviteEmployeeCommand(request.Email);
+        var token = await mediator.Send(command);
+
+        return Ok(ApiResponse<Guid>.Ok(token, "Invitation sent successfully."));
+    }
 }
+
+public record InviteEmployeeRequest(string Email);
 
 public record CreateTenantRequest(string Name, string Slug);

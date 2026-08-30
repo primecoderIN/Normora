@@ -50,7 +50,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-password}
-    command: server /data --console-address ":9001"
+    command: server --console-address ":9001" /data
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -62,6 +62,18 @@ services:
       timeout: 5s
       retries: 5
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: normora_mailpit
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_UI_AUTH_FILE: ""
+    ports:
+      - "8025:8025" # UI
+      - "1025:1025" # SMTP
+    networks:
+      - normora-network
+
   api:
     build:
       context: ./server
@@ -70,10 +82,15 @@ services:
     ports:
       - "5000:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-normoradb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-password}
-      - Authentication__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-password}
+      - Keycloak__Authority=http://keycloak:8080/realms/normora
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
       - Minio__Endpoint=minio:9000
+      - Minio__AccessKey=${MINIO_ROOT_USER:-admin}
+      - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
+      - Smtp__Host=mailpit
+      - Smtp__Port=1025
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,6 +98,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    networks:
+      - normora-network
 
   client:
     build:

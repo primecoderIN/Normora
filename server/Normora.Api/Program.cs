@@ -53,6 +53,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>(); // Extracts user from JWT Claims
 builder.Services.AddScoped<ITenantContext, TenantContext>(); // Holds tenant context per request
 builder.Services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>(); // Handles MinIO uploads
+builder.Services.AddScoped<IEmailService, SmtpEmailService>(); // Handles SMTP Emails
 
 // 2. Configure Authentication (Who are you?)
 // We tell the API to expect a JWT (JSON Web Token) in the Authorization header,

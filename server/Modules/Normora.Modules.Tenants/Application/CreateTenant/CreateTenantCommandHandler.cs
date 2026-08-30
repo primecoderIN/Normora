@@ -61,7 +61,8 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
                 UserId = user.Id,
                 Role = TenantRole.Admin
             };
-            dbContext.Memberships.Add(membership);
+            dbContext.TenantMemberships.Add(membership);
+
             await dbContext.SaveChangesAsync(cancellationToken);
 
             // Commit transaction

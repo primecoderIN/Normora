@@ -24,6 +24,15 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'accept-invite',
+    loadComponent: () => import('./features/accept-invite/accept-invite.component').then(m => m.AcceptInviteComponent)
+  },
+  {
+    path: 'onboarding',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/onboarding/onboarding.component').then(m => m.OnboardingComponent)
+  },
+  {
     path: 'employer',
     canActivate: [authGuard, roleGuard],
     data: { role: 'employer' },
@@ -41,6 +50,10 @@ export const routes: Routes = [
       {
         path: 'documents',
         loadComponent: () => import('./features/employer/documents/documents').then(m => m.Documents)
+      },
+      {
+        path: 'settings/team',
+        loadComponent: () => import('./features/employer/settings/team/team-settings.component').then(m => m.TeamSettingsComponent)
       }
     ]
   },
