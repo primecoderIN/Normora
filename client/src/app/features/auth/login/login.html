@@ -5,9 +5,19 @@
       <p class="text-surface-500 mt-2">Please sign in to access the platform</p>
     </div>
 
-    <div class="flex flex-col gap-4">
+    <!-- Normal Login State -->
+    <div class="flex flex-col gap-4" *ngIf="!isProcessingLogin; else processing">
       <p-button label="Sign In with Keycloak" icon="pi pi-key" (onClick)="login()" styleClass="w-full" outlined="true"></p-button>
       <p-button label="Sign In with GitHub" icon="pi pi-github" severity="secondary" (onClick)="loginWithGithub()" styleClass="w-full"></p-button>
     </div>
+
+    <!-- Processing Login State -->
+    <ng-template #processing>
+      <div class="flex flex-col items-center gap-4 py-4">
+        <p-progress-spinner styleClass="w-12 h-12" strokeWidth="4" animationDuration=".5s"></p-progress-spinner>
+        <p class="text-surface-600 font-medium text-center">Login successful, redirecting to Normora...</p>
+      </div>
+    </ng-template>
+
   </p-card>
 </div>

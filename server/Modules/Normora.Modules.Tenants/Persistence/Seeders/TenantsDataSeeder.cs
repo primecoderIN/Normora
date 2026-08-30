@@ -7,7 +7,7 @@ namespace Normora.Modules.Tenants.Persistence.Seeders;
 /// Responsible for populating the Tenants database with initial required records upon application startup.
 /// Currently, there is no default data required for this module, but it implements IDataSeeder for future use.
 /// </summary>
-public class TenantsDataSeeder(TenantsDbContext dbContext) : IDataSeeder
+public class TenantsDataSeeder : IDataSeeder
 {
     public async Task SeedAsync()
     {

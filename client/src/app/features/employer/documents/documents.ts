@@ -1,10 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FileUpload, FileUploadEvent } from 'primeng/fileupload';
-import { Table } from 'primeng/table';
-import { Button } from 'primeng/button';
 import { Toast } from 'primeng/toast';
-import { Tag } from 'primeng/tag';
 import { Dialog } from 'primeng/dialog';
 import { Checkbox } from 'primeng/checkbox';
 import { InputText } from 'primeng/inputtext';
@@ -16,7 +13,7 @@ import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, FileUpload, Table, Button, Toast, Tag, DatePipe, Dialog, Checkbox, InputText],
+  imports: [CommonModule, FileUpload, Toast, DatePipe, Dialog, Checkbox, InputText],
   providers: [MessageService],
   styleUrl: './documents.css',
   templateUrl: './documents.html',

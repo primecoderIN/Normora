@@ -1,21 +1,29 @@
 import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Button } from 'primeng/button';
 import { Card } from 'primeng/card';
+import { ProgressSpinner } from 'primeng/progressspinner';
 
 // This is the Login Component. It is responsible for rendering the login page
 // and starting the authentication process.
 @Component({
   selector: 'app-login',
   standalone: true,
-  // We import the PrimeNG ButtonModule so we can use <p-button> in the HTML template
-  imports: [Button, Card],
+  // We import the PrimeNG components so we can use them in the HTML template
+  imports: [CommonModule, Button, Card, ProgressSpinner],
   styleUrl: './login.css',
   templateUrl: './login.html',
 })
 export class Login {
   // Inject the security service so we can talk to Keycloak
   private oidcSecurityService = inject(OidcSecurityService);
+
+  // We are processing a login if there is a 'code' or 'state' in the URL, 
+  // which indicates we just returned from Keycloak.
+  get isProcessingLogin(): boolean {
+    return window.location.search.includes('code=') || window.location.search.includes('state=');
+  }
 
   // This method is called when the user clicks the "Sign In" button in the HTML
   login() {

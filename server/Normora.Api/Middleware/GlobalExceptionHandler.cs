@@ -8,7 +8,7 @@ namespace Normora.Api.Middleware;
 /// A centralized exception handler for the API.
 /// It intercepts unhandled exceptions globally and formats them into standard RFC 7807 Problem Details JSON.
 /// </summary>
-public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IWebHostEnvironment env) : IExceptionHandler
 {
     /// <summary>
     /// Attempts to handle the exception. Returns true if the exception was successfully handled, false otherwise.
@@ -45,7 +45,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         {
             Status = StatusCodes.Status500InternalServerError,
             Title = "Internal Server Error",
-            Detail = exception.Message // TODO: In production, consider hiding the actual exception message from the client.
+            Detail = env.IsProduction() ? "An unexpected error occurred. Please try again later." : exception.Message
         };
         
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;

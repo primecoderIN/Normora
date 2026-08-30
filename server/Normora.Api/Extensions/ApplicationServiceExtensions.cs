@@ -19,8 +19,11 @@ public static class ApplicationServiceExtensions
     {
         var assemblies = new[]
         {
-            typeof(Normora.Modules.Tenants.Application.CreateTenant.CreateTenantCommand).Assembly,
-            // Register other assemblies as they implement application logic
+            typeof(IApiMarker).Assembly, // Register Normora.Api assemblies (Documents module commands)
+            typeof(Normora.Modules.Tenants.ITenantsModuleMarker).Assembly, // Register Tenants module commands
+            typeof(Normora.Modules.Auth.IAuthModuleMarker).Assembly, // Register Auth module commands
+            typeof(Normora.Modules.Users.IUsersModuleMarker).Assembly, // Register Users module commands
+            typeof(Normora.Modules.Documents.IDocumentsModuleMarker).Assembly // Register Documents module commands
         };
 
         services.AddMediatR(cfg => {

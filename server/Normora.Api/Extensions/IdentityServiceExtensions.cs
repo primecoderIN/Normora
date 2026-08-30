@@ -17,7 +17,7 @@ public static class IdentityServiceExtensions
             .AddJwtBearer(options =>
             {
                 options.Authority = configuration["Keycloak:Authority"];
-                options.MetadataAddress = configuration["Keycloak:MetadataAddress"];
+                options.MetadataAddress = configuration["Keycloak:MetadataAddress"]!;
                 options.RequireHttpsMetadata = false;
 
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -25,7 +25,7 @@ public static class IdentityServiceExtensions
                     ValidateIssuer = true,
                     ValidIssuers = new[] 
                     { 
-                        configuration["Keycloak:Authority"], 
+                        configuration["Keycloak:Authority"]!, 
                         "http://localhost:8080/realms/normora" // Handle Docker network issuer mismatch
                     },
                     ValidateAudience = false, // Keycloak doesn't always add the clientId to 'aud' by default
