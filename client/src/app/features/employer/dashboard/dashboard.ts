@@ -1,9 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 
 import { InputText } from 'primeng/inputtext';
 import { ChartModule } from 'primeng/chart';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
+import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,6 +13,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
+  public userService = inject(UserService);
   documentChartData: any;
   documentChartOptions: any;
 

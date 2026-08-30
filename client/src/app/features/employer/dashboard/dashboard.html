@@ -4,7 +4,11 @@
   <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-bold text-surface-900 tracking-tight">Overview</h1>
-      <p class="text-surface-500 text-sm mt-1">Welcome back, Priya! Here's what's happening with your knowledge base.</p>
+      @if (userService.currentUser(); as user) {
+        <p class="text-surface-500 text-sm mt-1">Welcome back, {{ user.displayName }}! Here's what's happening with your knowledge base.</p>
+      } @else {
+        <p class="text-surface-500 text-sm mt-1">Welcome back! Here's what's happening with your knowledge base.</p>
+      }
     </div>
     
     <div class="flex items-center gap-3">

@@ -8,20 +8,22 @@
     <!-- Normal Login State -->
     @if (!isProcessingLogin) {
       <div class="flex flex-col gap-4">
-        <p-button
+        <button
+        pButton
           label="Sign In with Keycloak"
           icon="pi pi-key"
           (onClick)="login()"
           styleClass="w-full"
           outlined="true"
-        ></p-button>
-        <p-button
+        ></button>
+        <button
+        pButton
           label="Sign In with GitHub"
           icon="pi pi-github"
           severity="secondary"
           (onClick)="loginWithGithub()"
           styleClass="w-full"
-        ></p-button>
+        ></button>
       </div>
     } @else {
       <div class="flex flex-col items-center gap-4 py-4">

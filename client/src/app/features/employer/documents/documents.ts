@@ -11,6 +11,7 @@ import { environment } from '../../../../environments/environment';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { DocumentListComponent } from '../../../shared/components/document-list/document-list.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'app-documents',
@@ -24,6 +25,7 @@ export class Documents implements OnInit {
   private documentService = inject(DocumentService);
   private messageService = inject(MessageService);
   private oidcSecurityService = inject(OidcSecurityService);
+  public userService = inject(UserService);
 
   documents = signal<Document[]>([]);
   uploadUrl = `${environment.apiUrl}/api/documents/upload`;
