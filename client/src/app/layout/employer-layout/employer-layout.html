@@ -65,9 +65,11 @@
         <span class="text-sm">Documents</span>
       </a>
       <a
+        routerLink="/employer/employees"
+        routerLinkActive="bg-indigo-600 text-white font-medium"
         class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
       >
-        <i class="pi pi-users text-lg"></i>
+        <i class="pi pi-users text-lg" routerLinkActive="text-white"></i>
         <span class="text-sm">Employees</span>
       </a>
       <a
@@ -157,7 +159,7 @@
 
   <!-- Main Content Area -->
   <div class="flex-1 flex flex-col min-w-0 bg-surface-50 relative">
-    <main class="flex-1 overflow-y-auto">
+    <main class="flex-1 overflow-y-auto p-5">
       <router-outlet></router-outlet>
     </main>
   </div>

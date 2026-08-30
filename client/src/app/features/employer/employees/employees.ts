@@ -2,10 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 @Component({
-  selector: 'app-team-settings',
+  selector: 'app-employees',
   standalone: true,
   imports: [ReactiveFormsModule],
   template: `
@@ -69,7 +69,7 @@ import { environment } from '../../../../../environments/environment';
     </div>
   `,
 })
-export class TeamSettingsComponent {
+export class Employees {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
 

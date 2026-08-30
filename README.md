@@ -47,7 +47,9 @@ To gracefully stop the environment without destroying your data volumes:
 ## 🌐 Access Points
 
 Once the Docker containers are running, you can access the ecosystem at:
-- **Client Application (Angular)**: `http://localhost`
+- **Client Application (Angular)**: `http://localhost:4200`
 - **Backend API (.NET 10)**: `http://localhost:5000`
+- **API Documentation & Testing (Scalar)**: `http://localhost:5000/scalar/v1`
 - **Keycloak Admin Console**: `http://localhost:8080`
 - **MinIO Console**: `http://localhost:9001`
+- **Mailpit (Email Testing UI)**: `http://localhost:8025`

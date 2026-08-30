@@ -52,8 +52,8 @@ export const routes: Routes = [
         loadComponent: () => import('./features/employer/documents/documents').then(m => m.Documents)
       },
       {
-        path: 'settings/team',
-        loadComponent: () => import('./features/employer/settings/team/team-settings.component').then(m => m.TeamSettingsComponent)
+        path: 'employees',
+        loadComponent: () => import('./features/employer/employees/employees').then(m => m.Employees)
       }
     ]
   },
