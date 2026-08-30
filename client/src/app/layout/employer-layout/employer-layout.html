@@ -22,9 +22,9 @@
           <div class="w-8 h-8 rounded bg-surface-700 flex items-center justify-center text-surface-300 border border-surface-600">
             <i class="pi pi-building text-sm"></i>
           </div>
-          <div>
-            <div class="text-sm font-semibold text-white">Acme Corp</div>
-            <div class="text-[11px] text-surface-400">Employer</div>
+          <div *ngIf="userService.currentUser$ | async as user">
+            <div class="text-sm font-semibold text-white">{{ user.memberships[0]?.tenantName || 'No Tenant' }}</div>
+            <div class="text-[11px] text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Employer' }}</div>
           </div>
         </div>
         <i class="pi pi-chevron-down text-surface-400 text-xs"></i>
@@ -78,16 +78,17 @@
     <!-- Bottom User Profile & Storage -->
     <div class="mt-auto px-6 pb-6 pt-4 flex flex-col gap-4">
       
-      <!-- User Profile -->
-      <div class="flex items-center justify-between cursor-pointer group" (click)="logout()">
+      <div class="flex items-center justify-between group">
         <div class="flex items-center gap-3">
           <img src="https://i.pravatar.cc/150?img=47" class="w-10 h-10 rounded-full border border-surface-600 object-cover" alt="Profile" />
-          <div>
-            <div class="text-sm font-semibold text-white">Priya Sharma</div>
-            <div class="text-[11px] text-surface-400">Admin</div>
+          <div *ngIf="userService.currentUser$ | async as user">
+            <div class="text-sm font-semibold text-white">{{ user.displayName }}</div>
+            <div class="text-[11px] text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Admin' }}</div>
           </div>
         </div>
-        <i class="pi pi-chevron-down text-surface-500 text-xs group-hover:text-surface-300 transition-colors"></i>
+        <button (click)="logout()" title="Log out" class="w-8 h-8 rounded-full hover:bg-surface-800 text-surface-500 hover:text-red-400 transition-colors flex items-center justify-center">
+          <i class="pi pi-sign-out"></i>
+        </button>
       </div>
 
       <!-- Help & Support -->

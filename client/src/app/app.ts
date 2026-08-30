@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { UserService } from './core/services/user.service';
 
 // This is the Root Component of our Angular application. 
 // Think of it as the main container that holds everything else.
@@ -20,6 +21,7 @@ export class App implements OnInit {
   // Here we are asking for the OIDC security service to handle auth logic.
   private oidcSecurityService = inject(OidcSecurityService);
   private router = inject(Router);
+  private userService = inject(UserService);
 
   // ngOnInit is a lifecycle hook. It runs exactly once when this component is first created.
   ngOnInit() {
@@ -37,23 +39,30 @@ export class App implements OnInit {
           this.router.url.startsWith('/auth/callback');
 
         if (isAuthRoute) {
-          // Roles live in the Access Token (realm_access.roles), NOT in UserInfo.
-          this.oidcSecurityService.getPayloadFromAccessToken().subscribe((payload) => {
-            const roles: string[] = payload?.realm_access?.roles ?? [];
+          // We now rely on our backend DB for roles (Memberships), not Keycloak realm_access
+          this.userService.getMe().subscribe({
+            next: (response) => {
+              if (!response.success || !response.data) {
+                this.oidcSecurityService.logoffLocal();
+                this.router.navigate(['/auth/login']);
+                return;
+              }
 
-            if (roles.includes('employer')) {
-              this.router.navigate(['/employer/dashboard']);
-            } else if (roles.includes('employee')) {
-              this.router.navigate(['/employee/ask']);
-            } else {
-              console.error(
-                'Auth: user is authenticated but has no employer/employee role.',
-                'Check Keycloak role mappers for this user or identity provider.',
-                payload
-              );
-              // User has a stale token without roles (or role mapper is missing).
-              // We must clear their local session and send them back to login, 
-              // otherwise they get stuck on the callback spinner forever.
+              const memberships = response.data.memberships;
+              if (memberships.length === 0) {
+                this.router.navigate(['/onboarding']);
+                return;
+              }
+
+              const firstMembership = memberships[0];
+              if (firstMembership.role === 'admin') {
+                this.router.navigate(['/employer/dashboard']);
+              } else {
+                this.router.navigate(['/employee/ask']);
+              }
+            },
+            error: () => {
+              // API failure or unauthorized
               this.oidcSecurityService.logoffLocal();
               this.router.navigate(['/auth/login']);
             }

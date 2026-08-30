@@ -9,6 +9,7 @@ using Normora.Api.Infrastructure;
 using Normora.Modules.Tenants;
 using Normora.Shared.Interfaces;
 using Normora.Infrastructure.Services;
+using Scalar.AspNetCore;
 
 // 1. Create the builder which sets up the configuration and services for the application.
 var builder = WebApplication.CreateBuilder(args);
@@ -62,10 +63,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         // The external URL used to validate the token's 'iss' claim
-        var authority = builder.Configuration["Authentication:Authority"] ?? "http://localhost:8080/realms/normora";
+        var authority = builder.Configuration["Keycloak:Authority"] ?? "http://localhost:8080/realms/normora";
         
         // The internal URL used by the API to fetch the public signing keys
-        var metadataAddress = builder.Configuration["Authentication:MetadataAddress"] ?? $"{authority}/.well-known/openid-configuration";
+        var metadataAddress = builder.Configuration["Keycloak:MetadataAddress"] ?? $"{authority}/.well-known/openid-configuration";
 
         options.Authority = authority;
         options.MetadataAddress = metadataAddress;
@@ -86,7 +87,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             // SECURITY FIX: Validate the issuer so tokens from a different Keycloak
             // realm or a different server are rejected outright.
             ValidateIssuer = true,
-            ValidIssuer = authority,
+            ValidIssuers = new[] { authority, "http://localhost:8080/realms/normora" },
 
             // Map 'preferred_username' from Keycloak into User.Identity.Name
             NameClaimType = "preferred_username",
@@ -151,6 +152,17 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
+// Auto-apply database migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    appDbContext.Database.Migrate();
+
+    var tenantsDbContext = scope.ServiceProvider.GetRequiredService<Normora.Modules.Tenants.Persistence.TenantsDbContext>();
+    tenantsDbContext.Database.Migrate();
 }
 
 // ==========================================

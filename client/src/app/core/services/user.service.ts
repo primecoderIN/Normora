@@ -28,7 +28,7 @@ export interface ApiResponse<T> {
 })
 export class UserService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/users`;
+  private apiUrl = `${environment.apiUrl}/api/users`;
 
   private currentUserSubject = new BehaviorSubject<CurrentUser | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();

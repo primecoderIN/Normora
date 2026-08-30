@@ -91,7 +91,7 @@ export class AcceptInviteComponent implements OnInit {
   }
 
   loadInvitation() {
-    this.http.get<{success: boolean, message: string, data: any}>(`${environment.apiUrl}/invitations/${this.token}`)
+    this.http.get<{success: boolean, message: string, data: any}>(`${environment.apiUrl}/api/invitations/${this.token}`)
       .subscribe({
         next: (res) => {
           this.isLoading = false;
@@ -124,7 +124,7 @@ export class AcceptInviteComponent implements OnInit {
     this.isAccepting = true;
     this.error = '';
 
-    this.http.post<{success: boolean, message: string}>(`${environment.apiUrl}/invitations/${this.token}/accept`, {})
+    this.http.post<{success: boolean, message: string}>(`${environment.apiUrl}/api/invitations/${this.token}/accept`, {})
       .subscribe({
         next: (res) => {
           this.isAccepting = false;

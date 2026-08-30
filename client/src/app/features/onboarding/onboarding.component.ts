@@ -79,7 +79,7 @@ export class OnboardingComponent {
 
     const payload = this.onboardingForm.value;
     
-    this.http.post<{success: boolean, message: string}>(`${environment.apiUrl}/tenants`, payload)
+    this.http.post<{success: boolean, message: string}>(`${environment.apiUrl}/api/tenants`, payload)
       .subscribe({
         next: (res) => {
           if (res.success) {

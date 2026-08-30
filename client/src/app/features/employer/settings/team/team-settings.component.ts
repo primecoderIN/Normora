@@ -82,7 +82,7 @@ export class TeamSettingsComponent {
     // We will rely on `X-Tenant-Id` header sent by an interceptor, or we can fetch the user's first tenant.
     
     // For simplicity, let's just make the POST request and we'll add an interceptor or default in middleware.
-    this.http.post<{success: boolean, message: string}>(`${environment.apiUrl}/tenants/invitations`, payload)
+    this.http.post<{success: boolean, message: string}>(`${environment.apiUrl}/api/tenants/invitations`, payload)
       .subscribe({
         next: (res) => {
           this.isLoading = false;

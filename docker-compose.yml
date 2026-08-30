@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15
@@ -71,8 +69,6 @@ services:
     ports:
       - "8025:8025" # UI
       - "1025:1025" # SMTP
-    networks:
-      - normora-network
 
   api:
     build:
@@ -98,8 +94,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    networks:
-      - normora-network
 
   client:
     build:

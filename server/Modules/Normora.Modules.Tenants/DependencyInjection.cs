@@ -15,6 +15,10 @@ public static class DependencyInjection
         services.AddDbContext<TenantsDbContext>(options =>
             options.UseNpgsql(connectionString));
 
+        services.AddMediatR(cfg => {
+            cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
+        });
+
         return services;
     }
 }

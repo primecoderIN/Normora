@@ -9,7 +9,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options => 
+            {
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            });
         services.AddOpenApi();
         
         services.AddExceptionHandler<GlobalExceptionHandler>();
