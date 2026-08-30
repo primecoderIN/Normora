@@ -13,13 +13,13 @@ export const roleGuard: CanActivateFn = (route) => {
 
   // We rely on the CurrentUser being already fetched in the rootGuard or auth flow
   // However, roleGuard is attached to children. To be safe, we can check the sync value.
-  const currentUser = userService.getCurrentUserSync();
+  const currentUser = userService.currentUser();
 
   if (!currentUser) {
     return router.createUrlTree(['/auth/login']);
   }
 
-  const hasRole = currentUser.memberships.some(m => {
+  const hasRole = currentUser.memberships.some((m: any) => {
     // Map admin -> employer, employee -> employee for routing backwards compatibility
     // Our backend sends 'admin' or 'employee' as the role.
     const effectiveRole = m.role === 'admin' ? 'employer' : 'employee';

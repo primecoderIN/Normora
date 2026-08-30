@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
+import { Observable, catchError, of, tap } from 'rxjs';
 
 export interface UserTenantMembership {
   tenantId: string;
@@ -30,14 +30,14 @@ export class UserService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/users`;
 
-  private currentUserSubject = new BehaviorSubject<CurrentUser | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+  // Application state using Signals
+  public currentUser = signal<CurrentUser | null>(null);
 
   public getMe(): Observable<ApiResponse<CurrentUser>> {
     return this.http.get<ApiResponse<CurrentUser>>(`${this.apiUrl}/me`).pipe(
       tap(response => {
         if (response.success) {
-          this.currentUserSubject.next(response.data);
+          this.currentUser.set(response.data);
         }
       }),
       catchError(error => {
@@ -45,9 +45,5 @@ export class UserService {
         return of({ success: false, message: 'Failed to load user', data: null as any });
       })
     );
-  }
-
-  public getCurrentUserSync(): CurrentUser | null {
-    return this.currentUserSubject.value;
   }
 }

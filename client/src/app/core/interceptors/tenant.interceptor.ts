@@ -4,7 +4,7 @@ import { UserService } from '../services/user.service';
 
 export const tenantInterceptor: HttpInterceptorFn = (req, next) => {
   const userService = inject(UserService);
-  const currentUser = userService.getCurrentUserSync();
+  const currentUser = userService.currentUser();
 
   if (currentUser && currentUser.memberships && currentUser.memberships.length > 0) {
     // For MVP, if the user belongs to a tenant, we inject their first tenant's ID

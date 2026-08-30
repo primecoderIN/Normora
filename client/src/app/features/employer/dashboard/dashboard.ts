@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 
 import { InputText } from 'primeng/inputtext';
 import { ChartModule } from 'primeng/chart';
+import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, DatePipe, InputText, ChartModule],
+  imports: [CommonModule, DatePipe, InputText, ChartModule, StatCardComponent],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
@@ -17,21 +18,21 @@ export class Dashboard implements OnInit {
   activityChartData: any;
   activityChartOptions: any;
 
-  recentDocuments = [
+  recentDocuments = signal([
     { name: 'Travel Policy v2.1', category: 'HR Policies', status: 'Published', type: 'PDF', date: new Date(2025, 4, 20) },
     { name: 'Employee Handbook', category: 'HR Policies', status: 'Published', type: 'DOC', date: new Date(2025, 4, 18) },
     { name: 'Code of Conduct', category: 'Compliance', status: 'Published', type: 'PDF', date: new Date(2025, 4, 15) },
     { name: 'Leave Policy v1.2', category: 'HR Policies', status: 'Published', type: 'XLS', date: new Date(2025, 4, 12) },
     { name: 'IT Security Guidelines', category: 'IT Policies', status: 'Draft', type: 'PPT', date: new Date(2025, 4, 10) },
-  ];
+  ]);
 
-  topQuestions = [
+  topQuestions = signal([
     { question: 'What is the policy for travel reimbursement?', count: 128 },
     { question: 'How many leaves can I take in a year?', count: 98 },
     { question: 'What is the process for expense approval?', count: 76 },
     { question: 'How to claim medical reimbursement?', count: 64 },
     { question: 'What is the work from home policy?', count: 52 },
-  ];
+  ]);
 
   ngOnInit() {
     this.initDocumentChart();

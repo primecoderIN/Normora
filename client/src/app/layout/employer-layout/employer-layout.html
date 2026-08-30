@@ -1,10 +1,14 @@
 <div class="flex h-screen bg-surface-50 text-surface-900 font-sans overflow-hidden">
   <!-- Dark Sidebar -->
-  <aside class="w-70 bg-[#0b0e14] text-surface-0 flex flex-col shrink-0 transition-all duration-300 relative z-20">
+  <aside
+    class="w-70 bg-[#0b0e14] text-surface-0 flex flex-col shrink-0 transition-all duration-300 relative z-20"
+  >
     <!-- Logo area -->
     <div class="h-20 flex items-center px-6">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-lg">
+        <div
+          class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-lg"
+        >
           N
         </div>
         <span class="text-xl font-bold tracking-wide text-white">Nexora</span>
@@ -14,18 +18,28 @@
         <i class="pi pi-bars text-sm"></i>
       </button>
     </div>
-    
+
     <!-- User/Context selector -->
     <div class="px-6 mb-6 mt-2">
-      <div class="bg-surface-800 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-surface-700 transition-colors border border-surface-700">
+      <div
+        class="bg-surface-800 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-surface-700 transition-colors border border-surface-700"
+      >
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded bg-surface-700 flex items-center justify-center text-surface-300 border border-surface-600">
+          <div
+            class="w-8 h-8 rounded bg-surface-700 flex items-center justify-center text-surface-300 border border-surface-600"
+          >
             <i class="pi pi-building text-sm"></i>
           </div>
-          <div *ngIf="userService.currentUser$ | async as user">
-            <div class="text-sm font-semibold text-white">{{ user.memberships[0]?.tenantName || 'No Tenant' }}</div>
-            <div class="text-[11px] text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Employer' }}</div>
-          </div>
+          @if (userService.currentUser(); as user) {
+            <div>
+              <div class="text-sm font-semibold text-white">
+                {{ user.memberships[0]?.tenantName || 'No Tenant' }}
+              </div>
+              <div class="text-[11px] text-surface-400 capitalize">
+                {{ user.memberships[0]?.role || 'Employer' }}
+              </div>
+            </div>
+          }
         </div>
         <i class="pi pi-chevron-down text-surface-400 text-xs"></i>
       </div>
@@ -33,71 +47,110 @@
 
     <!-- Navigation -->
     <nav class="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-      <a routerLink="/employer/dashboard" routerLinkActive="bg-indigo-600 text-white font-medium" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        routerLink="/employer/dashboard"
+        routerLinkActive="bg-indigo-600 text-white font-medium"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-home text-lg" routerLinkActive="text-white"></i>
         <span class="text-sm">Overview</span>
       </a>
-      <a routerLink="/employer/documents" routerLinkActive="bg-indigo-600 text-white font-medium" class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        routerLink="/employer/documents"
+        routerLinkActive="bg-indigo-600 text-white font-medium"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-file text-lg" routerLinkActive="text-white"></i>
         <span class="text-sm">Documents</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-users text-lg"></i>
         <span class="text-sm">Employees</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-tags text-lg"></i>
         <span class="text-sm">Categories</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-comments text-lg"></i>
         <span class="text-sm">Conversations</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-chart-bar text-lg"></i>
         <span class="text-sm">Analytics</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-link text-lg"></i>
         <span class="text-sm">Integrations</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-credit-card text-lg"></i>
         <span class="text-sm">Billing & Plans</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-history text-lg"></i>
         <span class="text-sm">Audit Logs</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group">
+      <a
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer group"
+      >
         <i class="pi pi-cog text-lg"></i>
         <span class="text-sm">Settings</span>
       </a>
     </nav>
-    
+
     <!-- Bottom User Profile & Storage -->
     <div class="mt-auto px-6 pb-6 pt-4 flex flex-col gap-4">
-      
       <div class="flex items-center justify-between group">
         <div class="flex items-center gap-3">
-          <img src="https://i.pravatar.cc/150?img=47" class="w-10 h-10 rounded-full border border-surface-600 object-cover" alt="Profile" />
-          <div *ngIf="userService.currentUser$ | async as user">
-            <div class="text-sm font-semibold text-white">{{ user.displayName }}</div>
-            <div class="text-[11px] text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Admin' }}</div>
-          </div>
+          <img
+            src="https://i.pravatar.cc/150?img=47"
+            class="w-10 h-10 rounded-full border border-surface-600 object-cover"
+            alt="Profile"
+          />
+          @if (userService.currentUser(); as user) {
+            <div>
+              <div class="text-sm font-semibold text-white">{{ user.displayName }}</div>
+              <div class="text-[11px] text-surface-400 capitalize">
+                {{ user.memberships[0]?.role || 'Admin' }}
+              </div>
+            </div>
+          }
         </div>
-        <button (click)="logout()" class="px-3 py-1.5 text-xs font-medium rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors border border-red-500/20">
+        <button
+          (click)="logout()"
+          class="px-3 py-1.5 text-xs font-medium rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors border border-red-500/20"
+        >
           Sign Out
         </button>
       </div>
 
       <!-- Help & Support -->
       <div class="flex items-center justify-between cursor-pointer group mt-2">
-        <div class="flex items-center gap-3 text-surface-400 group-hover:text-white transition-colors">
+        <div
+          class="flex items-center gap-3 text-surface-400 group-hover:text-white transition-colors"
+        >
           <i class="pi pi-question-circle text-lg"></i>
           <span class="text-sm font-medium">Help & Support</span>
         </div>
-        <i class="pi pi-chevron-up text-surface-500 text-xs group-hover:text-surface-300 transition-colors"></i>
+        <i
+          class="pi pi-chevron-up text-surface-500 text-xs group-hover:text-surface-300 transition-colors"
+        ></i>
       </div>
     </div>
   </aside>

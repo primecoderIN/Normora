@@ -1,14 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { AsyncPipe, NgIf } from '@angular/common';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { UserService } from '../../core/services/user.service';
-
 
 @Component({
   selector: 'app-employer-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AsyncPipe, NgIf],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './employer-layout.html',
 })
 export class EmployerLayout {

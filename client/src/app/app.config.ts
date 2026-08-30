@@ -7,6 +7,7 @@ import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { provideAuth, authInterceptor, LogLevel } from 'angular-auth-oidc-client';
 import { tenantInterceptor } from './core/interceptors/tenant.interceptor';
+import { apiInterceptor } from './core/interceptors/api.interceptor';
 
 // The appConfig is the central configuration file for our standalone Angular application.
 // It tells Angular what global services (providers) should be available everywhere in the app.
@@ -22,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     // We attach the 'authInterceptor' here. An interceptor acts like a middleman:
     // every time our app sends an HTTP request, the interceptor catches it, 
     // attaches our Keycloak Access Token to the headers, and then sends it on its way.
-    provideHttpClient(withInterceptors([authInterceptor(), tenantInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor(), tenantInterceptor, apiInterceptor])),
     
     // Configures our Authentication service (OIDC - OpenID Connect).
     provideAuth({

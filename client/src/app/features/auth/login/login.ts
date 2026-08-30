@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { Button } from 'primeng/button';
-import { Card } from 'primeng/card';
-import { ProgressSpinner } from 'primeng/progressspinner';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 // This is the Login Component. It is responsible for rendering the login page
 // and starting the authentication process.
@@ -11,7 +11,7 @@ import { ProgressSpinner } from 'primeng/progressspinner';
   selector: 'app-login',
   standalone: true,
   // We import the PrimeNG components so we can use them in the HTML template
-  imports: [CommonModule, Button, Card, ProgressSpinner],
+  imports: [ButtonModule, CardModule, ProgressSpinnerModule],
   styleUrl: './login.css',
   templateUrl: './login.html',
 })
@@ -19,7 +19,7 @@ export class Login {
   // Inject the security service so we can talk to Keycloak
   private oidcSecurityService = inject(OidcSecurityService);
 
-  // We are processing a login if there is a 'code' or 'state' in the URL, 
+  // We are processing a login if there is a 'code' or 'state' in the URL,
   // which indicates we just returned from Keycloak.
   get isProcessingLogin(): boolean {
     return window.location.search.includes('code=') || window.location.search.includes('state=');
@@ -27,7 +27,7 @@ export class Login {
 
   // This method is called when the user clicks the "Sign In" button in the HTML
   login() {
-    // authorize() tells the library to construct the Keycloak login URL 
+    // authorize() tells the library to construct the Keycloak login URL
     // and redirect the user's browser there.
     this.oidcSecurityService.authorize();
   }
@@ -35,12 +35,12 @@ export class Login {
   // This method tells Keycloak to skip its own login page and go straight to GitHub
   loginWithGithub() {
     console.log('Attempting GitHub login...');
-    
+
     try {
       this.oidcSecurityService.authorize(undefined, {
         customParams: {
-          kc_idp_hint: 'github' // This must match the Alias you gave the provider in Keycloak
-        }
+          kc_idp_hint: 'github', // This must match the Alias you gave the provider in Keycloak
+        },
       });
     } catch (e) {
       console.error('Error during authorize call:', e);

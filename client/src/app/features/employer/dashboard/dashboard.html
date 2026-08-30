@@ -29,60 +29,44 @@
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     
     <!-- Total Documents -->
-    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4 hover:shadow-md transition-shadow">
-      <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-        <i class="pi pi-file text-xl"></i>
-      </div>
-      <div>
-        <div class="text-xs font-semibold text-surface-500 mb-0.5">Total Documents</div>
-        <div class="text-2xl font-bold text-surface-900">128</div>
-        <div class="text-xs text-emerald-500 font-medium mt-1.5 flex items-center gap-1">
-          <i class="pi pi-arrow-up text-[10px]"></i> 12 this month
-        </div>
-      </div>
-    </div>
+    <app-stat-card
+      title="Total Documents"
+      value="128"
+      icon="pi-file"
+      colorClass="bg-indigo-50 text-indigo-600"
+      trend="up"
+      trendText="12 this month">
+    </app-stat-card>
     
     <!-- Active Employees -->
-    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4 hover:shadow-md transition-shadow">
-      <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-        <i class="pi pi-users text-xl"></i>
-      </div>
-      <div>
-        <div class="text-xs font-semibold text-surface-500 mb-0.5">Active Employees</div>
-        <div class="text-2xl font-bold text-surface-900">342</div>
-        <div class="text-xs text-emerald-500 font-medium mt-1.5 flex items-center gap-1">
-          <i class="pi pi-arrow-up text-[10px]"></i> 18 this month
-        </div>
-      </div>
-    </div>
+    <app-stat-card
+      title="Active Employees"
+      value="342"
+      icon="pi-users"
+      colorClass="bg-emerald-50 text-emerald-600"
+      trend="up"
+      trendText="18 this month">
+    </app-stat-card>
     
     <!-- Conversations -->
-    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4 hover:shadow-md transition-shadow">
-      <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-        <i class="pi pi-comments text-xl"></i>
-      </div>
-      <div>
-        <div class="text-xs font-semibold text-surface-500 mb-0.5">Conversations</div>
-        <div class="text-2xl font-bold text-surface-900">1,248</div>
-        <div class="text-xs text-emerald-500 font-medium mt-1.5 flex items-center gap-1">
-          <i class="pi pi-arrow-up text-[10px]"></i> 23% this month
-        </div>
-      </div>
-    </div>
+    <app-stat-card
+      title="Conversations"
+      value="1,248"
+      icon="pi-comments"
+      colorClass="bg-blue-50 text-blue-600"
+      trend="up"
+      trendText="23% this month">
+    </app-stat-card>
     
     <!-- Accuracy -->
-    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4 hover:shadow-md transition-shadow">
-      <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
-        <i class="pi pi-bullseye text-xl"></i>
-      </div>
-      <div>
-        <div class="text-xs font-semibold text-surface-500 mb-0.5">Accuracy (AI)</div>
-        <div class="text-2xl font-bold text-surface-900">96.4%</div>
-        <div class="text-xs text-emerald-500 font-medium mt-1.5 flex items-center gap-1">
-          <i class="pi pi-arrow-up text-[10px]"></i> 2.1% this month
-        </div>
-      </div>
-    </div>
+    <app-stat-card
+      title="Accuracy (AI)"
+      value="96.4%"
+      icon="pi-bullseye"
+      colorClass="bg-orange-50 text-orange-600"
+      trend="up"
+      trendText="2.1% this month">
+    </app-stat-card>
     
   </div>
 
@@ -111,7 +95,7 @@
         <button class="text-xs font-medium text-surface-500 hover:text-indigo-600 bg-surface-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-surface-200 hover:border-indigo-100">View all</button>
       </div>
       <div class="flex-1 overflow-y-auto custom-scrollbar p-3">
-        @for (doc of recentDocuments; track doc.name) {
+        @for (doc of recentDocuments(); track doc.name) {
           <div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-50 transition-colors group cursor-pointer">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded bg-red-50 text-red-500 flex items-center justify-center text-xs font-bold shrink-0">
@@ -145,7 +129,7 @@
         <button class="text-xs font-medium text-surface-500 hover:text-indigo-600 bg-surface-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-surface-200 hover:border-indigo-100">View all</button>
       </div>
       <div class="flex-1 overflow-y-auto custom-scrollbar p-3">
-        @for (q of topQuestions; track q.question) {
+        @for (q of topQuestions(); track q.question) {
           <div class="flex items-start gap-3 p-3 rounded-xl hover:bg-surface-50 transition-colors cursor-pointer group">
             <div class="mt-0.5 text-surface-300">
               <i class="pi pi-question-circle"></i>
