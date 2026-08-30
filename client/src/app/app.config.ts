@@ -42,7 +42,7 @@ export const appConfig: ApplicationConfig = {
         clientId: 'normora-web',
 
         // 'openid' is required for OIDC. 'profile' and 'email' give us user details.
-        scope: 'openid profile email offline_access',
+        scope: 'openid profile email',
 
         // Authorization Code Flow — most secure for public browser apps
         responseType: 'code',
@@ -61,6 +61,10 @@ export const appConfig: ApplicationConfig = {
 
         // Proactively renew 30 seconds before expiry to avoid 401s on in-flight requests
         renewTimeBeforeTokenExpiresInSeconds: 30,
+
+        // Handle missing 'unauthorized' route error
+        unauthorizedRoute: '/auth/login',
+        forbiddenRoute: '/auth/login',
 
         // Only suppress logs in production; warn level is safe for dev
         logLevel: LogLevel.Warn,

@@ -13,9 +13,9 @@ namespace Normora.Modules.Tenants.Application.CreateTenant;
 /// <param name="dbContext">The Tenants module DbContext.</param>
 /// <param name="currentUser">The service providing the current JWT Keycloak user identity.</param>
 public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser currentUser) 
-    : IRequestHandler<CreateTenantCommand, Tenant>
+    : IRequestHandler<CreateTenantCommand, TenantDto>
 {
-    public async Task<Tenant> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
+    public async Task<TenantDto> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
         // 1. Ensure the caller is an authenticated user.
         if (!currentUser.IsAuthenticated)
@@ -78,7 +78,7 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             // Commit the transaction to save all changes.
             await transaction.CommitAsync(cancellationToken);
 
-            return tenant;
+            return new TenantDto(tenant.Id, tenant.Name, tenant.Slug, (int)tenant.Status, tenant.CreatedAt);
         }
         catch (Exception)
         {
