@@ -13,6 +13,8 @@ export class EmployeeLayout {
   private oidcSecurityService = inject(OidcSecurityService);
 
   logout() {
-    this.oidcSecurityService.logoff().subscribe();
+    this.oidcSecurityService.getIdToken().subscribe((idToken) => {
+      this.oidcSecurityService.logoff('', { customParams: { id_token_hint: idToken } }).subscribe();
+    });
   }
 }

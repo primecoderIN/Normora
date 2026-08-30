@@ -1,6 +1,5 @@
 <Solution>
   <Project Path="Normora.Api/Normora.Api.csproj" />
-  <Project Path="Normora.Infrastructure/Normora.Infrastructure.csproj" />
   <Project Path="Normora.Shared/Normora.Shared.csproj" />
   <Folder Name="/Modules/">
     <Project Path="Modules/Normora.Modules.Auth/Normora.Modules.Auth.csproj" />

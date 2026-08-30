@@ -4,7 +4,7 @@ WORKDIR /src
 # Copy csproj files for restoring
 COPY ["Normora.Api/Normora.Api.csproj", "Normora.Api/"]
 COPY ["Normora.Shared/Normora.Shared.csproj", "Normora.Shared/"]
-COPY ["Normora.Infrastructure/Normora.Infrastructure.csproj", "Normora.Infrastructure/"]
+
 COPY ["Modules/Normora.Modules.Auth/Normora.Modules.Auth.csproj", "Modules/Normora.Modules.Auth/"]
 COPY ["Modules/Normora.Modules.Tenants/Normora.Modules.Tenants.csproj", "Modules/Normora.Modules.Tenants/"]
 COPY ["Modules/Normora.Modules.Users/Normora.Modules.Users.csproj", "Modules/Normora.Modules.Users/"]

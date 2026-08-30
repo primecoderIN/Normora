@@ -1,7 +1,7 @@
 using FluentValidation;
 using MediatR;
 
-namespace Normora.Api.Infrastructure;
+namespace Normora.Shared.Validation;
 
 public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull

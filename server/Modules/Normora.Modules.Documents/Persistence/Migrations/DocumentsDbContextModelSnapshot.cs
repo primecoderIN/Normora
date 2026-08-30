@@ -2,21 +2,18 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Normora.Infrastructure;
+using Normora.Modules.Documents.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Normora.Infrastructure.Migrations
+namespace Normora.Modules.Documents.Persistence.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
-    [Migration("20260829100612_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(DocumentsDbContext))]
+    partial class DocumentsDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,11 +28,6 @@ namespace Normora.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("EmployerId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -49,12 +41,15 @@ namespace Normora.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("UploadedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployerId");
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Documents");
                 });

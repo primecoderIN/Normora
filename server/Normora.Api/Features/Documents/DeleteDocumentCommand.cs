@@ -1,7 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Normora.Infrastructure;
+using Normora.Modules.Documents.Persistence;
 
 namespace Normora.Api.Features.Documents;
 
@@ -23,7 +23,7 @@ public sealed class DeleteDocumentCommandValidator : AbstractValidator<DeleteDoc
 /// Handles the execution of DeleteDocumentCommand.
 /// Responsible for removing the physical file from MinIO and deleting the metadata record from the database.
 /// </summary>
-public sealed class DeleteDocumentCommandHandler(AppDbContext context, IDocumentStorageService storageService) : IRequestHandler<DeleteDocumentCommand, bool>
+public sealed class DeleteDocumentCommandHandler(DocumentsDbContext context, IDocumentStorageService storageService) : IRequestHandler<DeleteDocumentCommand, bool>
 {
     public async Task<bool> Handle(DeleteDocumentCommand request, CancellationToken cancellationToken)
     {

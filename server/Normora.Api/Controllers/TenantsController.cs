@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Normora.Modules.Tenants.Application.CreateTenant;
 using Normora.Modules.Tenants.Application.SuspendTenant;
 using Normora.Modules.Tenants.Application.Invitations;
-using Normora.Api.Infrastructure;
+using Normora.Api.Middleware;
 using Normora.Shared;
 
 namespace Normora.Api.Controllers;

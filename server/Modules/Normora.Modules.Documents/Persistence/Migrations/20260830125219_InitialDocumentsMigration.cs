@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Normora.Infrastructure.Migrations
+namespace Normora.Modules.Documents.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialDocumentsMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,7 +20,7 @@ namespace Normora.Infrastructure.Migrations
                     MinioObjectName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     UploadedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EmployerId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -28,9 +28,9 @@ namespace Normora.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Documents_EmployerId",
+                name: "IX_Documents_TenantId",
                 table: "Documents",
-                column: "EmployerId");
+                column: "TenantId");
         }
 
         /// <inheritdoc />

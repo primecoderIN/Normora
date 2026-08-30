@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-namespace Normora.Infrastructure;
+namespace Normora.Modules.Documents.Persistence;
 
 public interface IDocumentStorageService
 {

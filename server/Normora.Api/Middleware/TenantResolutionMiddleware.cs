@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Tenants.Persistence;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Infrastructure;
+namespace Normora.Api.Middleware;
 
 /// <summary>
 /// Middleware responsible for extracting the active tenant from the request and validating the user's access.

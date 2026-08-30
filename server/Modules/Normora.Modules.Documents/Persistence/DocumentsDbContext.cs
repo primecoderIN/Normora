@@ -2,17 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using Normora.Shared;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Infrastructure;
+namespace Normora.Modules.Documents.Persistence;
 
 /// <summary>
-/// The primary database context for the application. 
-/// Handles all business entities (like Documents) and enforces cross-tenant data isolation.
+/// The primary database context for the Documents module. 
+/// Handles all document entities and enforces cross-tenant data isolation.
 /// </summary>
-public class AppDbContext : DbContext
+public class DocumentsDbContext : DbContext
 {
     private readonly ITenantContext _tenantContext;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext tenantContext) : base(options)
+    public DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, ITenantContext tenantContext) : base(options)
     {
         _tenantContext = tenantContext;
     }

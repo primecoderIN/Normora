@@ -1,7 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Normora.Infrastructure;
+using Normora.Modules.Documents.Persistence;
 using Normora.Shared;
 
 namespace Normora.Api.Features.Documents;
@@ -37,7 +37,7 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
 /// Handles the execution of UploadDocumentCommand.
 /// Responsible for streaming the file to MinIO storage and saving metadata to the database.
 /// </summary>
-public sealed class UploadDocumentCommandHandler(AppDbContext context, IDocumentStorageService storageService) : IRequestHandler<UploadDocumentCommand, Document>
+public sealed class UploadDocumentCommandHandler(DocumentsDbContext context, IDocumentStorageService storageService) : IRequestHandler<UploadDocumentCommand, Document>
 {
     public async Task<Document> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
@@ -56,7 +56,7 @@ public sealed class UploadDocumentCommandHandler(AppDbContext context, IDocument
         };
 
         // 3. Save the document metadata to the PostgreSQL database.
-        // NOTE: The AppDbContext is configured with a Global Query Filter and an Interceptor
+        // NOTE: The DocumentsDbContext is configured with a Global Query Filter and an Interceptor
         // that will automatically bind this Document to the current active TenantId upon SaveChanges.
         context.Documents.Add(document);
         await context.SaveChangesAsync(cancellationToken);

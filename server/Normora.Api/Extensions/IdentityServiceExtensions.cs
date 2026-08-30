@@ -1,0 +1,36 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Normora.Api.Extensions;
+
+/// <summary>
+/// Registers the JWT authentication and authorization middleware.
+/// Validates tokens issued by Keycloak.
+/// </summary>
+public static class IdentityServiceExtensions
+{
+    public static IServiceCollection AddIdentityServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = configuration["Keycloak:Authority"];
+                options.Audience = configuration["Keycloak:Audience"];
+                options.RequireHttpsMetadata = false;
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true
+                };
+            });
+
+        services.AddAuthorization();
+
+        return services;
+    }
+}

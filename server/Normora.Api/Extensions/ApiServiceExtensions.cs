@@ -1,0 +1,38 @@
+using Microsoft.Extensions.DependencyInjection;
+using Normora.Api.Middleware;
+using System.Text.Json.Serialization;
+
+namespace Normora.Api.Extensions;
+
+/// <summary>
+/// Registers web API-specific services, such as Controllers, CORS, OpenAPI, and Exception Handling.
+/// </summary>
+public static class ApiServiceExtensions
+{
+    public static IServiceCollection AddApiServices(this IServiceCollection services, Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        services.AddControllers()
+            .AddJsonOptions(options => 
+            {
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+            });
+
+        services.AddOpenApi();
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
+
+        services.AddHttpContextAccessor();
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy("CorsPolicy",
+                builder => builder
+                    .WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials());
+        });
+
+        return services;
+    }
+}

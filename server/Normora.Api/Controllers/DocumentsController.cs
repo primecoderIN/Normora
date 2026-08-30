@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Features.Documents;
 using Normora.Shared;
 using Normora.Shared.Interfaces;
-using Normora.Api.Infrastructure;
+using Normora.Api.Middleware;
 using System.Security.Claims;
 
 namespace Normora.Api.Controllers;

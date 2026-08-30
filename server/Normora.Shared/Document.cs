@@ -8,6 +8,9 @@ namespace Normora.Shared;
 /// </summary>
 public class Document
 {
+    /// <summary>
+    /// The unique identifier for the document record.
+    /// </summary>
     public Guid Id { get; set; }
     
     /// <summary>
@@ -20,12 +23,19 @@ public class Document
     /// </summary>
     public string MinioObjectName { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The current processing status of the document.
+    /// </summary>
     public DocumentStatus Status { get; set; }
+
+    /// <summary>
+    /// The UTC timestamp when the document was uploaded.
+    /// </summary>
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// The identifier of the tenant that owns this document.
-    /// This is automatically populated by AppDbContext.SaveChangesAsync() and filtered by Global Query Filters.
+    /// Used by the Entity Framework Global Query Filter in DocumentsDbContext to ensure cross-tenant data isolation.
     /// </summary>
     public Guid TenantId { get; set; }
 }

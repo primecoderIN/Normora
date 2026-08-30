@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Infrastructure;
+namespace Normora.Api.Middleware;
 
 /// <summary>
 /// An authorization filter attribute that enforces tenant-level access.

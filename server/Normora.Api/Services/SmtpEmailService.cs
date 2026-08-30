@@ -4,8 +4,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Infrastructure.Services;
+namespace Normora.Api.Services;
 
+/// <summary>
+/// A concrete implementation of IEmailService that sends emails via an SMTP server.
+/// Currently configured to connect to the local MailHog instance (port 1025) for development.
+/// </summary>
 public class SmtpEmailService : IEmailService, IDisposable
 {
     private readonly SmtpClient _client;
@@ -28,6 +32,7 @@ public class SmtpEmailService : IEmailService, IDisposable
         };
     }
 
+    /// <inheritdoc />
     public async Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
     {
         try
@@ -45,7 +50,7 @@ public class SmtpEmailService : IEmailService, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send email to {To} with subject {Subject}", to, subject);
-            throw;
+            throw; // Re-throw to allow upstream systems (like MediatR pipelines) to handle the failure.
         }
     }
 
