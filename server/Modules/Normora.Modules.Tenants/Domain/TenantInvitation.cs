@@ -26,7 +26,7 @@ public class TenantInvitation
     /// <summary>
     /// When the invitation expires and can no longer be accepted.
     /// </summary>
-    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddDays(7);
+    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddHours(48);
 
     /// <summary>
     /// The current status of the invitation (e.g., "Pending", "Accepted", "Revoked").

@@ -123,6 +123,9 @@ export class AcceptInviteComponent implements OnInit {
             if (this.invitation().status !== 'Pending') {
               this.error.set('This invitation has already been accepted or is no longer valid.');
               this.invitation.set(null);
+            } else if (new Date(this.invitation().expiresAt) < new Date()) {
+              this.error.set('This invitation link has expired.');
+              this.invitation.set(null);
             }
           } else {
             this.error.set(res.message);

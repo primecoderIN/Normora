@@ -27,6 +27,27 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             return new CurrentUserDto(Guid.Empty, string.Empty, string.Empty, new List<UserTenantMembershipDto>());
         }
 
+        // Sync any changes from Keycloak (like if they updated their name or email)
+        bool isUpdated = false;
+        
+        if (user.DisplayName != currentUser.DisplayName)
+        {
+            user.DisplayName = currentUser.DisplayName;
+            isUpdated = true;
+        }
+
+        if (user.Email != currentUser.Email)
+        {
+            user.Email = currentUser.Email;
+            isUpdated = true;
+        }
+
+        if (isUpdated)
+        {
+            user.UpdatedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
         var memberships = user.Memberships.Select(m => new UserTenantMembershipDto(
             m.TenantId,
             m.Tenant.Name,

@@ -18,9 +18,19 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
         var invitation = await context.TenantInvitations
             .FirstOrDefaultAsync(i => i.Token == request.Token, cancellationToken);
 
-        if (invitation == null || invitation.Status != "Pending" || invitation.ExpiresAt < DateTime.UtcNow)
+        if (invitation == null)
         {
-            return false;
+            throw new InvalidOperationException("This invitation is invalid or does not exist.");
+        }
+
+        if (invitation.Status != "Pending")
+        {
+            throw new InvalidOperationException("This invitation has already been accepted or is no longer valid.");
+        }
+
+        if (invitation.ExpiresAt < DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("This invitation link has expired.");
         }
 
         // Validate the email matches the authenticated user's email
