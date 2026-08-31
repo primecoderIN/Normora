@@ -49,6 +49,14 @@ export class App implements OnInit {
               }
 
               const memberships = response.data.memberships;
+              
+              // Check if user just logged in specifically to accept an invite
+              const pendingToken = localStorage.getItem('pending_invitation');
+              if (pendingToken) {
+                this.router.navigate(['/accept-invite'], { queryParams: { token: pendingToken } });
+                return;
+              }
+
               if (memberships.length === 0) {
                 this.router.navigate(['/onboarding']);
                 return;

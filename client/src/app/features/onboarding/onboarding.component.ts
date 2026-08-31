@@ -4,13 +4,23 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 
 @Component({
   selector: 'app-onboarding',
   standalone: true,
   imports: [ReactiveFormsModule],
   template: `
-    <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+      <div class="absolute top-4 right-4">
+        <button
+          (click)="logout()"
+          class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          Sign Out
+        </button>
+      </div>
+
       <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Set up your Organization
@@ -84,6 +94,7 @@ export class OnboardingComponent {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private router = inject(Router);
+  private oidcSecurityService = inject(OidcSecurityService);
 
   onboardingForm: FormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3)]],
@@ -92,6 +103,12 @@ export class OnboardingComponent {
 
   isLoading = signal(false);
   error = signal('');
+
+  logout() {
+    this.oidcSecurityService.getIdToken().subscribe((idToken) => {
+      this.oidcSecurityService.logoff('', { customParams: { id_token_hint: idToken } }).subscribe();
+    });
+  }
 
   onSubmit() {
     if (this.onboardingForm.invalid) return;

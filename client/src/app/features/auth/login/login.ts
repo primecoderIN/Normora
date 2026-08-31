@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
 
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ButtonDirective } from 'primeng/button';
+import { Card } from 'primeng/card';
+import { ProgressSpinner } from 'primeng/progressspinner';
 
 // This is the Login Component. It is responsible for rendering the login page
 // and starting the authentication process.
@@ -11,7 +11,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
   selector: 'app-login',
   standalone: true,
   // We import the PrimeNG components so we can use them in the HTML template
-  imports: [ButtonModule, CardModule, ProgressSpinnerModule],
+  imports: [ButtonDirective, Card, ProgressSpinner],
   styleUrl: './login.css',
   templateUrl: './login.html',
 })
@@ -40,6 +40,21 @@ export class Login {
       this.oidcSecurityService.authorize(undefined, {
         customParams: {
           kc_idp_hint: 'github', // This must match the Alias you gave the provider in Keycloak
+        },
+      });
+    } catch (e) {
+      console.error('Error during authorize call:', e);
+    }
+  }
+
+  // This method tells Keycloak to skip its own login page and go straight to Google
+  loginWithGoogle() {
+    console.log('Attempting Google login...');
+
+    try {
+      this.oidcSecurityService.authorize(undefined, {
+        customParams: {
+          kc_idp_hint: 'google', // This must match the Alias you gave the provider in Keycloak
         },
       });
     } catch (e) {

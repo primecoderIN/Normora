@@ -53,3 +53,4 @@ Once the Docker containers are running, you can access the ecosystem at:
 - **Keycloak Admin Console**: `http://localhost:8080`
 - **MinIO Console**: `http://localhost:9001`
 - **Mailpit (Email Testing UI)**: `http://localhost:8025`
+- **pgAdmin**: `http://localhost:5050`

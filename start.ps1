@@ -10,6 +10,8 @@ KEYCLOAK_ADMIN_PASSWORD=admin
 MINIO_ROOT_USER=admin
 MINIO_ROOT_PASSWORD=password
 ASPNETCORE_ENVIRONMENT=Development
+PGADMIN_DEFAULT_EMAIL=admin@normora.com
+PGADMIN_DEFAULT_PASSWORD=admin
 "@
 
 if (-not (Test-Path $envFile)) {
