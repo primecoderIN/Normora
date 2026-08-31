@@ -21,6 +21,14 @@ if (-not (Test-Path $envFile)) {
     Write-Host ".env file already exists. Skipping creation..." -ForegroundColor Yellow
 }
 
+if (Test-Path "realm-export-live.json") {
+    Write-Host "Found realm-export-live.json. Using it for Keycloak initialization to keep secrets uncommitted..." -ForegroundColor Cyan
+    $env:KEYCLOAK_REALM_EXPORT = "./realm-export-live.json"
+} else {
+    Write-Host "No realm-export-live.json found. Using default committed realm export..." -ForegroundColor Cyan
+    $env:KEYCLOAK_REALM_EXPORT = "./infrastructure/keycloak/realm-export.json"
+}
+
 Write-Host "Starting all services with docker-compose..." -ForegroundColor Green
 docker-compose up -d --build
 

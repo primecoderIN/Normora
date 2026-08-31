@@ -119,17 +119,12 @@ export class OnboardingComponent {
     const payload = this.onboardingForm.value;
 
     this.http
-      .post<{ success: boolean; message: string }>(`${environment.apiUrl}/api/tenants`, payload)
+      .post<any>(`${environment.apiUrl}/api/tenants`, payload)
       .subscribe({
-        next: (res) => {
-          if (res.success) {
-            // Need to reload to re-fetch the user profile with the new membership
-            // The rootGuard will then route them to the employer dashboard
-            window.location.href = '/employer/dashboard';
-          } else {
-            this.error.set(res.message);
-            this.isLoading.set(false);
-          }
+        next: () => {
+          // Need to reload to re-fetch the user profile with the new membership
+          // The rootGuard will then route them to the employer dashboard
+          window.location.href = '/employer/dashboard';
         },
         error: (err) => {
           this.error.set(err.error?.message || 'Failed to create organization');

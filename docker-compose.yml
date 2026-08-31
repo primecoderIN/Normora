@@ -10,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
@@ -35,13 +36,13 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_DB: postgres
       KC_DB_URL_HOST: postgres
-      KC_DB_URL_DATABASE: ${POSTGRES_DB:-normoradb}
+      KC_DB_URL_DATABASE: keycloakdb
       KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
       KC_HEALTH_ENABLED: 'true'
     command: start-dev --import-realm
     volumes:
-      - ./infrastructure/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ${KEYCLOAK_REALM_EXPORT:-./infrastructure/keycloak/realm-export.json}:/opt/keycloak/data/import/realm-export.json
     ports:
       - "8080:8080"
     depends_on:
