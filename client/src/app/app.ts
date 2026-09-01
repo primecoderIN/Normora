@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { UserService } from './core/services/user.service';
+import { TenantBrandingService } from './core/services/tenant-branding.service';
 
 // This is the Root Component of our Angular application. 
 // Think of it as the main container that holds everything else.
@@ -18,17 +19,23 @@ export class App implements OnInit {
   protected readonly title = signal('client');
   
   // 'inject' is the modern way to request a service from Angular's Dependency Injection system.
-  // Here we are asking for the OIDC security service to handle auth logic.
   private oidcSecurityService = inject(OidcSecurityService);
   private router = inject(Router);
   private userService = inject(UserService);
+  private brandingService = inject(TenantBrandingService);
 
   // ngOnInit is a lifecycle hook. It runs exactly once when this component is first created.
   ngOnInit() {
-    // When the app starts, or when the user is redirected back from Keycloak,
-    // we must call 'checkAuth()' to process the URL parameters and validate the token.
-    // The '.subscribe' listens for the result of that check.
-    this.oidcSecurityService.checkAuth().subscribe(({ isAuthenticated, userData, accessToken }) => {
+    // Step 1: Fetch and apply tenant branding based on the current subdomain (if any).
+    // e.g. on intel.localhost:4200 we load Intel's colors/favicon before the login page renders.
+    // The app always stays on localhost:4200 — subdomain is only used for branding context.
+    const slug = this.brandingService.getSlugFromSubdomain();
+    if (slug) {
+      this.brandingService.applyBrandingForSlug(slug).subscribe();
+    }
+
+    // Step 2: Check authentication state.
+    this.oidcSecurityService.checkAuth().subscribe(({ isAuthenticated }) => {
       if (isAuthenticated) {
 
         // Route to dashboard when the user lands on login, callback, or root.
@@ -57,11 +64,13 @@ export class App implements OnInit {
                 return;
               }
 
+              // No tenants: go to onboarding.
               if (memberships.length === 0) {
                 this.router.navigate(['/onboarding']);
                 return;
               }
 
+              // Route based on role. App always stays on localhost:4200.
               const firstMembership = memberships[0];
               if (firstMembership.role === 'admin') {
                 this.router.navigate(['/employer/dashboard']);

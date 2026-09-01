@@ -34,4 +34,9 @@ public class Tenant
     /// All users who have been granted access to this tenant.
     /// </summary>
     public ICollection<TenantMembership> Memberships { get; set; } = new List<TenantMembership>();
+
+    /// <summary>
+    /// The white-label branding configuration for this tenant (colors, logo, favicon).
+    /// </summary>
+    public TenantBranding? Branding { get; set; }
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Normora.Modules.Tenants.Application.CreateTenant;
 using Normora.Modules.Tenants.Application.SuspendTenant;
 using Normora.Modules.Tenants.Application.Invitations;
+using Normora.Modules.Tenants.Application.Branding;
 using Normora.Api.Middleware;
 using Normora.Shared;
 using Normora.Shared.Interfaces;
@@ -27,6 +28,23 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
         var command = new CreateTenantCommand(request.Name, request.Slug);
         var tenant = await mediator.Send(command);
         return Ok(tenant);
+    }
+
+    /// <summary>
+    /// Retrieves white-label branding configuration for a tenant by its slug.
+    /// Anonymous — called by the frontend before login to skin the app.
+    /// </summary>
+    [HttpGet("branding/{slug}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetTenantBranding(string slug)
+    {
+        var query = new GetTenantBrandingQuery(slug);
+        var result = await mediator.Send(query);
+
+        if (result == null)
+            return NotFound(ApiResponse.Failure("Tenant branding not found."));
+
+        return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
     }
 
     /// <summary>

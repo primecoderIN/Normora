@@ -18,6 +18,7 @@ public class TenantsDbContext : DbContext
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<TenantMembership> TenantMemberships { get; set; } = null!;
     public DbSet<TenantInvitation> TenantInvitations { get; set; } = null!;
+    public DbSet<TenantBranding> TenantBrandings { get; set; } = null!;
 
     /// <summary>
     /// Configures the relational mappings and strict uniqueness constraints required for multi-tenancy.
@@ -86,6 +87,21 @@ public class TenantsDbContext : DbContext
             entity.HasOne(i => i.Tenant)
                   .WithMany()
                   .HasForeignKey(i => i.TenantId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // TenantBranding Configuration — 1-to-1 with Tenant
+        modelBuilder.Entity<TenantBranding>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.PrimaryColor).HasMaxLength(20);
+            entity.Property(b => b.SecondaryColor).HasMaxLength(20);
+            entity.Property(b => b.LogoUrl).HasMaxLength(500);
+            entity.Property(b => b.FaviconUrl).HasMaxLength(500);
+
+            entity.HasOne(b => b.Tenant)
+                  .WithOne(t => t.Branding)
+                  .HasForeignKey<TenantBranding>(b => b.TenantId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }

@@ -27,7 +27,15 @@ public static class ApiServiceExtensions
         {
             options.AddPolicy("CorsPolicy",
                 builder => builder
-                    .WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+                    .SetIsOriginAllowed(origin =>
+                    {
+                        // Allow any subdomain of localhost (e.g. intel.localhost:4200)
+                        // and the base localhost origins from configuration.
+                        var uri = new Uri(origin);
+                        var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+                        return allowedOrigins.Contains(origin) ||
+                               (uri.Host.EndsWith(".localhost") && (uri.Port == 4200 || uri.Port == 80));
+                    })
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials());
