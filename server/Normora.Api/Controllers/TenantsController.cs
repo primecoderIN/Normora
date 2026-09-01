@@ -6,7 +6,7 @@ using Normora.Modules.Tenants.Application.SuspendTenant;
 using Normora.Modules.Tenants.Application.Invitations;
 using Normora.Api.Middleware;
 using Normora.Shared;
-
+using Normora.Shared.Interfaces;
 namespace Normora.Api.Controllers;
 
 /// <summary>
@@ -15,7 +15,7 @@ namespace Normora.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class TenantsController(IMediator mediator) : ControllerBase
+public class TenantsController(IMediator mediator, ITenantContext tenantContext) : ControllerBase
 {
     /// <summary>
     /// Creates a new Tenant. The authenticated user making the request will automatically
@@ -37,6 +37,11 @@ public class TenantsController(IMediator mediator) : ControllerBase
     [RequireTenant("admin")]
     public async Task<IActionResult> SuspendTenant(Guid id)
     {
+        if (id != tenantContext.TenantId)
+        {
+            return Forbid();
+        }
+
         var command = new SuspendTenantCommand(id);
         var success = await mediator.Send(command);
         
