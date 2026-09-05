@@ -2,7 +2,8 @@ namespace Normora.Shared;
 
 public enum DocumentStatus
 {
+    Uploaded,
     Processing,
-    Processed,
-    Error
+    Ready,
+    Failed
 }

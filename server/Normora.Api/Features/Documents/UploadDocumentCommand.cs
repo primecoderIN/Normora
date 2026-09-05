@@ -50,7 +50,7 @@ public sealed class UploadDocumentCommandHandler(DocumentsDbContext context, IDo
             Id = Guid.NewGuid(),
             FileName = request.File.FileName,
             MinioObjectName = objectName,
-            Status = DocumentStatus.Processing,
+            Status = DocumentStatus.Uploaded,
             UploadedAt = DateTime.UtcNow,
             TenantId = request.TenantId
         };

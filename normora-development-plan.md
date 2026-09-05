@@ -1069,6 +1069,7 @@ Do not require exact wording.
 
 ### Phase 9 — Ingestion
 
+- document processing state contract (`Uploaded`, `Processing`, `Ready`, `Failed`)
 - Hangfire
 - Tika
 - normalization

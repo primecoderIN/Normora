@@ -95,6 +95,17 @@ document.documentElement.style.setProperty('--brand-primary', branding.primaryCo
 
 This causes the entire app to reskin automatically without any rebuild.
 
+## Document Processing Lifecycle
+
+Document metadata is stored in PostgreSQL while the original file is stored in MinIO. The document status is represented by the shared `DocumentStatus` enum:
+
+```text
+Uploaded -> Processing -> Ready
+                         \-> Failed
+```
+
+The upload request currently stores the file and creates an `Uploaded` metadata record. The employer document list displays the lifecycle state using readable API values. The background worker, text extraction, normalization, and chunking steps are intentionally separate follow-up increments so a document is never shown as `Ready` before ingestion has completed.
+
 ### Subdomain Routing
 After a successful login:
 - **User with no tenants**: stays on `localhost:4200` and is routed to `/onboarding`.

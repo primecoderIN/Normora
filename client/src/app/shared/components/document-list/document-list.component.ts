@@ -33,18 +33,24 @@ import { Document } from '../../../core/services/document.service';
                   <span class="text-sm text-surface-500">{{ doc.uploadedAt | date:'MMM d, y' }}</span>
                 </td>
                 <td class="px-6 py-4">
-                  @if (doc.status === 1) {
+                  @if (doc.status === 'Ready') {
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      Published
+                      Ready
                     </span>
-                  } @else if (doc.status === 0) {
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-100 text-surface-700 text-xs font-medium border border-surface-200">
-                      Draft
+                  } @else if (doc.status === 'Failed') {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium border border-red-100">
+                      <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                      Failed
+                    </span>
+                  } @else if (doc.status === 'Processing') {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                      Processing
                     </span>
                   } @else {
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">
-                      Archived
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-100 text-surface-700 text-xs font-medium border border-surface-200">
+                      Uploaded
                     </span>
                   }
                 </td>

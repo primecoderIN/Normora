@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 export interface Document {
   id: string;
   fileName: string;
-  status: number;
+  status: 'Uploaded' | 'Processing' | 'Ready' | 'Failed';
   uploadedAt: string;
 }
 
