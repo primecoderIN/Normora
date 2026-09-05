@@ -43,4 +43,12 @@ public class Document
     /// Used by the Entity Framework Global Query Filter in DocumentsDbContext to ensure cross-tenant data isolation.
     /// </summary>
     public Guid TenantId { get; set; }
+
+    // Navigation Properties
+
+    /// <summary>
+    /// The departments this document is scoped to. An empty collection means the document
+    /// is "Company Wide" and accessible to every employee in the tenant.
+    /// </summary>
+    public ICollection<DocumentDepartment> DocumentDepartments { get; set; } = new List<DocumentDepartment>();
 }

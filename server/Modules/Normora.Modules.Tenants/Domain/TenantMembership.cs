@@ -28,4 +28,10 @@ public class TenantMembership
     // Navigation Properties
     public Tenant Tenant { get; set; } = null!;
     public User User { get; set; } = null!;
+
+    /// <summary>Departments directly assigned to this membership.</summary>
+    public ICollection<MembershipDepartment> MembershipDepartments { get; set; } = new List<MembershipDepartment>();
+
+    /// <summary>User groups this membership belongs to.</summary>
+    public ICollection<UserGroupMembership> UserGroupMemberships { get; set; } = new List<UserGroupMembership>();
 }

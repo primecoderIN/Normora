@@ -39,4 +39,14 @@ public class Tenant
     /// The white-label branding configuration for this tenant (colors, logo, favicon).
     /// </summary>
     public TenantBranding? Branding { get; set; }
+
+    /// <summary>
+    /// Departments defined within this tenant (e.g., "Frontend", "HR").
+    /// </summary>
+    public ICollection<Department> Departments { get; set; } = new List<Department>();
+
+    /// <summary>
+    /// Named groups of users for access control within this tenant.
+    /// </summary>
+    public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
 }

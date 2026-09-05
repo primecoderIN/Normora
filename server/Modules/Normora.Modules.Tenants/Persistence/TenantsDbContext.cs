@@ -19,6 +19,11 @@ public class TenantsDbContext : DbContext
     public DbSet<TenantMembership> TenantMemberships { get; set; } = null!;
     public DbSet<TenantInvitation> TenantInvitations { get; set; } = null!;
     public DbSet<TenantBranding> TenantBrandings { get; set; } = null!;
+    public DbSet<Department> Departments { get; set; } = null!;
+    public DbSet<UserGroup> UserGroups { get; set; } = null!;
+    public DbSet<MembershipDepartment> MembershipDepartments { get; set; } = null!;
+    public DbSet<UserGroupMembership> UserGroupMemberships { get; set; } = null!;
+    public DbSet<UserGroupDepartment> UserGroupDepartments { get; set; } = null!;
 
     /// <summary>
     /// Configures the relational mappings and strict uniqueness constraints required for multi-tenancy.
@@ -103,6 +108,82 @@ public class TenantsDbContext : DbContext
                   .WithOne(t => t.Branding)
                   .HasForeignKey<TenantBranding>(b => b.TenantId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Department — organizational unit scoped to a tenant
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(d => d.Id);
+            entity.Property(d => d.Name).IsRequired().HasMaxLength(100);
+            entity.Property(d => d.Description).HasMaxLength(500);
+            entity.HasIndex(d => new { d.TenantId, d.Name }).IsUnique();
+
+            entity.HasOne(d => d.Tenant)
+                  .WithMany(t => t.Departments)
+                  .HasForeignKey(d => d.TenantId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // UserGroup — named group of users within a tenant
+        modelBuilder.Entity<UserGroup>(entity =>
+        {
+            entity.HasKey(g => g.Id);
+            entity.Property(g => g.Name).IsRequired().HasMaxLength(100);
+            entity.Property(g => g.Description).HasMaxLength(500);
+            entity.HasIndex(g => new { g.TenantId, g.Name }).IsUnique();
+
+            entity.HasOne(g => g.Tenant)
+                  .WithMany(t => t.UserGroups)
+                  .HasForeignKey(g => g.TenantId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // MembershipDepartment — direct user → department assignment
+        modelBuilder.Entity<MembershipDepartment>(entity =>
+        {
+            entity.HasKey(md => new { md.TenantMembershipId, md.DepartmentId });
+
+            entity.HasOne(md => md.TenantMembership)
+                  .WithMany(m => m.MembershipDepartments)
+                  .HasForeignKey(md => md.TenantMembershipId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(md => md.Department)
+                  .WithMany(d => d.MembershipDepartments)
+                  .HasForeignKey(md => md.DepartmentId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // UserGroupMembership — user → group membership
+        modelBuilder.Entity<UserGroupMembership>(entity =>
+        {
+            entity.HasKey(ugm => new { ugm.TenantMembershipId, ugm.UserGroupId });
+
+            entity.HasOne(ugm => ugm.TenantMembership)
+                  .WithMany(m => m.UserGroupMemberships)
+                  .HasForeignKey(ugm => ugm.TenantMembershipId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ugm => ugm.UserGroup)
+                  .WithMany(g => g.UserGroupMemberships)
+                  .HasForeignKey(ugm => ugm.UserGroupId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // UserGroupDepartment — group → department mapping (department inheritance)
+        modelBuilder.Entity<UserGroupDepartment>(entity =>
+        {
+            entity.HasKey(ugd => new { ugd.UserGroupId, ugd.DepartmentId });
+
+            entity.HasOne(ugd => ugd.UserGroup)
+                  .WithMany(g => g.UserGroupDepartments)
+                  .HasForeignKey(ugd => ugd.UserGroupId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ugd => ugd.Department)
+                  .WithMany(d => d.UserGroupDepartments)
+                  .HasForeignKey(ugd => ugd.DepartmentId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

@@ -20,6 +20,7 @@ public class DocumentsDbContext : DbContext
 
     public DbSet<Document> Documents { get; set; } = null!;
     public DbSet<DocumentChunk> DocumentChunks { get; set; } = null!;
+    public DbSet<DocumentDepartment> DocumentDepartments { get; set; } = null!;
 
     /// <summary>
     /// Configures the entity models, setting up constraints, indexes, and global query filters.
@@ -60,6 +61,23 @@ public class DocumentsDbContext : DbContext
             // jobs may bypass this filter only after checking both tenant and document IDs.
             entity.HasQueryFilter(chunk => chunk.TenantId == _tenantContext.TenantId);
         });
+
+        // DocumentDepartment — junction table for document department scoping.
+        // DepartmentId is a plain Guid FK (no EF nav) to respect the module boundary.
+        // A document with zero DocumentDepartment rows is treated as "Company Wide".
+        // The matching query filter on TenantId aligns with the Document filter to
+        // prevent EF Core validation warning EF10622 on required-end relationships.
+        modelBuilder.Entity<DocumentDepartment>(entity =>
+        {
+            entity.HasKey(dd => new { dd.DocumentId, dd.DepartmentId });
+
+            entity.HasOne(dd => dd.Document)
+                  .WithMany(d => d.DocumentDepartments)
+                  .HasForeignKey(dd => dd.DocumentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(dd => dd.TenantId == _tenantContext.TenantId);
+        });
     }
 
     /// <summary>
@@ -72,6 +90,15 @@ public class DocumentsDbContext : DbContext
         foreach (var entry in ChangeTracker.Entries<Document>().Where(e => e.State == EntityState.Added))
         {
             // And automatically assign the TenantId from the current HTTP context!
+            if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
+            {
+                entry.Entity.TenantId = _tenantContext.TenantId.Value;
+            }
+        }
+
+        // Propagate TenantId to DocumentDepartment rows to keep the query filter aligned.
+        foreach (var entry in ChangeTracker.Entries<DocumentDepartment>().Where(e => e.State == EntityState.Added))
+        {
             if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
             {
                 entry.Entity.TenantId = _tenantContext.TenantId.Value;
