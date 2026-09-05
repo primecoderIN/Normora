@@ -1,5 +1,6 @@
 using Normora.Api.Extensions;
 using Normora.Api.Middleware;
+using Normora.Api.Hubs;
 using Hangfire;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -56,5 +57,6 @@ app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();               
 
 app.MapControllers();
+app.MapHub<DocumentHub>("/hubs/documents");
 
 app.Run();

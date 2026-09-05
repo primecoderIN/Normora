@@ -19,6 +19,7 @@ public static class ApiServiceExtensions
             });
 
         services.AddOpenApi();
+        services.AddSignalR();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FileUpload, FileUploadEvent } from 'primeng/fileupload';
 import { Toast } from 'primeng/toast';
@@ -12,6 +12,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { DocumentListComponent } from '../../../shared/components/document-list/document-list.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { UserService } from '../../../core/services/user.service';
+import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/services/document-realtime.service';
 
 @Component({
   selector: 'app-documents',
@@ -21,8 +22,9 @@ import { UserService } from '../../../core/services/user.service';
   styleUrl: './documents.css',
   templateUrl: './documents.html',
 })
-export class Documents implements OnInit {
+export class Documents implements OnInit, OnDestroy {
   private documentService = inject(DocumentService);
+  private documentRealtimeService = inject(DocumentRealtimeService);
   private messageService = inject(MessageService);
   private oidcSecurityService = inject(OidcSecurityService);
   public userService = inject(UserService);
@@ -38,6 +40,17 @@ export class Documents implements OnInit {
     this.oidcSecurityService.getAccessToken().subscribe((token: string) => {
       this.token.set(token);
     });
+
+    const tenantId = this.userService.currentUser()?.memberships[0]?.tenantId;
+    if (tenantId) {
+      void this.documentRealtimeService
+        .connect(tenantId, event => this.onDocumentStatusChanged(event))
+        .catch(error => console.error('Failed to connect to document realtime events:', error));
+    }
+  }
+
+  ngOnDestroy() {
+    void this.documentRealtimeService.disconnect();
   }
 
   loadDocuments() {
@@ -56,6 +69,27 @@ export class Documents implements OnInit {
     this.messageService.add({ severity: 'info', summary: 'Success', detail: 'Document uploaded successfully' });
     this.showUploadDialog.set(false);
     this.loadDocuments();
+  }
+
+  private onDocumentStatusChanged(event: DocumentStatusChanged) {
+    const currentDocuments = this.documents();
+    const documentExists = currentDocuments.some(document => document.id === event.documentId);
+
+    if (!documentExists) {
+      this.loadDocuments();
+      return;
+    }
+
+    this.documents.set(currentDocuments.map(document =>
+      document.id === event.documentId
+        ? { ...document, status: event.status }
+        : document));
+
+    if (event.status === 'Ready') {
+      this.messageService.add({ severity: 'success', summary: 'Document ready', detail: `${event.fileName} is ready for search.` });
+    } else if (event.status === 'Failed') {
+      this.messageService.add({ severity: 'error', summary: 'Processing failed', detail: `${event.fileName} could not be processed.` });
+    }
   }
 
   onError(event: any) {

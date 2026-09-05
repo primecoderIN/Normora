@@ -1073,6 +1073,7 @@ Do not require exact wording.
 - Hangfire job boundary and PostgreSQL-backed worker
 - Tika extraction and persisted extracted text
 - normalization and bounded document chunks
+- SignalR processing status events
 - processing states
 
 ### Phase 10 — Embeddings and Retrieval

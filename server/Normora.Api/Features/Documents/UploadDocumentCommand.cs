@@ -2,6 +2,8 @@ using FluentValidation;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
+using Normora.Api.Hubs;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared;
 
@@ -41,7 +43,8 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
 public sealed class UploadDocumentCommandHandler(
     DocumentsDbContext context,
     IDocumentStorageService storageService,
-    IBackgroundJobClient backgroundJobClient) : IRequestHandler<UploadDocumentCommand, Document>
+    IBackgroundJobClient backgroundJobClient,
+    IHubContext<DocumentHub> hubContext) : IRequestHandler<UploadDocumentCommand, Document>
 {
     public async Task<Document> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
@@ -64,6 +67,13 @@ public sealed class UploadDocumentCommandHandler(
         // that will automatically bind this Document to the current active TenantId upon SaveChanges.
         context.Documents.Add(document);
         await context.SaveChangesAsync(cancellationToken);
+
+        await hubContext.Clients.Group(DocumentHub.GroupName(document.TenantId))
+            .SendAsync("DocumentStatusChanged", new DocumentStatusChanged(
+                document.Id,
+                document.TenantId,
+                document.FileName,
+                document.Status.ToString()), cancellationToken);
 
         backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
             job.ProcessAsync(document.Id, document.TenantId));

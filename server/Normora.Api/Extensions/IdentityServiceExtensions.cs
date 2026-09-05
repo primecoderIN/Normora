@@ -19,6 +19,22 @@ public static class IdentityServiceExtensions
                 options.Authority = configuration["Keycloak:Authority"];
                 options.MetadataAddress = configuration["Keycloak:MetadataAddress"]!;
                 options.RequireHttpsMetadata = false;
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var requestPath = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            requestPath.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {

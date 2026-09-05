@@ -1,5 +1,7 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using Normora.Api.Hubs;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared;
 
@@ -12,6 +14,7 @@ public sealed class DocumentProcessingJob(
     DocumentsDbContext context,
     IDocumentStorageService storageService,
     IDocumentTextExtractor textExtractor,
+    IHubContext<DocumentHub> hubContext,
     ILogger<DocumentProcessingJob> logger)
 {
     [AutomaticRetry(Attempts = 3)]
@@ -44,6 +47,7 @@ public sealed class DocumentProcessingJob(
         {
             document.Status = DocumentStatus.Processing;
             await context.SaveChangesAsync();
+            await PublishStatusAsync(document);
 
             await using var documentStream = await storageService.DownloadDocumentAsync(document.MinioObjectName);
             document.ExtractedText = await textExtractor.ExtractAsync(documentStream, document.FileName);
@@ -65,6 +69,7 @@ public sealed class DocumentProcessingJob(
 
             document.Status = DocumentStatus.Ready;
             await context.SaveChangesAsync();
+            await PublishStatusAsync(document);
 
             logger.LogInformation(
                 "Document {DocumentId} was extracted successfully for tenant {TenantId}.",
@@ -75,8 +80,19 @@ public sealed class DocumentProcessingJob(
         {
             document.Status = DocumentStatus.Failed;
             await context.SaveChangesAsync();
+            await PublishStatusAsync(document);
             logger.LogError(exception, "Document {DocumentId} failed processing for tenant {TenantId}.", documentId, tenantId);
             throw;
         }
+    }
+
+    private Task PublishStatusAsync(Document document)
+    {
+        return hubContext.Clients.Group(DocumentHub.GroupName(document.TenantId))
+            .SendAsync("DocumentStatusChanged", new DocumentStatusChanged(
+                document.Id,
+                document.TenantId,
+                document.FileName,
+                document.Status.ToString()));
     }
 }
