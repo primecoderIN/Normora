@@ -35,6 +35,7 @@ public class DocumentsDbContext : DbContext
         {
             entity.Property(d => d.FileName).IsRequired().HasMaxLength(255);
             entity.Property(d => d.MinioObjectName).IsRequired().HasMaxLength(500);
+            entity.Property(d => d.ExtractedText).HasColumnType("text");
             
             // TENANT-14: Global Query Filter for Tenant Data Isolation
             // This ensures that EVERY LINQ query executed against Documents will transparently have

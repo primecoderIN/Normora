@@ -82,6 +82,12 @@ services:
       - "8025:8025" # UI
       - "1025:1025" # SMTP
 
+  tika:
+    image: apache/tika:3.2.3.0-full
+    container_name: normora_tika
+    ports:
+      - "9998:9998"
+
   api:
     build:
       context: ./server
@@ -99,6 +105,7 @@ services:
       - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
       - Smtp__Host=mailpit
       - Smtp__Port=1025
+      - Tika__Endpoint=http://tika:9998/
     depends_on:
       postgres:
         condition: service_healthy
@@ -106,6 +113,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      tika:
+        condition: service_started
 
   client:
     build:

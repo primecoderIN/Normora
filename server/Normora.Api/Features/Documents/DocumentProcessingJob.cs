@@ -10,6 +10,8 @@ namespace Normora.Api.Features.Documents;
 /// </summary>
 public sealed class DocumentProcessingJob(
     DocumentsDbContext context,
+    IDocumentStorageService storageService,
+    IDocumentTextExtractor textExtractor,
     ILogger<DocumentProcessingJob> logger)
 {
     [AutomaticRetry(Attempts = 3)]
@@ -29,7 +31,7 @@ public sealed class DocumentProcessingJob(
             return;
         }
 
-        if (document.Status != DocumentStatus.Uploaded)
+        if (document.Status is not (DocumentStatus.Uploaded or DocumentStatus.Failed))
         {
             logger.LogInformation(
                 "Document processing job skipped because document {DocumentId} is already {Status}.",
@@ -38,12 +40,27 @@ public sealed class DocumentProcessingJob(
             return;
         }
 
-        document.Status = DocumentStatus.Processing;
-        await context.SaveChangesAsync();
+        try
+        {
+            document.Status = DocumentStatus.Processing;
+            await context.SaveChangesAsync();
 
-        logger.LogInformation(
-            "Document {DocumentId} is now processing for tenant {TenantId}. Text extraction is the next ingestion step.",
-            documentId,
-            tenantId);
+            await using var documentStream = await storageService.DownloadDocumentAsync(document.MinioObjectName);
+            document.ExtractedText = await textExtractor.ExtractAsync(documentStream, document.FileName);
+            document.Status = DocumentStatus.Ready;
+            await context.SaveChangesAsync();
+
+            logger.LogInformation(
+                "Document {DocumentId} was extracted successfully for tenant {TenantId}.",
+                documentId,
+                tenantId);
+        }
+        catch (Exception exception)
+        {
+            document.Status = DocumentStatus.Failed;
+            await context.SaveChangesAsync();
+            logger.LogError(exception, "Document {DocumentId} failed processing for tenant {TenantId}.", documentId, tenantId);
+            throw;
+        }
     }
 }

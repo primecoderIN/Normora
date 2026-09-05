@@ -24,6 +24,11 @@ public class Document
     public string MinioObjectName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Text extracted from the original file by the ingestion pipeline.
+    /// </summary>
+    public string? ExtractedText { get; set; }
+
+    /// <summary>
     /// The current processing status of the document.
     /// </summary>
     public DocumentStatus Status { get; set; }

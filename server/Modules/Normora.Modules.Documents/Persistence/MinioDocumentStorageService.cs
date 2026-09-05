@@ -64,6 +64,22 @@ public class MinioDocumentStorageService : IDocumentStorageService
         return objectName;
     }
 
+    public async Task<Stream> DownloadDocumentAsync(string objectName)
+    {
+        var stream = new MemoryStream();
+
+        await _minioClient.GetObjectAsync(new GetObjectArgs()
+            .WithBucket(BucketName)
+            .WithObject(objectName)
+            .WithCallbackStream(async (objectStream, cancellationToken) =>
+            {
+                await objectStream.CopyToAsync(stream, cancellationToken);
+            }));
+
+        stream.Position = 0;
+        return stream;
+    }
+
     /// <summary>
     /// Permanently deletes a file from MinIO storage.
     /// </summary>

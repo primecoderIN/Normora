@@ -44,6 +44,11 @@ public static class DatabaseServiceExtensions
             .Build());
 
         services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>();
+        services.AddHttpClient<IDocumentTextExtractor, TikaDocumentTextExtractor>(client =>
+        {
+            client.BaseAddress = new Uri(configuration["Tika:Endpoint"] ?? "http://localhost:9998/");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        });
 
         return services;
     }
