@@ -1,1 +1,9 @@
-<router-outlet></router-outlet>
+@if (authInitializing()) {
+	<main class="auth-loading" aria-live="polite" aria-busy="true">
+		<div class="auth-loading__spinner" aria-hidden="true"></div>
+		<h1>Signing you in</h1>
+		<p>{{ authStatus() }}</p>
+	</main>
+} @else {
+	<router-outlet></router-outlet>
+}
