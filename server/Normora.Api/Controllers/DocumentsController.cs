@@ -33,6 +33,18 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
         return Ok(ApiResponse<List<Document>>.Ok(result));
     }
 
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchDocuments([FromQuery] string query, [FromQuery] int limit = 5)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return BadRequest(ApiResponse.Failure("A search query is required."));
+        }
+
+        var result = await mediator.Send(new SearchDocumentsQuery(query.Trim(), limit));
+        return Ok(ApiResponse<IReadOnlyList<DocumentSearchResult>>.Ok(result));
+    }
+
     /// <summary>
     /// Uploads a new document file and metadata.
     /// Limits payload size to 100MB.

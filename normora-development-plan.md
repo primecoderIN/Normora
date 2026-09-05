@@ -1079,6 +1079,7 @@ Do not require exact wording.
 ### Phase 10 — Embeddings and Retrieval
 
 - Gemini embeddings and pgvector chunk storage
+- tenant-safe pgvector similarity retrieval
 - keyword search
 - hybrid retrieval
 

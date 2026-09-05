@@ -59,6 +59,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Added normalized, tenant-owned document chunks with idempotent retry behavior
 - [x] Added tenant-validated SignalR document status events for upload and processing transitions
 - [x] Added optional Gemini chunk embeddings with PostgreSQL pgvector storage
+- [x] Added tenant-safe pgvector similarity retrieval with source chunk metadata
 
 ## ✅ Recently Completed Enhancements
 - [x] **Social Login Integrations (Google & GitHub)**: Configured Keycloak Identity Providers and built `kc_idp_hint` auto-redirect logic in the Angular Login UI for both platforms.

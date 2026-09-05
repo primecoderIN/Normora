@@ -14,6 +14,7 @@ Normora is an enterprise-grade full-stack web application. It is designed to be 
 - **Document Chunks**: Extracted text is normalized into bounded, tenant-owned chunks ready for future embeddings and retrieval.
 - **Realtime Processing Updates**: SignalR broadcasts tenant-scoped document status changes so the employer UI can show processing progress immediately.
 - **Embedding Preparation**: Document chunks support 768-dimensional Gemini embeddings in PostgreSQL `pgvector`, with keyless local development still supported.
+- **Tenant-Safe Retrieval**: Ready document chunks can be ranked by semantic similarity while preserving tenant isolation and source metadata.
 
 ## Target Audience
 This platform is built to accommodate complex enterprise workloads, providing robust multi-tenant data isolation, stringent user management, and seamless document handling out of the box.

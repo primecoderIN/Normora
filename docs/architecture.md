@@ -112,6 +112,8 @@ Chunks are tenant-owned and uniquely ordered per document. A retry removes the d
 
 When `Gemini:ApiKey` is configured, the ingestion job generates a 768-dimensional Gemini embedding for each chunk and stores it in PostgreSQL `pgvector` before publishing `Ready`. Without a key, local ingestion still completes through chunking and leaves embeddings null; retrieval is disabled until embeddings are available.
 
+The tenant-protected `GET /api/documents/search?query=...&limit=5` endpoint embeds the query, applies the current tenant's chunk filter, ranks results by pgvector cosine distance, and returns the matching source document, chunk index, content, and similarity score. It is retrieval only; answer generation and citations belong to the next RAG slice.
+
 ### Realtime Document Events
 
 Authenticated clients connect to `/hubs/documents` and explicitly join a tenant group. SignalR's bearer token is accepted from the WebSocket `access_token` query parameter only for `/hubs` paths. The hub validates the current user's membership before adding the connection. Upload and processing transitions publish `DocumentStatusChanged` events to that tenant group, allowing the employer document list to update without polling.
