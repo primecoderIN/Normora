@@ -7,6 +7,7 @@ import { UserService } from '../../core/services/user.service';
   selector: 'app-employer-layout',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  styleUrl: './employer-layout.css',
   templateUrl: './employer-layout.html',
 })
 export class EmployerLayout {

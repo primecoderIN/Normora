@@ -1,10 +1,60 @@
-<div class="flex h-screen bg-surface-50 text-surface-900 flex-col items-center justify-center">
-  <div class="bg-white p-8 rounded-xl shadow-sm text-center max-w-md w-full border border-surface-200">
-    <i class="pi pi-user text-4xl text-blue-500 mb-4"></i>
-    <h1 class="text-2xl font-bold mb-2">Employee Portal</h1>
-    <p class="text-surface-600 mb-8">This portal is currently under construction. Please check back later.</p>
-    
-    <p-button label="Sign Out" icon="pi pi-sign-out" severity="danger" (onClick)="logout()" class="w-full"></p-button>
+<div class="employee-shell">
+  <aside class="employee-sidebar">
+    <div class="brand-row">
+      <div class="brand-mark">N</div>
+      <div>
+        <div class="brand-name">Normora</div>
+        <div class="brand-meta">Employee workspace</div>
+      </div>
+    </div>
+
+    @if (userService.currentUser(); as user) {
+      <div class="workspace-card">
+        <div class="workspace-icon"><i class="pi pi-building"></i></div>
+        <div>
+          <div class="workspace-name">{{ user.memberships[0]?.tenantName || 'Workspace' }}</div>
+          <div class="workspace-role">{{ user.memberships[0]?.role || 'Employee' }}</div>
+        </div>
+      </div>
+    }
+
+    <nav class="nav-list" aria-label="Employee navigation">
+      <a
+        routerLink="/employee/ask"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <i class="pi pi-comments"></i>
+        <span>Ask</span>
+      </a>
+      <a routerLink="/employee/conversations" routerLinkActive="active">
+        <i class="pi pi-history"></i>
+        <span>Conversations</span>
+      </a>
+      <a routerLink="/employee/saved-answers" routerLinkActive="active">
+        <i class="pi pi-bookmark"></i>
+        <span>Saved answers</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      @if (userService.currentUser(); as user) {
+        <div class="user-block">
+          <div class="avatar">{{ user.displayName.charAt(0) || 'U' }}</div>
+          <div>
+            <div class="user-name">{{ user.displayName }}</div>
+            <div class="user-role">{{ user.memberships[0]?.role || 'Employee' }}</div>
+          </div>
+        </div>
+      }
+      <button type="button" class="sign-out" (click)="logout()">
+        <i class="pi pi-sign-out"></i>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <main class="employee-main custom-scrollbar">
     <router-outlet></router-outlet>
-  </div>
+  </main>
 </div>

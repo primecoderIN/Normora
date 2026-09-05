@@ -1,187 +1,158 @@
-<div class="flex flex-col h-full space-y-6 max-w-350 mx-auto">
-  
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+<div class="dashboard-page">
+  <header class="page-header">
     <div>
-      <h1 class="text-2xl font-bold text-surface-900 tracking-tight">Overview</h1>
+      <p class="eyebrow">Workspace overview</p>
+      <h1>Overview</h1>
       @if (userService.currentUser(); as user) {
-        <p class="text-surface-500 text-sm mt-1">Welcome back, {{ user.displayName }}! Here's what's happening with your knowledge base.</p>
+        <p>Welcome back, {{ user.displayName }}. Here is the current state of your knowledge base.</p>
       } @else {
-        <p class="text-surface-500 text-sm mt-1">Welcome back! Here's what's happening with your knowledge base.</p>
+        <p>Here is the current state of your knowledge base.</p>
       }
     </div>
-    
-    <div class="flex items-center gap-3">
-      <!-- Search -->
-      <div class="relative">
-        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
-        <input type="text" pInputText placeholder="Search documents, categories..." class="pl-9 w-65 h-10 rounded-xl bg-white border border-surface-200 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-shadow">
-        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          <span class="text-[10px] font-mono bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded border border-surface-200">⌘K</span>
-        </div>
-      </div>
-      
-      <!-- Notifications -->
-      <button class="relative w-10 h-10 rounded-xl bg-white border border-surface-200 flex items-center justify-center hover:bg-surface-50 transition-colors">
-        <i class="pi pi-bell text-surface-600"></i>
-        <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+
+    <div class="header-actions">
+      <label class="search-field">
+        <i class="pi pi-search"></i>
+        <input type="text" pInputText placeholder="Search workspace" />
+      </label>
+      <button type="button" class="icon-button" aria-label="Notifications">
+        <i class="pi pi-bell"></i>
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- KPI Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    
-    <!-- Total Documents -->
+  <section class="metric-grid" aria-label="Workspace metrics">
     <app-stat-card
-      title="Total Documents"
+      title="Documents"
       value="128"
       icon="pi-file"
       colorClass="bg-indigo-50 text-indigo-600"
       trend="up"
       trendText="12 this month">
     </app-stat-card>
-    
-    <!-- Active Employees -->
+
     <app-stat-card
-      title="Active Employees"
+      title="Employees"
       value="342"
       icon="pi-users"
       colorClass="bg-emerald-50 text-emerald-600"
       trend="up"
       trendText="18 this month">
     </app-stat-card>
-    
-    <!-- Conversations -->
+
     <app-stat-card
-      title="Conversations"
+      title="Questions"
       value="1,248"
       icon="pi-comments"
       colorClass="bg-blue-50 text-blue-600"
       trend="up"
       trendText="23% this month">
     </app-stat-card>
-    
-    <!-- Accuracy -->
+
     <app-stat-card
-      title="Accuracy (AI)"
+      title="Answer quality"
       value="96.4%"
       icon="pi-bullseye"
-      colorClass="bg-orange-50 text-orange-600"
+      colorClass="bg-amber-50 text-amber-600"
       trend="up"
       trendText="2.1% this month">
     </app-stat-card>
-    
-  </div>
+  </section>
 
-  <!-- Middle Row: Charts -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <!-- Document Overview -->
-    <div class="bg-white rounded-2xl border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] p-5 flex flex-col h-80">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-bold text-surface-900">Document Overview</h2>
-        <button class="text-xs font-medium text-surface-500 hover:text-indigo-600 bg-surface-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-surface-200 hover:border-indigo-100">View all</button>
+  <section class="content-grid">
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Document coverage</h2>
+          <p>Categories indexed for employee search.</p>
+        </div>
+        <button type="button" class="text-button">View all</button>
       </div>
-      <div class="flex-1 flex items-center justify-center relative">
-        <p-chart type="doughnut" [data]="documentChartData" [options]="documentChartOptions" class="w-full h-full flex justify-center"></p-chart>
-        <!-- Center Text -->
-        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span class="text-2xl font-bold text-surface-900">128</span>
-          <span class="text-xs text-surface-500 font-medium">Total</span>
+      <div class="chart-frame">
+        <p-chart
+          type="doughnut"
+          [data]="documentChartData"
+          [options]="documentChartOptions"
+          class="chart">
+        </p-chart>
+        <div class="chart-total" aria-hidden="true">
+          <strong>128</strong>
+          <span>Total</span>
         </div>
       </div>
-    </div>
+    </article>
 
-    <!-- Recent Documents -->
-    <div class="bg-white rounded-2xl border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-80 overflow-hidden">
-      <div class="p-5 pb-3 flex items-center justify-between border-b border-surface-100">
-        <h2 class="text-sm font-bold text-surface-900">Recent Documents</h2>
-        <button class="text-xs font-medium text-surface-500 hover:text-indigo-600 bg-surface-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-surface-200 hover:border-indigo-100">View all</button>
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Recent documents</h2>
+          <p>Latest files added to the knowledge base.</p>
+        </div>
+        <button type="button" class="text-button">View all</button>
       </div>
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-3">
+      <div class="list-stack custom-scrollbar">
         @for (doc of recentDocuments(); track doc.name) {
-          <div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-50 transition-colors group cursor-pointer">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded bg-red-50 text-red-500 flex items-center justify-center text-xs font-bold shrink-0">
-                {{ doc.type }}
-              </div>
-              <div>
-                <div class="text-sm font-semibold text-surface-900 group-hover:text-indigo-600 transition-colors">{{ doc.name }}</div>
-                <div class="text-xs text-surface-500 mt-0.5">{{ doc.category }} • {{ doc.date | date:'mediumDate' }}</div>
-              </div>
+          <div class="list-row">
+            <div class="file-type">{{ doc.type }}</div>
+            <div class="row-main">
+              <strong>{{ doc.name }}</strong>
+              <span>{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
             </div>
-            <div class="flex items-center gap-3">
-              <span [class]="'text-[10px] font-semibold px-2 py-1 rounded-md ' + (doc.status === 'Published' ? 'bg-emerald-50 text-emerald-600' : 'bg-surface-100 text-surface-600')">
-                {{ doc.status }}
-              </span>
-              <button class="w-7 h-7 rounded-lg hover:bg-surface-200 text-surface-400 hover:text-surface-600 flex items-center justify-center transition-colors">
-                <i class="pi pi-ellipsis-v text-[10px]"></i>
-              </button>
-            </div>
+            <span class="status-pill" [class.status-pill--draft]="doc.status !== 'Published'">
+              {{ doc.status }}
+            </span>
           </div>
         }
       </div>
-    </div>
-  </div>
+    </article>
+  </section>
 
-  <!-- Bottom Row -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <!-- Top Questions -->
-    <div class="bg-white rounded-2xl border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col h-80 overflow-hidden">
-      <div class="p-5 pb-3 flex items-center justify-between border-b border-surface-100">
-        <h2 class="text-sm font-bold text-surface-900">Top Questions Asked</h2>
-        <button class="text-xs font-medium text-surface-500 hover:text-indigo-600 bg-surface-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-surface-200 hover:border-indigo-100">View all</button>
-      </div>
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-3">
-        @for (q of topQuestions(); track q.question) {
-          <div class="flex items-start gap-3 p-3 rounded-xl hover:bg-surface-50 transition-colors cursor-pointer group">
-            <div class="mt-0.5 text-surface-300">
-              <i class="pi pi-question-circle"></i>
-            </div>
-            <div class="flex-1">
-              <div class="text-sm text-surface-700 group-hover:text-surface-900">{{ q.question }}</div>
-            </div>
-            <div class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md shrink-0">
-              {{ q.count }}
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Chat Activity -->
-    <div class="bg-white rounded-2xl border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] p-5 flex flex-col h-80">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-bold text-surface-900">Chat Activity <span class="text-surface-400 font-normal">(Last 7 Days)</span></h2>
-        <div class="flex items-center gap-1 text-xs font-medium text-surface-600 border border-surface-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-surface-50">
-          Last 7 days <i class="pi pi-chevron-down text-[10px] ml-1"></i>
+  <section class="content-grid">
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Top questions</h2>
+          <p>Common employee asks this month.</p>
         </div>
+        <button type="button" class="text-button">Review</button>
       </div>
-      <div class="flex-1 w-full h-full relative">
-        <p-chart type="line" [data]="activityChartData" [options]="activityChartOptions" class="w-full h-full"></p-chart>
+      <div class="list-stack custom-scrollbar">
+        @for (q of topQuestions(); track q.question) {
+          <div class="question-row">
+            <i class="pi pi-question-circle"></i>
+            <span>{{ q.question }}</span>
+            <strong>{{ q.count }}</strong>
+          </div>
+        }
       </div>
-    </div>
-  </div>
+    </article>
 
-  <!-- AI Suggestions -->
-  <div class="bg-[#f5f3ff] rounded-2xl border border-indigo-100 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
-    <!-- Decorative background elements -->
-    <div class="absolute right-0 top-0 w-64 h-full bg-linear-to-l from-indigo-100/50 to-transparent pointer-events-none"></div>
-    
-    <div class="flex items-center gap-5 relative z-10">
-      <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-indigo-600">
-        <i class="pi pi-sparkles text-xl"></i>
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Chat activity</h2>
+          <p>Employee question volume over the last 7 days.</p>
+        </div>
+        <button type="button" class="text-button">
+          Last 7 days <i class="pi pi-chevron-down"></i>
+        </button>
       </div>
-      <div>
-        <h3 class="font-bold text-surface-900 text-[15px]">AI suggestions to improve your knowledge base</h3>
-        <p class="text-surface-600 text-sm mt-0.5">We found 8 similar documents that can be merged and 3 outdated documents to review.</p>
+      <div class="line-chart-frame">
+        <p-chart
+          type="line"
+          [data]="activityChartData"
+          [options]="activityChartOptions"
+          class="chart">
+        </p-chart>
       </div>
+    </article>
+  </section>
+
+  <section class="insight-band">
+    <div>
+      <strong>Knowledge base review</strong>
+      <p>8 similar documents can be merged and 3 outdated documents are ready for review.</p>
     </div>
-    
-    <button class="relative z-10 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm px-5 py-2.5 rounded-xl shadow-sm transition-colors shrink-0">
-      Review Suggestions
-    </button>
-  </div>
-  
-  <div class="h-4"></div> <!-- bottom padding -->
+    <button type="button">Review suggestions</button>
+  </section>
 </div>

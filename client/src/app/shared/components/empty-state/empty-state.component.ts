@@ -6,21 +6,21 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl border border-surface-200 border-dashed">
+    <div class="flex flex-col items-center justify-center p-8 text-center bg-white rounded-lg border border-surface-200 border-dashed min-h-72">
       <div 
-        class="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+        class="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
         [class]="iconBgClass()"
       >
-        <i class="pi text-2xl" [class]="icon()" [class.text-surface-400]="!iconColorClass()" [class]="iconColorClass()"></i>
+        <i class="pi text-xl" [class]="iconClasses"></i>
       </div>
       
-      <h3 class="text-lg font-bold text-surface-900 mb-1">{{ title() }}</h3>
+      <h3 class="text-base font-bold text-surface-900 mb-1">{{ title() }}</h3>
       <p class="text-sm text-surface-500 max-w-sm mb-6">{{ description() }}</p>
       
       @if (actionLabel()) {
         <button 
           (click)="action.emit()"
-          class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm"
+          class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm"
         >
           @if (actionIcon()) {
             <i class="pi" [class]="actionIcon()"></i>
@@ -43,4 +43,8 @@ export class EmptyStateComponent {
   actionIcon = input<string>();
   
   action = output<void>();
+
+  get iconClasses() {
+    return `${this.icon()} ${this.iconColorClass() || 'text-surface-400'}`;
+  }
 }

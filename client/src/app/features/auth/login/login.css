@@ -1,0 +1,152 @@
+.login-page {
+  align-items: stretch;
+  background: #f6f7fb;
+  color: #172033;
+  display: grid;
+  grid-template-columns: minmax(24rem, 28rem) minmax(0, 34rem);
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.login-panel,
+.login-aside {
+  border: 1px solid #dfe3ec;
+  padding: 2rem;
+}
+
+.login-panel {
+  background: #fff;
+  border-radius: .5rem 0 0 .5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-aside {
+  background: #101624;
+  border-left: 0;
+  border-radius: 0 .5rem .5rem 0;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand-lockup {
+  align-items: center;
+  display: flex;
+  gap: .75rem;
+  margin-bottom: 3rem;
+}
+
+.brand-mark {
+  align-items: center;
+  background: #4f46e5;
+  border-radius: .5rem;
+  color: #fff;
+  display: flex;
+  font-weight: 800;
+  height: 2.25rem;
+  justify-content: center;
+  width: 2.25rem;
+}
+
+.brand-lockup strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.brand-lockup span,
+.login-copy span,
+.login-aside span {
+  color: #64748b;
+  display: block;
+  font-size: .9rem;
+}
+
+.login-copy p,
+.login-aside p {
+  color: #4f46e5;
+  font-size: .72rem;
+  font-weight: 800;
+  margin: 0 0 .5rem;
+  text-transform: uppercase;
+}
+
+.login-copy h1,
+.login-aside h2 {
+  font-size: 2rem;
+  line-height: 1.1;
+  margin: 0 0 .75rem;
+}
+
+.login-actions {
+  display: grid;
+  gap: .75rem;
+  margin-top: 2rem;
+}
+
+.login-actions button {
+  justify-content: center;
+  min-height: 2.75rem;
+  width: 100%;
+}
+
+.processing-state {
+  align-items: center;
+  color: #64748b;
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.login-aside p {
+  color: #a5b4fc;
+}
+
+.login-aside span {
+  color: #cbd5e1;
+}
+
+.aside-metrics {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 3rem;
+}
+
+.aside-metrics div {
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: .5rem;
+  padding: 1rem;
+}
+
+.aside-metrics strong {
+  display: block;
+  font-size: 1.5rem;
+}
+
+.aside-metrics span {
+  font-size: .78rem;
+}
+
+@media (max-width: 820px) {
+  .login-page {
+    grid-template-columns: minmax(0, 30rem);
+    padding: 1rem;
+  }
+
+  .login-panel,
+  .login-aside {
+    border-radius: .5rem;
+  }
+
+  .login-aside {
+    border-left: 1px solid #dfe3ec;
+    margin-top: 1rem;
+  }
+}

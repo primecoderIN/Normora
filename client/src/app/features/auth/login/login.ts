@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { ButtonDirective } from 'primeng/button';
-import { Card } from 'primeng/card';
 import { ProgressSpinner } from 'primeng/progressspinner';
 
 // This is the Login Component. It is responsible for rendering the login page
@@ -11,7 +10,7 @@ import { ProgressSpinner } from 'primeng/progressspinner';
   selector: 'app-login',
   standalone: true,
   // We import the PrimeNG components so we can use them in the HTML template
-  imports: [ButtonDirective, Card, ProgressSpinner],
+  imports: [ButtonDirective, ProgressSpinner],
   styleUrl: './login.css',
   templateUrl: './login.html',
 })

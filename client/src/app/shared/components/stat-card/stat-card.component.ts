@@ -4,20 +4,20 @@ import { Component, input } from '@angular/core';
   selector: 'app-stat-card',
   standalone: true,
   template: `
-    <div class="bg-white rounded-2xl p-5 border border-surface-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-start gap-4">
-      <div 
-        class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" 
+    <div class="bg-white rounded-lg p-4 border border-surface-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex items-start gap-3 min-h-28">
+      <div
+        class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
         [class]="colorClass()"
       >
-        <i class="pi text-xl" [class]="icon()"></i>
+        <i class="pi text-lg" [class]="icon()"></i>
       </div>
-      <div>
+      <div class="min-w-0">
         <div class="text-xs font-semibold text-surface-500 mb-0.5">{{ title() }}</div>
-        <div class="text-2xl font-bold text-surface-900">{{ value() }}</div>
-        
+        <div class="text-2xl font-bold text-surface-900 leading-tight">{{ value() }}</div>
+
         @if (trendText()) {
-          <div 
-            class="text-xs font-medium mt-1.5 flex items-center gap-1"
+          <div
+            class="text-xs font-medium mt-2 flex items-center gap-1"
             [class]="trendColorClass"
           >
             @if (trend() === 'up') {
@@ -25,7 +25,7 @@ import { Component, input } from '@angular/core';
             } @else if (trend() === 'down') {
               <i class="pi pi-arrow-down text-[10px]"></i>
             } @else {
-              <span class="text-[10px]">—</span>
+              <span class="text-[10px]">-</span>
             }
             {{ trendText() }}
           </div>
@@ -39,7 +39,7 @@ export class StatCardComponent {
   value = input.required<string | number>();
   icon = input.required<string>();
   colorClass = input<string>('bg-indigo-50 text-indigo-600');
-  
+
   trend = input<'up' | 'down' | 'neutral'>('neutral');
   trendText = input<string>('');
 

@@ -1,72 +1,97 @@
 <div class="ask-page">
-	<header class="ask-header">
-		<div>
-			<p class="ask-eyebrow">Employee workspace</p>
-			<h1>Ask Normora</h1>
-			<p class="ask-subtitle">Find clear answers in your company documents.</p>
-		</div>
-		<div class="ask-status"><span></span> Company knowledge</div>
-	</header>
+  <header class="ask-header">
+    <div>
+      <p class="ask-eyebrow">Knowledge assistant</p>
+      <h1>Ask Normora</h1>
+      <p class="ask-subtitle">Get answers grounded in approved company documents.</p>
+    </div>
+    <div class="ask-status"><span></span> Knowledge base online</div>
+  </header>
 
-	<section class="ask-intro" aria-label="Ask a question">
-		<div class="ask-intro__icon"><i class="pi pi-sparkles"></i></div>
-		<h2>What do you need to know?</h2>
-		<p>Ask about policies, benefits, processes, or anything covered in your company documents.</p>
+  <div class="ask-grid">
+    <section class="ask-composer" aria-label="Ask a question">
+      <div class="section-heading">
+        <div>
+          <h2>Question</h2>
+          <p>Policies, benefits, operations, and internal process answers.</p>
+        </div>
+        <i class="pi pi-sparkles"></i>
+      </div>
 
-		<form class="ask-form" (ngSubmit)="ask()">
-			<textarea name="question" [(ngModel)]="question" rows="3" maxlength="1000"
-				placeholder="e.g. How many annual leave days do I receive?"
-				[disabled]="isLoading()" aria-label="Your question"></textarea>
-			<div class="ask-form__footer">
-				<span>{{ question.length }}/1000</span>
-				<button type="submit" [disabled]="!question.trim() || isLoading()">
-					@if (isLoading()) {
-						<i class="pi pi-spin pi-spinner"></i> Searching documents
-					} @else {
-						<i class="pi pi-arrow-up"></i> Ask question
-					}
-				</button>
-			</div>
-		</form>
+      <form class="ask-form" (ngSubmit)="ask()">
+        <textarea
+          name="question"
+          [(ngModel)]="question"
+          rows="7"
+          maxlength="1000"
+          placeholder="Ask a specific question, for example: How many annual leave days do I receive?"
+          [disabled]="isLoading()"
+          aria-label="Your question">
+        </textarea>
+        <div class="ask-form__footer">
+          <span>{{ question.length }}/1000</span>
+          <button type="submit" [disabled]="!question.trim() || isLoading()">
+            @if (isLoading()) {
+              <i class="pi pi-spin pi-spinner"></i> Searching
+            } @else {
+              <i class="pi pi-arrow-up"></i> Ask
+            }
+          </button>
+        </div>
+      </form>
 
-		@if (!hasAsked()) {
-			<div class="suggestions">
-				<span>Try asking</span>
-				<button type="button" (click)="useSuggestion('What is our annual leave policy?')">Annual leave policy</button>
-				<button type="button" (click)="useSuggestion('How do I submit an expense?')">Expense process</button>
-				<button type="button" (click)="useSuggestion('What benefits are available to employees?')">Employee benefits</button>
-			</div>
-		}
-	</section>
+      <div class="suggestions">
+        <span>Try</span>
+        <button type="button" (click)="useSuggestion('What is our annual leave policy?')">Annual leave</button>
+        <button type="button" (click)="useSuggestion('How do I submit an expense?')">Expenses</button>
+        <button type="button" (click)="useSuggestion('What benefits are available to employees?')">Benefits</button>
+      </div>
+    </section>
 
-	@if (isLoading()) {
-		<section class="answer-panel answer-panel--loading" aria-live="polite">
-			<div class="answer-spinner"></div><p>Searching your company documents...</p>
-		</section>
-	} @else if (error()) {
-		<section class="answer-panel answer-panel--error" role="alert">
-			<i class="pi pi-exclamation-circle"></i>
-			<div><strong>Unable to answer</strong><p>{{ error() }}</p></div>
-		</section>
-	} @else if (answer()) {
-		<section class="answer-panel" aria-live="polite">
-			<div class="answer-panel__heading"><span><i class="pi pi-sparkles"></i> Answer</span><small>Grounded in company documents</small></div>
-			<p class="answer-text">{{ answer() }}</p>
+    <section class="answer-panel" aria-live="polite">
+      <div class="section-heading">
+        <div>
+          <h2>Answer</h2>
+          <p>Responses cite the closest matching document chunks.</p>
+        </div>
+      </div>
 
-			@if (sources().length > 0) {
-				<div class="sources">
-					<h3>Sources</h3>
-					<div class="source-list">
-						@for (source of sources(); track source.documentId + '-' + source.chunkIndex) {
-							<div class="source-item">
-								<i class="pi pi-file-pdf"></i>
-								<span>{{ source.fileName }} <small>Chunk {{ source.chunkIndex + 1 }}</small></span>
-								<strong>{{ formatSimilarity(source.similarity) }}</strong>
-							</div>
-						}
-					</div>
-				</div>
-			}
-		</section>
-	}
+      @if (isLoading()) {
+        <div class="state-block">
+          <div class="answer-spinner"></div>
+          <strong>Searching documents</strong>
+          <p>Checking the knowledge base for matching context.</p>
+        </div>
+      } @else if (error()) {
+        <div class="state-block state-block--error" role="alert">
+          <i class="pi pi-exclamation-circle"></i>
+          <strong>Unable to answer</strong>
+          <p>{{ error() }}</p>
+        </div>
+      } @else if (answer()) {
+        <p class="answer-text">{{ answer() }}</p>
+
+        @if (sources().length > 0) {
+          <div class="sources">
+            <h3>Sources</h3>
+            <div class="source-list">
+              @for (source of sources(); track source.documentId + '-' + source.chunkIndex) {
+                <div class="source-item">
+                  <i class="pi pi-file"></i>
+                  <span>{{ source.fileName }} <small>Chunk {{ source.chunkIndex + 1 }}</small></span>
+                  <strong>{{ formatSimilarity(source.similarity) }}</strong>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      } @else {
+        <div class="state-block">
+          <i class="pi pi-comments"></i>
+          <strong>No question yet</strong>
+          <p>Ask something from the left panel to see a grounded answer here.</p>
+        </div>
+      }
+    </section>
+  </div>
 </div>

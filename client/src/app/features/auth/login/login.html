@@ -1,59 +1,71 @@
-<div class="flex h-screen items-center justify-center bg-surface-50">
-  <p-card styleClass="w-full max-w-md shadow-xl border border-surface-200">
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-surface-900 tracking-tight">Welcome to Normora</h2>
-      <p class="text-surface-500 mt-2">Please sign in to access the platform</p>
+<main class="login-page">
+  <section class="login-panel">
+    <div class="brand-lockup">
+      <div class="brand-mark">N</div>
+      <div>
+        <strong>Normora</strong>
+        <span>Company knowledge, answered</span>
+      </div>
     </div>
 
-    <!-- Normal Login State -->
+    <div class="login-copy">
+      <p>Secure workspace access</p>
+      <h1>Sign in to Normora</h1>
+      <span>Use your organization account to manage documents or ask trusted workplace questions.</span>
+    </div>
+
     @if (!isProcessingLogin) {
-      <div class="flex flex-col gap-4">
+      <div class="login-actions">
         <button
           pButton
-          label="Sign In with Keycloak"
+          type="button"
           icon="pi pi-key"
-          variant="outlined"
+          label="Continue with Keycloak"
           (click)="login()"
-          class="w-full"
-        >
-          Sign In with Keycloak
-        </button>
+        ></button>
 
         <button
           pButton
-          label="Sign In with GitHub"
+          type="button"
           icon="pi pi-github"
+          label="Continue with GitHub"
           severity="secondary"
+          [outlined]="true"
           (click)="loginWithGithub()"
-          class="w-full"
-        >
-          Sign In with GitHub
-        </button>
+        ></button>
 
         <button
           pButton
-          label="Sign In with Google"
+          type="button"
           icon="pi pi-google"
-          severity="danger"
+          label="Continue with Google"
+          severity="secondary"
+          [outlined]="true"
           (click)="loginWithGoogle()"
-          class="w-full"
-        >
-          Sign In with Google
-        </button>
+        ></button>
       </div>
     } @else {
-      <div class="flex flex-col items-center gap-4 py-4">
+      <div class="processing-state">
         <p-progress-spinner
           styleClass="w-12 h-12"
           strokeWidth="4"
           animationDuration=".5s"
         ></p-progress-spinner>
-        <p class="text-surface-600 font-medium text-center">
-          Login successful, redirecting to Normora...
-        </p>
+        <p>Login successful. Redirecting to Normora...</p>
       </div>
     }
+  </section>
 
-    <!-- Processing Login State -->
-  </p-card>
-</div>
+  <aside class="login-aside">
+    <div>
+      <p>For HR, ops, and growing teams</p>
+      <h2>Keep internal answers consistent.</h2>
+      <span>Upload policies, let employees ask naturally, and keep every answer tied to source documents.</span>
+    </div>
+
+    <div class="aside-metrics">
+      <div><strong>128</strong><span>Documents indexed</span></div>
+      <div><strong>96%</strong><span>Answer quality</span></div>
+    </div>
+  </aside>
+</main>

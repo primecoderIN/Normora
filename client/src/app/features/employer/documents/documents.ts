@@ -1,5 +1,6 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { FileUpload, FileUploadEvent } from 'primeng/fileupload';
 import { Toast } from 'primeng/toast';
 import { Dialog } from 'primeng/dialog';
@@ -17,7 +18,7 @@ import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/se
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, FileUpload, Toast, Dialog, InputText, StatCardComponent, DocumentListComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, StatCardComponent, DocumentListComponent, EmptyStateComponent],
   providers: [MessageService],
   styleUrl: './documents.css',
   templateUrl: './documents.html',
@@ -34,6 +35,23 @@ export class Documents implements OnInit, OnDestroy {
   token = signal('');
 
   showUploadDialog = signal(false);
+  selectedStatus = signal<'All' | Document['status']>('All');
+  searchTerm = signal('');
+
+  filteredDocuments = computed(() => {
+    const status = this.selectedStatus();
+    const query = this.searchTerm().trim().toLowerCase();
+
+    return this.documents().filter(document => {
+      const matchesStatus = status === 'All' || document.status === status;
+      const matchesQuery = !query || document.fileName.toLowerCase().includes(query);
+      return matchesStatus && matchesQuery;
+    });
+  });
+
+  readyCount = computed(() => this.countByStatus('Ready'));
+  processingCount = computed(() => this.countByStatus('Processing'));
+  failedCount = computed(() => this.countByStatus('Failed'));
   
   ngOnInit() {
     this.loadDocuments();
@@ -116,6 +134,14 @@ export class Documents implements OnInit, OnDestroy {
         console.error('Failed to delete', err);
       }
     });
+  }
+
+  selectStatus(status: 'All' | Document['status']) {
+    this.selectedStatus.set(status);
+  }
+
+  private countByStatus(status: Document['status']) {
+    return this.documents().filter(document => document.status === status).length;
   }
 }
 
