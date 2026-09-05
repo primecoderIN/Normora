@@ -47,6 +47,22 @@ public sealed class DocumentProcessingJob(
 
             await using var documentStream = await storageService.DownloadDocumentAsync(document.MinioObjectName);
             document.ExtractedText = await textExtractor.ExtractAsync(documentStream, document.FileName);
+
+            await context.DocumentChunks
+                .IgnoreQueryFilters()
+                .Where(chunk => chunk.DocumentId == document.Id && chunk.TenantId == document.TenantId)
+                .ExecuteDeleteAsync();
+
+            var chunks = DocumentChunker.Split(document.ExtractedText);
+            context.DocumentChunks.AddRange(chunks.Select((content, index) => new DocumentChunk
+            {
+                Id = Guid.NewGuid(),
+                DocumentId = document.Id,
+                TenantId = document.TenantId,
+                ChunkIndex = index,
+                Content = content
+            }));
+
             document.Status = DocumentStatus.Ready;
             await context.SaveChangesAsync();
 

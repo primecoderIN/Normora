@@ -1072,8 +1072,7 @@ Do not require exact wording.
 - document processing state contract (`Uploaded`, `Processing`, `Ready`, `Failed`)
 - Hangfire job boundary and PostgreSQL-backed worker
 - Tika extraction and persisted extracted text
-- normalization
-- chunking
+- normalization and bounded document chunks
 - processing states
 
 ### Phase 10 — Embeddings and Retrieval

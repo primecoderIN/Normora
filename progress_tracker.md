@@ -56,6 +56,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Exposed document states as readable JSON values and displayed them in the employer document list
 - [x] Added PostgreSQL-backed Hangfire worker and tenant-scoped `DocumentProcessingJob` boundary
 - [x] Added Apache Tika extraction with persisted text and `Ready`/`Failed` transitions
+- [x] Added normalized, tenant-owned document chunks with idempotent retry behavior
 
 ## ✅ Recently Completed Enhancements
 - [x] **Social Login Integrations (Google & GitHub)**: Configured Keycloak Identity Providers and built `kc_idp_hint` auto-redirect logic in the Angular Login UI for both platforms.

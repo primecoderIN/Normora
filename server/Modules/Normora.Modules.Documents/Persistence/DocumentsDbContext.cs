@@ -18,6 +18,7 @@ public class DocumentsDbContext : DbContext
     }
 
     public DbSet<Document> Documents { get; set; } = null!;
+    public DbSet<DocumentChunk> DocumentChunks { get; set; } = null!;
 
     /// <summary>
     /// Configures the entity models, setting up constraints, indexes, and global query filters.
@@ -41,6 +42,18 @@ public class DocumentsDbContext : DbContext
             // This ensures that EVERY LINQ query executed against Documents will transparently have
             // `WHERE TenantId = @currentTenantId` appended to it, preventing cross-tenant data leakage.
             entity.HasQueryFilter(d => d.TenantId == _tenantContext.TenantId);
+        });
+
+        modelBuilder.Entity<DocumentChunk>(entity =>
+        {
+            entity.HasKey(chunk => chunk.Id);
+            entity.Property(chunk => chunk.Content).IsRequired().HasColumnType("text");
+            entity.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentId, chunk.ChunkIndex }).IsUnique();
+            entity.HasOne<Document>()
+                .WithMany()
+                .HasForeignKey(chunk => chunk.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(chunk => chunk.TenantId == _tenantContext.TenantId);
         });
     }
 
