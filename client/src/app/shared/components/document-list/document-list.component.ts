@@ -7,7 +7,7 @@ import { Document } from '../../../core/services/document.service';
   standalone: true,
   imports: [CommonModule, DatePipe],
   template: `
-    <div class="bg-white rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-surface-200 overflow-hidden">
+    <div class="block bg-white rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-surface-200 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>

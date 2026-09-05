@@ -20,6 +20,8 @@ public sealed class DocumentProcessingJob(
     [AutomaticRetry(Attempts = 3)]
     public async Task ProcessAsync(Guid documentId, Guid tenantId)
     {
+        // Hangfire has no HTTP tenant context, so bypass the request-scoped filter and
+        // enforce ownership explicitly with both identifiers before touching the record.
         var document = await context.Documents
             .IgnoreQueryFilters()
             .SingleOrDefaultAsync(document =>
@@ -34,6 +36,8 @@ public sealed class DocumentProcessingJob(
             return;
         }
 
+        // Reprocessing only these states makes retries idempotent and prevents a late job
+        // from overwriting a document that has already reached a later lifecycle state.
         if (document.Status is not (DocumentStatus.Uploaded or DocumentStatus.Failed))
         {
             logger.LogInformation(
@@ -53,6 +57,7 @@ public sealed class DocumentProcessingJob(
             document.ExtractedText = await textExtractor.ExtractAsync(documentStream, document.FileName);
 
             await context.DocumentChunks
+                // A retry replaces the complete chunk set so partial previous work cannot duplicate results.
                 .IgnoreQueryFilters()
                 .Where(chunk => chunk.DocumentId == document.Id && chunk.TenantId == document.TenantId)
                 .ExecuteDeleteAsync();

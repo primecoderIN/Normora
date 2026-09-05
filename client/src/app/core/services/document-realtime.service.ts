@@ -21,6 +21,8 @@ export class DocumentRealtimeService {
       return;
     }
 
+    // The token authenticates the connection; JoinTenant then asks the server to validate
+    // this tenant subscription rather than trusting the client-provided tenant ID.
     this.connection = new HubConnectionBuilder()
       .withUrl(`${environment.apiUrl}/hubs/documents`, {
         accessTokenFactory: () => firstValueFrom(this.oidcSecurityService.getAccessToken())

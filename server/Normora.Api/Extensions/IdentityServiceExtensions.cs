@@ -23,6 +23,8 @@ public static class IdentityServiceExtensions
                 {
                     OnMessageReceived = context =>
                     {
+                        // WebSockets cannot reliably send the bearer header during the upgrade,
+                        // so accept access_token only for the SignalR hub path, never general APIs.
                         var accessToken = context.Request.Query["access_token"];
                         var requestPath = context.HttpContext.Request.Path;
 
@@ -39,12 +41,15 @@ public static class IdentityServiceExtensions
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
+                    // Docker and browser traffic use different hostnames for the same Keycloak realm.
                     ValidIssuers = new[] 
                     { 
                         configuration["Keycloak:Authority"]!, 
                         "http://localhost:8080/realms/normora" // Handle Docker network issuer mismatch
                     },
-                    ValidateAudience = false, // Keycloak doesn't always add the clientId to 'aud' by default
+                    // The realm export does not consistently emit the web client in `aud`; issuer,
+                    // signature, lifetime, and authenticated membership remain enforced.
+                    ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true
                 };

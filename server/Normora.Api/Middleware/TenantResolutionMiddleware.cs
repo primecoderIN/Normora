@@ -48,6 +48,9 @@ public class TenantResolutionMiddleware
                     }
                 }
             }
+
+            // Missing, malformed, or unauthorized tenant headers deliberately leave the
+            // context unresolved; RequireTenant then rejects protected endpoints.
         }
 
         await _next(context);

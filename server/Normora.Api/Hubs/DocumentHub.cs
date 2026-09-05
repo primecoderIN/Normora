@@ -13,6 +13,8 @@ public sealed class DocumentHub(
 {
     public async Task JoinTenant(Guid tenantId)
     {
+        // The tenant ID comes from the client only as a routing request. Membership is
+        // revalidated here before the connection can receive another tenant's events.
         var isMember = await tenantsDbContext.TenantMemberships
             .Include(membership => membership.User)
             .AnyAsync(membership =>
@@ -24,6 +26,8 @@ public sealed class DocumentHub(
             throw new HubException("You do not have access to this tenant.");
         }
 
+        // Publishers use the same deterministic name, making group membership the sole
+        // boundary for tenant-scoped document notifications.
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(tenantId));
     }
 

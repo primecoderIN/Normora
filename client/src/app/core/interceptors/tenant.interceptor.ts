@@ -7,8 +7,8 @@ export const tenantInterceptor: HttpInterceptorFn = (req, next) => {
   const currentUser = userService.currentUser();
 
   if (currentUser && currentUser.memberships && currentUser.memberships.length > 0) {
-    // For MVP, if the user belongs to a tenant, we inject their first tenant's ID
-    // In the future, this can be dynamic based on the currently active workspace in the UI state
+    // Until tenant switching exists, the first membership is the active workspace. This is
+    // only a routing hint; the API independently verifies membership before resolving context.
     const tenantId = currentUser.memberships[0].tenantId;
     
     // Only intercept requests going to our API

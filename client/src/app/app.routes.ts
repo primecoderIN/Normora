@@ -3,6 +3,8 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
+  // Login, callback, and invitation inspection are public; onboarding and workspaces
+  // require authentication, with workspace roles enforced by roleGuard.
   {
     path: '',
     redirectTo: 'auth/login',

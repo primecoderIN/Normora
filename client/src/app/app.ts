@@ -65,7 +65,8 @@ export class App implements OnInit {
 
               const memberships = response.data.memberships;
               
-              // Check if user just logged in specifically to accept an invite
+              // Invitation acceptance takes precedence over normal workspace routing because
+              // the OAuth redirect may have started from a public invite URL.
               const pendingToken = localStorage.getItem('pending_invitation');
               if (pendingToken) {
                 this.authInitializing.set(false);

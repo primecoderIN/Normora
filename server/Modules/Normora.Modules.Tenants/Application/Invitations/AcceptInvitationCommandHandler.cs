@@ -33,8 +33,8 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             throw new InvalidOperationException("This invitation link has expired.");
         }
 
-        // Validate the email matches the authenticated user's email
-        // In some systems, this is relaxed, but for security, we enforce email matching.
+        // The invitation token alone is not sufficient: the authenticated email must be
+        // the intended recipient so a forwarded invitation cannot grant access.
         if (!string.Equals(invitation.Email, currentUser.Email, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("This invitation was sent to a different email address.");
@@ -55,7 +55,8 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             context.Users.Add(user);
         }
 
-        // Check if they are already a member
+        // Membership creation is idempotent. Re-accepting a valid token for an existing
+        // member still completes the invitation without creating a duplicate membership.
         var existingMembership = await context.TenantMemberships
             .FirstOrDefaultAsync(m => m.TenantId == invitation.TenantId && m.UserId == user.Id, cancellationToken);
 

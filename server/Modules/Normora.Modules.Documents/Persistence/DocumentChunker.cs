@@ -4,6 +4,8 @@ namespace Normora.Modules.Documents.Persistence;
 
 public static partial class DocumentChunker
 {
+    // This bound keeps individual retrieval and embedding inputs predictable; oversized
+    // paragraphs are hard-split only when preserving the paragraph would exceed the limit.
     private const int MaximumChunkCharacters = 4_000;
 
     public static IReadOnlyList<string> Split(string extractedText)
@@ -14,6 +16,7 @@ public static partial class DocumentChunker
             return [];
         }
 
+        // Pack complete paragraphs together first so search results retain local context.
         var paragraphs = normalizedText.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var chunks = new List<string>();
         var current = new List<string>();

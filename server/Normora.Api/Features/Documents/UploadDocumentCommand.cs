@@ -48,7 +48,8 @@ public sealed class UploadDocumentCommandHandler(
 {
     public async Task<Document> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
-        // 1. Upload the physical file to MinIO object storage.
+        // Persist the binary before metadata so a database row never points to an object
+        // that was not successfully stored. The tenant ID becomes part of the object key.
         var objectName = await storageService.UploadDocumentAsync(request.File, request.TenantId.ToString());
 
         // 2. Create EF Core Record
@@ -68,6 +69,8 @@ public sealed class UploadDocumentCommandHandler(
         context.Documents.Add(document);
         await context.SaveChangesAsync(cancellationToken);
 
+        // Notify connected tenant members before queueing background work so clients observe
+        // the lifecycle in order: Uploaded, then Processing/Ready/Failed.
         await hubContext.Clients.Group(DocumentHub.GroupName(document.TenantId))
             .SendAsync("DocumentStatusChanged", new DocumentStatusChanged(
                 document.Id,

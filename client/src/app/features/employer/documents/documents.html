@@ -69,7 +69,7 @@
     </app-stat-card>
 
     <app-stat-card
-      title="Published"
+      title="Ready"
       value="98"
       icon="pi-check-circle"
       colorClass="bg-emerald-50 text-emerald-600"
@@ -78,7 +78,7 @@
     </app-stat-card>
 
     <app-stat-card
-      title="Drafts"
+      title="Processing"
       value="18"
       icon="pi-file-edit"
       colorClass="bg-orange-50 text-orange-600"
@@ -87,7 +87,7 @@
     </app-stat-card>
 
     <app-stat-card
-      title="Archived"
+      title="Failed"
       value="12"
       icon="pi-box"
       colorClass="bg-surface-100 text-surface-600"
@@ -97,7 +97,7 @@
   </div>
 
   <!-- Document List Table -->
-  <div class="flex-1 flex flex-col min-h-0">
+  <div class="flex-1 flex flex-col min-h-0 overflow-y-auto">
     @if (documents().length > 0) {
       <app-document-list 
         [documents]="documents()" 
@@ -118,7 +118,7 @@
   </div>
 
   <!-- Bottom Action Area -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 shrink-0">
     <!-- Dropzone -->
     <div class="bg-indigo-50/40 rounded-2xl border border-indigo-100 p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-50 transition-colors shadow-sm" (click)="showUploadDialog.set(true)">
       <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center text-indigo-500 mb-4 shadow-[0_2px_10px_-4px_rgba(99,102,241,0.2)]">

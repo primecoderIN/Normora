@@ -111,6 +111,8 @@ export class AcceptInviteComponent implements OnInit {
   }
 
   loadInvitation() {
+    // Invitation details are safe to inspect anonymously; the API remains authoritative
+    // when accepting and requires the authenticated email to match the recipient.
     this.invitationService.getInvitation(this.token!).subscribe({
       next: (res: any) => {
         this.isLoading.set(false);
@@ -135,7 +137,8 @@ export class AcceptInviteComponent implements OnInit {
   }
 
   loginAndAccept() {
-    // Save the token to local storage so we can accept it after the redirect flow
+    // Preserve the token across Keycloak's full-page redirect; app.ts consumes it after
+    // authentication and routes back here before the normal workspace destination.
     localStorage.setItem('pending_invitation', this.token!);
     this.oidcSecurityService.authorize();
   }

@@ -53,6 +53,8 @@ public class DocumentsDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(chunk => chunk.DocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
+            // Chunks inherit the same tenant boundary as their parent document; background
+            // jobs may bypass this filter only after checking both tenant and document IDs.
             entity.HasQueryFilter(chunk => chunk.TenantId == _tenantContext.TenantId);
         });
     }
@@ -62,7 +64,8 @@ public class DocumentsDbContext : DbContext
     /// </summary>
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Intercept any newly added Document entities...
+        // HTTP callers must not be able to persist a document under a different tenant than
+        // the resolved request context, even if a command contains a caller-supplied ID.
         foreach (var entry in ChangeTracker.Entries<Document>().Where(e => e.State == EntityState.Added))
         {
             // And automatically assign the TenantId from the current HTTP context!
