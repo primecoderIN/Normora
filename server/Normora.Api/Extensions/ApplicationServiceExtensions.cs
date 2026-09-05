@@ -1,5 +1,7 @@
 using FluentValidation;
+using Hangfire;
 using MediatR;
+using Normora.Api.Features.Documents;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Shared.Interfaces;
 using Normora.Api.Services;
@@ -38,6 +40,8 @@ public static class ApplicationServiceExtensions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+
+        services.AddScoped<DocumentProcessingJob>();
 
         return services;
     }

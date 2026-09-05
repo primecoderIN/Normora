@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Normora.Modules.Tenants.Persistence;
 using Normora.Modules.Documents.Persistence;
 using Minio;
@@ -22,6 +24,13 @@ public static class DatabaseServiceExtensions
 
         services.AddDbContext<DocumentsDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddHangfire(configuration => configuration
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(connectionString)));
+        services.AddHangfireServer();
 
         // Configure MinIO S3-compatible storage
         var minioEndpoint = configuration["Minio:Endpoint"] ?? "localhost:9000";

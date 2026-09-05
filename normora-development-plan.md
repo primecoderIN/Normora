@@ -1070,7 +1070,7 @@ Do not require exact wording.
 ### Phase 9 — Ingestion
 
 - document processing state contract (`Uploaded`, `Processing`, `Ready`, `Failed`)
-- Hangfire
+- Hangfire job boundary and PostgreSQL-backed worker
 - Tika
 - normalization
 - chunking

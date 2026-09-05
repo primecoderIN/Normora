@@ -1,5 +1,6 @@
 using Normora.Api.Extensions;
 using Normora.Api.Middleware;
+using Hangfire;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Tenants.Persistence;
@@ -36,6 +37,11 @@ using (var scope = app.Services.CreateScope())
 
 // Global Exception Handler interceptor (returns ProblemDetails JSON instead of crashing)
 app.UseExceptionHandler(); 
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseHangfireDashboard("/hangfire");
+}
 
 app.UseCors("CorsPolicy");
 

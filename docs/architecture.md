@@ -106,6 +106,8 @@ Uploaded -> Processing -> Ready
 
 The upload request currently stores the file and creates an `Uploaded` metadata record. The employer document list displays the lifecycle state using readable API values. The background worker, text extraction, normalization, and chunking steps are intentionally separate follow-up increments so a document is never shown as `Ready` before ingestion has completed.
 
+Hangfire uses PostgreSQL storage and runs `DocumentProcessingJob` in the API worker. Uploads enqueue a job only after the MinIO object and document metadata have been persisted. The job validates both the document ID and tenant ID outside the HTTP tenant context before moving the document to `Processing`. The Hangfire dashboard is available at `/hangfire` in Development only.
+
 ### Subdomain Routing
 After a successful login:
 - **User with no tenants**: stays on `localhost:4200` and is routed to `/onboarding`.

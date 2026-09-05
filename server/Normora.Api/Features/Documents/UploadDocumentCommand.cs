@@ -1,4 +1,5 @@
 using FluentValidation;
+using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Normora.Modules.Documents.Persistence;
@@ -37,7 +38,10 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
 /// Handles the execution of UploadDocumentCommand.
 /// Responsible for streaming the file to MinIO storage and saving metadata to the database.
 /// </summary>
-public sealed class UploadDocumentCommandHandler(DocumentsDbContext context, IDocumentStorageService storageService) : IRequestHandler<UploadDocumentCommand, Document>
+public sealed class UploadDocumentCommandHandler(
+    DocumentsDbContext context,
+    IDocumentStorageService storageService,
+    IBackgroundJobClient backgroundJobClient) : IRequestHandler<UploadDocumentCommand, Document>
 {
     public async Task<Document> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
@@ -60,6 +64,9 @@ public sealed class UploadDocumentCommandHandler(DocumentsDbContext context, IDo
         // that will automatically bind this Document to the current active TenantId upon SaveChanges.
         context.Documents.Add(document);
         await context.SaveChangesAsync(cancellationToken);
+
+        backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
+            job.ProcessAsync(document.Id, document.TenantId));
 
         return document;
     }

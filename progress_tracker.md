@@ -54,6 +54,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Added Just-In-Time (JIT) provisioning to sync user profiles (Name/Email) from Keycloak to PostgreSQL on every login (`GetCurrentUserQueryHandler`)
 - [x] Added explicit document processing states (`Uploaded`, `Processing`, `Ready`, `Failed`) with a data-preserving EF migration
 - [x] Exposed document states as readable JSON values and displayed them in the employer document list
+- [x] Added PostgreSQL-backed Hangfire worker and tenant-scoped `DocumentProcessingJob` boundary
 
 ## ✅ Recently Completed Enhancements
 - [x] **Social Login Integrations (Google & GitHub)**: Configured Keycloak Identity Providers and built `kc_idp_hint` auto-redirect logic in the Angular Login UI for both platforms.
