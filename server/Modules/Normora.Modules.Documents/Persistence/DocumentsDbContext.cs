@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 using Normora.Shared;
 using Normora.Shared.Interfaces;
 
@@ -26,6 +27,7 @@ public class DocumentsDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasPostgresExtension("vector");
         
         // Ensure TenantId is indexed for faster document queries
         modelBuilder.Entity<Document>()
@@ -48,6 +50,7 @@ public class DocumentsDbContext : DbContext
         {
             entity.HasKey(chunk => chunk.Id);
             entity.Property(chunk => chunk.Content).IsRequired().HasColumnType("text");
+            entity.Property(chunk => chunk.Embedding).HasColumnType("vector(768)");
             entity.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentId, chunk.ChunkIndex }).IsUnique();
             entity.HasOne<Document>()
                 .WithMany()

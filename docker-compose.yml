@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15
+    image: pgvector/pgvector:pg15
     container_name: normora_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -11,6 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["postgres", "-c", "shared_preload_libraries=vector"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
@@ -106,6 +107,7 @@ services:
       - Smtp__Host=mailpit
       - Smtp__Port=1025
       - Tika__Endpoint=http://tika:9998/
+      - Gemini__ApiKey=${GEMINI_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy

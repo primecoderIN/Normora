@@ -1078,8 +1078,7 @@ Do not require exact wording.
 
 ### Phase 10 — Embeddings and Retrieval
 
-- Gemini embeddings
-- pgvector
+- Gemini embeddings and pgvector chunk storage
 - keyword search
 - hybrid retrieval
 

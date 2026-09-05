@@ -14,6 +14,7 @@ public sealed class DocumentProcessingJob(
     DocumentsDbContext context,
     IDocumentStorageService storageService,
     IDocumentTextExtractor textExtractor,
+    ITextEmbeddingService embeddingService,
     IHubContext<DocumentHub> hubContext,
     ILogger<DocumentProcessingJob> logger)
 {
@@ -72,6 +73,24 @@ public sealed class DocumentProcessingJob(
                 Content = content
             }));
 
+            if (embeddingService.IsConfigured)
+            {
+                var storedChunks = await context.DocumentChunks
+                    .IgnoreQueryFilters()
+                    .Where(chunk => chunk.DocumentId == document.Id && chunk.TenantId == document.TenantId)
+                    .OrderBy(chunk => chunk.ChunkIndex)
+                    .ToListAsync();
+
+                foreach (var chunk in storedChunks)
+                {
+                    chunk.Embedding = new Pgvector.Vector(
+                        await embeddingService.CreateEmbeddingAsync(chunk.Content));
+                }
+
+                await context.SaveChangesAsync();
+            }
+
+            // Ready is published only after all configured ingestion stages have completed.
             document.Status = DocumentStatus.Ready;
             await context.SaveChangesAsync();
             await PublishStatusAsync(document);

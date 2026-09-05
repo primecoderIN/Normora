@@ -110,6 +110,8 @@ Hangfire uses PostgreSQL storage and runs `DocumentProcessingJob` in the API wor
 
 Chunks are tenant-owned and uniquely ordered per document. A retry removes the document's existing chunks and recreates them, preventing duplicate chunk records. Each chunk is capped at approximately 4,000 characters and preserves paragraph boundaries where possible. Embeddings and vector search are separate later stages.
 
+When `Gemini:ApiKey` is configured, the ingestion job generates a 768-dimensional Gemini embedding for each chunk and stores it in PostgreSQL `pgvector` before publishing `Ready`. Without a key, local ingestion still completes through chunking and leaves embeddings null; retrieval is disabled until embeddings are available.
+
 ### Realtime Document Events
 
 Authenticated clients connect to `/hubs/documents` and explicitly join a tenant group. SignalR's bearer token is accepted from the WebSocket `access_token` query parameter only for `/hubs` paths. The hub validates the current user's membership before adding the connection. Upload and processing transitions publish `DocumentStatusChanged` events to that tenant group, allowing the employer document list to update without polling.

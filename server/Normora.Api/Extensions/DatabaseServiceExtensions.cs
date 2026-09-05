@@ -5,6 +5,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Normora.Modules.Tenants.Persistence;
 using Normora.Modules.Documents.Persistence;
+using Normora.Api.Features.Documents;
 using Minio;
 
 namespace Normora.Api.Extensions;
@@ -23,7 +24,7 @@ public static class DatabaseServiceExtensions
             options.UseNpgsql(connectionString));
 
         services.AddDbContext<DocumentsDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
 
         services.AddHangfire(configuration => configuration
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -48,6 +49,11 @@ public static class DatabaseServiceExtensions
         {
             client.BaseAddress = new Uri(configuration["Tika:Endpoint"] ?? "http://localhost:9998/");
             client.Timeout = TimeSpan.FromMinutes(5);
+        });
+        services.AddHttpClient<ITextEmbeddingService, GeminiEmbeddingService>(client =>
+        {
+            client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
+            client.Timeout = TimeSpan.FromMinutes(2);
         });
 
         return services;
