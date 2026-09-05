@@ -32,6 +32,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Created `docs/architecture.md` detailing the modular monolith and tech stack
 - [x] Created `docs/getting_started.md` for new developer onboarding
 - [x] Updated root `README.md` with badges, impressive architectural summary, and quick links to documentation
+- [x] Synced documentation to reflect the latest UI changes, new access endpoints, and White-Label Branding capabilities
 
 ## ✅ Completed Frontend Features (Angular + PrimeNG)
 - [x] Bootstrapped Angular 17+ with TailwindCSS and PrimeNG UI library

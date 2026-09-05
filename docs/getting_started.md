@@ -23,10 +23,13 @@ We have configured the entire stack to run locally using Docker Compose. This in
 
 Once the containers are up and running, you can access the services at the following URLs:
 
-- **Web Client (Angular)**: [http://localhost](http://localhost)
-- **Backend API**: [http://localhost:5000](http://localhost:5000) (or `/swagger` if configured)
+- **Web Client (Angular)**: [http://localhost:4200](http://localhost:4200)
+- **Backend API**: [http://localhost:5000](http://localhost:5000)
+- **API Documentation & Testing (Scalar)**: [http://localhost:5000/scalar/v1](http://localhost:5000/scalar/v1)
 - **Keycloak Admin Console**: [http://localhost:8080](http://localhost:8080)
 - **MinIO Console**: [http://localhost:9001](http://localhost:9001)
+- **Mailpit (Email Testing UI)**: [http://localhost:8025](http://localhost:8025)
+- **pgAdmin**: [http://localhost:5050](http://localhost:5050)
 
 ## Default Credentials
 Check the auto-generated `.env` file in the root directory for default usernames and passwords used in local development (e.g., PostgreSQL, Keycloak, MinIO).
