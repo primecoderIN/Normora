@@ -6,6 +6,7 @@ using Hangfire.PostgreSql;
 using Normora.Modules.Tenants.Persistence;
 using Normora.Modules.Documents.Persistence;
 using Normora.Api.Features.Documents;
+using Normora.Api.Features.Ask;
 using Minio;
 
 namespace Normora.Api.Extensions;
@@ -51,6 +52,11 @@ public static class DatabaseServiceExtensions
             client.Timeout = TimeSpan.FromMinutes(5);
         });
         services.AddHttpClient<ITextEmbeddingService, GeminiEmbeddingService>(client =>
+        {
+            client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
+            client.Timeout = TimeSpan.FromMinutes(2);
+        });
+        services.AddHttpClient<ITextGenerationService, GeminiTextGenerationService>(client =>
         {
             client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
             client.Timeout = TimeSpan.FromMinutes(2);

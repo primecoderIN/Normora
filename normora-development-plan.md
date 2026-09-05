@@ -1085,9 +1085,8 @@ Do not require exact wording.
 
 ### Phase 11 — RAG Answering
 
-- Gemini generation
-- grounded prompts
-- source validation
+- Gemini generation and grounded prompts
+- source validation and citations
 - no-answer behavior
 
 ### Phase 12 — Employee Experience

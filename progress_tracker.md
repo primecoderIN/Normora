@@ -60,6 +60,8 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Added tenant-validated SignalR document status events for upload and processing transitions
 - [x] Added optional Gemini chunk embeddings with PostgreSQL pgvector storage
 - [x] Added tenant-safe pgvector similarity retrieval with source chunk metadata
+- [x] Added grounded Ask Normora endpoint with tenant-safe sources and no-answer behavior
+- [x] Added basic employee Ask Normora chatbot screen for endpoint testing
 
 ## ✅ Recently Completed Enhancements
 - [x] **Social Login Integrations (Google & GitHub)**: Configured Keycloak Identity Providers and built `kc_idp_hint` auto-redirect logic in the Angular Login UI for both platforms.

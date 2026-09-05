@@ -114,6 +114,8 @@ When `Gemini:ApiKey` is configured, the ingestion job generates a 768-dimensiona
 
 The tenant-protected `GET /api/documents/search?query=...&limit=5` endpoint embeds the query, applies the current tenant's chunk filter, ranks results by pgvector cosine distance, and returns the matching source document, chunk index, content, and similarity score. It is retrieval only; answer generation and citations belong to the next RAG slice.
 
+The employee `POST /api/ask` endpoint uses the same tenant-filtered retrieval, rejects weak matches below the similarity threshold, and sends only the selected chunks to Gemini generation. Its response contains the grounded answer and document/chunk citations; when evidence is insufficient it returns a no-answer message instead of guessing.
+
 ### Realtime Document Events
 
 Authenticated clients connect to `/hubs/documents` and explicitly join a tenant group. SignalR's bearer token is accepted from the WebSocket `access_token` query parameter only for `/hubs` paths. The hub validates the current user's membership before adding the connection. Upload and processing transitions publish `DocumentStatusChanged` events to that tenant group, allowing the employer document list to update without polling.

@@ -49,7 +49,9 @@ export class App implements OnInit {
           this.router.url.startsWith('/auth/login') ||
           this.router.url.startsWith('/auth/callback');
 
-        if (isAuthRoute) {
+        // A browser refresh on a protected route still needs the profile before the
+        // tenant interceptor can add X-Tenant-Id to API requests.
+        if (isAuthRoute || !this.userService.currentUser()) {
           this.authStatus.set('Loading your workspace...');
 
           // We now rely on our backend DB for roles (Memberships), not Keycloak realm_access
@@ -64,6 +66,13 @@ export class App implements OnInit {
               }
 
               const memberships = response.data.memberships;
+
+              // Direct protected-route loads only need profile initialization. Do not
+              // redirect away from the route the user explicitly refreshed.
+              if (!isAuthRoute) {
+                this.authInitializing.set(false);
+                return;
+              }
               
               // Invitation acceptance takes precedence over normal workspace routing because
               // the OAuth redirect may have started from a public invite URL.

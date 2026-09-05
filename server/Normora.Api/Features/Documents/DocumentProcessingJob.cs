@@ -64,31 +64,28 @@ public sealed class DocumentProcessingJob(
                 .ExecuteDeleteAsync();
 
             var chunks = DocumentChunker.Split(document.ExtractedText);
-            context.DocumentChunks.AddRange(chunks.Select((content, index) => new DocumentChunk
+            var documentChunks = chunks.Select((content, index) => new DocumentChunk
             {
                 Id = Guid.NewGuid(),
                 DocumentId = document.Id,
                 TenantId = document.TenantId,
                 ChunkIndex = index,
                 Content = content
-            }));
+            }).ToList();
 
             if (embeddingService.IsConfigured)
             {
-                var storedChunks = await context.DocumentChunks
-                    .IgnoreQueryFilters()
-                    .Where(chunk => chunk.DocumentId == document.Id && chunk.TenantId == document.TenantId)
-                    .OrderBy(chunk => chunk.ChunkIndex)
-                    .ToListAsync();
-
-                foreach (var chunk in storedChunks)
+                // These chunks are new and still tracked in memory, so embed this list
+                // directly instead of querying PostgreSQL before SaveChanges persists it.
+                foreach (var chunk in documentChunks)
                 {
                     chunk.Embedding = new Pgvector.Vector(
                         await embeddingService.CreateEmbeddingAsync(chunk.Content));
                 }
-
-                await context.SaveChangesAsync();
             }
+
+            context.DocumentChunks.AddRange(documentChunks);
+            await context.SaveChangesAsync();
 
             // Ready is published only after all configured ingestion stages have completed.
             document.Status = DocumentStatus.Ready;
