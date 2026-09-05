@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { catchError, of, tap } from 'rxjs';
-import { ApiResponse } from './user.service';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface TenantBrandingDto {
   tenantId: string;

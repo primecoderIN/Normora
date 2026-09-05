@@ -30,10 +30,14 @@ public class RequireTenantAttribute : Attribute, IAsyncAuthorizationFilter
             return Task.CompletedTask;
         }
 
-        // 3. If specific roles were required (e.g. [RequireTenant("admin")]), check against the user's role in this tenant.
-        if (_roles.Length > 0 && !string.IsNullOrEmpty(tenantContext.TenantRole))
+        // 3. If specific roles were required (e.g. [RequireTenant("admin")]), enforce them strictly.
+        //    BUG FIX: The old guard `&& !string.IsNullOrEmpty(tenantContext.TenantRole)` silently
+        //    skipped the check when TenantRole was null, allowing any tenant member through.
+        //    Now we deny if the role is absent OR doesn't match the required set.
+        if (_roles.Length > 0)
         {
-            if (!_roles.Contains(tenantContext.TenantRole, StringComparer.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(tenantContext.TenantRole) ||
+                !_roles.Contains(tenantContext.TenantRole, StringComparer.OrdinalIgnoreCase))
             {
                 context.Result = new ForbidResult();
                 return Task.CompletedTask;

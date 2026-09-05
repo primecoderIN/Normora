@@ -1,8 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
+import { InvitationService } from '../../../core/services/invitation.service';
 
 @Component({
   selector: 'app-employees',
@@ -71,7 +70,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class Employees {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
+  private invitationService = inject(InvitationService);
 
   inviteForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -90,25 +89,20 @@ export class Employees {
 
     const payload = this.inviteForm.value;
 
-    this.http
-      .post<{ success: boolean; message: string }>(
-        `${environment.apiUrl}/api/tenants/invitations`,
-        payload,
-      )
-      .subscribe({
-        next: (res) => {
-          this.isLoading.set(false);
-          if (res.success) {
-            this.successMessage.set(res.message);
-            this.inviteForm.reset();
-          } else {
-            this.errorMessage.set(res.message);
-          }
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.errorMessage.set(err.error?.message || 'Failed to send invitation');
-        },
-      });
+    this.invitationService.inviteEmployee(payload.email).subscribe({
+      next: (res: any) => {
+        this.isLoading.set(false);
+        if (res.success) {
+          this.successMessage.set(res.message);
+          this.inviteForm.reset();
+        } else {
+          this.errorMessage.set(res.message);
+        }
+      },
+      error: (err: any) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(err.error?.message || 'Failed to send invitation');
+      },
+    });
   }
 }

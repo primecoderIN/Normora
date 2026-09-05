@@ -51,7 +51,7 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             // 3. Verify that the requested tenant slug is globally unique.
             if (await dbContext.Tenants.AnyAsync(t => t.Slug == request.Slug, cancellationToken))
             {
-                throw new Exception($"Tenant slug '{request.Slug}' is already taken.");
+                throw new InvalidOperationException($"Tenant slug '{request.Slug}' is already taken.");
             }
 
             // 4. Create the new Tenant entity.

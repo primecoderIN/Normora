@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { InvitationService, InvitationDto } from '../../core/services/invitation.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-accept-invite',
@@ -32,7 +32,7 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
           @if (!isLoading() && invitation()) {
             <div class="text-center">
               <p class="text-gray-700 mb-4">
-                You have been invited to join <strong>{{ invitation().tenantName }}</strong
+                You have been invited to join <strong>{{ invitation()?.tenantName }}</strong
                 >!
               </p>
               @if (isAuthenticated()) {
@@ -81,13 +81,13 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
 export class AcceptInviteComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private http = inject(HttpClient);
   private oidcSecurityService = inject(OidcSecurityService);
+  private invitationService = inject(InvitationService);
 
   token: string | null = null;
   
   // State Signals
-  invitation = signal<any>(null);
+  invitation = signal<InvitationDto | null>(null);
   isLoading = signal(true);
   isAccepting = signal(false);
   error = signal('');
@@ -104,38 +104,34 @@ export class AcceptInviteComponent implements OnInit {
     }
 
     // Check if user is logged in
-    this.oidcSecurityService.isAuthenticated$.subscribe(({ isAuthenticated }) => {
+    this.oidcSecurityService.isAuthenticated$.pipe(take(1)).subscribe(({ isAuthenticated }) => {
       this.isAuthenticated.set(isAuthenticated);
       this.loadInvitation();
     });
   }
 
   loadInvitation() {
-    this.http
-      .get<{ success: boolean; message: string; data: any }>(
-        `${environment.apiUrl}/api/invitations/${this.token}`,
-      )
-      .subscribe({
-        next: (res) => {
-          this.isLoading.set(false);
-          if (res.success) {
-            this.invitation.set(res.data);
-            if (this.invitation().status !== 'Pending') {
-              this.error.set('This invitation has already been accepted or is no longer valid.');
-              this.invitation.set(null);
-            } else if (new Date(this.invitation().expiresAt) < new Date()) {
-              this.error.set('This invitation link has expired.');
-              this.invitation.set(null);
-            }
-          } else {
-            this.error.set(res.message);
+    this.invitationService.getInvitation(this.token!).subscribe({
+      next: (res: any) => {
+        this.isLoading.set(false);
+        if (res.success && res.data) {
+          this.invitation.set(res.data);
+          if (this.invitation()!.status !== 'Pending') {
+            this.error.set('This invitation has already been accepted or is no longer valid.');
+            this.invitation.set(null);
+          } else if (new Date(this.invitation()!.expiresAt) < new Date()) {
+            this.error.set('This invitation link has expired.');
+            this.invitation.set(null);
           }
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.error.set(err.error?.message || 'Failed to load invitation.');
-        },
-      });
+        } else {
+          this.error.set(res.message);
+        }
+      },
+      error: (err: any) => {
+        this.isLoading.set(false);
+        this.error.set(err.error?.message || 'Failed to load invitation.');
+      },
+    });
   }
 
   loginAndAccept() {
@@ -150,30 +146,25 @@ export class AcceptInviteComponent implements OnInit {
     this.isAccepting.set(true);
     this.error.set('');
 
-    this.http
-      .post<{ success: boolean; message: string }>(
-        `${environment.apiUrl}/api/invitations/${this.token}/accept`,
-        {},
-      )
-      .subscribe({
-        next: (res) => {
-          this.isAccepting.set(false);
-          if (res.success) {
-            this.success.set(true);
-            this.invitation.set(null);
-            localStorage.removeItem('pending_invitation');
-          } else {
-            this.error.set(res.message);
-          }
-        },
-        error: (err) => {
-          this.isAccepting.set(false);
-          this.error.set(err.error?.message || 'Failed to accept invitation.');
-        },
-      });
+    this.invitationService.acceptInvitation(this.token).subscribe({
+      next: (res: any) => {
+        this.isAccepting.set(false);
+        if (res.success) {
+          this.success.set(true);
+          this.invitation.set(null);
+          localStorage.removeItem('pending_invitation');
+        } else {
+          this.error.set(res.message);
+        }
+      },
+      error: (err: any) => {
+        this.isAccepting.set(false);
+        this.error.set(err.error?.message || 'Failed to accept invitation.');
+      },
+    });
   }
 
   goToApp() {
-    window.location.href = '/employee/ask';
+    this.router.navigate(['/employee/ask']);
   }
 }

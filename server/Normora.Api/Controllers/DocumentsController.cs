@@ -41,11 +41,9 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [RequestSizeLimit(100_971_520)] // 100 MB max payload size for ASP.NET
     public async Task<IActionResult> UploadDocument([FromForm] IFormFile file)
     {
-        // 1. Ensure the user is acting within a valid Tenant context.
-        if (!tenantContext.IsTenantResolved || !tenantContext.TenantId.HasValue) 
-            return Unauthorized(ApiResponse.Failure("Tenant context not found."));
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
 
-        // 2. Validation (file empty, size, extension) is now handled automatically
+        // 1. Validation (file empty, size, extension) is handled automatically
         // by FluentValidation through the MediatR Pipeline Behavior.
         var command = new UploadDocumentCommand(file, tenantContext.TenantId.Value);
         
@@ -58,8 +56,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDocument(Guid id)
     {
-        if (!tenantContext.IsTenantResolved || !tenantContext.TenantId.HasValue) 
-            return Unauthorized(ApiResponse.Failure("Tenant context not found."));
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
 
         var command = new DeleteDocumentCommand(id, tenantContext.TenantId.Value);
         var deleted = await mediator.Send(command);

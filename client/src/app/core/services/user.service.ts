@@ -17,11 +17,7 @@ export interface CurrentUser {
   memberships: UserTenantMembership[];
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
+import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root'

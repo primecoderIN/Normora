@@ -38,6 +38,34 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             return true;
         }
 
+        // 2. Handle domain business rule violations (e.g. duplicate slug, invalid invite state).
+        // Maps to 400 Bad Request — the client sent a logically invalid request.
+        if (exception is InvalidOperationException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = exception.Message
+            }, cancellationToken);
+            return true;
+        }
+
+        // 3. Handle authentication/authorization failures thrown from command handlers.
+        // Maps to 401 Unauthorized.
+        if (exception is UnauthorizedAccessException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = exception.Message
+            }, cancellationToken);
+            return true;
+        }
+
         // 2. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
         logger.LogError(exception, "An unhandled exception occurred.");
         

@@ -29,9 +29,9 @@ public class TenantInvitation
     public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddHours(48);
 
     /// <summary>
-    /// The current status of the invitation (e.g., "Pending", "Accepted", "Revoked").
+    /// The current status of the invitation lifecycle.
     /// </summary>
-    public string Status { get; set; } = "Pending";
+    public InvitationStatus Status { get; set; } = InvitationStatus.Pending;
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

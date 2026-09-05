@@ -9,7 +9,8 @@ namespace Normora.Modules.Tenants.Application.Invitations;
 public class InviteEmployeeCommandHandler(
     TenantsDbContext context, 
     ITenantContext tenantContext, 
-    IEmailService emailService) 
+    IEmailService emailService,
+    Microsoft.Extensions.Configuration.IConfiguration configuration) 
     : IRequestHandler<InviteEmployeeCommand, Guid>
 {
     public async Task<Guid> Handle(InviteEmployeeCommand request, CancellationToken cancellationToken)
@@ -23,7 +24,7 @@ public class InviteEmployeeCommandHandler(
 
         // Ensure no pending invitation exists for this email and tenant
         var existingInvite = await context.TenantInvitations
-            .FirstOrDefaultAsync(i => i.Email == request.Email && i.TenantId == tenantId && i.Status == "Pending", cancellationToken);
+            .FirstOrDefaultAsync(i => i.Email == request.Email && i.TenantId == tenantId && i.Status == InvitationStatus.Pending, cancellationToken);
 
         if (existingInvite != null)
         {
@@ -44,7 +45,8 @@ public class InviteEmployeeCommandHandler(
         var tenantName = tenant?.Name ?? "An organization";
 
         // Send email
-        var acceptLink = $"http://localhost:4200/accept-invite?token={invitation.Token}";
+        var baseUrl = configuration["App:BaseUrl"] ?? "http://localhost:4200";
+        var acceptLink = $"{baseUrl}/accept-invite?token={invitation.Token}";
         var body = $"<p>You have been invited to join {tenantName} on Normora.</p><p><a href='{acceptLink}'>Click here to accept the invitation</a>.</p>";
         await emailService.SendEmailAsync(request.Email, $"Invitation to join {tenantName}", body, cancellationToken);
 

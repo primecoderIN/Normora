@@ -23,7 +23,7 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             throw new InvalidOperationException("This invitation is invalid or does not exist.");
         }
 
-        if (invitation.Status != "Pending")
+        if (invitation.Status != InvitationStatus.Pending)
         {
             throw new InvalidOperationException("This invitation has already been accepted or is no longer valid.");
         }
@@ -70,7 +70,7 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             context.TenantMemberships.Add(membership);
         }
 
-        invitation.Status = "Accepted";
+        invitation.Status = InvitationStatus.Accepted;
 
         await context.SaveChangesAsync(cancellationToken);
 

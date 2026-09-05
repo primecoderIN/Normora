@@ -22,7 +22,7 @@ public class GetInvitationQueryHandler(TenantsDbContext context) : IRequestHandl
             invitation.Email,
             invitation.Tenant.Name,
             invitation.Tenant.Slug,
-            invitation.Status,
+            invitation.Status.ToString(),
             invitation.ExpiresAt
         );
     }

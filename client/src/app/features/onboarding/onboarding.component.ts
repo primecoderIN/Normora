@@ -2,8 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { TenantService } from '../../core/services/tenant.service';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 
 @Component({
@@ -92,7 +91,7 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
 })
 export class OnboardingComponent {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
+  private tenantService = inject(TenantService);
   private router = inject(Router);
   private oidcSecurityService = inject(OidcSecurityService);
 
@@ -118,18 +117,16 @@ export class OnboardingComponent {
 
     const payload = this.onboardingForm.value;
 
-    this.http
-      .post<any>(`${environment.apiUrl}/api/tenants`, payload)
-      .subscribe({
-        next: () => {
-          // Need to reload to re-fetch the user profile with the new membership
-          // The rootGuard will then route them to the employer dashboard
-          window.location.href = '/employer/dashboard';
-        },
-        error: (err) => {
-          this.error.set(err.error?.message || 'Failed to create organization');
-          this.isLoading.set(false);
-        },
-      });
+    this.tenantService.createTenant(payload).subscribe({
+      next: () => {
+        // Need to reload to re-fetch the user profile with the new membership
+        // The rootGuard will then route them to the employer dashboard
+        window.location.href = '/employer/dashboard';
+      },
+      error: (err: any) => {
+        this.error.set(err.error?.message || 'Failed to create organization');
+        this.isLoading.set(false);
+      },
+    });
   }
 }
