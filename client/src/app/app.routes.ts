@@ -60,6 +60,14 @@ export const routes: Routes = [
       {
         path: 'employees',
         loadComponent: () => import('./features/employer/employees/employees').then(m => m.Employees)
+      },
+      {
+        path: 'settings/departments',
+        loadComponent: () => import('./features/employer/departments/departments').then(m => m.Departments)
+      },
+      {
+        path: 'settings/user-groups',
+        loadComponent: () => import('./features/employer/user-groups/user-groups').then(m => m.UserGroups)
       }
     ]
   },
