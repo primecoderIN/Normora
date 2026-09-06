@@ -16,13 +16,12 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { UserService } from '../../../core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/services/document-realtime.service';
 
-import { MultiSelect } from 'primeng/multiselect';
 import { DepartmentService, Department } from '../../../core/services/department.service';
 
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, MultiSelect, StatCardComponent, DocumentListComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, StatCardComponent, DocumentListComponent, EmptyStateComponent],
   providers: [MessageService],
   styleUrl: './documents.css',
   templateUrl: './documents.html',

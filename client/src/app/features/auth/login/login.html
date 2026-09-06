@@ -1,71 +1,12 @@
-<main class="login-page">
-  <section class="login-panel">
-    <div class="brand-lockup">
-      <div class="brand-mark">N</div>
-      <div>
-        <strong>Normora</strong>
-        <span>Company knowledge, answered</span>
-      </div>
-    </div>
-
-    <div class="login-copy">
-      <p>Secure workspace access</p>
-      <h1>Sign in to Normora</h1>
-      <span>Use your organization account to manage documents or ask trusted workplace questions.</span>
-    </div>
-
-    @if (!isProcessingLogin) {
-      <div class="login-actions">
-        <button
-          pButton
-          type="button"
-          icon="pi pi-key"
-          label="Continue with Keycloak"
-          (click)="login()"
-        ></button>
-
-        <button
-          pButton
-          type="button"
-          icon="pi pi-github"
-          label="Continue with GitHub"
-          severity="secondary"
-          [outlined]="true"
-          (click)="loginWithGithub()"
-        ></button>
-
-        <button
-          pButton
-          type="button"
-          icon="pi pi-google"
-          label="Continue with Google"
-          severity="secondary"
-          [outlined]="true"
-          (click)="loginWithGoogle()"
-        ></button>
-      </div>
-    } @else {
-      <div class="processing-state">
-        <p-progress-spinner
-          styleClass="w-12 h-12"
-          strokeWidth="4"
-          animationDuration=".5s"
-        ></p-progress-spinner>
-        <p>Login successful. Redirecting to Normora...</p>
-      </div>
-    }
-  </section>
-
-  <aside class="login-aside">
-    <div>
-      <p>For HR, ops, and growing teams</p>
-      <h2>Keep internal answers consistent.</h2>
-      <span>Upload policies, let employees ask naturally, and keep every answer tied to source documents.</span>
-    </div>
-
-    <div class="aside-metrics">
-      <div><strong>128</strong><span>Documents indexed</span></div>
-      <div><strong>96%</strong><span>Answer quality</span></div>
-    </div>
-  </aside>
+<main class="min-h-screen bg-white text-surface-900 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+  <app-login-form 
+    [isProcessing]="isProcessingLogin"
+    (onLogin)="login()"
+    (onGithubLogin)="loginWithGithub()"
+    (onGoogleLogin)="loginWithGoogle()">
+  </app-login-form>
+  
+  <div class="hidden lg:block">
+    <app-login-promo></app-login-promo>
+  </div>
 </main>
