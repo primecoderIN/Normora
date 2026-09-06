@@ -31,8 +31,8 @@ public class GetDepartmentsQueryHandler(TenantsDbContext dbContext, ITenantConte
 
         return await dbContext.Departments
             .Where(d => d.TenantId == tenantContext.TenantId.Value)
-            .Select(d => new DepartmentDto(d.Id, d.Name))
             .OrderBy(d => d.Name)
+            .Select(d => new DepartmentDto(d.Id, d.Name))
             .ToListAsync(cancellationToken);
     }
 }

@@ -28,12 +28,12 @@ public class GetUserGroupsQueryHandler(TenantsDbContext dbContext, ITenantContex
         return await dbContext.UserGroups
             .AsNoTracking()
             .Where(g => g.TenantId == tenantContext.TenantId.Value)
+            .OrderBy(g => g.Name)
             .Select(g => new UserGroupDto(
                 g.Id,
                 g.Name,
                 g.UserGroupDepartments.Select(d => d.DepartmentId).ToList()
             ))
-            .OrderBy(g => g.Name)
             .ToListAsync(cancellationToken);
     }
 }
