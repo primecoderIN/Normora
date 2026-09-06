@@ -82,9 +82,6 @@ import { Department } from '../../../core/services/department.service';
                 </td>
               </tr>
             }
-                </td>
-              </tr>
-            }
           </tbody>
         </table>
       </div>

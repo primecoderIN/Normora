@@ -155,7 +155,7 @@
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-2">
         <label class="text-sm font-semibold text-surface-700">Departments (Optional)</label>
-        <p-multiSelect
+        <p-multiselect
           [options]="departments()"
           [ngModel]="selectedUploadDeptIds()"
           (ngModelChange)="selectedUploadDeptIds.set($event)"
@@ -165,7 +165,7 @@
           [filter]="true"
           display="chip"
           styleClass="w-full">
-        </p-multiSelect>
+        </p-multiselect>
         <small class="text-xs text-surface-500">If no departments are selected, all employees can search this document.</small>
       </div>
 
