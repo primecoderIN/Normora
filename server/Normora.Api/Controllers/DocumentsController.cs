@@ -51,13 +51,13 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// </summary>
     [HttpPost("upload")]
     [RequestSizeLimit(100_971_520)] // 100 MB max payload size for ASP.NET
-    public async Task<IActionResult> UploadDocument([FromForm] IFormFile file)
+    public async Task<IActionResult> UploadDocument([FromForm] IFormFile file, [FromForm] Guid[]? departmentIds = null)
     {
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
 
         // 1. Validation (file empty, size, extension) is handled automatically
         // by FluentValidation through the MediatR Pipeline Behavior.
-        var command = new UploadDocumentCommand(file, tenantContext.TenantId.Value);
+        var command = new UploadDocumentCommand(file, tenantContext.TenantId.Value, departmentIds);
         
         // 3. Dispatch the command to the MediatR handler.
         var document = await mediator.Send(command);

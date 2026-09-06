@@ -20,6 +20,13 @@ public interface ITenantContext
     string? TenantRole { get; }
 
     /// <summary>
+    /// The unique list of departments the user has access to in this tenant.
+    /// Derived from direct department assignments and group inheritance.
+    /// An empty list implies the user can only access "Company Wide" documents.
+    /// </summary>
+    IReadOnlyCollection<Guid> EffectiveDepartments { get; }
+
+    /// <summary>
     /// True if a tenant context was successfully extracted and validated during this request.
     /// </summary>
     bool IsTenantResolved { get; }
@@ -30,5 +37,6 @@ public interface ITenantContext
     /// </summary>
     /// <param name="tenantId">The resolved tenant ID.</param>
     /// <param name="role">The user's role in this tenant.</param>
-    void SetContext(Guid tenantId, string role);
+    /// <param name="effectiveDepartments">The resolved effective departments for the user.</param>
+    void SetContext(Guid tenantId, string role, IReadOnlyCollection<Guid> effectiveDepartments);
 }

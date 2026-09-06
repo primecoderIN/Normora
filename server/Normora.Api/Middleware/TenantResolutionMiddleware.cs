@@ -34,17 +34,28 @@ public class TenantResolutionMiddleware
             {
                 if (Guid.TryParse(tenantIdValues.FirstOrDefault(), out var tenantId))
                 {
-                    // TENANT-12: Resolve user's tenant membership
+                    // TENANT-12: Resolve user's tenant membership and effective departments
                     // 3. Verify that the authenticated user is actually a member of this tenant.
                     var membership = await tenantsDbContext.TenantMemberships
                         .Include(m => m.User)
+                        .Include(m => m.MembershipDepartments)
+                        .Include(m => m.UserGroupMemberships)
+                            .ThenInclude(ugm => ugm.UserGroup)
+                                .ThenInclude(ug => ug.UserGroupDepartments)
                         .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.KeycloakUserId == currentUser.KeycloakUserId);
 
                     if (membership != null)
                     {
+                        var directDepartments = membership.MembershipDepartments.Select(md => md.DepartmentId);
+                        var inheritedDepartments = membership.UserGroupMemberships
+                            .SelectMany(ugm => ugm.UserGroup.UserGroupDepartments)
+                            .Select(ugd => ugd.DepartmentId);
+
+                        var effectiveDepartments = directDepartments.Concat(inheritedDepartments).Distinct().ToList();
+
                         // 4. If valid, initialize the ITenantContext so down-stream services (like AppDbContext) 
                         //    and authorization filters ([RequireTenant]) can enforce isolation.
-                        tenantContext.SetContext(tenantId, membership.Role.ToString());
+                        tenantContext.SetContext(tenantId, membership.Role.ToString(), effectiveDepartments);
                     }
                 }
             }

@@ -10,9 +10,10 @@ using Normora.Shared;
 namespace Normora.Api.Features.Documents;
 
 /// <summary>
-/// Command to upload a new document. Includes the physical file and the active TenantId.
+/// Command to upload a new document. Includes the physical file, the active TenantId,
+/// and optionally a list of department IDs to scope the document to.
 /// </summary>
-public record UploadDocumentCommand(IFormFile File, Guid TenantId) : IRequest<Document>;
+public record UploadDocumentCommand(IFormFile File, Guid TenantId, IReadOnlyCollection<Guid>? DepartmentIds = null) : IRequest<Document>;
 
 public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDocumentCommand>
 {
@@ -60,7 +61,13 @@ public sealed class UploadDocumentCommandHandler(
             MinioObjectName = objectName,
             Status = DocumentStatus.Uploaded,
             UploadedAt = DateTime.UtcNow,
-            TenantId = request.TenantId
+            TenantId = request.TenantId,
+            DocumentDepartments = request.DepartmentIds?.Select(depId => new DocumentDepartment
+            {
+                DepartmentId = depId
+                // TenantId and DocumentId are populated automatically by EF Core conventions
+                // and the DbContext SaveChanges interception.
+            }).ToList() ?? new List<DocumentDepartment>()
         };
 
         // 3. Save the document metadata to the PostgreSQL database.

@@ -21,7 +21,8 @@ public sealed record AskCitation(
 public sealed class AskQuestionQueryHandler(
     DocumentsDbContext context,
     Normora.Api.Features.Documents.ITextEmbeddingService embeddingService,
-    ITextGenerationService generationService) : IRequestHandler<AskQuestionQuery, AskQuestionResult>
+    ITextGenerationService generationService,
+    Normora.Shared.Interfaces.ITenantContext tenantContext) : IRequestHandler<AskQuestionQuery, AskQuestionResult>
 {
     private const double MinimumSimilarity = 0.35;
 
@@ -37,13 +38,18 @@ public sealed class AskQuestionQueryHandler(
         var queryVector = new Vector(await embeddingService.CreateEmbeddingAsync(request.Question, cancellationToken));
         var limit = Math.Clamp(request.Limit, 1, 8);
 
+        // Fetch effective departments for the current user
+        var effectiveDepartments = tenantContext.EffectiveDepartments;
+
         // The global tenant filters apply to both chunks and documents before the vector
         // ranking, so the prompt can only contain the active tenant's source material.
         var sourceRows = await context.DocumentChunks
             .AsNoTracking()
             .Where(chunk => chunk.Embedding != null)
             .Join(
-                context.Documents.AsNoTracking(),
+                context.Documents.AsNoTracking().Where(d => 
+                    !d.DocumentDepartments.Any() || // Company Wide
+                    d.DocumentDepartments.Any(dd => effectiveDepartments.Contains(dd.DepartmentId))), // Department Scoped
                 chunk => chunk.DocumentId,
                 document => document.Id,
                 (chunk, document) => new
