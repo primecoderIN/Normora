@@ -13,7 +13,7 @@ namespace Normora.Api.Features.Documents;
 /// Command to upload a new document. Includes the physical file, the active TenantId,
 /// and optionally a list of department IDs to scope the document to.
 /// </summary>
-public record UploadDocumentCommand(IFormFile File, Guid TenantId, IReadOnlyCollection<Guid>? DepartmentIds = null) : IRequest<Document>;
+public record UploadDocumentCommand(IFormFile File, Guid TenantId, IReadOnlyCollection<Guid>? DepartmentIds = null) : IRequest<DocumentDto>;
 
 public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDocumentCommand>
 {
@@ -45,9 +45,9 @@ public sealed class UploadDocumentCommandHandler(
     DocumentsDbContext context,
     IDocumentStorageService storageService,
     IBackgroundJobClient backgroundJobClient,
-    IHubContext<DocumentHub> hubContext) : IRequestHandler<UploadDocumentCommand, Document>
+    IHubContext<DocumentHub> hubContext) : IRequestHandler<UploadDocumentCommand, DocumentDto>
 {
-    public async Task<Document> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
+    public async Task<DocumentDto> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
         // Persist the binary before metadata so a database row never points to an object
         // that was not successfully stored. The tenant ID becomes part of the object key.
@@ -88,6 +88,6 @@ public sealed class UploadDocumentCommandHandler(
         backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
             job.ProcessAsync(document.Id, document.TenantId));
 
-        return document;
+        return document.ToDto();
     }
 }

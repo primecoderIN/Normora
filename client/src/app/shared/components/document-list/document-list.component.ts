@@ -1,6 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Document } from '../../../core/services/document.service';
+import { Department } from '../../../core/services/department.service';
 
 @Component({
   selector: 'app-document-list',
@@ -28,7 +29,19 @@ import { Document } from '../../../core/services/document.service';
                     </div>
                     <div class="min-w-0">
                       <div class="font-medium text-surface-900 text-sm truncate max-w-90">{{ doc.fileName }}</div>
-                      <div class="text-xs text-surface-500 mt-0.5">Company knowledge base</div>
+                      <div class="mt-1">
+                        @if (!doc.departmentIds || doc.departmentIds.length === 0) {
+                          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-100 text-surface-600">Company wide</span>
+                        } @else {
+                          <div class="flex gap-1 flex-wrap">
+                            @for (deptId of doc.departmentIds; track deptId) {
+                              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                {{ getDepartmentName(deptId) }}
+                              </span>
+                            }
+                          </div>
+                        }
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -69,6 +82,9 @@ import { Document } from '../../../core/services/document.service';
                 </td>
               </tr>
             }
+                </td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
@@ -77,5 +93,11 @@ import { Document } from '../../../core/services/document.service';
 })
 export class DocumentListComponent {
   documents = input.required<Document[]>();
+  departments = input<Department[]>([]);
   onDelete = output<string>();
+
+  getDepartmentName(id: string): string {
+    const dept = this.departments().find(d => d.id === id);
+    return dept ? dept.name : 'Unknown Department';
+  }
 }

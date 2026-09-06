@@ -9,16 +9,20 @@ import { MessageService } from 'primeng/api';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { DocumentService, Document } from '../../../core/services/document.service';
 import { environment } from '../../../../environments/environment';
+
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { DocumentListComponent } from '../../../shared/components/document-list/document-list.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { UserService } from '../../../core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/services/document-realtime.service';
 
+import { MultiSelectModule } from 'primeng/multiselect';
+import { DepartmentService, Department } from '../../../core/services/department.service';
+
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, StatCardComponent, DocumentListComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, MultiSelectModule, StatCardComponent, DocumentListComponent, EmptyStateComponent],
   providers: [MessageService],
   styleUrl: './documents.css',
   templateUrl: './documents.html',
@@ -28,7 +32,11 @@ export class Documents implements OnInit, OnDestroy {
   private documentRealtimeService = inject(DocumentRealtimeService);
   private messageService = inject(MessageService);
   private oidcSecurityService = inject(OidcSecurityService);
+  private departmentService = inject(DepartmentService);
   public userService = inject(UserService);
+
+  departments = signal<Department[]>([]);
+  selectedUploadDeptIds = signal<string[]>([]);
 
   documents = signal<Document[]>([]);
   uploadUrl = `${environment.apiUrl}/api/documents/upload`;
@@ -55,6 +63,7 @@ export class Documents implements OnInit, OnDestroy {
   
   ngOnInit() {
     this.loadDocuments();
+    this.loadDepartments();
     this.oidcSecurityService.getAccessToken().subscribe((token: string) => {
       this.token.set(token);
     });
@@ -80,6 +89,12 @@ export class Documents implements OnInit, OnDestroy {
         console.error('Failed to load documents', err);
         // Error handling is now globally covered by API interceptor
       }
+    });
+  }
+
+  loadDepartments() {
+    this.departmentService.getAll().subscribe({
+      next: (depts) => this.departments.set(depts || [])
     });
   }
 
@@ -118,9 +133,13 @@ export class Documents implements OnInit, OnDestroy {
     this.messageService.add({ severity: 'error', summary: 'Upload Error', detail: errorDetail });
   }
 
-  onBeforeUpload(event: any) {
+  onBeforeSend(event: any) {
     if (this.token()) {
       event.xhr.setRequestHeader('Authorization', `Bearer ${this.token()}`);
+    }
+    const deptIds = this.selectedUploadDeptIds();
+    if (deptIds && deptIds.length > 0) {
+      deptIds.forEach(id => event.formData.append('departmentIds', id));
     }
   }
 

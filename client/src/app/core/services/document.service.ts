@@ -9,6 +9,7 @@ export interface Document {
   fileName: string;
   status: 'Uploaded' | 'Processing' | 'Ready' | 'Failed';
   uploadedAt: string;
+  departmentIds: string[];
 }
 
 export interface ApiResponse<T> {

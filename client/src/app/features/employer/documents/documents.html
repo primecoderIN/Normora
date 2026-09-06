@@ -109,6 +109,7 @@
     @if (filteredDocuments().length > 0) {
       <app-document-list
         [documents]="filteredDocuments()"
+        [departments]="departments()"
         (onDelete)="deleteDocument($event)">
       </app-document-list>
     } @else {
@@ -149,20 +150,39 @@
     [visible]="showUploadDialog()"
     (visibleChange)="showUploadDialog.set($event)"
     [modal]="true"
-    [style]="{ width: '420px' }">
-    <p-fileupload
-      name="file"
-      [url]="uploadUrl"
-      (onBeforeUpload)="onBeforeUpload($event)"
-      (onUpload)="onUpload($event)"
-      (onError)="onError($event)"
-      [multiple]="false"
-      accept=".pdf,.docx,.txt"
-      [maxFileSize]="20971520"
-      chooseLabel="Select file"
-      uploadLabel="Upload"
-      cancelLabel="Cancel"
-      styleClass="p-fileupload-custom w-full">
-    </p-fileupload>
+    [style]="{ width: '450px' }">
+    
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-semibold text-surface-700">Departments (Optional)</label>
+        <p-multiSelect
+          [options]="departments()"
+          [ngModel]="selectedUploadDeptIds()"
+          (ngModelChange)="selectedUploadDeptIds.set($event)"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Company wide (Select departments to restrict access)"
+          [filter]="true"
+          display="chip"
+          styleClass="w-full">
+        </p-multiSelect>
+        <small class="text-xs text-surface-500">If no departments are selected, all employees can search this document.</small>
+      </div>
+
+      <p-fileupload
+        name="file"
+        [url]="uploadUrl"
+        (onBeforeSend)="onBeforeSend($event)"
+        (onUpload)="onUpload($event)"
+        (onError)="onError($event)"
+        [multiple]="false"
+        accept=".pdf,.docx,.txt"
+        [maxFileSize]="20971520"
+        chooseLabel="Select file"
+        uploadLabel="Upload"
+        cancelLabel="Cancel"
+        styleClass="p-fileupload-custom w-full">
+      </p-fileupload>
+    </div>
   </p-dialog>
 </div>

@@ -30,7 +30,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
         var query = new GetEmployerDocumentsQuery();
         var result = await mediator.Send(query);
 
-        return Ok(ApiResponse<List<Document>>.Ok(result));
+        return Ok(ApiResponse<List<DocumentDto>>.Ok(result));
     }
 
     [HttpGet("search")]
@@ -62,7 +62,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
         // 3. Dispatch the command to the MediatR handler.
         var document = await mediator.Send(command);
 
-        return Ok(ApiResponse<Document>.Ok(document, "Document uploaded successfully."));
+        return Ok(ApiResponse<DocumentDto>.Ok(document, "Document uploaded successfully."));
     }
 
     [HttpDelete("{id}")]
