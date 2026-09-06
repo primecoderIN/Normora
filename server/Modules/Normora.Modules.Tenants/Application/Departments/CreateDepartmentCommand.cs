@@ -7,8 +7,15 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Departments;
 
+/// <summary>
+/// Command to create a new department within the current tenant.
+/// </summary>
+/// <param name="Name">The name of the new department.</param>
 public record CreateDepartmentCommand(string Name) : IRequest<Guid>;
 
+/// <summary>
+/// Validates the <see cref="CreateDepartmentCommand"/>.
+/// </summary>
 public class CreateDepartmentCommandValidator : AbstractValidator<CreateDepartmentCommand>
 {
     public CreateDepartmentCommandValidator()
@@ -17,6 +24,9 @@ public class CreateDepartmentCommandValidator : AbstractValidator<CreateDepartme
     }
 }
 
+/// <summary>
+/// Handles the <see cref="CreateDepartmentCommand"/> by ensuring name uniqueness and saving the new department.
+/// </summary>
 public class CreateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<CreateDepartmentCommand, Guid>
 {

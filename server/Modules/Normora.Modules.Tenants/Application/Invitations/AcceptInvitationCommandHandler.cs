@@ -6,6 +6,10 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Invitations;
 
+/// <summary>
+/// Handles <see cref="AcceptInvitationCommand"/> by validating the token, verifying the recipient's email,
+/// creating the user record if needed, and adding a TenantMembership.
+/// </summary>
 public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUser currentUser) : IRequestHandler<AcceptInvitationCommand, bool>
 {
     public async Task<bool> Handle(AcceptInvitationCommand request, CancellationToken cancellationToken)

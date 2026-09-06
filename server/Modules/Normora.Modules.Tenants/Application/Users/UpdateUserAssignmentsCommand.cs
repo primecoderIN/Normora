@@ -7,8 +7,17 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Users;
 
+/// <summary>
+/// Command to update a user's department and user group assignments within the current tenant.
+/// </summary>
+/// <param name="UserId">The ID of the user whose assignments are being updated.</param>
+/// <param name="DepartmentIds">The new list of directly assigned department IDs.</param>
+/// <param name="UserGroupIds">The new list of user group IDs the user should belong to.</param>
 public record UpdateUserAssignmentsCommand(Guid UserId, List<Guid> DepartmentIds, List<Guid> UserGroupIds) : IRequest<bool>;
 
+/// <summary>
+/// Validates the <see cref="UpdateUserAssignmentsCommand"/>.
+/// </summary>
 public class UpdateUserAssignmentsCommandValidator : AbstractValidator<UpdateUserAssignmentsCommand>
 {
     public UpdateUserAssignmentsCommandValidator()
@@ -19,6 +28,9 @@ public class UpdateUserAssignmentsCommandValidator : AbstractValidator<UpdateUse
     }
 }
 
+/// <summary>
+/// Handles <see cref="UpdateUserAssignmentsCommand"/> by synchronizing the user's department and group memberships.
+/// </summary>
 public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<UpdateUserAssignmentsCommand, bool>
 {

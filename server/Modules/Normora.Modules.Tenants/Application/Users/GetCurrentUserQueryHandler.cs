@@ -5,6 +5,9 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Users;
 
+/// <summary>
+/// Handles <see cref="GetCurrentUserQuery"/> by loading the user from the database and syncing any profile changes from Keycloak.
+/// </summary>
 public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser currentUser) : IRequestHandler<GetCurrentUserQuery, CurrentUserDto>
 {
     public async Task<CurrentUserDto> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)

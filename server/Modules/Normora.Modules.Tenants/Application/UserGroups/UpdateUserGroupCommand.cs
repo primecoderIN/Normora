@@ -7,8 +7,17 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.UserGroups;
 
+/// <summary>
+/// Command to update the details and department assignments of an existing user group.
+/// </summary>
+/// <param name="Id">The unique identifier of the user group.</param>
+/// <param name="Name">The new name for the user group.</param>
+/// <param name="DepartmentIds">The updated list of assigned department IDs.</param>
 public record UpdateUserGroupCommand(Guid Id, string Name, List<Guid> DepartmentIds) : IRequest<bool>;
 
+/// <summary>
+/// Validates the <see cref="UpdateUserGroupCommand"/>.
+/// </summary>
 public class UpdateUserGroupCommandValidator : AbstractValidator<UpdateUserGroupCommand>
 {
     public UpdateUserGroupCommandValidator()
@@ -19,6 +28,9 @@ public class UpdateUserGroupCommandValidator : AbstractValidator<UpdateUserGroup
     }
 }
 
+/// <summary>
+/// Handles the <see cref="UpdateUserGroupCommand"/> by updating properties and synchronizing department associations.
+/// </summary>
 public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<UpdateUserGroupCommand, bool>
 {

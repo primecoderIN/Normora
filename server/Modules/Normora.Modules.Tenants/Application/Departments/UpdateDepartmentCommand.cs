@@ -6,8 +6,16 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Departments;
 
+/// <summary>
+/// Command to update the details of an existing department.
+/// </summary>
+/// <param name="Id">The unique identifier of the department.</param>
+/// <param name="Name">The new name for the department.</param>
 public record UpdateDepartmentCommand(Guid Id, string Name) : IRequest<bool>;
 
+/// <summary>
+/// Validates the <see cref="UpdateDepartmentCommand"/>.
+/// </summary>
 public class UpdateDepartmentCommandValidator : AbstractValidator<UpdateDepartmentCommand>
 {
     public UpdateDepartmentCommandValidator()
@@ -17,6 +25,9 @@ public class UpdateDepartmentCommandValidator : AbstractValidator<UpdateDepartme
     }
 }
 
+/// <summary>
+/// Handles the <see cref="UpdateDepartmentCommand"/> by updating the department's properties while ensuring uniqueness.
+/// </summary>
 public class UpdateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<UpdateDepartmentCommand, bool>
 {

@@ -6,6 +6,9 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Invitations;
 
+/// <summary>
+/// Handles <see cref="InviteEmployeeCommand"/> by creating an invitation record and sending the invitation email.
+/// </summary>
 public class InviteEmployeeCommandHandler(
     TenantsDbContext context, 
     ITenantContext tenantContext, 

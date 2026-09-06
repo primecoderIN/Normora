@@ -5,6 +5,9 @@ using Normora.Modules.Tenants.Persistence;
 
 namespace Normora.Modules.Tenants.Application.SuspendTenant;
 
+/// <summary>
+/// Handles <see cref="SuspendTenantCommand"/> by setting the tenant's status to Suspended.
+/// </summary>
 public class SuspendTenantCommandHandler(TenantsDbContext dbContext) : IRequestHandler<SuspendTenantCommand, bool>
 {
     public async Task<bool> Handle(SuspendTenantCommand request, CancellationToken cancellationToken)

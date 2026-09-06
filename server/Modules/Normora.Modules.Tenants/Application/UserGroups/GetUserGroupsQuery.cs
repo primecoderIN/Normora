@@ -5,10 +5,19 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.UserGroups;
 
+/// <summary>
+/// Query to retrieve a list of all user groups for the current tenant.
+/// </summary>
 public record GetUserGroupsQuery : IRequest<List<UserGroupDto>>;
 
+/// <summary>
+/// Data transfer object representing a user group and its associated departments.
+/// </summary>
 public record UserGroupDto(Guid Id, string Name, List<Guid> DepartmentIds);
 
+/// <summary>
+/// Handles the <see cref="GetUserGroupsQuery"/> by querying the database for the current tenant's user groups.
+/// </summary>
 public class GetUserGroupsQueryHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<GetUserGroupsQuery, List<UserGroupDto>>
 {

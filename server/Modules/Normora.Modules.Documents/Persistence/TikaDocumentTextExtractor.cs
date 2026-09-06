@@ -2,6 +2,9 @@ using System.Net.Http.Headers;
 
 namespace Normora.Modules.Documents.Persistence;
 
+/// <summary>
+/// An implementation of <see cref="IDocumentTextExtractor"/> that delegates extraction to an Apache Tika service.
+/// </summary>
 public sealed class TikaDocumentTextExtractor(HttpClient httpClient) : IDocumentTextExtractor
 {
     public async Task<string> ExtractAsync(

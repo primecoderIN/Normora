@@ -3,6 +3,11 @@ using MediatR;
 
 namespace Normora.Shared.Validation;
 
+/// <summary>
+/// A MediatR pipeline behavior that runs FluentValidation validators before a request reaches its handler.
+/// </summary>
+/// <typeparam name="TRequest">The type of the MediatR request.</typeparam>
+/// <typeparam name="TResponse">The type of the MediatR response.</typeparam>
 public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {

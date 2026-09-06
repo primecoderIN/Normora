@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Normora.Api.Features.Ask;
 
+/// <summary>
+/// Implementation of <see cref="ITextGenerationService"/> that uses Google's Gemini API for answering questions.
+/// </summary>
 public sealed class GeminiTextGenerationService(
     HttpClient httpClient,
     IConfiguration configuration) : ITextGenerationService

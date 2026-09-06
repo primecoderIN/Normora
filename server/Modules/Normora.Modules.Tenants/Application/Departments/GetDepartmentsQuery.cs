@@ -6,10 +6,19 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Departments;
 
+/// <summary>
+/// Query to retrieve a list of all departments for the current tenant.
+/// </summary>
 public record GetDepartmentsQuery : IRequest<List<DepartmentDto>>;
 
+/// <summary>
+/// Data transfer object representing a department.
+/// </summary>
 public record DepartmentDto(Guid Id, string Name);
 
+/// <summary>
+/// Handles the <see cref="GetDepartmentsQuery"/> by querying the database for the current tenant's departments.
+/// </summary>
 public class GetDepartmentsQueryHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<GetDepartmentsQuery, List<DepartmentDto>>
 {

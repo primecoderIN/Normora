@@ -2,12 +2,20 @@ using System.Text.RegularExpressions;
 
 namespace Normora.Modules.Documents.Persistence;
 
+/// <summary>
+/// Utility class responsible for splitting raw document text into bounded, normalized chunks suitable for vector embeddings and retrieval.
+/// </summary>
 public static partial class DocumentChunker
 {
     // This bound keeps individual retrieval and embedding inputs predictable; oversized
     // paragraphs are hard-split only when preserving the paragraph would exceed the limit.
     private const int MaximumChunkCharacters = 4_000;
 
+    /// <summary>
+    /// Splits the extracted text into an array of chunks, preserving paragraph boundaries where possible.
+    /// </summary>
+    /// <param name="extractedText">The raw extracted text.</param>
+    /// <returns>A list of bounded text chunks.</returns>
     public static IReadOnlyList<string> Split(string extractedText)
     {
         var normalizedText = Normalize(extractedText);

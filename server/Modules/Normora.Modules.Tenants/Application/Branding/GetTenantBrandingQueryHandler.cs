@@ -4,6 +4,9 @@ using Normora.Modules.Tenants.Persistence;
 
 namespace Normora.Modules.Tenants.Application.Branding;
 
+/// <summary>
+/// Data transfer object containing the branding details for a tenant.
+/// </summary>
 public record TenantBrandingDto(
     Guid TenantId,
     string TenantName,
@@ -13,8 +16,15 @@ public record TenantBrandingDto(
     string? FaviconUrl
 );
 
+/// <summary>
+/// Query to retrieve a tenant's branding information based on their slug.
+/// </summary>
+/// <param name="Slug">The unique URL slug of the tenant.</param>
 public record GetTenantBrandingQuery(string Slug) : IRequest<TenantBrandingDto?>;
 
+/// <summary>
+/// Handles the <see cref="GetTenantBrandingQuery"/> by fetching the tenant and its branding from the database.
+/// </summary>
 public class GetTenantBrandingQueryHandler(TenantsDbContext context)
     : IRequestHandler<GetTenantBrandingQuery, TenantBrandingDto?>
 {

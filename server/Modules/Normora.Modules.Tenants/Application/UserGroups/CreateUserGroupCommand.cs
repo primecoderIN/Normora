@@ -7,8 +7,16 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.UserGroups;
 
+/// <summary>
+/// Command to create a new user group within the current tenant and assign it to departments.
+/// </summary>
+/// <param name="Name">The name of the user group.</param>
+/// <param name="DepartmentIds">A list of department IDs this group should have access to.</param>
 public record CreateUserGroupCommand(string Name, List<Guid> DepartmentIds) : IRequest<Guid>;
 
+/// <summary>
+/// Validates the <see cref="CreateUserGroupCommand"/>.
+/// </summary>
 public class CreateUserGroupCommandValidator : AbstractValidator<CreateUserGroupCommand>
 {
     public CreateUserGroupCommandValidator()
@@ -18,6 +26,9 @@ public class CreateUserGroupCommandValidator : AbstractValidator<CreateUserGroup
     }
 }
 
+/// <summary>
+/// Handles the <see cref="CreateUserGroupCommand"/> by ensuring name uniqueness and saving the group with its department associations.
+/// </summary>
 public class CreateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<CreateUserGroupCommand, Guid>
 {

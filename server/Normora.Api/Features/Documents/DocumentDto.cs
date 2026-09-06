@@ -5,6 +5,10 @@ using Normora.Shared;
 
 namespace Normora.Api.Features.Documents;
 
+/// <summary>
+/// Data transfer object representing a document for API responses.
+/// Decouples EF Core entities from the API surface.
+/// </summary>
 public record DocumentDto(
     Guid Id,
     string FileName,
@@ -12,8 +16,14 @@ public record DocumentDto(
     DateTime UploadedAt,
     IReadOnlyCollection<Guid> DepartmentIds);
 
+/// <summary>
+/// Extension methods for mapping Document entities to DTOs.
+/// </summary>
 public static class DocumentExtensions
 {
+    /// <summary>
+    /// Maps a <see cref="Document"/> entity to a <see cref="DocumentDto"/>.
+    /// </summary>
     public static DocumentDto ToDto(this Document document)
     {
         return new DocumentDto(

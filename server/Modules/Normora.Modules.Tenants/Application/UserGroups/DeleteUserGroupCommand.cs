@@ -5,8 +5,15 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.UserGroups;
 
+/// <summary>
+/// Command to delete a specific user group from the current tenant.
+/// </summary>
+/// <param name="Id">The unique identifier of the user group to delete.</param>
 public record DeleteUserGroupCommand(Guid Id) : IRequest<bool>;
 
+/// <summary>
+/// Handles the <see cref="DeleteUserGroupCommand"/> by finding and removing the specified user group.
+/// </summary>
 public class DeleteUserGroupCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<DeleteUserGroupCommand, bool>
 {

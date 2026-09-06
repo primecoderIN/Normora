@@ -6,18 +6,34 @@ using Pgvector.EntityFrameworkCore;
 
 namespace Normora.Api.Features.Ask;
 
+/// <summary>
+/// Query to answer an employee's question using RAG (Retrieval-Augmented Generation).
+/// Retrieves the most semantically relevant document chunks and passes them to the LLM for grounded answering.
+/// </summary>
+/// <param name="Question">The employee's natural language question.</param>
+/// <param name="Limit">Maximum number of document chunks to retrieve (1–8).</param>
 public sealed record AskQuestionQuery(string Question, int Limit = 5) : IRequest<AskQuestionResult>;
 
+/// <summary>
+/// Represents the result of an Ask Normora query, containing the generated answer and citations.
+/// </summary>
 public sealed record AskQuestionResult(
     string Answer,
     IReadOnlyList<AskCitation> Sources);
 
+/// <summary>
+/// Represents a source document chunk that contributed to the generated answer.
+/// </summary>
 public sealed record AskCitation(
     Guid DocumentId,
     string FileName,
     int ChunkIndex,
     double Similarity);
 
+/// <summary>
+/// Handles <see cref="AskQuestionQuery"/> by performing a vector similarity search scoped to the user's
+/// effective departments, then generating a grounded answer from the top-ranked chunks.
+/// </summary>
 public sealed class AskQuestionQueryHandler(
     DocumentsDbContext context,
     Normora.Api.Features.Documents.ITextEmbeddingService embeddingService,

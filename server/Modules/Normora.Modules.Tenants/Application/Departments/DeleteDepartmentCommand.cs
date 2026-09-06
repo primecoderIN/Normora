@@ -5,8 +5,15 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Departments;
 
+/// <summary>
+/// Command to delete a specific department from the current tenant.
+/// </summary>
+/// <param name="Id">The unique identifier of the department to delete.</param>
 public record DeleteDepartmentCommand(Guid Id) : IRequest<bool>;
 
+/// <summary>
+/// Handles the <see cref="DeleteDepartmentCommand"/> by finding and removing the specified department.
+/// </summary>
 public class DeleteDepartmentCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
     : IRequestHandler<DeleteDepartmentCommand, bool>
 {

@@ -64,6 +64,14 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Added grounded Ask Normora endpoint with tenant-safe sources and no-answer behavior
 - [x] Added basic employee Ask Normora chatbot screen for endpoint testing
 
+## ✅ Completed Department & User Group-Based Answers System
+- [x] Added `Department`, `UserGroup`, and junction entities to Tenants and Documents modules.
+- [x] Implemented dynamic **Effective Department** resolution during JWT token generation.
+- [x] Built Employer Settings UI for `Departments` and `User Groups` with full CRUD and assignment logic.
+- [x] Enhanced Document Upload modal to support multi-select department assignments.
+- [x] Updated Employer Document List to render department scope badges.
+- [x] Secured Hybrid Search pipeline (AskNormora) to exclusively query chunks from **Company Wide** documents or documents mapped to the user's **Effective Departments**.
+
 ## ✅ Recently Completed Enhancements
 - [x] **Social Login Integrations (Google & GitHub)**: Configured Keycloak Identity Providers and built `kc_idp_hint` auto-redirect logic in the Angular Login UI for both platforms.
 - [x] **pgAdmin Integration**: Added pgAdmin 4 to the Docker Compose stack for easy database management, complete with automated `.env` setup.

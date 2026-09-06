@@ -4,6 +4,9 @@ using Normora.Modules.Tenants.Persistence;
 
 namespace Normora.Modules.Tenants.Application.Invitations;
 
+/// <summary>
+/// Handles <see cref="GetInvitationQuery"/> by fetching the invitation and its associated tenant details.
+/// </summary>
 public class GetInvitationQueryHandler(TenantsDbContext context) : IRequestHandler<GetInvitationQuery, InvitationDto?>
 {
     public async Task<InvitationDto?> Handle(GetInvitationQuery request, CancellationToken cancellationToken)
