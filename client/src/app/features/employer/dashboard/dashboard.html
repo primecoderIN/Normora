@@ -1,27 +1,25 @@
-<div class="dashboard-page">
-  <header class="page-header">
+<div class="grid gap-8">
+  <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <p class="eyebrow">Workspace overview</p>
-      <h1>Overview</h1>
+      <p class="text-[0.72rem] font-extrabold uppercase text-indigo-600 m-0 mb-1">Workspace overview</p>
+      <h1 class="text-[1.75rem] leading-[1.15] text-surface-900 m-0 font-bold">Overview</h1>
       @if (userService.currentUser(); as user) {
-        <p>Welcome back, {{ user.displayName }}. Here is the current state of your knowledge base.</p>
+        <p class="text-[0.9rem] text-surface-500 m-0 mt-1.5">Welcome back, {{ user.displayName }}. Here is the current state of your knowledge base.</p>
       } @else {
-        <p>Here is the current state of your knowledge base.</p>
+        <p class="text-[0.9rem] text-surface-500 m-0 mt-1.5">Here is the current state of your knowledge base.</p>
       }
     </div>
 
-    <div class="header-actions">
-      <label class="search-field">
-        <i class="pi pi-search"></i>
-        <input type="text" pInputText placeholder="Search workspace" />
+    <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
+      <label class="flex items-center gap-2 h-10 px-3 bg-white border border-surface-200 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-indigo-500 transition-colors">
+        <i class="pi pi-search text-surface-500"></i>
+        <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none shadow-none outline-none p-0 text-surface-900 placeholder:text-surface-400" />
       </label>
-      <button type="button" class="icon-button" aria-label="Notifications">
-        <i class="pi pi-bell"></i>
-      </button>
+      <p-button icon="pi pi-bell" styleClass="!w-10 !h-10 !p-0 flex items-center justify-center !bg-white !border-surface-200 !text-surface-500 hover:!bg-surface-50 transition-colors" ariaLabel="Notifications"></p-button>
     </div>
   </header>
 
-  <section class="metric-grid" aria-label="Workspace metrics">
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Workspace metrics">
     <app-stat-card
       title="Documents"
       value="128"
@@ -59,46 +57,46 @@
     </app-stat-card>
   </section>
 
-  <section class="content-grid">
-    <article class="panel">
-      <div class="panel-header">
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <article class="bg-white border border-surface-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
+      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-surface-100 -mx-4 px-4 -mt-4 pt-4">
         <div>
-          <h2>Document coverage</h2>
-          <p>Categories indexed for employee search.</p>
+          <h2 class="text-[0.95rem] text-surface-900 m-0 font-bold">Document coverage</h2>
+          <p class="text-[0.9rem] text-surface-500 m-0 mt-1">Categories indexed for employee search.</p>
         </div>
-        <button type="button" class="text-button">View all</button>
+        <p-button label="View all" styleClass="!bg-white !border-surface-200 !text-surface-700 hover:!bg-surface-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
       </div>
-      <div class="chart-frame">
+      <div class="relative h-[15.5rem]">
         <p-chart
           type="doughnut"
           [data]="documentChartData"
           [options]="documentChartOptions"
-          class="chart">
+          class="block w-full h-full">
         </p-chart>
-        <div class="chart-total" aria-hidden="true">
-          <strong>128</strong>
-          <span>Total</span>
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
+          <strong class="text-2xl text-surface-900 font-bold">128</strong>
+          <span class="text-xs text-surface-500">Total</span>
         </div>
       </div>
     </article>
 
-    <article class="panel">
-      <div class="panel-header">
+    <article class="bg-white border border-surface-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
+      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-surface-100 -mx-4 px-4 -mt-4 pt-4">
         <div>
-          <h2>Recent documents</h2>
-          <p>Latest files added to the knowledge base.</p>
+          <h2 class="text-[0.95rem] text-surface-900 m-0 font-bold">Recent documents</h2>
+          <p class="text-[0.9rem] text-surface-500 m-0 mt-1">Latest files added to the knowledge base.</p>
         </div>
-        <button type="button" class="text-button">View all</button>
+        <p-button label="View all" styleClass="!bg-white !border-surface-200 !text-surface-700 hover:!bg-surface-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
       </div>
-      <div class="list-stack custom-scrollbar">
+      <div class="grid gap-1.5 max-h-[15.5rem] overflow-y-auto custom-scrollbar">
         @for (doc of recentDocuments(); track doc.name) {
-          <div class="list-row">
-            <div class="file-type">{{ doc.type }}</div>
-            <div class="row-main">
-              <strong>{{ doc.name }}</strong>
-              <span>{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
+          <div class="flex items-center gap-3 min-h-[3.5rem] p-2.5 rounded-lg hover:bg-surface-50 transition-colors">
+            <div class="flex items-center justify-center flex-none w-9 h-9 bg-red-50 text-red-600 rounded-md text-[0.7rem] font-extrabold">{{ doc.type }}</div>
+            <div class="grid flex-1 min-w-0">
+              <strong class="text-[0.875rem] text-surface-900 truncate font-bold">{{ doc.name }}</strong>
+              <span class="text-[0.75rem] text-surface-500">{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
             </div>
-            <span class="status-pill" [class.status-pill--draft]="doc.status !== 'Published'">
+            <span class="px-2 py-0.5 text-[0.72rem] font-bold rounded-md" [ngClass]="doc.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-surface-50 text-surface-500 border border-surface-200'">
               {{ doc.status }}
             </span>
           </div>
@@ -107,52 +105,50 @@
     </article>
   </section>
 
-  <section class="content-grid">
-    <article class="panel">
-      <div class="panel-header">
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <article class="bg-white border border-surface-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
+      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-surface-100 -mx-4 px-4 -mt-4 pt-4">
         <div>
-          <h2>Top questions</h2>
-          <p>Common employee asks this month.</p>
+          <h2 class="text-[0.95rem] text-surface-900 m-0 font-bold">Top questions</h2>
+          <p class="text-[0.9rem] text-surface-500 m-0 mt-1">Common employee asks this month.</p>
         </div>
-        <button type="button" class="text-button">Review</button>
+        <p-button label="Review" styleClass="!bg-white !border-surface-200 !text-surface-700 hover:!bg-surface-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
       </div>
-      <div class="list-stack custom-scrollbar">
+      <div class="grid gap-1.5 max-h-[15.5rem] overflow-y-auto custom-scrollbar">
         @for (q of topQuestions(); track q.question) {
-          <div class="question-row">
-            <i class="pi pi-question-circle"></i>
-            <span>{{ q.question }}</span>
-            <strong>{{ q.count }}</strong>
+          <div class="flex items-center gap-3 min-h-[3.5rem] p-2.5 rounded-lg hover:bg-surface-50 transition-colors">
+            <i class="pi pi-question-circle text-surface-400"></i>
+            <span class="flex-1 text-[0.875rem] text-surface-900 truncate">{{ q.question }}</span>
+            <strong class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[0.72rem] font-bold rounded-md">{{ q.count }}</strong>
           </div>
         }
       </div>
     </article>
 
-    <article class="panel">
-      <div class="panel-header">
+    <article class="bg-white border border-surface-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
+      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-surface-100 -mx-4 px-4 -mt-4 pt-4">
         <div>
-          <h2>Chat activity</h2>
-          <p>Employee question volume over the last 7 days.</p>
+          <h2 class="text-[0.95rem] text-surface-900 m-0 font-bold">Chat activity</h2>
+          <p class="text-[0.9rem] text-surface-500 m-0 mt-1">Employee question volume over the last 7 days.</p>
         </div>
-        <button type="button" class="text-button">
-          Last 7 days <i class="pi pi-chevron-down"></i>
-        </button>
+        <p-button label="Last 7 days" iconPos="right" icon="pi pi-chevron-down" styleClass="!bg-white !border-surface-200 !text-surface-700 hover:!bg-surface-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
       </div>
-      <div class="line-chart-frame">
+      <div class="relative h-[15.5rem]">
         <p-chart
           type="line"
           [data]="activityChartData"
           [options]="activityChartOptions"
-          class="chart">
+          class="block w-full h-full">
         </p-chart>
       </div>
     </article>
   </section>
 
-  <section class="insight-band">
+  <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white border border-surface-200 rounded-lg p-4">
     <div>
-      <strong>Knowledge base review</strong>
-      <p>8 similar documents can be merged and 3 outdated documents are ready for review.</p>
+      <strong class="text-surface-900 font-bold">Knowledge base review</strong>
+      <p class="text-[0.9rem] text-surface-500 m-0 mt-1">8 similar documents can be merged and 3 outdated documents are ready for review.</p>
     </div>
-    <button type="button">Review suggestions</button>
+    <p-button label="Review suggestions" styleClass="!bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 font-bold !px-3.5 !py-2 !min-h-10 whitespace-nowrap transition-colors"></p-button>
   </section>
 </div>

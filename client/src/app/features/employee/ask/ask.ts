@@ -1,9 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
 import { AskCitation, AskService } from '../../../core/services/ask.service';
 
 @Component({
-  imports: [FormsModule],
+  imports: [FormsModule, ButtonModule],
   selector: 'app-ask',
   styleUrl: './ask.css',
   templateUrl: './ask.html',

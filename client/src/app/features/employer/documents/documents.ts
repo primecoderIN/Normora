@@ -17,11 +17,13 @@ import { UserService } from '../../../core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/services/document-realtime.service';
 
 import { DepartmentService, Department } from '../../../core/services/department.service';
+import { ButtonModule } from 'primeng/button';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, StatCardComponent, DocumentListComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, StatCardComponent, DocumentListComponent, EmptyStateComponent, ButtonModule, MultiSelectModule],
   providers: [MessageService],
   styleUrl: './documents.css',
   templateUrl: './documents.html',
