@@ -1,9 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FileUpload, FileUploadEvent } from 'primeng/fileupload';
 import { Toast } from 'primeng/toast';
-import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
@@ -13,20 +11,30 @@ import { environment } from '../../../../environments/environment';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { DocumentListComponent } from '../../../shared/components/document-list/document-list.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { DocumentUploadModalComponent } from './components/document-upload-modal.component';
+
 import { UserService } from '../../../core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/services/document-realtime.service';
-
 import { DepartmentService, Department } from '../../../core/services/department.service';
 import { ButtonModule } from 'primeng/button';
-import { MultiSelectModule } from 'primeng/multiselect';
 
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, FormsModule, FileUpload, Toast, Dialog, InputText, StatCardComponent, DocumentListComponent, EmptyStateComponent, ButtonModule, MultiSelectModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    Toast,
+    InputText,
+    StatCardComponent,
+    DocumentListComponent,
+    EmptyStateComponent,
+    ButtonModule,
+    DocumentUploadModalComponent,
+  ],
   providers: [MessageService],
-  styleUrl: './documents.css',
   templateUrl: './documents.html',
+  styleUrl: './documents.css',
 })
 export class Documents implements OnInit, OnDestroy {
   private documentService = inject(DocumentService);
@@ -37,7 +45,6 @@ export class Documents implements OnInit, OnDestroy {
   public userService = inject(UserService);
 
   departments = signal<Department[]>([]);
-  selectedUploadDeptIds = signal<string[]>([]);
 
   documents = signal<Document[]>([]);
   uploadUrl = `${environment.apiUrl}/api/documents/upload`;
@@ -61,7 +68,7 @@ export class Documents implements OnInit, OnDestroy {
   readyCount = computed(() => this.countByStatus('Ready'));
   processingCount = computed(() => this.countByStatus('Processing'));
   failedCount = computed(() => this.countByStatus('Failed'));
-  
+
   ngOnInit() {
     this.loadDocuments();
     this.loadDepartments();
@@ -83,13 +90,8 @@ export class Documents implements OnInit, OnDestroy {
 
   loadDocuments() {
     this.documentService.getDocuments().subscribe({
-      next: (docs) => {
-        this.documents.set(docs || []);
-      },
-      error: (err) => {
-        console.error('Failed to load documents', err);
-        // Error handling is now globally covered by API interceptor
-      }
+      next: (docs) => { this.documents.set(docs || []); },
+      error: (err) => { console.error('Failed to load documents', err); }
     });
   }
 
@@ -99,10 +101,18 @@ export class Documents implements OnInit, OnDestroy {
     });
   }
 
-  onUpload(event: any) {
+  onUploadSuccess(event: any) {
     this.messageService.add({ severity: 'info', summary: 'Success', detail: 'Document uploaded successfully' });
     this.showUploadDialog.set(false);
     this.loadDocuments();
+  }
+
+  onUploadError(event: any) {
+    let errorDetail = 'Upload failed.';
+    if (event.error?.error) {
+      errorDetail = typeof event.error.error === 'string' ? event.error.error : 'Invalid file type or size.';
+    }
+    this.messageService.add({ severity: 'error', summary: 'Upload Error', detail: errorDetail });
   }
 
   private onDocumentStatusChanged(event: DocumentStatusChanged) {
@@ -126,33 +136,13 @@ export class Documents implements OnInit, OnDestroy {
     }
   }
 
-  onError(event: any) {
-    let errorDetail = 'Upload failed.';
-    if (event.error?.error) {
-       errorDetail = typeof event.error.error === 'string' ? event.error.error : 'Invalid file type or size.';
-    }
-    this.messageService.add({ severity: 'error', summary: 'Upload Error', detail: errorDetail });
-  }
-
-  onBeforeSend(event: any) {
-    if (this.token()) {
-      event.xhr.setRequestHeader('Authorization', `Bearer ${this.token()}`);
-    }
-    const deptIds = this.selectedUploadDeptIds();
-    if (deptIds && deptIds.length > 0) {
-      deptIds.forEach(id => event.formData.append('departmentIds', id));
-    }
-  }
-
   deleteDocument(id: string) {
     this.documentService.deleteDocument(id).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Document deleted' });
         this.loadDocuments();
       },
-      error: (err) => {
-        console.error('Failed to delete', err);
-      }
+      error: (err) => { console.error('Failed to delete', err); }
     });
   }
 
@@ -164,4 +154,3 @@ export class Documents implements OnInit, OnDestroy {
     return this.documents().filter(document => document.status === status).length;
   }
 }
-
