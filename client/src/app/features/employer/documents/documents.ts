@@ -17,6 +17,7 @@ import { UserService } from '../../../core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/services/document-realtime.service';
 import { DepartmentService, Department } from '../../../core/services/department.service';
 import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-documents',
@@ -31,6 +32,7 @@ import { ButtonModule } from 'primeng/button';
     EmptyStateComponent,
     ButtonModule,
     DocumentUploadModalComponent,
+    SkeletonModule,
   ],
   providers: [MessageService],
   templateUrl: './documents.html',
@@ -51,6 +53,7 @@ export class Documents implements OnInit, OnDestroy {
   token = signal('');
 
   showUploadDialog = signal(false);
+  isLoading = signal(true);
   selectedStatus = signal<'All' | Document['status']>('All');
   searchTerm = signal('');
 
@@ -89,9 +92,10 @@ export class Documents implements OnInit, OnDestroy {
   }
 
   loadDocuments() {
+    this.isLoading.set(true);
     this.documentService.getDocuments().subscribe({
-      next: (docs) => { this.documents.set(docs || []); },
-      error: (err) => { console.error('Failed to load documents', err); }
+      next: (docs) => { this.documents.set(docs || []); this.isLoading.set(false); },
+      error: (err) => { console.error('Failed to load documents', err); this.isLoading.set(false); }
     });
   }
 

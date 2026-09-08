@@ -5,11 +5,12 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { DepartmentListComponent } from './components/department-list.component';
 import { DepartmentFormComponent } from './components/department-form.component';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-departments',
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent],
+  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent, SkeletonModule],
   templateUrl: './departments.html',
   styleUrl: './departments.css',
 })

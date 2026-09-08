@@ -7,11 +7,12 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { UserGroupListComponent } from './components/user-group-list.component';
 import { UserGroupFormComponent } from './components/user-group-form.component';
 import { UserGroupAssignmentsComponent } from './components/user-group-assignments.component';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-user-groups',
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, UserGroupListComponent, UserGroupFormComponent, UserGroupAssignmentsComponent],
+  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, UserGroupListComponent, UserGroupFormComponent, UserGroupAssignmentsComponent, SkeletonModule],
   templateUrl: './user-groups.html',
 })
 export class UserGroups implements OnInit {
