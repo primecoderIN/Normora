@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { PreloadAllModules, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
@@ -16,8 +16,14 @@ export const appConfig: ApplicationConfig = {
     // Catches unhandled errors globally in the browser
     provideBrowserGlobalErrorListeners(),
     
-    // Sets up our routing system using the routes defined in app.routes.ts
-    provideRouter(routes),
+    // Sets up our routing system. withPreloading eagerly downloads lazy chunks in
+    // the background after the initial page loads, so navigating between routes is instant.
+    // withComponentInputBinding allows route params/data to be bound directly via @Input().
+    provideRouter(
+      routes,
+      withPreloading(PreloadAllModules),
+      withComponentInputBinding(),
+    ),
     
     // Configures the HTTP Client used to make API calls to the backend.
     // We attach the 'authInterceptor' here. An interceptor acts like a middleman:

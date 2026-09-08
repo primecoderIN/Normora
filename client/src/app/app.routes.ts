@@ -62,12 +62,23 @@ export const routes: Routes = [
         loadComponent: () => import('./features/employer/employees/employees').then(m => m.Employees)
       },
       {
-        path: 'settings/departments',
-        loadComponent: () => import('./features/employer/departments/departments').then(m => m.Departments)
-      },
-      {
-        path: 'settings/user-groups',
-        loadComponent: () => import('./features/employer/user-groups/user-groups').then(m => m.UserGroups)
+        // Settings is a nested group — each sub-page gets its own lazy chunk
+        path: 'settings',
+        children: [
+          {
+            path: '',
+            redirectTo: 'departments',
+            pathMatch: 'full'
+          },
+          {
+            path: 'departments',
+            loadComponent: () => import('./features/employer/departments/departments').then(m => m.Departments)
+          },
+          {
+            path: 'user-groups',
+            loadComponent: () => import('./features/employer/user-groups/user-groups').then(m => m.UserGroups)
+          }
+        ]
       }
     ]
   },
@@ -95,5 +106,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/employee/saved-answers/saved-answers').then(m => m.SavedAnswers)
       }
     ]
+  },
+  // Wildcard — redirect unknown URLs to login instead of blank screen
+  {
+    path: '**',
+    redirectTo: 'auth/login'
   }
 ];
