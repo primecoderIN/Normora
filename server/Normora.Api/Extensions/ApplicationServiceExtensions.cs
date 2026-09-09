@@ -25,7 +25,8 @@ public static class ApplicationServiceExtensions
             typeof(Normora.Modules.Tenants.ITenantsModuleMarker).Assembly, // Register Tenants module commands
             typeof(Normora.Modules.Auth.IAuthModuleMarker).Assembly, // Register Auth module commands
             typeof(Normora.Modules.Users.IUsersModuleMarker).Assembly, // Register Users module commands
-            typeof(Normora.Modules.Documents.IDocumentsModuleMarker).Assembly // Register Documents module commands
+            typeof(Normora.Modules.Documents.IDocumentsModuleMarker).Assembly, // Register Documents module commands
+            typeof(Normora.Modules.Conversations.IConversationsModuleMarker).Assembly // Register Conversations module commands
         };
 
         services.AddMediatR(cfg => {

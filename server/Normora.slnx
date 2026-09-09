@@ -3,6 +3,7 @@
   <Project Path="Normora.Shared/Normora.Shared.csproj" />
   <Folder Name="/Modules/">
     <Project Path="Modules/Normora.Modules.Auth/Normora.Modules.Auth.csproj" />
+    <Project Path="Modules/Normora.Modules.Conversations/Normora.Modules.Conversations.csproj" />
     <Project Path="Modules/Normora.Modules.Documents/Normora.Modules.Documents.csproj" />
     <Project Path="Modules/Normora.Modules.Tenants/Normora.Modules.Tenants.csproj" />
     <Project Path="Modules/Normora.Modules.Users/Normora.Modules.Users.csproj" />

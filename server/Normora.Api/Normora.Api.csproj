@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Normora.Shared\Normora.Shared.csproj" />
     <ProjectReference Include="..\Modules\Normora.Modules.Auth\Normora.Modules.Auth.csproj" />
+    <ProjectReference Include="..\Modules\Normora.Modules.Conversations\Normora.Modules.Conversations.csproj" />
     <ProjectReference Include="..\Modules\Normora.Modules.Tenants\Normora.Modules.Tenants.csproj" />
     <ProjectReference Include="..\Modules\Normora.Modules.Users\Normora.Modules.Users.csproj" />
     <ProjectReference Include="..\Modules\Normora.Modules.Documents\Normora.Modules.Documents.csproj" />

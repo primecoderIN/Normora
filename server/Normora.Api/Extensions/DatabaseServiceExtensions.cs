@@ -27,6 +27,9 @@ public static class DatabaseServiceExtensions
         services.AddDbContext<DocumentsDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
 
+        services.AddDbContext<Normora.Modules.Conversations.Persistence.ConversationsDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
         services.AddHangfire(configuration => configuration
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()

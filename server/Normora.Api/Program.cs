@@ -34,6 +34,9 @@ using (var scope = app.Services.CreateScope())
 
     var tenantsDbContext = scope.ServiceProvider.GetRequiredService<TenantsDbContext>();
     tenantsDbContext.Database.Migrate();
+
+    var conversationsDbContext = scope.ServiceProvider.GetRequiredService<Normora.Modules.Conversations.Persistence.ConversationsDbContext>();
+    conversationsDbContext.Database.Migrate();
 }
 
 // Global Exception Handler interceptor (returns ProblemDetails JSON instead of crashing)
