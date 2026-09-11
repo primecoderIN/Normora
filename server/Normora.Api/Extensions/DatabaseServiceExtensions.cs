@@ -64,6 +64,12 @@ public static class DatabaseServiceExtensions
             client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
             client.Timeout = TimeSpan.FromMinutes(2);
         });
+        
+        services.AddHttpClient<Normora.Modules.Conversations.Application.Services.IQueryRewriterService, Normora.Modules.Conversations.Infrastructure.Llm.GeminiQueryRewriterService>(client =>
+        {
+            client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
+            client.Timeout = TimeSpan.FromMinutes(2);
+        });
 
         return services;
     }

@@ -44,6 +44,8 @@ public static class ApplicationServiceExtensions
 
         services.AddScoped<DocumentProcessingJob>();
 
+        services.AddScoped<Normora.Modules.Conversations.Application.Services.IContextResolver, Normora.Modules.Conversations.Application.Services.ContextResolver>();
+
         return services;
     }
 }
