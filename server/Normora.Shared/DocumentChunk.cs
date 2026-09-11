@@ -13,5 +13,6 @@ public class DocumentChunk
     public int ChunkIndex { get; set; }
     public string Content { get; set; } = string.Empty;
     public Vector? Embedding { get; set; }
+    public NpgsqlTypes.NpgsqlTsVector? SearchVector { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

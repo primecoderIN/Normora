@@ -52,6 +52,15 @@ public class DocumentsDbContext : DbContext
             entity.HasKey(chunk => chunk.Id);
             entity.Property(chunk => chunk.Content).IsRequired().HasColumnType("text");
             entity.Property(chunk => chunk.Embedding).HasColumnType("vector(768)");
+            
+            // Configure full-text search vector
+            entity.HasGeneratedTsVectorColumn(
+                chunk => chunk.SearchVector,
+                "english",
+                chunk => new { chunk.Content })
+            .HasIndex(chunk => chunk.SearchVector)
+            .HasMethod("GIN");
+
             entity.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentId, chunk.ChunkIndex }).IsUnique();
             entity.HasOne<Document>()
                 .WithMany()
