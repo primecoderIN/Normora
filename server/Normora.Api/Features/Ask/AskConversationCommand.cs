@@ -152,11 +152,8 @@ public sealed class AskConversationCommandHandler(
             // Build paired conversation turns for the generation prompt
             var historyTurns = BuildConversationTurns(budgetedHistory);
 
-            answerText = historyTurns.Count > 0
-                ? await generationService.GenerateConversationalAnswerAsync(
-                    rewrittenQuestion, sources, historyTurns, cancellationToken)
-                : await generationService.GenerateGroundedAnswerAsync(
-                    rewrittenQuestion, sources, cancellationToken);
+            answerText = await generationService.GenerateConversationalAnswerAsync(
+                rewrittenQuestion, sources, historyTurns, cancellationToken);
 
             // ── 7a. Build citations ───────────────────────────────────────────
             citations = topCandidates.Select((c, idx) => new MessageCitation

@@ -21,15 +21,7 @@
     }
 
     <nav class="grid gap-1 overflow-y-auto mt-4 md:mt-0 flex-row md:flex-col overflow-x-auto md:overflow-x-visible custom-scrollbar" aria-label="Employee navigation">
-      <a
-        routerLink="/employee/ask"
-        routerLinkActive="!bg-indigo-600/20 !text-white"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto"
-      >
-        <i class="pi pi-comments text-base w-4"></i>
-        <span>Ask</span>
-      </a>
+
       <a routerLink="/employee/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
         <i class="pi pi-history text-base w-4"></i>
         <span>Conversations</span>
@@ -77,9 +69,7 @@
   <!-- Mobile Nav (Visible only on small screens) -->
   <div class="md:hidden overflow-x-auto bg-surface-900 border-b border-white/10">
     <nav class="flex px-2 py-2 gap-1 custom-scrollbar">
-      <a routerLink="/employee/ask" routerLinkActive="!bg-indigo-600/20 !text-white" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 rounded-lg text-surface-400 whitespace-nowrap text-sm font-medium">
-        <i class="pi pi-comments"></i> Ask
-      </a>
+
       <a routerLink="/employee/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-surface-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-history"></i> Conversations
       </a>

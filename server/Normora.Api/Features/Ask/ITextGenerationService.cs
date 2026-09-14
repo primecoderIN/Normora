@@ -10,18 +10,6 @@ public interface ITextGenerationService
     /// </summary>
     bool IsConfigured { get; }
 
-    /// <summary>
-    /// Generates a grounded answer to a user's question using only the provided document sources.
-    /// Stateless — no conversation history. Used by the legacy <c>AskQuestionQuery</c>.
-    /// </summary>
-    /// <param name="question">The employee's question.</param>
-    /// <param name="sources">The retrieved chunks of text to use as evidence.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A generated answer, or a fallback string if the answer is not in the sources.</returns>
-    Task<string> GenerateGroundedAnswerAsync(
-        string question,
-        IReadOnlyList<AskSource> sources,
-        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Generates a grounded, multi-turn answer that embeds prior conversation turns into the prompt,
