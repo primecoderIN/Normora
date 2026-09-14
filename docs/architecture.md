@@ -22,6 +22,7 @@ Crucially, there is no shared "Infrastructure" layer. Each module completely enc
   - `Normora.Modules.Tenants`: Multi-tenancy logic, membership validation, isolated tenant data (`TenantsDbContext`), and invitation workflows (with 48-hour expiration).
   - `Normora.Modules.Users`: User profiles and management.
   - `Normora.Modules.Documents`: File metadata, isolated data storage (`DocumentsDbContext`), and object storage integration via MinIO.
+  - `Normora.Modules.Conversations`: Conversational RAG pipeline, chat history persistence (`ConversationsDbContext`), AI generation (Gemini), and token budget management.
 
 Modules communicate with each other exclusively through explicitly defined contracts (e.g., MediatR CQRS commands/queries or shared interfaces) rather than directly interacting with each other's databases.
 
@@ -29,6 +30,12 @@ Modules communicate with each other exclusively through explicitly defined contr
 Normora delegates authentication entirely to Keycloak. However, to maintain relational integrity with business data (like Tenant Memberships), the application employs **Just-In-Time (JIT) Provisioning**:
 - When a user successfully authenticates via Keycloak (or Google via Keycloak), their local shadow profile (`User.cs`) is updated or created.
 - The `GetCurrentUserQueryHandler` automatically syncs their latest `DisplayName` and `Email` from the Keycloak JWT token into the local PostgreSQL database on every login, guaranteeing profile consistency without relying on webhooks.
+
+## Observability
+The backend relies on **OpenTelemetry (OTLP)** for a unified observability layer:
+- **Tracing**: Traces HTTP requests (ASP.NET), outgoing HTTP calls (e.g. Gemini), and Entity Framework database queries.
+- **Metrics**: Captures standard process metrics alongside custom application metrics (e.g. LLM tokens consumed, RAG latency, background job completion).
+- **Exporters**: Designed to export to the console during development and a vendor-neutral OTLP collector in production.
 
 ## Frontend Architecture
 The Angular application resides in the `client/` directory and communicates with the .NET backend via REST APIs. During local development and production, requests to `/api/*` are proxied to the backend. The frontend seamlessly handles complex auth flows, including intercepting OAuth callbacks to redirect users accepting invitations.

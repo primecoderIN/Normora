@@ -93,3 +93,9 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Generated EF Core migration `AddTenantBranding`
 - [x] Created Angular `TenantBrandingService` — reads slug from subdomain, fetches branding, injects CSS variables, handles subdomain redirect
 - [x] Updated `app.ts` routing: users with tenants are redirected to `{slug}.localhost:4200`, users with no tenants stay on base `localhost:4200/onboarding`
+
+## ? Completed Conversational RAG Architecture
+- [x] Phase 5: Created Conversations API (POST /api/conversations/{id}/messages) for handling RAG messaging.
+- [x] Phase 6: Built Angular Conversational UI with Tailwind, smart/dumb components, and Signals state management.
+- [x] Phase 7: Integrated OpenTelemetry metrics and tracing for the RAG pipeline (tokens, latency, dependencies).
+- [x] Phase 8: Finalized architecture documentation and added inline codebase documentation.

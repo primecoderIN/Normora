@@ -7,6 +7,8 @@
   <img src="https://img.shields.io/badge/Keycloak-0096D6?logo=keycloak&logoColor=white" alt="Keycloak" />
   <img src="https://img.shields.io/badge/MinIO-C72C48?logo=minio&logoColor=white" alt="MinIO" />
   <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Gemini_Flash-8E75B2?logo=google-gemini&logoColor=white" alt="Google Gemini" />
+  <img src="https://img.shields.io/badge/OpenTelemetry-000000?logo=opentelemetry&logoColor=white" alt="OpenTelemetry" />
 </div>
 <br>
 
@@ -21,6 +23,8 @@ Normora is architected from the ground up to deliver a resilient and performant 
   - **Identity & Access Management**: Fully integrated with **Keycloak** via OAuth2/OpenID Connect to handle secure authentication and robust role-based access control.
   - **Object Storage**: Leverages **MinIO** for S3-compatible, highly performant, and horizontally scalable file storage.
   - **Relational Data**: Powered by **PostgreSQL** for reliable ACID-compliant transactions across isolated module schemas.
+- **Conversational AI & RAG**: Features an advanced Retrieval-Augmented Generation pipeline. Uses **pgvector** for hybrid vector-keyword retrieval (RRF scoring) and the **Gemini 1.5 Flash API** to answer complex queries strictly grounded in secure company documentation.
+- **Observability**: Fully instrumented with **OpenTelemetry (OTLP)** for distributed tracing and granular metrics (e.g. tracking LLM token consumption and DB query latencies).
 - **Containerization & DevOps**: The entire application and its complex dependencies are thoroughly Dockerized. It highlights a focus on developer experience (DX)—a single script provisions the database, IAM server, object storage, API, and the Web Client from scratch.
 
 ## 📚 Documentation
