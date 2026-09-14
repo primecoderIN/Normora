@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { TooltipModule } from 'primeng/tooltip';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ConversationDto } from '@core/services/conversation.service';
 
 @Component({
   selector: 'app-conversation-sidebar',
   standalone: true,
-  imports: [CommonModule, TooltipModule, DatePipe],
+  imports: [CommonModule, TooltipModule, DatePipe, ScrollingModule],
   template: `
     <aside class="flex flex-col flex-none w-65 bg-white border-r border-surface-200 overflow-hidden">
       <!-- Header -->
@@ -28,8 +29,8 @@ import { ConversationDto } from '@core/services/conversation.service';
       </div>
 
       <!-- List -->
-      <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar">
-        @if (isLoading) {
+      <div class="flex-1 overflow-hidden p-2 flex flex-col gap-1">
+        @if (isLoading && conversations.length === 0) {
           <div class="flex flex-col gap-2 p-2">
             @for (n of [1,2,3,4]; track n) {
               <div class="flex flex-col gap-1.5 p-3 bg-surface-50 rounded-lg animate-pulse">
@@ -38,7 +39,7 @@ import { ConversationDto } from '@core/services/conversation.service';
               </div>
             }
           </div>
-        } @else if (error) {
+        } @else if (error && conversations.length === 0) {
           <div class="flex flex-col items-center gap-2 m-auto p-8 text-center text-red-500">
             <i class="pi pi-exclamation-circle text-2xl text-red-300"></i>
             <span class="text-sm">{{ error }}</span>
@@ -46,13 +47,14 @@ import { ConversationDto } from '@core/services/conversation.service';
         } @else if (conversations.length === 0) {
           <div class="flex flex-col items-center gap-2 m-auto p-8 text-center text-surface-400">
             <i class="pi pi-comments text-2xl text-indigo-200"></i>
-            <span class="text-sm">No conversations yet.<br>Click <strong class="text-surface-600">+</strong> to start one.</span>
+            <span class="text-sm">No conversations yet.<br>Ask a question to start one.</span>
           </div>
         } @else {
-          @for (conv of conversations; track conv.id) {
+          <cdk-virtual-scroll-viewport itemSize="60" class="w-full h-full custom-scrollbar" (scrolledIndexChange)="onScrolledIndexChange($event)">
             <button
+              *cdkVirtualFor="let conv of conversations; trackBy: trackById"
               type="button"
-              class="group flex items-center w-full bg-transparent border border-transparent rounded-lg cursor-pointer gap-2 px-2.5 py-2.5 text-left transition-all hover:bg-surface-50 hover:border-surface-200"
+              class="group flex items-center w-full bg-transparent border border-transparent rounded-lg cursor-pointer gap-2 px-2.5 py-2.5 text-left transition-all hover:bg-surface-50 hover:border-surface-200 mb-1"
               [class.!bg-indigo-50]="activeId === conv.id"
               [class.!border-indigo-200]="activeId === conv.id"
               (click)="onSelect.emit(conv.id)"
@@ -76,7 +78,12 @@ import { ConversationDto } from '@core/services/conversation.service';
                 <i class="text-xs" [class.pi-spin]="deletingId === conv.id" [class.pi-spinner]="deletingId === conv.id" [class.pi-trash]="deletingId !== conv.id"></i>
               </button>
             </button>
-          }
+            @if (isLoading) {
+              <div class="flex justify-center p-2">
+                 <i class="pi pi-spinner pi-spin text-surface-400"></i>
+              </div>
+            }
+          </cdk-virtual-scroll-viewport>
         }
       </div>
     </aside>
@@ -92,4 +99,15 @@ export class ConversationSidebarComponent {
   @Output() onSelect = new EventEmitter<string>();
   @Output() onNewConversation = new EventEmitter<void>();
   @Output() onDelete = new EventEmitter<string>();
+  @Output() onLoadMore = new EventEmitter<void>();
+
+  trackById(index: number, item: ConversationDto) {
+    return item.id;
+  }
+
+  onScrolledIndexChange(index: number) {
+    if (this.conversations.length > 0 && index + 10 >= this.conversations.length) {
+      this.onLoadMore.emit();
+    }
+  }
 }

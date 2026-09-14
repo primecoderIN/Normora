@@ -31,18 +31,19 @@ import { ConversationChatComponent } from './components/conversation-chat.compon
         [error]="listError()"
         [deletingId]="isDeletingId()"
         (onSelect)="selectConversation($event)"
-        (onNewConversation)="newConversation()"
+        (onNewConversation)="startBlankConversation()"
         (onDelete)="deleteConversation($event)"
+        (onLoadMore)="loadMoreConversations()"
       />
 
       <!-- Chat Area -->
       <app-conversation-chat
         class="flex flex-col flex-1 min-w-0"
-        [conversation]="activeConversation()"
+        [conversation]="activeConversation()!"
         [isLoading]="isLoadingMessages()"
         [isSending]="isSending()"
         [error]="chatError()"
-        (onNewConversation)="newConversation()"
+        (onNewConversation)="startBlankConversation()"
         (onSendMessage)="sendMessage($event)"
       />
     </div>
@@ -57,6 +58,12 @@ export class Conversations implements OnInit, AfterViewChecked {
   conversations = signal<ConversationDto[]>([]);
   activeConversation = signal<ConversationDetailDto | null>(null);
   
+  // Pagination
+  limit = 20;
+  offset = 0;
+  hasMore = true;
+  isLoadingMore = false;
+
   isLoadingList = signal(false);
   isLoadingMessages = signal(false);
   isSending = signal(false);
@@ -80,6 +87,7 @@ export class Conversations implements OnInit, AfterViewChecked {
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   ngOnInit() {
+    this.startBlankConversation();
     this.loadConversations();
   }
 
@@ -92,19 +100,42 @@ export class Conversations implements OnInit, AfterViewChecked {
 
   // ─── Conversation list ────────────────────────────────────────────────────
 
-  loadConversations() {
-    this.isLoadingList.set(true);
+  loadConversations(append = false) {
+    if (!append) {
+      this.isLoadingList.set(true);
+      this.offset = 0;
+      this.hasMore = true;
+    } else {
+      if (!this.hasMore || this.isLoadingMore) return;
+      this.isLoadingMore = true;
+    }
+
     this.listError.set('');
-    this.conversationService.getConversations().subscribe({
+    this.conversationService.getConversations(this.limit, this.offset).subscribe({
       next: list => {
-        this.conversations.set(list);
-        this.isLoadingList.set(false);
+        if (list.length < this.limit) {
+          this.hasMore = false;
+        }
+        this.offset += list.length;
+        
+        if (append) {
+          this.conversations.update(curr => [...curr, ...list]);
+          this.isLoadingMore = false;
+        } else {
+          this.conversations.set(list);
+          this.isLoadingList.set(false);
+        }
       },
       error: () => {
         this.listError.set('Could not load conversations.');
         this.isLoadingList.set(false);
+        this.isLoadingMore = false;
       },
     });
+  }
+
+  loadMoreConversations() {
+    this.loadConversations(true);
   }
 
   selectConversation(id: string) {
@@ -125,17 +156,16 @@ export class Conversations implements OnInit, AfterViewChecked {
     });
   }
 
-  newConversation() {
-    this.conversationService.createConversation().subscribe({
-      next: conv => {
-        this.conversations.update(list => [conv, ...list]);
-        this.activeConversation.set({ ...conv, messages: [] });
-        this.chatError.set('');
-      },
-      error: () => {
-        this.listError.set('Could not create a new conversation.');
-      },
+  startBlankConversation() {
+    this.activeConversation.set({
+      id: '', // Blank ID indicates it hasn't been created on the backend yet
+      title: 'New conversation',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastMessageAt: new Date().toISOString(),
+      messages: []
     });
+    this.chatError.set('');
   }
 
   deleteConversation(id: string) {
@@ -156,12 +186,28 @@ export class Conversations implements OnInit, AfterViewChecked {
 
   // ─── Send message ────────────────────────────────────────────────────────
 
-  sendMessage(text: string) {
-    const conv = this.activeConversation();
+  async sendMessage(text: string) {
+    let conv = this.activeConversation();
     if (!conv || this.isSending()) return;
 
     this.isSending.set(true);
     this.chatError.set('');
+
+    // Seamless start: if it's a blank slate, create it first
+    if (!conv.id) {
+      try {
+        const newConv = await new Promise<ConversationDto>((resolve, reject) => {
+          this.conversationService.createConversation().subscribe({ next: resolve, error: reject });
+        });
+        conv = { ...newConv, messages: [] };
+        this.activeConversation.set(conv);
+        this.conversations.update(list => [newConv, ...list]);
+      } catch (err) {
+        this.chatError.set('Could not start conversation.');
+        this.isSending.set(false);
+        return;
+      }
+    }
 
     // Optimistically add the user message
     const optimisticUser: MessageDto = {
@@ -195,9 +241,7 @@ export class Conversations implements OnInit, AfterViewChecked {
         this.activeConversation.update(c => c ? { ...c, messages: [...c.messages, assistantMsg] } : c);
 
         // Refresh conversation list to get updated title / lastMessageAt
-        this.conversationService.getConversations().subscribe({
-          next: list => this.conversations.set(list),
-        });
+        this.loadConversations();
 
         this.isSending.set(false);
         this.shouldScrollToBottom = true;
@@ -208,7 +252,6 @@ export class Conversations implements OnInit, AfterViewChecked {
         this.activeConversation.update(c =>
           c ? { ...c, messages: c.messages.filter(m => m.id !== optimisticUser.id) } : c
         );
-        // Put text back into input if possible (in a real app we'd pass it back up)
         this.isSending.set(false);
       },
     });
