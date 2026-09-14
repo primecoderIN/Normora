@@ -15,6 +15,7 @@ builder.Services.AddDatabaseServices(builder.Configuration); // EF Core, MinIO
 builder.Services.AddApplicationServices();                   // MediatR, FluentValidation, Scoped Services
 builder.Services.AddApiServices(builder.Configuration);      // Controllers, CORS, OpenAPI, Exception Handling
 builder.Services.AddIdentityServices(builder.Configuration); // Keycloak JWT Authentication
+builder.Services.AddNormoraTelemetry(builder.Environment);   // OpenTelemetry Tracing & Metrics
 
 var app = builder.Build();
 

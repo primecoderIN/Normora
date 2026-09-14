@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,10 +55,15 @@ public sealed class AskConversationCommandHandler(
     ITextGenerationService generationService,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    IServiceScopeFactory scopeFactory) : IRequestHandler<AskConversationCommand, AskConversationResult>
+    IServiceScopeFactory scopeFactory,
+    IMeterFactory meterFactory) : IRequestHandler<AskConversationCommand, AskConversationResult>
 {
     private const double MinimumSimilarity = 0.35;
     private const double RrfK = 60.0;
+
+    private readonly Counter<long> _tokensConsumed = meterFactory.Create("Normora.Conversations").CreateCounter<long>("tokens.consumed", description: "Estimated LLM tokens consumed");
+    private readonly Histogram<double> _ragDuration = meterFactory.Create("Normora.Conversations").CreateHistogram<double>("rag.duration", unit: "ms", description: "RAG pipeline execution latency");
+    private readonly Counter<long> _autoTitleOperations = meterFactory.Create("Normora.Conversations").CreateCounter<long>("auto_title.operations", description: "Auto-title generation attempts (success or failure)");
 
     /// <summary>
     /// Maximum tokens allocated to conversation history injected into the generation prompt.
@@ -70,6 +77,10 @@ public sealed class AskConversationCommandHandler(
     {
         if (!generationService.IsConfigured)
             throw new InvalidOperationException("Ask Normora requires Gemini generation to be configured.");
+
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
 
         // ── 1. Validate conversation ownership ────────────────────────────────
         var conversation = await conversationsContext.Conversations
@@ -197,6 +208,8 @@ public sealed class AskConversationCommandHandler(
             AutoTitleConversationAsync(conversation.Id, request.Question);
         }
 
+        _tokensConsumed.Add((userMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
+
         return new AskConversationResult(
             request.ConversationId,
             userMessage.Id,
@@ -207,6 +220,12 @@ public sealed class AskConversationCommandHandler(
                 c.FileName,
                 c.ChunkIndex,
                 c.Score)).ToList());
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ragDuration.Record(stopwatch.ElapsedMilliseconds, new KeyValuePair<string, object?>("operation", "ask"));
+        }
     }
 
     // ─── Hybrid Retrieval ────────────────────────────────────────────────────────
@@ -353,10 +372,13 @@ public sealed class AskConversationCommandHandler(
                 conv.Title = title;
                 conv.UpdatedAt = DateTimeOffset.UtcNow;
                 await db.SaveChangesAsync();
+
+                _autoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "success"));
             }
             catch
             {
                 // Titles are best-effort — never surface auto-title failures to the caller
+                _autoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "failure"));
             }
         });
     }
