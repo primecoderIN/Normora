@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Normora.Api.Features.Ask;
 using Normora.Api.Middleware;
 using Normora.Modules.Conversations.Application.Commands;
 using Normora.Modules.Conversations.Application.Dtos;
@@ -44,4 +45,16 @@ public class ConversationsController(IMediator mediator) : ControllerBase
         await mediator.Send(new DeleteConversationCommand(id));
         return NoContent();
     }
+
+    /// <summary>
+    /// Sends a message to a conversation and receives a grounded AI answer.
+    /// </summary>
+    [HttpPost("{id:guid}/messages")]
+    public async Task<IActionResult> AskConversation(Guid id, [FromBody] AskConversationRequest body)
+    {
+        var result = await mediator.Send(new AskConversationCommand(id, body.Question, body.Limit));
+        return Ok(ApiResponse<AskConversationResult>.Ok(result));
+    }
 }
+
+public sealed record AskConversationRequest(string Question, int Limit = 5);

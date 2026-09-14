@@ -45,6 +45,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<DocumentProcessingJob>();
 
         services.AddScoped<Normora.Modules.Conversations.Application.Services.IContextResolver, Normora.Modules.Conversations.Application.Services.ContextResolver>();
+        services.AddSingleton<Normora.Modules.Conversations.Application.Services.ITokenBudgetService, Normora.Modules.Conversations.Application.Services.TokenBudgetService>();
 
         return services;
     }
