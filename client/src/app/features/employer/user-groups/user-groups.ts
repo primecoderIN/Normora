@@ -1,9 +1,9 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserGroupService, UserGroup, UserGroupDetail } from '../../../core/services/user-group.service';
-import { DepartmentService, Department } from '../../../core/services/department.service';
-import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
-import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { UserGroupService, UserGroup, UserGroupDetail } from '@core/services/user-group.service';
+import { DepartmentService, Department } from '@core/services/department.service';
+import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { UserGroupListComponent } from './components/user-group-list.component';
 import { UserGroupFormComponent } from './components/user-group-form.component';
 import { UserGroupAssignmentsComponent } from './components/user-group-assignments.component';

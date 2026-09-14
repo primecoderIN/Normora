@@ -4,8 +4,8 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { InputText } from 'primeng/inputtext';
 import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
-import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
-import { UserService } from '../../../core/services/user.service';
+import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
+import { UserService } from '@core/services/user.service';
 
 @Component({
   selector: 'app-dashboard',

@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { UserService } from '../../core/services/user.service';
+import { UserService } from '@core/services/user.service';
 
 @Component({
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule],

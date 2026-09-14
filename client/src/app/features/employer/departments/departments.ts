@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DepartmentService, Department } from '../../../core/services/department.service';
-import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
-import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { DepartmentService, Department } from '@core/services/department.service';
+import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { DepartmentListComponent } from './components/department-list.component';
 import { DepartmentFormComponent } from './components/department-form.component';
 import { SkeletonModule } from 'primeng/skeleton';

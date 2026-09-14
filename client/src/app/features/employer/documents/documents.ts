@@ -5,17 +5,17 @@ import { Toast } from 'primeng/toast';
 import { InputText } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { DocumentService, Document } from '../../../core/services/document.service';
-import { environment } from '../../../../environments/environment';
+import { DocumentService, Document } from '@core/services/document.service';
+import { environment } from '@env/environment';
 
-import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
-import { DocumentListComponent } from '../../../shared/components/document-list/document-list.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
+import { DocumentListComponent } from '@shared/components/document-list/document-list.component';
+import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { DocumentUploadModalComponent } from './components/document-upload-modal.component';
 
-import { UserService } from '../../../core/services/user.service';
-import { DocumentRealtimeService, DocumentStatusChanged } from '../../../core/services/document-realtime.service';
-import { DepartmentService, Department } from '../../../core/services/department.service';
+import { UserService } from '@core/services/user.service';
+import { DocumentRealtimeService, DocumentStatusChanged } from '@core/services/document-realtime.service';
+import { DepartmentService, Department } from '@core/services/department.service';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 

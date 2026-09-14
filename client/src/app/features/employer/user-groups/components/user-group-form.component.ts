@@ -2,8 +2,8 @@ import { Component, input, output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { UserGroup } from '../../../../core/services/user-group.service';
-import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
+import { UserGroup } from '@core/services/user-group.service';
+import { FormErrorComponent } from '@shared/components/form-error/form-error.component';
 
 @Component({
   selector: 'app-user-group-form',

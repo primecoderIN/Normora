@@ -12,7 +12,7 @@ import {
   ConversationDto,
   ConversationService,
   MessageDto,
-} from '../../../core/services/conversation.service';
+} from '@core/services/conversation.service';
 import { ConversationSidebarComponent } from './components/conversation-sidebar.component';
 import { ConversationChatComponent } from './components/conversation-chat.component';
 

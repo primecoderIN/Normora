@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { TooltipModule } from 'primeng/tooltip';
-import { ConversationDto } from '../../../../core/services/conversation.service';
+import { ConversationDto } from '@core/services/conversation.service';
 
 @Component({
   selector: 'app-conversation-sidebar',
   standalone: true,
   imports: [CommonModule, TooltipModule, DatePipe],
   template: `
-    <aside class="flex flex-col flex-none w-[260px] bg-white border-r border-surface-200 overflow-hidden">
+    <aside class="flex flex-col flex-none w-65 bg-white border-r border-surface-200 overflow-hidden">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 pb-3 border-b border-surface-200 flex-none gap-2">
         <div>

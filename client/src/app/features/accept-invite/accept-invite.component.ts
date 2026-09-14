@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { InvitationService, InvitationDto } from '../../core/services/invitation.service';
+import { InvitationService, InvitationDto } from '@core/services/invitation.service';
 import { take } from 'rxjs';
 
 @Component({

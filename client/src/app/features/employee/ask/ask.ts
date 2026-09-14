@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { AskCitation, AskService } from '../../../core/services/ask.service';
+import { AskCitation, AskService } from '@core/services/ask.service';
 
 @Component({
   imports: [FormsModule, ButtonModule],

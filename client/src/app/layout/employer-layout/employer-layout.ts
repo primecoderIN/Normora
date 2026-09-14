@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { UserService } from '../../core/services/user.service';
+import { UserService } from '@core/services/user.service';
 
 @Component({
   selector: 'app-employer-layout',

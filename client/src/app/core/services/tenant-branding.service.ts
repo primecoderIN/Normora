@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { environment } from '@env/environment';
 import { catchError, of, tap } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
 

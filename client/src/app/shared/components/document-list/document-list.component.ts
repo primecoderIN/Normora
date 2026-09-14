@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Document } from '../../../core/services/document.service';
-import { Department } from '../../../core/services/department.service';
+import { Document } from '@core/services/document.service';
+import { Department } from '@core/services/department.service';
 
 @Component({
   selector: 'app-document-list',

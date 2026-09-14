@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { InvitationService } from '../../../core/services/invitation.service';
+import { InvitationService } from '@core/services/invitation.service';
 import { ButtonModule } from 'primeng/button';
 
 @Component({

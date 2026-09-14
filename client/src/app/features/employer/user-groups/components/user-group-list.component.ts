@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
-import { UserGroup } from '../../../../core/services/user-group.service';
+import { UserGroup } from '@core/services/user-group.service';
 
 @Component({
   selector: 'app-user-group-list',

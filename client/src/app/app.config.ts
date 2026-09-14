@@ -4,10 +4,10 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 import { routes } from './app.routes';
-import { environment } from '../environments/environment';
+import { environment } from '@env/environment';
 import { provideAuth, authInterceptor, LogLevel } from 'angular-auth-oidc-client';
-import { tenantInterceptor } from './core/interceptors/tenant.interceptor';
-import { apiInterceptor } from './core/interceptors/api.interceptor';
+import { tenantInterceptor } from '@core/interceptors/tenant.interceptor';
+import { apiInterceptor } from '@core/interceptors/api.interceptor';
 
 // The appConfig is the central configuration file for our standalone Angular application.
 // It tells Angular what global services (providers) should be available everywhere in the app.

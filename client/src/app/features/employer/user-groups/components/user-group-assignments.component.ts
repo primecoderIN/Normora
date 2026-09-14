@@ -1,9 +1,9 @@
 import { Component, input, output, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
-import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
-import { UserGroup, UserGroupDetail } from '../../../../core/services/user-group.service';
-import { Department } from '../../../../core/services/department.service';
+import { FormErrorComponent } from '@shared/components/form-error/form-error.component';
+import { UserGroup, UserGroupDetail } from '@core/services/user-group.service';
+import { Department } from '@core/services/department.service';
 
 @Component({
   selector: 'app-user-group-assignments',

@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
-import { Department } from '../../../../core/services/department.service';
+import { Department } from '@core/services/department.service';
 
 @Component({
   selector: 'app-department-list',

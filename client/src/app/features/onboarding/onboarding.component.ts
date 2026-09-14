@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TenantService } from '../../core/services/tenant.service';
+import { TenantService } from '@core/services/tenant.service';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 
 @Component({

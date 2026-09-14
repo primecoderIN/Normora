@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FileUpload } from 'primeng/fileupload';
 import { Dialog } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { Department } from '../../../../core/services/department.service';
+import { Department } from '@core/services/department.service';
 
 @Component({
   selector: 'app-document-upload-modal',

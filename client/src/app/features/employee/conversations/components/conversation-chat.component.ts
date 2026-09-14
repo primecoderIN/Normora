@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
-import { ConversationDetailDto } from '../../../../core/services/conversation.service';
+import { ConversationDetailDto } from '@core/services/conversation.service';
 
 @Component({
   selector: 'app-conversation-chat',
@@ -78,7 +78,7 @@ import { ConversationDetailDto } from '../../../../core/services/conversation.se
 
                 <div class="flex flex-col gap-1.5 min-w-0">
                   <!-- Bubble -->
-                  <div class="px-4 py-3 rounded-2xl break-words"
+                  <div class="px-4 py-3 rounded-2xl wrap-break-word"
                        [class.bg-indigo-600]="msg.role === 'User'"
                        [class.text-white]="msg.role === 'User'"
                        [class.rounded-br-sm]="msg.role === 'User'"
@@ -96,7 +96,7 @@ import { ConversationDetailDto } from '../../../../core/services/conversation.se
                     <div class="flex flex-wrap items-center gap-1.5 px-1">
                       <span class="text-[0.68rem] font-bold text-surface-400 tracking-widest uppercase mr-1">Sources</span>
                       @for (cite of msg.citations; track cite.documentId + cite.fileName) {
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-50 border border-surface-200 rounded-full text-surface-600 text-[0.72rem] font-medium max-w-[160px]"
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-50 border border-surface-200 rounded-full text-surface-600 text-[0.72rem] font-medium max-w-40"
                              [pTooltip]="cite.fileName" tooltipPosition="top">
                           <i class="pi pi-file-pdf text-surface-400 text-[0.7rem] flex-none"></i>
                           <span class="truncate">{{ cite.fileName }}</span>
@@ -136,7 +136,7 @@ import { ConversationDetailDto } from '../../../../core/services/conversation.se
                 <i class="pi pi-sparkles"></i>
               </div>
               <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white border border-surface-200 rounded-2xl rounded-bl-sm shadow-sm">
-                <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0s]"></span>
+                <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce animate-delay-none"></span>
                 <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                 <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
               </div>
