@@ -300,26 +300,32 @@ export class Conversations implements OnInit, AfterViewChecked {
                 const evt = JSON.parse(jsonStr);
                 
                 if (evt.type === 'citations') {
+                  // Store metadata — bubble will be created on first text chunk
                   assistantMsg = {
                     id: evt.assistantMessageId,
                     role: 'Assistant',
                     content: '',
                     createdAt: new Date().toISOString(),
                     rewritten: false,
-                    citations: evt.sources.map((s: any) => ({
+                    citations: (evt.sources ?? []).map((s: any) => ({
                       documentId: s.documentId,
                       documentChunkId: '',
                       fileName: s.fileName,
                       score: s.score
                     }))
                   };
-                  this.activeConversation.update(c => c ? { ...c, messages: [...c.messages, assistantMsg!] } : c);
-                  this.shouldScrollToBottom = true;
+                  // Don't push to messages yet — wait for first text chunk
                 } else if (evt.type === 'text') {
                   if (assistantMsg) {
                     assistantMsg.content += evt.text;
                     this.activeConversation.update(c => {
                       if (!c) return c;
+                      const exists = c.messages.some(m => m.id === assistantMsg!.id);
+                      if (!exists) {
+                        // First text chunk — add the bubble now with initial content
+                        return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
+                      }
+                      // Subsequent chunks — update in place
                       const newMessages = [...c.messages];
                       const idx = newMessages.findIndex(m => m.id === assistantMsg!.id);
                       if (idx >= 0) newMessages[idx] = { ...assistantMsg! };
