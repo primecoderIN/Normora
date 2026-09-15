@@ -55,6 +55,29 @@ public class ConversationsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(new AskConversationCommand(id, body.Question, body.Limit));
         return Ok(ApiResponse<AskConversationResult>.Ok(result));
     }
+
+    /// <summary>
+    /// Sends a message to a conversation and receives a grounded AI answer via Server-Sent Events (SSE).
+    /// </summary>
+    [HttpPost("{id:guid}/messages/stream")]
+    public async Task AskConversationStream(Guid id, [FromBody] AskConversationRequest body)
+    {
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("Connection", "keep-alive");
+
+        var stream = mediator.CreateStream(new AskConversationStreamCommand(id, body.Question, body.Limit));
+
+        await foreach (var evt in stream)
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(evt, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            });
+            await Response.WriteAsync($"data: {json}\n\n");
+            await Response.Body.FlushAsync();
+        }
+    }
 }
 
 public sealed record AskConversationRequest(string Question, int Limit = 5);

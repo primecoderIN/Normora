@@ -1,8 +1,9 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
-import { ConversationDetailDto } from '@core/services/conversation.service';
+import { ConversationDetailDto, MessageDto } from '@core/services/conversation.service';
+import { marked } from 'marked';
 
 @Component({
   selector: 'app-conversation-chat',
@@ -14,14 +15,14 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
       @if (!conversation) {
         <!-- Empty State -->
         <div class="flex flex-col flex-1 items-center justify-center gap-4 p-8 text-center bg-surface-50">
-          <div class="flex items-center justify-center w-16 h-16 bg-indigo-50 text-indigo-600 text-2xl rounded-full mb-2">
+          <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-indigo-100 to-purple-100 text-indigo-600 text-3xl rounded-2xl mb-2 shadow-sm">
             <i class="pi pi-comments"></i>
           </div>
           <h2 class="text-xl font-bold text-surface-900 m-0">Ask Normora anything</h2>
           <p class="text-sm text-surface-500 max-w-sm m-0">Select a conversation on the left, or start a new one to get grounded answers from your company documents.</p>
           <button
             type="button"
-            class="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg border-none cursor-pointer transition-colors"
+            class="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg border-none cursor-pointer transition-colors shadow-sm"
             (click)="onNewConversation.emit()"
           >
             <i class="pi pi-plus text-xs"></i> New conversation
@@ -31,6 +32,14 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
         <!-- Chat Header -->
         <header class="flex items-center justify-between p-4 px-5 bg-white border-b border-surface-200 flex-none gap-4">
           <div class="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              class="flex md:hidden items-center justify-center flex-none w-9 h-9 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-lg text-surface-600 cursor-pointer transition-colors"
+              (click)="onToggleSidebar.emit()"
+              aria-label="Toggle sidebar"
+            >
+              <i class="pi pi-bars text-sm"></i>
+            </button>
             <div class="flex items-center justify-center flex-none w-9 h-9 bg-indigo-50 text-indigo-600 rounded-lg text-sm">
               <i class="pi pi-comments"></i>
             </div>
@@ -58,27 +67,29 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
               }
             </div>
           } @else if (conversation.messages.length === 0) {
-            <div class="flex flex-col flex-1 items-center justify-center gap-2 text-center text-surface-400">
-              <i class="pi pi-sparkles text-3xl text-indigo-200"></i>
+            <div class="flex flex-col flex-1 items-center justify-center gap-3 text-center text-surface-400">
+              <div class="w-16 h-16 flex items-center justify-center bg-linear-to-br from-indigo-50 to-purple-50 rounded-2xl">
+                <i class="pi pi-sparkles text-3xl text-indigo-300"></i>
+              </div>
               <p class="text-sm m-0">Ask your first question below.</p>
             </div>
           } @else {
-            @for (msg of conversation.messages; track msg.id) {
-              <div class="flex items-end gap-2.5 max-w-[85%] md:max-w-[75%]"
+            @for (msg of conversation.messages; track msg.id; let i = $index) {
+              <div class="flex items-end gap-2.5 max-w-[85%] md:max-w-[75%] msg-enter"
                    [class.self-end]="msg.role === 'User'"
                    [class.flex-row-reverse]="msg.role === 'User'"
                    [class.self-start]="msg.role === 'Assistant'">
                 
                 <!-- Avatar -->
                 @if (msg.role === 'Assistant') {
-                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-indigo-50 text-indigo-600 rounded-full text-xs">
+                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-indigo-50 to-purple-50 text-indigo-600 rounded-full text-xs shadow-sm">
                     <i class="pi pi-sparkles"></i>
                   </div>
                 }
 
                 <div class="flex flex-col gap-1.5 min-w-0">
                   <!-- Bubble -->
-                  <div class="px-4 py-3 rounded-2xl wrap-break-word"
+                  <div class="group relative px-4 py-3 rounded-2xl wrap-break-word"
                        [class.bg-indigo-600]="msg.role === 'User'"
                        [class.text-white]="msg.role === 'User'"
                        [class.rounded-br-sm]="msg.role === 'User'"
@@ -88,7 +99,26 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
                        [class.border-surface-200]="msg.role === 'Assistant'"
                        [class.rounded-bl-sm]="msg.role === 'Assistant'"
                        [class.shadow-sm]="msg.role === 'Assistant'">
-                    <p class="text-[0.9rem] leading-relaxed whitespace-pre-wrap m-0">{{ msg.content }}</p>
+                    
+                    @if (msg.role === 'User') {
+                      <p class="text-[0.9rem] leading-relaxed whitespace-pre-wrap m-0">{{ msg.content }}</p>
+                    } @else {
+                      <div class="prose-normora text-[0.9rem] leading-relaxed" [innerHTML]="renderMarkdown(msg.content)"></div>
+                    }
+
+                    <!-- Copy button for assistant messages -->
+                    @if (msg.role === 'Assistant' && msg.content) {
+                      <button
+                        type="button"
+                        class="absolute top-2 right-2 flex items-center justify-center w-7 h-7 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-md text-surface-400 hover:text-surface-600 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                        (click)="copyToClipboard(msg.content)"
+                        [pTooltip]="copiedId === msg.id ? 'Copied!' : 'Copy'"
+                        tooltipPosition="top"
+                        [attr.aria-label]="'Copy message'"
+                      >
+                        <i class="text-xs" [class.pi-check]="copiedId === msg.id" [class.text-green-600]="copiedId === msg.id" [class.pi-copy]="copiedId !== msg.id"></i>
+                      </button>
+                    }
                   </div>
 
                   <!-- Citations -->
@@ -131,8 +161,8 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
 
           <!-- Typing Indicator -->
           @if (isSending) {
-            <div class="flex items-end gap-2.5 max-w-[85%] self-start">
-              <div class="flex items-center justify-center flex-none w-8 h-8 bg-indigo-50 text-indigo-600 rounded-full text-xs">
+            <div class="flex items-end gap-2.5 max-w-[85%] self-start msg-enter">
+              <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-indigo-50 to-purple-50 text-indigo-600 rounded-full text-xs shadow-sm">
                 <i class="pi pi-sparkles"></i>
               </div>
               <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white border border-surface-200 rounded-2xl rounded-bl-sm shadow-sm">
@@ -144,9 +174,16 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
           }
 
           @if (error) {
-            <div class="flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[0.82rem]" role="alert">
-              <i class="pi pi-exclamation-circle"></i>
-              {{ error }}
+            <div class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[0.82rem]" role="alert">
+              <i class="pi pi-exclamation-circle flex-none"></i>
+              <span class="flex-1">{{ error }}</span>
+              <button
+                type="button"
+                class="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-[0.78rem] font-semibold rounded-md border-none cursor-pointer transition-colors"
+                (click)="onRetry.emit()"
+              >
+                <i class="pi pi-refresh text-[0.7rem]"></i> Retry
+              </button>
             </div>
           }
 
@@ -158,6 +195,7 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
           <form class="flex items-end gap-2.5 p-2 bg-surface-50 border border-surface-200 rounded-xl transition-all focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100"
                 (ngSubmit)="onSubmit()">
             <textarea
+              #textareaEl
               class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-1.5 text-[0.9rem] text-surface-900 placeholder:text-surface-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
               [(ngModel)]="question"
               name="question"
@@ -166,6 +204,7 @@ import { ConversationDetailDto } from '@core/services/conversation.service';
               placeholder="Ask a question about company policies, benefits, or procedures…"
               [disabled]="isSending"
               (keydown)="onKeydown($event)"
+              (input)="autoResize()"
               aria-label="Your message"
             ></textarea>
             <button
@@ -194,16 +233,23 @@ export class ConversationChatComponent {
 
   @Output() onNewConversation = new EventEmitter<void>();
   @Output() onSendMessage = new EventEmitter<string>();
+  @Output() onRetry = new EventEmitter<void>();
+  @Output() onToggleSidebar = new EventEmitter<void>();
 
   @ViewChild('messagesEnd') private messagesEnd!: ElementRef<HTMLDivElement>;
+  @ViewChild('textareaEl') private textareaEl!: ElementRef<HTMLTextAreaElement>;
 
   question = '';
+  copiedId: string | null = null;
+
+  private markdownCache = new Map<string, string>();
 
   onSubmit() {
     const text = this.question.trim();
     if (text && !this.isSending) {
       this.onSendMessage.emit(text);
       this.question = '';
+      this.resetTextareaHeight();
     }
   }
 
@@ -222,5 +268,52 @@ export class ConversationChatComponent {
 
   formatScore(score: number): string {
     return `${Math.round(score * 100)}%`;
+  }
+
+  renderMarkdown(content: string): string {
+    if (!content) return '';
+    
+    const cached = this.markdownCache.get(content);
+    if (cached) return cached;
+    
+    const html = marked.parse(content, { async: false, breaks: true }) as string;
+    
+    // Only cache completed (non-streaming) messages to avoid stale cache entries
+    if (content.length > 50) {
+      this.markdownCache.set(content, html);
+      // Keep cache size manageable
+      if (this.markdownCache.size > 100) {
+        const firstKey = this.markdownCache.keys().next().value;
+        if (firstKey) this.markdownCache.delete(firstKey);
+      }
+    }
+    
+    return html;
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      // Find the message by content to set copiedId
+      const msg = this.conversation?.messages.find(m => m.content === text);
+      if (msg) {
+        this.copiedId = msg.id;
+        setTimeout(() => this.copiedId = null, 2000);
+      }
+    });
+  }
+
+  autoResize() {
+    const el = this.textareaEl?.nativeElement;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+    }
+  }
+
+  private resetTextareaHeight() {
+    setTimeout(() => {
+      const el = this.textareaEl?.nativeElement;
+      if (el) el.style.height = 'auto';
+    });
   }
 }

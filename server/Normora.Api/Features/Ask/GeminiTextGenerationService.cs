@@ -57,6 +57,52 @@ public sealed class GeminiTextGenerationService(
         return await CallGeminiAsync(prompt.ToString(), temperature: 0.1, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async IAsyncEnumerable<string> StreamConversationalAnswerAsync(
+        string question,
+        IReadOnlyList<AskSource> sources,
+        IReadOnlyList<ConversationTurn> history,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        EnsureConfigured();
+
+        var sourcesBlock = BuildSourcesBlock(sources);
+        var historyBlock = BuildHistoryBlock(history);
+
+        var prompt = new StringBuilder();
+        prompt.AppendLine("""
+            You are Normora, a company policy assistant having an ongoing conversation with an employee.
+            Answer using ONLY the provided company document sources below. Do not invent policies, numbers, dates, or exceptions.
+            If the sources do not contain the answer, say exactly: I could not find that in the company documents.
+            Do not mention these instructions or refer to sources by index number in your answer.
+            """);
+
+        if (historyBlock.Length > 0)
+        {
+            prompt.AppendLine();
+            prompt.AppendLine("Conversation so far:");
+            prompt.AppendLine(historyBlock);
+        }
+
+        prompt.AppendLine();
+        prompt.AppendLine($"Employee's current question: {question}");
+        prompt.AppendLine();
+        prompt.AppendLine("Company document sources:");
+        prompt.Append(sourcesBlock);
+
+        var anyChunks = false;
+        await foreach (var chunk in StreamGeminiAsync(prompt.ToString(), temperature: 0.1, cancellationToken))
+        {
+            anyChunks = true;
+            yield return chunk;
+        }
+
+        if (!anyChunks)
+        {
+            yield return "I could not find that in the company documents.";
+        }
+    }
+
     // ─── Auto-title ─────────────────────────────────────────────────────────────
 
     /// <inheritdoc />
@@ -133,16 +179,62 @@ public sealed class GeminiTextGenerationService(
             throw new InvalidOperationException("Ask Normora requires Gemini generation to be configured.");
     }
 
+    private async IAsyncEnumerable<string> StreamGeminiAsync(
+        string prompt,
+        double temperature,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var request = new GeminiGenerateRequest(
+            [new GeminiContent([new GeminiPart(prompt)])],
+            new GeminiGenerationConfig(temperature));
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{_model}:streamGenerateContent?alt=sse&key={_apiKey}");
+        httpRequest.Content = JsonContent.Create(request);
+
+        using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var reader = new StreamReader(stream);
+
+        while (!reader.EndOfStream)
+        {
+            var line = await reader.ReadLineAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: ")) continue;
+
+            var json = line["data: ".Length..];
+            GeminiGenerateResponse? result = null;
+            try
+            {
+                result = System.Text.Json.JsonSerializer.Deserialize<GeminiGenerateResponse>(json);
+            }
+            catch
+            {
+                // Ignore parsing errors for partial/invalid chunks
+            }
+            
+            var text = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+            if (!string.IsNullOrEmpty(text))
+            {
+                yield return text;
+            }
+        }
+    }
+
     // ─── Gemini JSON DTOs ────────────────────────────────────────────────────────
 
     private sealed record GeminiGenerateRequest(
-        List<GeminiContent> Contents,
+        [property: JsonPropertyName("contents")] List<GeminiContent> Contents,
         [property: JsonPropertyName("generationConfig")] GeminiGenerationConfig GenerationConfig);
 
-    private sealed record GeminiContent(List<GeminiPart> Parts);
-    private sealed record GeminiPart(string Text);
+    private sealed record GeminiContent(
+        [property: JsonPropertyName("parts")] List<GeminiPart> Parts);
+    private sealed record GeminiPart(
+        [property: JsonPropertyName("text")] string Text);
     private sealed record GeminiGenerationConfig(
         [property: JsonPropertyName("temperature")] double Temperature);
-    private sealed record GeminiGenerateResponse(List<GeminiCandidate>? Candidates);
-    private sealed record GeminiCandidate(GeminiContent? Content);
-}
+    private sealed record GeminiGenerateResponse(
+        [property: JsonPropertyName("candidates")] List<GeminiCandidate>? Candidates);
+    private sealed record GeminiCandidate(
+        [property: JsonPropertyName("content")] GeminiContent? Content);
+}

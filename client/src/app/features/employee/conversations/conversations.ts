@@ -15,22 +15,32 @@ import {
 } from '@core/services/conversation.service';
 import { ConversationSidebarComponent } from './components/conversation-sidebar.component';
 import { ConversationChatComponent } from './components/conversation-chat.component';
+import { UserService } from '@core/services/user.service';
 
 @Component({
   selector: 'app-conversations',
   standalone: true,
   imports: [ConversationSidebarComponent, ConversationChatComponent],
   template: `
-    <div class="flex h-full min-h-0 bg-surface-50 rounded-xl border border-surface-200 shadow-sm overflow-hidden">
+    <div class="flex h-full min-h-0 bg-surface-50 rounded-xl border border-surface-200 shadow-sm overflow-hidden relative">
+      <!-- Mobile sidebar overlay -->
+      @if (showMobileSidebar()) {
+        <div class="absolute inset-0 z-20 bg-black/30 md:hidden" (click)="showMobileSidebar.set(false)"></div>
+      }
+
       <!-- Sidebar -->
       <app-conversation-sidebar
-        class="hidden md:flex"
+        class="md:flex"
+        [class.hidden]="!showMobileSidebar()"
+        [class.absolute]="showMobileSidebar()"
+        [class.z-30]="showMobileSidebar()"
+        [class.h-full]="showMobileSidebar()"
         [conversations]="sortedConversations()"
         [activeId]="activeId()"
         [isLoading]="isLoadingList()"
         [error]="listError()"
         [deletingId]="isDeletingId()"
-        (onSelect)="selectConversation($event)"
+        (onSelect)="onSidebarSelect($event)"
         (onNewConversation)="startBlankConversation()"
         (onDelete)="deleteConversation($event)"
         (onLoadMore)="loadMoreConversations()"
@@ -45,18 +55,22 @@ import { ConversationChatComponent } from './components/conversation-chat.compon
         [error]="chatError()"
         (onNewConversation)="startBlankConversation()"
         (onSendMessage)="sendMessage($event)"
+        (onRetry)="retryLastMessage()"
+        (onToggleSidebar)="showMobileSidebar.set(!showMobileSidebar())"
       />
     </div>
   `,
 })
 export class Conversations implements OnInit, AfterViewChecked {
   private conversationService = inject(ConversationService);
+  private userService = inject(UserService);
   @ViewChild(ConversationChatComponent) private chatComponent!: ConversationChatComponent;
 
   // ─── State ────────────────────────────────────────────────────────────────
 
   conversations = signal<ConversationDto[]>([]);
   activeConversation = signal<ConversationDetailDto | null>(null);
+  showMobileSidebar = signal(false);
   
   // Pagination
   limit = 20;
@@ -73,6 +87,7 @@ export class Conversations implements OnInit, AfterViewChecked {
   chatError = signal('');
 
   private shouldScrollToBottom = false;
+  private lastSentText = '';
 
   // ─── Computed ────────────────────────────────────────────────────────────
 
@@ -138,6 +153,11 @@ export class Conversations implements OnInit, AfterViewChecked {
     this.loadConversations(true);
   }
 
+  onSidebarSelect(id: string) {
+    this.showMobileSidebar.set(false);
+    this.selectConversation(id);
+  }
+
   selectConversation(id: string) {
     if (this.activeId() === id) return;
     this.chatError.set('');
@@ -158,7 +178,7 @@ export class Conversations implements OnInit, AfterViewChecked {
 
   startBlankConversation() {
     this.activeConversation.set({
-      id: '', // Blank ID indicates it hasn't been created on the backend yet
+      id: '',
       title: 'New conversation',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -184,7 +204,14 @@ export class Conversations implements OnInit, AfterViewChecked {
     });
   }
 
-  // ─── Send message ────────────────────────────────────────────────────────
+  // ─── Send message (streaming) ───────────────────────────────────────────
+
+  retryLastMessage() {
+    if (this.lastSentText) {
+      this.chatError.set('');
+      this.sendMessage(this.lastSentText);
+    }
+  }
 
   async sendMessage(text: string) {
     let conv = this.activeConversation();
@@ -192,6 +219,7 @@ export class Conversations implements OnInit, AfterViewChecked {
 
     this.isSending.set(true);
     this.chatError.set('');
+    this.lastSentText = text;
 
     // Seamless start: if it's a blank slate, create it first
     if (!conv.id) {
@@ -209,6 +237,8 @@ export class Conversations implements OnInit, AfterViewChecked {
       }
     }
 
+    const conversationId = conv.id;
+
     // Optimistically add the user message
     const optimisticUser: MessageDto = {
       id: crypto.randomUUID(),
@@ -222,38 +252,101 @@ export class Conversations implements OnInit, AfterViewChecked {
     this.activeConversation.update(c => c ? { ...c, messages: [...c.messages, optimisticUser] } : c);
     this.shouldScrollToBottom = true;
 
-    this.conversationService.sendMessage(conv.id, text).subscribe({
-      next: result => {
-        const assistantMsg: MessageDto = {
-          id: result.assistantMessageId,
-          role: 'Assistant',
-          content: result.answer,
-          createdAt: new Date().toISOString(),
-          rewritten: false,
-          citations: result.sources.map(s => ({
-            documentId: s.documentId,
-            documentChunkId: '',
-            fileName: s.fileName,
-            score: s.score,
-          })),
-        };
+    try {
+      const token = await new Promise<string>((resolve) => {
+        this.conversationService.getAccessToken().subscribe(resolve);
+      });
 
-        this.activeConversation.update(c => c ? { ...c, messages: [...c.messages, assistantMsg] } : c);
+      const currentUser = this.userService.currentUser();
+      const tenantId = currentUser?.memberships?.[0]?.tenantId;
 
-        // Refresh conversation list to get updated title / lastMessageAt
-        this.loadConversations();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      if (tenantId) {
+        headers['X-Tenant-Id'] = tenantId;
+      }
 
-        this.isSending.set(false);
-        this.shouldScrollToBottom = true;
-      },
-      error: err => {
-        this.chatError.set(err?.error?.message || 'Something went wrong. Please try again.');
-        // Remove optimistic user message on failure
-        this.activeConversation.update(c =>
-          c ? { ...c, messages: c.messages.filter(m => m.id !== optimisticUser.id) } : c
-        );
-        this.isSending.set(false);
-      },
-    });
+      const response = await fetch(`${this.conversationService.baseUrl}/${conversationId}/messages/stream`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ question: text, limit: 5 })
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      let assistantMsg: MessageDto | null = null;
+      let buffer = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.substring(6);
+              try {
+                const evt = JSON.parse(jsonStr);
+                
+                if (evt.type === 'citations') {
+                  assistantMsg = {
+                    id: evt.assistantMessageId,
+                    role: 'Assistant',
+                    content: '',
+                    createdAt: new Date().toISOString(),
+                    rewritten: false,
+                    citations: evt.sources.map((s: any) => ({
+                      documentId: s.documentId,
+                      documentChunkId: '',
+                      fileName: s.fileName,
+                      score: s.score
+                    }))
+                  };
+                  this.activeConversation.update(c => c ? { ...c, messages: [...c.messages, assistantMsg!] } : c);
+                  this.shouldScrollToBottom = true;
+                } else if (evt.type === 'text') {
+                  if (assistantMsg) {
+                    assistantMsg.content += evt.text;
+                    this.activeConversation.update(c => {
+                      if (!c) return c;
+                      const newMessages = [...c.messages];
+                      const idx = newMessages.findIndex(m => m.id === assistantMsg!.id);
+                      if (idx >= 0) newMessages[idx] = { ...assistantMsg! };
+                      return { ...c, messages: newMessages };
+                    });
+                    this.shouldScrollToBottom = true;
+                  }
+                } else if (evt.type === 'finished') {
+                  // Done
+                }
+              } catch (e) {
+                console.error('Failed to parse SSE chunk', e);
+              }
+            }
+          }
+        }
+      }
+
+      // Refresh list for updated title
+      this.loadConversations();
+    } catch (err: any) {
+      this.chatError.set(err?.message || 'Something went wrong while streaming the response.');
+      this.activeConversation.update(c =>
+        c ? { ...c, messages: c.messages.filter(m => m.id !== optimisticUser.id) } : c
+      );
+    } finally {
+      this.isSending.set(false);
+    }
   }
 }

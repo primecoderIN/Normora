@@ -28,6 +28,16 @@ public interface ITextGenerationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Streams a grounded, multi-turn answer back as an async enumerable of text chunks.
+    /// Used by <c>AskConversationStreamCommand</c> for streaming conversational RAG.
+    /// </summary>
+    IAsyncEnumerable<string> StreamConversationalAnswerAsync(
+        string question,
+        IReadOnlyList<AskSource> sources,
+        IReadOnlyList<ConversationTurn> history,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Generates a concise title (≤ 6 words) for a conversation based on its first user question.
     /// Called once after the first assistant reply is persisted.
     /// </summary>
