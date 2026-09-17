@@ -40,6 +40,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
 
         // 2. Handle domain business rule violations (e.g. duplicate slug, invalid invite state).
         // Maps to 400 Bad Request — the client sent a logically invalid request.
+        // Detail is hidden in production to avoid leaking internal state.
         if (exception is InvalidOperationException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -47,7 +48,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             {
                 Status = StatusCodes.Status400BadRequest,
                 Title = "Bad Request",
-                Detail = exception.Message
+                Detail = env.IsProduction() ? "The request could not be processed." : exception.Message
             }, cancellationToken);
             return true;
         }

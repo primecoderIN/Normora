@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Normora.Modules.Tenants.Application.Invitations;
 using Normora.Shared;
 
@@ -16,6 +17,7 @@ public class InvitationsController(IMediator mediator) : ControllerBase
     /// </summary>
     [HttpGet("{token}")]
     [AllowAnonymous]
+    [EnableRateLimiting("anon")]
     public async Task<IActionResult> GetInvitation(Guid token)
     {
         var query = new GetInvitationQuery(token);

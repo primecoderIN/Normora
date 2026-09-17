@@ -49,6 +49,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("CorsPolicy");
+app.UseRateLimiter();
 
 // Security & Tenancy Pipeline (Order is critical here)
 // First, verify the user's JWT token is valid (Authentication).

@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Api.Middleware;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using System.Threading.RateLimiting;
 
 namespace Normora.Api.Extensions;
 
@@ -24,6 +27,38 @@ public static class ApiServiceExtensions
         services.AddProblemDetails();
 
         services.AddHttpContextAccessor();
+
+        // SEC-2 & SEC-3: Rate Limiting
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            // "ai" limiter: 20 requests per minute, per user
+            options.AddPolicy("ai", context =>
+            {
+                var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+                return RateLimitPartition.GetFixedWindowLimiter(userId, _ =>
+                    new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 20,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    });
+            });
+
+            // "anon" limiter: 5 requests per minute, per IP
+            options.AddPolicy("anon", context =>
+            {
+                var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return RateLimitPartition.GetFixedWindowLimiter(ip, _ =>
+                    new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    });
+            });
+        });
 
         services.AddCors(options =>
         {

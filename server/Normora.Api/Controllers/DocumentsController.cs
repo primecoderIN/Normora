@@ -50,6 +50,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// Limits payload size to 100MB.
     /// </summary>
     [HttpPost("upload")]
+    [RequireTenant("admin")] // Security: only admins may add documents to the knowledge base
     [RequestSizeLimit(100_971_520)] // 100 MB max payload size for ASP.NET
     public async Task<IActionResult> UploadDocument([FromForm] IFormFile file, [FromForm] Guid[]? departmentIds = null)
     {
@@ -66,6 +67,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     }
 
     [HttpDelete("{id}")]
+    [RequireTenant("admin")] // Security: only admins may delete documents from the knowledge base
     public async Task<IActionResult> DeleteDocument(Guid id)
     {
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
