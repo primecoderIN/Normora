@@ -1,8 +1,9 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConversationDetailDto, MessageDto } from '@core/services/conversation.service';
+import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { marked } from 'marked';
 
 @Component({
@@ -106,18 +107,35 @@ import { marked } from 'marked';
                       <div class="prose-normora text-[0.9rem] leading-relaxed" [innerHTML]="renderMarkdown(msg.content)"></div>
                     }
 
-                    <!-- Copy button for assistant messages -->
+                    <!-- Action buttons for assistant messages -->
                     @if (msg.role === 'Assistant' && msg.content) {
-                      <button
-                        type="button"
-                        class="absolute top-2 right-2 flex items-center justify-center w-7 h-7 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-md text-surface-400 hover:text-surface-600 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-                        (click)="copyToClipboard(msg.content)"
-                        [pTooltip]="copiedId === msg.id ? 'Copied!' : 'Copy'"
-                        tooltipPosition="top"
-                        [attr.aria-label]="'Copy message'"
-                      >
-                        <i class="text-xs" [class.pi-check]="copiedId === msg.id" [class.text-green-600]="copiedId === msg.id" [class.pi-copy]="copiedId !== msg.id"></i>
-                      </button>
+                      <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <!-- Bookmark button -->
+                        <button
+                          type="button"
+                          class="flex items-center justify-center w-7 h-7 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-md text-surface-400 hover:text-amber-500 transition-all cursor-pointer"
+                          (click)="toggleSave(msg.id)"
+                          [pTooltip]="isSaved(msg.id) ? 'Unsave' : 'Save answer'"
+                          tooltipPosition="top"
+                          [attr.aria-label]="isSaved(msg.id) ? 'Unsave answer' : 'Save answer'"
+                        >
+                          <i class="text-xs pi"
+                             [class.pi-bookmark-fill]="isSaved(msg.id)"
+                             [class.text-amber-500]="isSaved(msg.id)"
+                             [class.pi-bookmark]="!isSaved(msg.id)"></i>
+                        </button>
+                        <!-- Copy button -->
+                        <button
+                          type="button"
+                          class="flex items-center justify-center w-7 h-7 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-md text-surface-400 hover:text-surface-600 transition-all cursor-pointer"
+                          (click)="copyToClipboard(msg.content)"
+                          [pTooltip]="copiedId === msg.id ? 'Copied!' : 'Copy'"
+                          tooltipPosition="top"
+                          [attr.aria-label]="'Copy message'"
+                        >
+                          <i class="text-xs" [class.pi-check]="copiedId === msg.id" [class.text-green-600]="copiedId === msg.id" [class.pi-copy]="copiedId !== msg.id"></i>
+                        </button>
+                      </div>
                     }
                   </div>
 
@@ -226,6 +244,8 @@ import { marked } from 'marked';
   `
 })
 export class ConversationChatComponent {
+  private savedAnswerService = inject(SavedAnswerService);
+
   @Input({ required: true }) conversation: ConversationDetailDto | null = null;
   @Input({ required: true }) isLoading = false;
   @Input({ required: true }) isSending = false;
@@ -241,6 +261,29 @@ export class ConversationChatComponent {
 
   question = '';
   copiedId: string | null = null;
+
+  /** Set of message IDs that the current user has saved. */
+  private savedMessageIds = signal(new Set<string>());
+
+  isSaved(messageId: string): boolean {
+    return this.savedMessageIds().has(messageId);
+  }
+
+  toggleSave(messageId: string) {
+    if (this.isSaved(messageId)) {
+      // Optimistically remove
+      this.savedMessageIds.update(s => { const n = new Set(s); n.delete(messageId); return n; });
+      this.savedAnswerService.unsaveAnswer(messageId).subscribe({
+        error: () => this.savedMessageIds.update(s => new Set(s).add(messageId))
+      });
+    } else {
+      // Optimistically add
+      this.savedMessageIds.update(s => new Set(s).add(messageId));
+      this.savedAnswerService.saveAnswer(messageId).subscribe({
+        error: () => this.savedMessageIds.update(s => { const n = new Set(s); n.delete(messageId); return n; })
+      });
+    }
+  }
 
   private markdownCache = new Map<string, string>();
 

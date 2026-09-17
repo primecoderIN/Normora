@@ -94,8 +94,21 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Created Angular `TenantBrandingService` — reads slug from subdomain, fetches branding, injects CSS variables, handles subdomain redirect
 - [x] Updated `app.ts` routing: users with tenants are redirected to `{slug}.localhost:4200`, users with no tenants stay on base `localhost:4200/onboarding`
 
-## ? Completed Conversational RAG Architecture
+## ✅ Completed Conversational RAG Architecture
 - [x] Phase 5: Created Conversations API (POST /api/conversations/{id}/messages) for handling RAG messaging.
 - [x] Phase 6: Built Angular Conversational UI with Tailwind, smart/dumb components, and Signals state management.
 - [x] Phase 7: Integrated OpenTelemetry metrics and tracing for the RAG pipeline (tokens, latency, dependencies).
 - [x] Phase 8: Finalized architecture documentation and added inline codebase documentation.
+
+## ✅ Completed Saved Answers
+- [x] `SavedAnswer` domain entity (`TenantId`, `UserId`, `MessageId`, `ConversationId`)
+- [x] Registered `SavedAnswer` in `ConversationsDbContext` with tenant global query filter and unique index `(UserId, MessageId)`
+- [x] `AddSavedAnswers` EF Core migration generated (applied automatically on API startup)
+- [x] `SaveAnswerCommand` — idempotent save of any assistant message
+- [x] `UnsaveAnswerCommand` — idempotent removal by MessageId
+- [x] `GetSavedAnswersQuery` — paginated list with message content + citations joined
+- [x] `SavedAnswerDto` + `CitationDto` records
+- [x] `SavedAnswersController` — `GET /api/saved-answers`, `POST /api/saved-answers`, `DELETE /api/saved-answers/{messageId}`
+- [x] Angular `SavedAnswerService` — thin HttpClient wrapper
+- [x] Bookmark (save/unsave) button added to every assistant message bubble in `ConversationChatComponent` with optimistic toggle
+- [x] Full `SavedAnswers` Angular page — loading skeleton, empty state, answer cards with markdown + citations, optimistic unsave, load-more pagination

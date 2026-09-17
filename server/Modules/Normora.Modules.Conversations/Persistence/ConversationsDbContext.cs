@@ -16,6 +16,7 @@ public class ConversationsDbContext : DbContext
     public DbSet<Conversation> Conversations { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;
     public DbSet<MessageCitation> MessageCitations { get; set; } = null!;
+    public DbSet<SavedAnswer> SavedAnswers { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -60,6 +61,24 @@ public class ConversationsDbContext : DbContext
 
             // Global Query Filter
             entity.HasQueryFilter(c => c.TenantId == _tenantContext.TenantId);
+        });
+
+        modelBuilder.Entity<SavedAnswer>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.HasIndex(s => s.UserId);
+            entity.HasIndex(s => s.ConversationId);
+
+            // Prevent a user from saving the same message twice
+            entity.HasIndex(s => new { s.UserId, s.MessageId }).IsUnique();
+
+            entity.HasOne(s => s.Message)
+                .WithMany()
+                .HasForeignKey(s => s.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Global Query Filter for Tenant Data Isolation
+            entity.HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
         });
     }
 
