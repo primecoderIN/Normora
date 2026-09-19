@@ -3,9 +3,19 @@
   "realm": "normora",
   "displayName": "Normora Identity",
   "enabled": true,
+  "loginTheme": "normora",
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
+  "verifyEmail": false,
   "bruteForceProtected": true,
   "failureFactor": 5,
   "sslRequired": "external",
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "auth@normora.com",
+    "fromDisplayName": "Normora Auth"
+  },
   "roles": {
     "realm": [
       {

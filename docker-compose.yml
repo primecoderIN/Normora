@@ -44,6 +44,7 @@ services:
     command: start-dev --import-realm
     volumes:
       - ${KEYCLOAK_REALM_EXPORT:-./infrastructure/keycloak/realm-export.json}:/opt/keycloak/data/import/realm-export.json
+      - ./keycloak-theme/normora:/opt/keycloak/themes/normora
     ports:
       - "8080:8080"
     depends_on:

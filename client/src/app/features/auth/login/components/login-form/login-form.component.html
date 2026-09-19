@@ -42,49 +42,12 @@
         <div class="flex-1 h-px bg-surface-200"></div>
       </div>
 
-      <!-- Form (Triggers Keycloak Redirect) -->
-      <div class="flex flex-col gap-4 mb-6">
-        <div class="flex flex-col gap-1.5">
-          <label class="text-[13px] font-semibold text-surface-900">Email address</label>
-          <span class="p-input-icon-left w-full">
-            <i class="pi pi-envelope text-surface-400 text-sm"></i>
-            <input 
-              pInputText 
-              type="email" 
-              [(ngModel)]="email" 
-              placeholder="you@company.com" 
-              class="w-full rounded-lg! bg-white! border-surface-200! hover:border-indigo-400! focus:border-indigo-500! focus:ring-1! focus:ring-indigo-500! text-[14px] py-2.5!" />
-          </span>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label class="text-[13px] font-semibold text-surface-900">Password</label>
-          <span class="p-input-icon-left p-input-icon-right w-full">
-            <i class="pi pi-lock text-surface-400 text-sm"></i>
-            <input 
-              pInputText 
-              type="password" 
-              [(ngModel)]="password" 
-              placeholder="Enter your password" 
-              class="w-full rounded-lg! bg-white! border-surface-200! hover:border-indigo-400! focus:border-indigo-500! focus:ring-1! focus:ring-indigo-500! text-[14px] py-2.5!" />
-            <i class="pi pi-eye text-surface-400 cursor-pointer hover:text-surface-600 transition-colors text-sm"></i>
-          </span>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between mb-8">
-        <div class="flex items-center gap-2">
-          <p-checkbox [(ngModel)]="keepMeSignedIn" [binary]="true" inputId="keepSignedIn"></p-checkbox>
-          <label for="keepSignedIn" class="text-[13px] font-medium text-surface-700 cursor-pointer">Keep me signed in</label>
-        </div>
-        <a href="#" class="text-[13px] font-medium text-indigo-600 hover:text-indigo-700 hover:underline">Forgot password?</a>
-      </div>
-
+      <!-- Email Login (Triggers Keycloak Redirect) -->
       <button 
         class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-md shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[14px]"
         (click)="submitLogin()">
-        Sign in
-        <i class="pi pi-arrow-right text-[11px]"></i>
+        <i class="pi pi-envelope text-[14px]"></i>
+        Continue with Email
       </button>
     </div>
   } @else {

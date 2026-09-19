@@ -1325,3 +1325,41 @@ These are extension points, not MVP requirements.
 > **Store the original source, process it asynchronously, preserve document structure, create deterministic chunks, generate embeddings, retrieve only authorized current knowledge, and use Gemini to generate a grounded answer from retrieved evidence.**
 
 Normora should remain a focused employer document-management experience plus a trustworthy employee knowledge-assistant experience, while the architecture provides enough depth to learn production-grade software engineering.
+
+## 13. BFF (Backend-For-Frontend) Architecture Evaluation (Draft)
+
+As part of Phase 4 (Enterprise Readiness), we evaluated whether Normora should migrate from a **Public Client SPA** architecture to a **Backend-For-Frontend (BFF)** architecture.
+
+### 13.1. Current Architecture: Public Client SPA
+Currently, the Angular frontend handles the OIDC flow directly (via `angular-auth-oidc-client`). 
+* **Tokens**: The JWT Access Token and Refresh Token are stored in the browser (usually `localStorage` or `sessionStorage`).
+* **Security**: Relies on PKCE to secure the authorization code exchange, which is the standard recommendation for modern SPAs.
+* **Drawbacks**: Storing tokens in the browser makes them potentially vulnerable to Cross-Site Scripting (XSS). If a malicious script runs in the browser, it can extract the tokens and impersonate the user.
+
+### 13.2. Proposed Architecture: Backend-For-Frontend (BFF)
+In a BFF architecture, the Angular frontend is completely stripped of OIDC logic. A lightweight backend server (the "BFF") sits between Angular and Keycloak/Normora.Api.
+* **Tokens**: The BFF handles the OIDC exchange and stores the Access/Refresh tokens securely in its own server-side session or memory.
+* **Cookies**: The BFF issues a standard, encrypted, HTTP-Only, SameSite `cookie` to the Angular frontend.
+* **Security**: Because the cookie is `HTTP-Only`, JavaScript (and therefore XSS attacks) cannot read it. This is widely considered the most secure way to handle SPA authentication today.
+
+### 13.3. Implementation Options for Normora
+
+#### Option A: ASP.NET Core as the BFF
+Since we already have an ASP.NET Core API, we can configure it to act as both the resource server *and* the BFF.
+* We would install `Duende.BFF` or rely on native `Microsoft.AspNetCore.Authentication.OpenIdConnect`.
+* The API would handle the login redirect to Keycloak.
+* The API would issue an HTTP-Only cookie to the frontend.
+
+#### Option B: Node.js / Next.js BFF (If we ever migrate from Angular)
+If the frontend was a meta-framework like Next.js, the Node server would act as the BFF natively (e.g., via NextAuth). For Angular, this would require spinning up a dedicated Express proxy just for auth.
+
+### 13.4. Recommendation for Normora
+**Verdict: Postpone until required by enterprise compliance.**
+
+While BFF is technically more secure against XSS, our current implementation using **OIDC + PKCE** is highly robust and perfectly acceptable for V1.
+Implementing a BFF requires a significant architectural shift:
+1. Stripping `angular-auth-oidc-client` from the frontend.
+2. Handling anti-CSRF tokens for the new HTTP-Only cookies.
+3. Dealing with CORS and cookie domain restrictions if the frontend (`localhost:4200`) and backend (`localhost:5000`) are on different ports/domains during development.
+
+**Next Steps**: We will stick with the Public Client + PKCE architecture for now. If Enterprise clients specifically request HTTP-Only cookie auth for compliance reasons (e.g., strict SOC2 or HIPAA requirements), we will pivot to the `Duende.BFF` model in ASP.NET Core.
