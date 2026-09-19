@@ -4,6 +4,8 @@ import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { UserService } from '@core/services/user.service';
+import { InvitationService } from '@core/services/invitation.service';
+import { signal } from '@angular/core';
 
 @Component({
   selector: 'app-employer-layout',
@@ -16,6 +18,9 @@ export class EmployerLayout {
   private oidcSecurityService = inject(OidcSecurityService);
   public userService = inject(UserService);
   private router = inject(Router);
+  private invitationService = inject(InvitationService);
+  
+  isAccepting = signal(false);
 
   // Retrieve the currently active workspace, falling back to their first available workspace if none is explicitly selected
   get activeWorkspace() {
@@ -48,6 +53,18 @@ export class EmployerLayout {
   logout() {
     this.oidcSecurityService.getIdToken().subscribe((idToken) => {
       this.oidcSecurityService.logoff('', { customParams: { id_token_hint: idToken } }).subscribe();
+    });
+  }
+
+  acceptInvite(token: string) {
+    if (this.isAccepting()) return;
+    this.isAccepting.set(true);
+    this.invitationService.acceptInvitation(token).subscribe({
+      next: () => window.location.reload(),
+      error: (err: any) => {
+        alert(err.error?.message || 'Failed to accept invitation');
+        this.isAccepting.set(false);
+      }
     });
   }
 }

@@ -19,21 +19,23 @@ import { Department } from '@core/services/department.service';
       [style]="{ width: '450px' }">
       
       <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-semibold text-surface-700">Departments (Optional)</label>
-          <p-multiselect
-            [options]="departments()"
-            [ngModel]="selectedDeptIds()"
-            (ngModelChange)="selectedDeptIds.set($event)"
-            optionLabel="name"
-            optionValue="id"
-            placeholder="Company wide (Select departments to restrict access)"
-            [filter]="true"
-            display="chip"
-            styleClass="w-full">
-          </p-multiselect>
-          <small class="text-xs text-surface-500">If no departments are selected, all employees can search this document.</small>
-        </div>
+        @if (!isPersonal()) {
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-surface-700">Departments (Optional)</label>
+            <p-multiselect
+              [options]="departments()"
+              [ngModel]="selectedDeptIds()"
+              (ngModelChange)="selectedDeptIds.set($event)"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="Company wide (Select departments to restrict access)"
+              [filter]="true"
+              display="chip"
+              styleClass="w-full">
+            </p-multiselect>
+            <small class="text-xs text-surface-500">If no departments are selected, all employees can search this document.</small>
+          </div>
+        }
 
         <p-fileupload
           name="file"
@@ -58,6 +60,7 @@ export class DocumentUploadModalComponent {
   departments = input.required<Department[]>();
   uploadUrl = input.required<string>();
   token = input.required<string>();
+  isPersonal = input<boolean>(false);
 
   visibleChange = output<boolean>();
   uploadSuccess = output<any>();

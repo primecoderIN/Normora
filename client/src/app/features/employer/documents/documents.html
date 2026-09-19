@@ -92,6 +92,7 @@
     [departments]="departments()"
     [uploadUrl]="uploadUrl"
     [token]="token()"
+    [isPersonal]="isPersonalWorkspace()"
     (uploadSuccess)="onUploadSuccess($event)"
     (uploadError)="onUploadError($event)">
   </app-document-upload-modal>

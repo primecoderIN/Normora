@@ -77,6 +77,8 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] **pgAdmin Integration**: Added pgAdmin 4 to the Docker Compose stack for easy database management, complete with automated `.env` setup.
 - [x] **Authentication UX**: Upgraded PrimeNG imports to the modern standalone syntax (v18+). Added logout capability directly to the Onboarding component.
 - [x] **Invitation Flow Resiliency**: Intercepted the OAuth callback to gracefully handle pending invitations (`localStorage.getItem('pending_invitation')`), overriding standard routing if the user is accepting an invite. Implemented granular UI error handling for expired links.
+- [x] **Pending Invitations Banner**: Added a dynamic banner to the Employer and Employee layouts that surfaces pending invitations for users who bypass the onboarding screen (i.e. those with existing tenant memberships).
+- [x] **Personal Workspace Uploads**: Modified the Document Upload modal to conditionally hide the "Departments" assignment dropdown when the active workspace is a Personal Workspace, reflecting the lack of departmental structure in that context.
 - [x] **Secrets Management**: Removed `realm-export-live.json` from git tracking to prevent leaking production secrets.
 
 ## ✅ Security Hardening

@@ -57,6 +57,14 @@ export class Documents implements OnInit, OnDestroy {
   selectedStatus = signal<'All' | Document['status']>('All');
   searchTerm = signal('');
 
+  isPersonalWorkspace = computed(() => {
+    const user = this.userService.currentUser();
+    if (!user) return false;
+    const activeId = this.userService.activeTenantId();
+    const ws = user.memberships.find(m => m.tenantId === activeId) || user.memberships[0];
+    return ws?.isPersonal ?? false;
+  });
+
   filteredDocuments = computed(() => {
     const status = this.selectedStatus();
     const query = this.searchTerm().trim().toLowerCase();
