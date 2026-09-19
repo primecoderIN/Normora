@@ -28,11 +28,19 @@ Normora is architected from the ground up to deliver a resilient and performant 
 - **Containerization & DevOps**: The entire application and its complex dependencies are thoroughly Dockerized. It highlights a focus on developer experience (DX)—a single script provisions the database, IAM server, object storage, API, and the Web Client from scratch.
 
 ## 📚 Documentation
-Dive deeper into the project by checking out our dedicated documentation suite:
 
-- 📖 [**Project Overview**](./docs/overview.md) - High-level summary of features and use cases.
-- 🏗️ [**Architecture Details**](./docs/architecture.md) - Deep dive into the Modular Monolith, technical stack, and system design decisions.
-- 🚀 [**Getting Started**](./docs/getting_started.md) - A step-by-step guide to spinning up the environment locally using Docker.
+For a deeper dive into the architectural decisions, database schema, and API contracts, please refer to the dedicated documentation files:
+
+- [**General Onboarding & Setup**](./docs/getting_started.md) — Quick-start guide, local environment configuration, and test account credentials.
+- [**Project Overview & Features**](./docs/overview.md) — High-level summary of features, use cases, and multi-tenant capabilities.
+- [**Backend Architecture & Patterns**](./docs/architecture.md) — MediatR request lifecycles, modular monolith design, and project dependency rules.
+- [**Authorization & Security Guide**](./docs/architecture.md#application-security-bola--bfla) — Comprehensive guide to BOLA and BFLA mitigation and the tenant-level RBAC enforcement.
+- [**Backend Onboarding & .NET Course**](./docs/backend_onboarding.md) — In-depth C#/.NET crash course tailored for developers transitioning from JS/Go/Python.
+- [**Frontend Onboarding Guide**](./docs/frontend_onboarding.md) — Angular 18 architecture, multi-tenant subdomain routing, Signal usage, and state management.
+- [**API Endpoints Catalog**](./docs/api_endpoints.md) — A comprehensive list of routes, parameters, authorization checks, and standard envelopes.
+- [**Database Schema & Entity Relationships**](./docs/database_schema.md) — Detailed mapping of module schemas, indexes, soft delete behaviors, and multi-tenant relationships.
+- [**How Normora Works (Access & RAG)**](./docs/how_normora_works.md) — End-to-end guide on document sharing, User Group isolation, and secure Conversational AI retrieval.
+- [**Conversational RAG Deep-Dive**](./docs/conversational_rag_architecture.md) — Technical breakdown of the multi-turn conversational AI pipeline, context resolution, and hybrid retrieval.
 
 ## ⚡ Quick Start
 
