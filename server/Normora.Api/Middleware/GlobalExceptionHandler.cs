@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Normora.Shared;
+using Normora.Shared.Constants;
 
 namespace Normora.Api.Middleware;
 
@@ -26,7 +27,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
 
-            var response = ApiResponse<Dictionary<string, string[]>>.Failure("One or more validation errors occurred.", errors);
+            var response = ApiResponse<Dictionary<string, string[]>>.Failure(ApiMessages.ValidationFailed, errors);
 
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);
@@ -39,7 +40,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is InvalidOperationException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            var message = env.IsProduction() ? "The request could not be processed." : exception.Message;
+            var message = env.IsProduction() ? ApiMessages.BadRequest : exception.Message;
             await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
@@ -56,7 +57,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         // 4. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
         logger.LogError(exception, "An unhandled exception occurred.");
         
-        var serverErrorMessage = env.IsProduction() ? "An unexpected error occurred. Please try again later." : exception.Message;
+        var serverErrorMessage = env.IsProduction() ? ApiMessages.InternalServerError : exception.Message;
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(serverErrorMessage), cancellationToken);
         return true;

@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -16,7 +17,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[RequireTenant("admin", "employee")]
+[RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
 [Produces("application/json")]
 public class DocumentsController(IMediator mediator, ITenantContext tenantContext) : ControllerBase
 {
@@ -65,7 +66,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// <param name="departmentIds">Optional department IDs to assign to the document.</param>
     /// <returns>The newly created document record.</returns>
     [HttpPost("upload")]
-    [RequireTenant("admin")] // Security: only admins may add documents to the knowledge base
+    [RequireTenant(TenantRoles.Admin)] // Security: only admins may add documents to the knowledge base
     [RequestSizeLimit(100_971_520)] // 100 MB max payload size for ASP.NET
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<DocumentDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
@@ -90,7 +91,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// <param name="id">The unique identifier of the document to delete.</param>
     /// <returns>A success message if deleted.</returns>
     [HttpDelete("{id}")]
-    [RequireTenant("admin")] // Security: only admins may delete documents from the knowledge base
+    [RequireTenant(TenantRoles.Admin)] // Security: only admins may delete documents from the knowledge base
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
@@ -106,3 +107,4 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
         return Ok(ApiResponse.Ok("Document deleted successfully."));
     }
 }
+

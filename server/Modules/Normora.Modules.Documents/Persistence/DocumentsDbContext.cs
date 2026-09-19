@@ -55,7 +55,7 @@ public class DocumentsDbContext : DbContext
             
             // Configure full-text search vector
             entity.HasGeneratedTsVectorColumn(
-                chunk => chunk.SearchVector,
+                chunk => chunk.SearchVector!,
                 "english",
                 chunk => new { chunk.Content })
             .HasIndex(chunk => chunk.SearchVector)

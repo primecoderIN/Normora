@@ -34,7 +34,7 @@ public static class ApiServiceExtensions
                     .Where(e => e.Value?.Errors.Count > 0)
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
 
-                var response = Normora.Shared.ApiResponse<System.Collections.Generic.Dictionary<string, string[]>>.Failure("One or more validation errors occurred.", errors);
+                var response = Normora.Shared.ApiResponse<System.Collections.Generic.Dictionary<string, string[]>>.Failure(Normora.Shared.Constants.ApiMessages.ValidationFailed, errors);
                 return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(response);
             };
         });

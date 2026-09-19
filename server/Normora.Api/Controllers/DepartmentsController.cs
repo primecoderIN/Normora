@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
@@ -12,7 +13,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[RequireTenant("admin")] // Only admins can manage departments
+[RequireTenant(TenantRoles.Admin)] // Only admins can manage departments
 [Produces("application/json")]
 public class DepartmentsController(IMediator mediator) : ControllerBase
 {
@@ -101,3 +102,4 @@ public record CreateDepartmentRequest(string Name);
 /// Request payload for updating a department.
 /// </summary>
 public record UpdateDepartmentRequest(string Name);
+

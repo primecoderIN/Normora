@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -64,7 +65,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
     /// <param name="id">The unique identifier of the tenant to suspend.</param>
     /// <returns>A success message if the suspension was successful.</returns>
     [HttpPost("{id}/suspend")]
-    [RequireTenant("admin")]
+    [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
@@ -90,7 +91,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
     /// <param name="request">The payload containing the email address of the user to invite.</param>
     /// <returns>The invitation token that was generated.</returns>
     [HttpPost("invitations")]
-    [RequireTenant("admin")]
+    [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Guid>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
@@ -106,3 +107,4 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
 public record InviteEmployeeRequest(string Email);
 
 public record CreateTenantRequest(string Name, string Slug);
+

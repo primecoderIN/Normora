@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -13,7 +14,7 @@ namespace Normora.Modules.Conversations.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[RequireTenant("employee", "admin")]
+[RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
 [EnableRateLimiting("ai")]
 [Produces("application/json")]
 public class ConversationsController(IMediator mediator) : ControllerBase
@@ -119,3 +120,4 @@ public class ConversationsController(IMediator mediator) : ControllerBase
 }
 
 public sealed record AskConversationRequest(string Question, int Limit = 5);
+

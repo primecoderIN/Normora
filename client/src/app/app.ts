@@ -6,6 +6,7 @@ import { TenantBrandingService } from './core/services/tenant-branding.service';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { NotificationRealtimeService } from './core/services/notification-realtime.service';
+import { TenantRoles } from './core/constants/tenant-roles';
 
 // This is the Root Component of our Angular application. 
 // Think of it as the main container that holds everything else.
@@ -104,7 +105,7 @@ export class App implements OnInit {
               const firstMembership = memberships.find(m => !m.isPersonal) || memberships[0];
               this.authInitializing.set(false);
               
-              if (firstMembership.role === 'admin') {
+              if (firstMembership.role === TenantRoles.Admin) {
                 this.router.navigate(['/employer/dashboard']);
               } else {
                 this.router.navigate(['/employee/ask']);

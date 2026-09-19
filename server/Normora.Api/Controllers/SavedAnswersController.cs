@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
@@ -14,7 +15,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/saved-answers")]
-[RequireTenant("employee", "admin")]
+[RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
 [Produces("application/json")]
 public class SavedAnswersController(IMediator mediator) : ControllerBase
 {
@@ -72,3 +73,4 @@ public class SavedAnswersController(IMediator mediator) : ControllerBase
 
 /// <summary>Request payload for saving an answer.</summary>
 public record SaveAnswerRequest(Guid MessageId);
+

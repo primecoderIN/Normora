@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
@@ -12,7 +13,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/user-groups")]
-[RequireTenant("admin")] // Only admins can manage user groups
+[RequireTenant(TenantRoles.Admin)] // Only admins can manage user groups
 [Produces("application/json")]
 public class UserGroupsController(IMediator mediator) : ControllerBase
 {
@@ -101,3 +102,4 @@ public record CreateUserGroupRequest(string Name, List<Guid>? DepartmentIds);
 /// Request payload for updating a user group.
 /// </summary>
 public record UpdateUserGroupRequest(string Name, List<Guid>? DepartmentIds);
+

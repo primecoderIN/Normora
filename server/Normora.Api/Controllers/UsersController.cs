@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +37,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     /// <param name="userId">The unique identifier of the user.</param>
     /// <returns>The user's assigned departments and user groups.</returns>
     [HttpGet("{userId}/assignments")]
-    [RequireTenant("admin")]
+    [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<UserAssignmentsDto>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
@@ -54,7 +55,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     /// <param name="request">The payload containing the new department and group IDs.</param>
     /// <returns>A success message if the update was successful.</returns>
     [HttpPut("{userId}/assignments")]
-    [RequireTenant("admin")]
+    [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
@@ -74,3 +75,4 @@ public class UsersController(IMediator mediator) : ControllerBase
 }
 
 public record UpdateUserAssignmentsRequest(List<Guid>? DepartmentIds, List<Guid>? UserGroupIds);
+
