@@ -14,6 +14,7 @@ public sealed class TokenBudgetService : ITokenBudgetService
     private const int MessageOverheadTokens = 5;
 
     /// <inheritdoc />
+    // Quickly estimate the token count using the 1 token ≈ 4 characters heuristic instead of pulling in a heavy tokenizer library
     public int EstimateTokenCount(string text) =>
         string.IsNullOrEmpty(text) ? 0 : (int)Math.Ceiling(text.Length / (double)CharsPerToken);
 
@@ -25,7 +26,7 @@ public sealed class TokenBudgetService : ITokenBudgetService
         if (history.Count == 0 || tokenBudget <= 0)
             return history;
 
-        // Walk backwards from most-recent to oldest, accumulating messages until budget is exhausted.
+        // Walk backwards from the most recent message, collecting history until the token limit is hit so we don't overwhelm the LLM
         // Using LinkedList<T> so AddFirst is O(1) and we get chronological order for free.
         var result = new LinkedList<ConversationMessageContext>();
         int used = 0;

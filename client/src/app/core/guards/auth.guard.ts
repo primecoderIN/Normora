@@ -7,6 +7,7 @@ export const authGuard: CanActivateFn = () => {
   const oidcSecurityService = inject(OidcSecurityService);
   const router = inject(Router);
 
+  // Redirect unauthenticated users back to the Keycloak login screen immediately
   return oidcSecurityService.isAuthenticated$.pipe(
     take(1),
     map(({ isAuthenticated }) => {

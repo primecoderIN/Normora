@@ -22,6 +22,7 @@ public class GeminiQueryRewriterService(
             throw new InvalidOperationException("Gemini generation is not configured.");
         }
 
+        // Skip rewriting if this is the very first question in the conversation since there's no context yet
         if (conversationHistory.Count == 0)
         {
             return currentQuestion; // No history to rewrite from
@@ -29,6 +30,7 @@ public class GeminiQueryRewriterService(
 
         var historyText = string.Join("\n", conversationHistory.Select(m => $"{m.Role}: {m.Content}"));
 
+        // Ask the LLM to rewrite the user's latest query into a standalone question using the chat history so we can search the vector DB effectively
         var prompt = $"""
             Given the following conversation history and a follow-up user question, rephrase the follow-up question to be a standalone question that can be used to query a vector database.
             Do NOT answer the question. Only return the standalone question. If the question does not need rewriting, return it exactly as is.

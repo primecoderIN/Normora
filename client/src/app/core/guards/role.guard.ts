@@ -8,8 +8,7 @@ export const roleGuard: CanActivateFn = (route) => {
   const router = inject(Router);
   const userService = inject(UserService);
 
-  // Routes use the UI role name "employer" while the backend membership role is "admin".
-  // A user may access the route when any of their memberships grants that effective role.
+  // Enforce route protection by verifying the user has the required access level across any of their active workspaces
   const requiredRole = route.data['role'] as string;
 
   // We rely on the CurrentUser being already fetched in the rootGuard or auth flow

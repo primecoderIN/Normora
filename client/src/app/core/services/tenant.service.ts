@@ -15,6 +15,7 @@ export class TenantService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/tenants`;
 
+  // Submit a new organization creation request to the API, establishing the user as its first Admin
   createTenant(payload: CreateTenantPayload): Observable<any> {
     return this.http.post<any>(this.apiUrl, payload);
   }

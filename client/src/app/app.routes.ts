@@ -3,8 +3,7 @@ import { authGuard } from '@core/guards/auth.guard';
 import { roleGuard } from '@core/guards/role.guard';
 
 export const routes: Routes = [
-  // Login, callback, and invitation inspection are public; onboarding and workspaces
-  // require authentication, with workspace roles enforced by roleGuard.
+  // Public vs Protected routes: Login and callbacks are public, but all workspace views are strictly protected by our Auth and Role guards
   {
     path: '',
     redirectTo: 'auth/login',
@@ -18,7 +17,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
       },
       {
-        // Dedicated OAuth callback route — Keycloak redirects here with ?code=&state=
+        // Dedicated OAuth callback route where Keycloak redirects with the authorization code so we can exchange it for a session token
         // The AuthCallback component handles the token exchange and navigates to the dashboard.
         path: 'callback',
         loadComponent: () => import('./features/auth/callback/callback').then(m => m.AuthCallback)

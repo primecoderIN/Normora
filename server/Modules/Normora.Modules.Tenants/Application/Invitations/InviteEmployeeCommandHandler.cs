@@ -19,6 +19,7 @@ public class InviteEmployeeCommandHandler(
 {
     public async Task<Guid> Handle(InviteEmployeeCommand request, CancellationToken cancellationToken)
     {
+        // Ensure the inviter is acting within the context of a specific tenant before they can invite anyone
         if (!tenantContext.IsTenantResolved || !tenantContext.TenantId.HasValue)
         {
             throw new UnauthorizedAccessException("Tenant context is missing.");
@@ -26,7 +27,7 @@ public class InviteEmployeeCommandHandler(
 
         var tenantId = tenantContext.TenantId.Value;
 
-        // Ensure no pending invitation exists for this email and tenant
+        // Prevent duplicate invitations by checking if the user already has a pending invite for this specific organization
         var existingInvite = await context.TenantInvitations
             .FirstOrDefaultAsync(i => i.Email == request.Email && i.TenantId == tenantId && i.Status == InvitationStatus.Pending, cancellationToken);
 
@@ -35,6 +36,7 @@ public class InviteEmployeeCommandHandler(
             throw new InvalidOperationException("A pending invitation already exists for this email.");
         }
 
+        // Create the new invitation token which the employee will use to accept the invite
         var invitation = new TenantInvitation
         {
             Email = request.Email,
@@ -48,13 +50,13 @@ public class InviteEmployeeCommandHandler(
         var tenant = await context.Tenants.FindAsync(new object[] { tenantId }, cancellationToken);
         var tenantName = tenant?.Name ?? "An organization";
 
-        // Send email
+        // Dispatch the invitation email containing the secure acceptance link
         var baseUrl = configuration["App:BaseUrl"] ?? "http://localhost:4200";
         var acceptLink = $"{baseUrl}/accept-invite?token={invitation.Token}";
         var body = $"<p>You have been invited to join {tenantName} on Normora.</p><p><a href='{acceptLink}'>Click here to accept the invitation</a>.</p>";
         await emailService.SendEmailAsync(request.Email, $"Invitation to join {tenantName}", body, cancellationToken);
 
-        // Send real-time notification
+        // Push a real-time notification to the user if they happen to already be logged in to the platform
         await notificationService.NotifyInvitationReceivedAsync(request.Email, tenantName, cancellationToken);
 
         return invitation.Token;

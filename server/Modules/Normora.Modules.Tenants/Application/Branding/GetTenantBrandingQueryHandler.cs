@@ -30,6 +30,7 @@ public class GetTenantBrandingQueryHandler(TenantsDbContext context)
 {
     public async Task<TenantBrandingDto?> Handle(GetTenantBrandingQuery request, CancellationToken cancellationToken)
     {
+        // Retrieve the tenant by its unique URL slug to load its custom branding colors and logos
         var tenant = await context.Tenants
             .Include(t => t.Branding)
             .FirstOrDefaultAsync(t => t.Slug == request.Slug && t.Status == Domain.TenantStatus.Active, cancellationToken);

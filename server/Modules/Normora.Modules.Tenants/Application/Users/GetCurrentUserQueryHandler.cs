@@ -17,11 +17,13 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             throw new UnauthorizedAccessException("User is not authenticated.");
         }
 
+        // Find the user and their existing memberships so we can determine their access levels across tenants
         var user = await context.Users
             .Include(u => u.Memberships)
             .ThenInclude(m => m.Tenant)
             .FirstOrDefaultAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
 
+        // Check if there are any pending invitations for the user's email address so we can show them on the dashboard
         var pendingInvitations = new List<PendingInvitationDto>();
         if (!string.IsNullOrEmpty(currentUser.Email))
         {
@@ -37,7 +39,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
 
         if (user == null)
         {
-            // Auto-provision the user and their Personal Workspace.
+            // Auto-provision the user and create their default Personal Workspace on first login
             user = new Normora.Modules.Tenants.Domain.User
             {
                 Id = Guid.NewGuid(),
@@ -61,8 +63,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             {
                 UserId = user.Id,
                 TenantId = personalTenant.Id,
-                Role = Normora.Modules.Tenants.Domain.MembershipRole.Admin,
-                JoinedAt = DateTime.UtcNow
+                Role = Normora.Modules.Tenants.Domain.TenantRole.Admin
             };
 
             context.Users.Add(user);
@@ -76,7 +77,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             membership.Tenant = personalTenant;
         }
 
-        // Sync any changes from Keycloak (like if they updated their name or email)
+        // Sync any profile changes from Keycloak (e.g. if they updated their display name or email) to keep our local database up-to-date
         bool isUpdated = false;
         
         if (user.DisplayName != currentUser.DisplayName)

@@ -10,6 +10,7 @@ public class NotificationService(IHubContext<NotificationHub> hubContext) : INot
     {
         if (string.IsNullOrWhiteSpace(email)) return;
 
+        // Target the specific user's connection by their email address to send a real-time invitation notification
         var targetEmail = email.ToLowerInvariant();
         await hubContext.Clients.Group(targetEmail).SendAsync("ReceiveInvitation", new
         {

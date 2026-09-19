@@ -23,6 +23,7 @@ public sealed class GeminiEmbeddingService(
             throw new InvalidOperationException("Gemini embedding is not configured.");
         }
 
+        // Convert the input text into a high-dimensional vector array so we can perform semantic similarity searches against it later
         var request = new GeminiEmbeddingRequest(
             new GeminiContent([new GeminiPart(text)]),
             EmbeddingDimensions);

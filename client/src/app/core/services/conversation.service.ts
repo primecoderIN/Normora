@@ -83,7 +83,7 @@ export class ConversationService {
       .pipe(map(r => r.data));
   }
 
-  /** Send a message and receive a grounded AI answer. */
+  // Send a chat message to the backend and wait for the LLM to stream or return a grounded answer with citations
   sendMessage(conversationId: string, question: string, limit = 5): Observable<SendMessageResult> {
     return this.http
       .post<ApiResponse<SendMessageResult>>(`${this.baseUrl}/${conversationId}/messages`, { question, limit })

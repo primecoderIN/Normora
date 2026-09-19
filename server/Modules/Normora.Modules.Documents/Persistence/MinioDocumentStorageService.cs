@@ -50,7 +50,7 @@ public class MinioDocumentStorageService : IDocumentStorageService
     /// <returns>The generated Object Name (Key) that can be used to retrieve the file later.</returns>
     public async Task<string> UploadDocumentAsync(IFormFile file, string tenantId)
     {
-        // Prefixing with tenantId creates pseudo-folders in the S3 bucket for organization.
+        // Prefix the file path with the TenantId to physically isolate organizations' documents inside the shared S3 bucket
         var objectName = $"{tenantId}/{Guid.NewGuid()}_{file.FileName}";
 
         using var stream = file.OpenReadStream();
@@ -99,6 +99,7 @@ public class MinioDocumentStorageService : IDocumentStorageService
     /// <returns>A secure, time-limited URL.</returns>
     public async Task<string> GetDocumentUrlAsync(string objectName)
     {
+        // Generate a secure, time-limited download link directly to S3 so large files don't proxy through our API servers
         return await _minioClient.PresignedGetObjectAsync(new PresignedGetObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName)

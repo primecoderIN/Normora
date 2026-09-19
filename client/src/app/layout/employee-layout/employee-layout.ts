@@ -16,6 +16,7 @@ export class EmployeeLayout {
   public userService = inject(UserService);
   private router = inject(Router);
 
+  // Retrieve the currently active workspace, falling back to their first available workspace if none is explicitly selected
   get activeWorkspace() {
     const user = this.userService.currentUser();
     if (!user) return null;
@@ -30,6 +31,7 @@ export class EmployeeLayout {
     return user.memberships.filter(m => m.tenantId !== activeId);
   }
 
+  // Switch the user's active workspace and enforce role-based redirection if they are an admin in the new workspace
   changeWorkspace(tenantId: string) {
     this.userService.activeTenantId.set(tenantId);
     

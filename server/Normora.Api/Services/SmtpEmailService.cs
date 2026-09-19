@@ -37,6 +37,7 @@ public class SmtpEmailService : IEmailService, IDisposable
     {
         try
         {
+            // Construct and fire off an HTML-formatted email using our local MailHog server or production SMTP provider
             var message = new MailMessage(_fromAddress, to)
             {
                 Subject = subject,

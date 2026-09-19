@@ -17,7 +17,7 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
 {
     public async Task<TenantDto> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
-        // 1. Ensure the caller is an authenticated user.
+        // Ensure the user is fully authenticated before allowing them to spin up a new organization
         if (!currentUser.IsAuthenticated)
         {
             throw new UnauthorizedAccessException("You must be logged in to create a tenant.");
@@ -25,14 +25,12 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
 
         var keycloakId = currentUser.KeycloakUserId;
 
-        // Start a database transaction because we are creating multiple related entities (User, Tenant, Membership).
-        // If any step fails, everything is rolled back to maintain consistency.
+        // Start a database transaction so we can safely roll back if creating the user, tenant, or membership fails midway
         using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            // 2. Resolve or Create Normora User (TENANT-08)
-            // The user exists in Keycloak, but might not exist in our Tenants database yet.
+            // Check if this Keycloak user already has a local profile in our database, and create one if they don't
             var user = await dbContext.Users
                 .FirstOrDefaultAsync(u => u.KeycloakUserId == keycloakId, cancellationToken);
 
@@ -48,13 +46,13 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
 
-            // 3. Verify that the requested tenant slug is globally unique.
+            // Verify that the requested workspace URL slug isn't already taken by another organization
             if (await dbContext.Tenants.AnyAsync(t => t.Slug == request.Slug, cancellationToken))
             {
                 throw new InvalidOperationException($"Tenant slug '{request.Slug}' is already taken.");
             }
 
-            // 4. Create the new Tenant entity.
+            // Provision the new workspace entity
             var tenant = new Tenant
             {
                 Name = request.Name,
@@ -63,8 +61,7 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             dbContext.Tenants.Add(tenant);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            // 5. Create TenantMembership (TENANT-10)
-            // Immediately grant the creator the 'Admin' role within their new tenant.
+            // Immediately grant the creator full Admin privileges over their newly minted workspace
             var membership = new TenantMembership
             {
                 TenantId = tenant.Id,

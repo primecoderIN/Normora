@@ -17,7 +17,7 @@ export const rootGuard: CanActivateFn = () => {
         return of(router.createUrlTree(['/auth/login']));
       }
 
-      // Fetch the current user profile from the backend
+      // Ensure the user's local database profile is created/synced on their very first login via the backend API
       return userService.getMe().pipe(
         map(response => {
           if (!response.success || !response.data) {
@@ -27,14 +27,13 @@ export const rootGuard: CanActivateFn = () => {
 
           const memberships = response.data.memberships;
 
-          // If the user has no memberships, they need to onboard or accept an invite
+          // Force users with zero workspaces into the onboarding flow where they can accept invites or create an org
           if (memberships.length === 0) {
             return router.createUrlTree(['/onboarding']);
           }
 
-          // For MVP, we route based on their first membership role
+          // Route the user to the appropriate portal (Admin Dashboard vs Employee Chat) based on their highest role in their primary workspace
           const firstMembership = memberships[0];
-          
           if (firstMembership.role === 'admin') {
             return router.createUrlTree(['/employer/dashboard']);
           } else {

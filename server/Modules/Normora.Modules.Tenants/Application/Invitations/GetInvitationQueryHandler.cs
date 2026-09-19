@@ -11,6 +11,7 @@ public class GetInvitationQueryHandler(TenantsDbContext context) : IRequestHandl
 {
     public async Task<InvitationDto?> Handle(GetInvitationQuery request, CancellationToken cancellationToken)
     {
+        // Load the invitation details along with the corresponding tenant info so we can display the workspace name to the invitee
         var invitation = await context.TenantInvitations
             .Include(i => i.Tenant)
             .FirstOrDefaultAsync(i => i.Token == request.Token, cancellationToken);

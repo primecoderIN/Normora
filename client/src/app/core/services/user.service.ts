@@ -43,6 +43,7 @@ export class UserService {
         if (response.success) {
           this.currentUser.set(response.data);
           // Set initial active tenant if not set
+          // Automatically select a default workspace on initial load, prioritizing shared organizations over the personal sandbox
           if (!this.activeTenantId() && response.data.memberships.length > 0) {
             // Default to the first non-personal workspace if available, otherwise the personal one
             const defaultWorkspace = response.data.memberships.find(m => !m.isPersonal) || response.data.memberships[0];

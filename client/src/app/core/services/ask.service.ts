@@ -30,9 +30,7 @@ export class AskService {
   private apiUrl = `${environment.apiUrl}/api/ask`;
 
   ask(question: string): Observable<AskResult> {
-    // A direct refresh can render Ask before the root auth flow has populated the
-    // current user. Load the profile first so the tenant interceptor can attach
-    // the validated membership ID to the protected request.
+    // Ensure the user profile is fully loaded so the HTTP interceptor can inject the correct tenant ID into the headers before asking the question
     const profile = this.userService.currentUser()
       ? of({ success: true, message: 'Loaded', data: this.userService.currentUser() })
       : this.userService.getMe();

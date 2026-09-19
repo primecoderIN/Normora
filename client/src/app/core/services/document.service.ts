@@ -30,6 +30,7 @@ export class DocumentService {
       .pipe(map(response => response.data));
   }
 
+  // Package the selected file as FormData to handle the binary upload to our backend (which forwards it to MinIO)
   uploadDocument(file: File): Observable<Document> {
     const formData = new FormData();
     formData.append('file', file);

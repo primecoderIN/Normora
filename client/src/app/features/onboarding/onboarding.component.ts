@@ -161,6 +161,7 @@ export class OnboardingComponent {
     });
   }
 
+  // Process the acceptance of a workspace invitation and redirect the user to the employee portal on success
   acceptInvite(token: string) {
     this.isAccepting.set(true);
     this.acceptingToken.set(token);
@@ -178,6 +179,7 @@ export class OnboardingComponent {
     });
   }
 
+  // Submit the form to create a new workspace and route the newly minted admin to their employer dashboard
   onSubmit() {
     if (this.onboardingForm.invalid) return;
 

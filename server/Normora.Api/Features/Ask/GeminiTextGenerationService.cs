@@ -33,6 +33,7 @@ public sealed class GeminiTextGenerationService(
         var sourcesBlock = BuildSourcesBlock(sources);
         var historyBlock = BuildHistoryBlock(history);
 
+        // Build a strict system prompt instructing the LLM to only use the provided company documents and never invent answers
         var prompt = new StringBuilder();
         prompt.AppendLine("""
             You are Normora, a company policy assistant having an ongoing conversation with an employee.
@@ -112,6 +113,7 @@ public sealed class GeminiTextGenerationService(
     {
         EnsureConfigured();
 
+        // Prompt the LLM to generate a short, clean title summarizing the user's initial question so we can label their chat history
         var prompt = $"""
             Generate a concise title of at most 6 words for a conversation that started with this question:
             "{firstQuestion}"
