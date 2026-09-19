@@ -6,7 +6,7 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 > **Auth Legend**
 > - `Anonymous` — No token required.
-> - `Authenticated` — Any valid JWT (User is logged in).
+> - `Authenticated` — Any valid authenticated session (via __Host-spa cookie).
 > - `RequireTenant(Employer)` — Requires a valid `X-Tenant-Id` header and the user must be an `Employer` in that tenant.
 > - `RequireTenant(Employee)` — Requires a valid `X-Tenant-Id` header and the user must be an `Employee` (or Employer) in that tenant.
 

@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Toast } from 'primeng/toast';
 import { InputText } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { DocumentService, Document } from '@core/services/document.service';
+import { AuthService } from '@core/services/auth.service';
 import { environment } from '@env/environment';
 
 import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
@@ -42,7 +43,8 @@ export class Documents implements OnInit, OnDestroy {
   private documentService = inject(DocumentService);
   private documentRealtimeService = inject(DocumentRealtimeService);
   private messageService = inject(MessageService);
-  private oidcSecurityService = inject(OidcSecurityService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
   private departmentService = inject(DepartmentService);
   public userService = inject(UserService);
 
@@ -50,7 +52,6 @@ export class Documents implements OnInit, OnDestroy {
 
   documents = signal<Document[]>([]);
   uploadUrl = `${environment.apiUrl}/api/documents/upload`;
-  token = signal('');
 
   showUploadDialog = signal(false);
   isLoading = signal(true);
@@ -83,9 +84,6 @@ export class Documents implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadDocuments();
     this.loadDepartments();
-    this.oidcSecurityService.getAccessToken().subscribe((token: string) => {
-      this.token.set(token);
-    });
 
     const tenantId = this.userService.currentUser()?.memberships[0]?.tenantId;
     if (tenantId) {

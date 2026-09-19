@@ -1,115 +1,118 @@
 {
-  "id": "normora",
-  "realm": "normora",
-  "displayName": "Normora Identity",
-  "enabled": true,
-  "loginTheme": "normora",
-  "registrationAllowed": true,
-  "resetPasswordAllowed": true,
-  "verifyEmail": false,
-  "bruteForceProtected": true,
-  "failureFactor": 5,
-  "sslRequired": "external",
-  "smtpServer": {
-    "host": "mailpit",
-    "port": "1025",
-    "from": "auth@normora.com",
-    "fromDisplayName": "Normora Auth"
-  },
-  "roles": {
-    "realm": [
-      {
-        "name": "employer",
-        "description": "Employer portal access"
-      },
-      {
-        "name": "employee",
-        "description": "Employee portal access"
-      },
-      {
-        "name": "default-roles-normora",
-        "description": "${role_default-roles}",
-        "composite": false,
-        "clientRole": false,
-        "containerId": "normora"
-      }
-    ]
-  },
-  "clients": [
-    {
-      "clientId": "normora-web",
-      "enabled": true,
-      "publicClient": true,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-
-      "directAccessGrantsEnabled": false,
-
-      "redirectUris": [
-        "http://localhost:4200/auth/callback",
-        "http://localhost:4200/auth/callback/*",
-        "http://localhost/auth/callback",
-        "http://localhost/auth/callback/*"
-      ],
-      "webOrigins": [
-        "http://localhost:4200",
-        "http://localhost"
-      ],
-      "attributes": {
-        "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:4200/auth/login##http://localhost/auth/login"
-      }
-    }
-  ],
-  "identityProviders": [
-    {
-      "alias": "github",
-      "providerId": "github",
-      "enabled": true,
-      "trustEmail": true,
-      "storeToken": true,
-      "addReadTokenRoleOnCreate": false,
-      "authenticateByDefault": false,
-      "linkOnly": false,
-      "firstBrokerLoginFlowAlias": "first broker login",
-      "config": {
-        "hideOnLoginPage": "false",
-        "clientId": "Iv23liPhumHqGrzXzI1N",
-        "clientSecret": "YOUR_GITHUB_CLIENT_SECRET",
-        "disableUserInfo": "false",
-        "syncMode": "IMPORT",
-        "guiOrder": "1"
-      }
-    }
-  ],
-  "identityProviderMappers": [
-    {
-      "name": "github-employee-role-mapper",
-      "identityProviderAlias": "github",
-      "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
-      "config": {
-        "syncMode": "INHERIT",
-        "role": "employee"
-      }
-    }
-  ],
-  "users": [
-    {
-      "username": "admin",
-      "enabled": true,
-      "emailVerified": true,
-      "credentials": [
-        {
-          "type": "password",
-          "value": "password",
-          "temporary": false
-        }
-      ],
-      "firstName": "System",
-      "lastName": "Admin",
-      "realmRoles": [
-        "employer"
-      ]
-    }
-  ]
+    "id":  "normora",
+    "realm":  "normora",
+    "displayName":  "Normora Identity",
+    "enabled":  true,
+    "loginTheme":  "normora",
+    "registrationAllowed":  true,
+    "resetPasswordAllowed":  true,
+    "verifyEmail":  false,
+    "bruteForceProtected":  true,
+    "failureFactor":  5,
+    "sslRequired":  "external",
+    "smtpServer":  {
+                       "host":  "mailpit",
+                       "port":  "1025",
+                       "from":  "auth@normora.com",
+                       "fromDisplayName":  "Normora Auth"
+                   },
+    "roles":  {
+                  "realm":  [
+                                {
+                                    "name":  "employer",
+                                    "description":  "Employer portal access"
+                                },
+                                {
+                                    "name":  "employee",
+                                    "description":  "Employee portal access"
+                                },
+                                {
+                                    "name":  "default-roles-normora",
+                                    "description":  "${role_default-roles}",
+                                    "composite":  false,
+                                    "clientRole":  false,
+                                    "containerId":  "normora"
+                                }
+                            ]
+              },
+    "clients":  [
+                    {
+                        "clientId":  "normora-web",
+                        "enabled":  true,
+                        "publicClient":  true,
+                        "standardFlowEnabled":  true,
+                        "implicitFlowEnabled":  false,
+                        "directAccessGrantsEnabled":  false,
+                        "redirectUris":  [
+                                             "http://localhost:4200/auth/callback",
+                                             "http://localhost:4200/auth/callback/*",
+                                             "http://localhost/auth/callback",
+                                             "http://localhost/auth/callback/*",
+                                             "http://localhost:5000/signin-oidc",
+                                             "http://localhost:5000/signout-callback-oidc",
+                                             "http://localhost:4200/signin-oidc",
+                                             "http://localhost:4200/signout-callback-oidc"
+                                         ],
+                        "webOrigins":  [
+                                           "http://localhost:4200",
+                                           "http://localhost"
+                                       ],
+                        "attributes":  {
+                                           "pkce.code.challenge.method":  "S256",
+                                           "post.logout.redirect.uris":  "http://localhost:4200/auth/login##http://localhost/auth/login##http://localhost:5000/signout-callback-oidc"
+                                       }
+                    }
+                ],
+    "identityProviders":  [
+                              {
+                                  "alias":  "github",
+                                  "providerId":  "github",
+                                  "enabled":  true,
+                                  "trustEmail":  true,
+                                  "storeToken":  true,
+                                  "addReadTokenRoleOnCreate":  false,
+                                  "authenticateByDefault":  false,
+                                  "linkOnly":  false,
+                                  "firstBrokerLoginFlowAlias":  "first broker login",
+                                  "config":  {
+                                                 "hideOnLoginPage":  "false",
+                                                 "clientId":  "Iv23liPhumHqGrzXzI1N",
+                                                 "clientSecret":  "YOUR_GITHUB_CLIENT_SECRET",
+                                                 "disableUserInfo":  "false",
+                                                 "syncMode":  "IMPORT",
+                                                 "guiOrder":  "1"
+                                             },
+                                  "updateProfileFirstLoginMode":  "off"
+                              }
+                          ],
+    "identityProviderMappers":  [
+                                    {
+                                        "name":  "github-employee-role-mapper",
+                                        "identityProviderAlias":  "github",
+                                        "identityProviderMapper":  "oidc-hardcoded-role-idp-mapper",
+                                        "config":  {
+                                                       "syncMode":  "INHERIT",
+                                                       "role":  "employee"
+                                                   }
+                                    }
+                                ],
+    "users":  [
+                  {
+                      "username":  "admin",
+                      "enabled":  true,
+                      "emailVerified":  true,
+                      "credentials":  [
+                                          {
+                                              "type":  "password",
+                                              "value":  "password",
+                                              "temporary":  false
+                                          }
+                                      ],
+                      "firstName":  "System",
+                      "lastName":  "Admin",
+                      "realmRoles":  [
+                                         "employer"
+                                     ]
+                  }
+              ]
 }

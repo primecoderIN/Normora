@@ -1,16 +1,16 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from '../services/auth.service';
 import { map, take } from 'rxjs/operators';
 
 export const authGuard: CanActivateFn = () => {
-  const oidcSecurityService = inject(OidcSecurityService);
+  const authService = inject(AuthService);
   const router = inject(Router);
 
   // Redirect unauthenticated users back to the Keycloak login screen immediately
-  return oidcSecurityService.isAuthenticated$.pipe(
+  return authService.isAuthenticated$.pipe(
     take(1),
-    map(({ isAuthenticated }) => {
+    map((isAuthenticated) => {
       if (isAuthenticated) {
         return true;
       }

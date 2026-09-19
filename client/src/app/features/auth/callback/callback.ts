@@ -1,6 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
 
 /**
  * Auth Callback Component
@@ -8,7 +7,7 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
  * This is the landing page after Keycloak/GitHub redirects the user back.
  * The URL will look like: /auth/callback?code=XXX&state=YYY
  *
- * The OidcSecurityService.checkAuth() in app.ts handles the actual token
+ * The checkAuth() in app.ts handles the actual token
  * exchange. This component just shows a loading state so the user does not
  * see the login form flash briefly during the OAuth callback round-trip.
  *

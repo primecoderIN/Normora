@@ -3,7 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TenantService } from '@core/services/tenant.service';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from '@core/services/auth.service';
 import { UserService } from '@core/services/user.service';
 import { InvitationService } from '@core/services/invitation.service';
 
@@ -137,7 +137,7 @@ export class OnboardingComponent {
   private fb = inject(FormBuilder);
   private tenantService = inject(TenantService);
   private router = inject(Router);
-  private oidcSecurityService = inject(OidcSecurityService);
+  private authService = inject(AuthService);
   private userService = inject(UserService);
   private invitationService = inject(InvitationService);
 
@@ -156,9 +156,7 @@ export class OnboardingComponent {
   acceptError = signal('');
 
   logout() {
-    this.oidcSecurityService.getIdToken().subscribe((idToken) => {
-      this.oidcSecurityService.logoff('', { customParams: { id_token_hint: idToken } }).subscribe();
-    });
+    this.authService.logout();
   }
 
   // Process the acceptance of a workspace invitation and redirect the user to the employee portal on success

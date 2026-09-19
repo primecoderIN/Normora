@@ -12,7 +12,7 @@ This guide is for developers working on the **Normora Angular SPA** (`client/`).
 | Styling | Tailwind CSS (v3) + CSS Custom Properties |
 | HTTP Client | `HttpClient` |
 | State Management | Signals + RxJS (for async streams) |
-| Identity & Auth | Keycloak + Angular OAuth2 OIDC |
+| Identity & Auth | Keycloak + Duende.BFF |
 | Component Library | Material Design (Angular Material) |
 
 ---
@@ -80,7 +80,7 @@ export class DepartmentListComponent {
 Document processing states (`Uploaded`, `Processing`, `Ready`, `Failed`) are broadcasted in real-time to employers via SignalR.
 
 - The `DocumentHubService` in `core/services` manages the WebSocket connection.
-- It authenticates by appending the Keycloak JWT to the connection URL.
+- It authenticates automatically using the secure `__Host-spa` cookie managed by the BFF.
 - Components subscribe to `documentStatusChanged$` streams to update their local signals without polling the server.
 
 ---

@@ -1,26 +1,30 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { UserService } from '@core/services/user.service';
+import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../core/services/user.service';
+import { TenantService } from '../../core/services/tenant.service';
 import { InvitationService } from '@core/services/invitation.service';
-import { signal } from '@angular/core';
 
 @Component({
   selector: 'app-employer-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, FormsModule],
-  styleUrl: './employer-layout.css',
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ButtonModule, FormsModule],
   templateUrl: './employer-layout.html',
 })
 export class EmployerLayout {
-  private oidcSecurityService = inject(OidcSecurityService);
+  private authService = inject(AuthService);
   public userService = inject(UserService);
-  private router = inject(Router);
+  public tenantService = inject(TenantService);
   private invitationService = inject(InvitationService);
   
   isAccepting = signal(false);
+
+  logout() {
+    this.authService.logout();
+  }
 
   // Retrieve the currently active workspace, falling back to their first available workspace if none is explicitly selected
   get activeWorkspace() {
@@ -48,12 +52,6 @@ export class EmployerLayout {
     } else {
       window.location.reload();
     }
-  }
-
-  logout() {
-    this.oidcSecurityService.getIdToken().subscribe((idToken) => {
-      this.oidcSecurityService.logoff('', { customParams: { id_token_hint: idToken } }).subscribe();
-    });
   }
 
   acceptInvite(token: string) {

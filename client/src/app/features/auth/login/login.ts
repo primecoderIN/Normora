@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from '../../../core/services/auth.service';
 import { LoginFormComponent } from './components/login-form/login-form.component';
 import { LoginPromoComponent } from './components/login-promo/login-promo.component';
 
@@ -10,37 +10,22 @@ import { LoginPromoComponent } from './components/login-promo/login-promo.compon
   templateUrl: './login.html',
 })
 export class Login {
-  private oidcSecurityService = inject(OidcSecurityService);
+  private authService = inject(AuthService);
 
   get isProcessingLogin(): boolean {
     return window.location.search.includes('code=') || window.location.search.includes('state=');
   }
 
   login() {
-    this.oidcSecurityService.authorize();
+    this.authService.login();
   }
 
   loginWithGithub() {
-    try {
-      this.oidcSecurityService.authorize(undefined, {
-        customParams: {
-          kc_idp_hint: 'github',
-        },
-      });
-    } catch (e) {
-      console.error('Error during authorize call:', e);
-    }
+    window.location.href = '/bff/login?provider=github';
   }
 
   loginWithGoogle() {
-    try {
-      this.oidcSecurityService.authorize(undefined, {
-        customParams: {
-          kc_idp_hint: 'google',
-        },
-      });
-    } catch (e) {
-      console.error('Error during authorize call:', e);
-    }
+    window.location.href = '/bff/login?provider=google';
   }
 }
+

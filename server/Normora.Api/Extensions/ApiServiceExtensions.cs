@@ -82,7 +82,11 @@ public static class ApiServiceExtensions
                     {
                         // Allow any subdomain of localhost (e.g. intel.localhost:4200)
                         // and the base localhost origins from configuration.
-                        var uri = new Uri(origin);
+                        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                        {
+                            return false;
+                        }
+
                         var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
                         return allowedOrigins.Contains(origin) ||
                                (uri.Host.EndsWith(".localhost") && (uri.Port == 4200 || uri.Port == 80));

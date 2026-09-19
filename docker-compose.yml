@@ -41,6 +41,8 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
       KC_HEALTH_ENABLED: 'true'
+      KC_HOSTNAME_URL: 'http://localhost:8080'
+      KC_HOSTNAME_STRICT_BACKCHANNEL: 'true'
     command: start-dev --import-realm
     volumes:
       - ${KEYCLOAK_REALM_EXPORT:-./infrastructure/keycloak/realm-export.json}:/opt/keycloak/data/import/realm-export.json

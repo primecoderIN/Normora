@@ -1,18 +1,18 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from '../services/auth.service';
 import { map, take, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { UserService } from '../services/user.service';
 
 export const rootGuard: CanActivateFn = () => {
-  const oidcSecurityService = inject(OidcSecurityService);
+  const authService = inject(AuthService);
   const router = inject(Router);
   const userService = inject(UserService);
 
-  return oidcSecurityService.isAuthenticated$.pipe(
+  return authService.isAuthenticated$.pipe(
     take(1),
-    switchMap(({ isAuthenticated }) => {
+    switchMap((isAuthenticated) => {
       if (!isAuthenticated) {
         return of(router.createUrlTree(['/auth/login']));
       }

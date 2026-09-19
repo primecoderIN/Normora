@@ -1,7 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
-import { firstValueFrom } from 'rxjs';
 import { environment } from '@env/environment';
 
 export interface DocumentStatusChanged {
@@ -13,7 +11,6 @@ export interface DocumentStatusChanged {
 
 @Injectable({ providedIn: 'root' })
 export class DocumentRealtimeService {
-  private oidcSecurityService = inject(OidcSecurityService);
   private connection?: HubConnection;
 
   async connect(tenantId: string, onStatusChanged: (event: DocumentStatusChanged) => void): Promise<void> {
@@ -21,12 +18,10 @@ export class DocumentRealtimeService {
       return;
     }
 
-    // The token authenticates the connection; JoinTenant then asks the server to validate
+    // The BFF auth cookie authenticates the connection; JoinTenant then asks the server to validate
     // this tenant subscription rather than trusting the client-provided tenant ID.
     this.connection = new HubConnectionBuilder()
-      .withUrl(`${environment.apiUrl}/hubs/documents`, {
-        accessTokenFactory: () => firstValueFrom(this.oidcSecurityService.getAccessToken())
-      })
+      .withUrl(`${environment.apiUrl}/hubs/documents`)
       .withAutomaticReconnect()
       .build();
 

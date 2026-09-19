@@ -291,23 +291,26 @@ Every tenant-owned query must enforce tenant isolation.
 
 ## 8. Authentication and Authorization
 
+We use the **Backend-For-Frontend (BFF)** pattern for maximum security.
+
 Authentication flow:
 
 ```text
 Angular
-   ↓
+   ↓ (Redirects to Backend /bff/login)
+ASP.NET Core (BFF)
+   ↓ (OIDC flow)
 Keycloak
-   ↓
-OIDC / JWT
-   ↓
-ASP.NET Core
-   ↓
-Current User
-   ↓
-Membership
-   ↓
-Tenant Context
+   ↓ (Returns tokens)
+ASP.NET Core (BFF)
+   ↓ (Issues encrypted __Host-spa cookie)
+Angular
 ```
+
+The frontend never receives or manages tokens directly. Tokens are encrypted inside the `__Host-spa` cookie issued by the backend. The backend transparently handles token renewal using refresh tokens.
+
+### Future Scalability: Redis Session Store
+Currently, the tokens are encrypted and stored within the cookie itself (stateless). When the user base scales significantly or if tokens become too large for browser limits, we will implement an `ITicketStore` backed by **Redis** (or PostgreSQL). This will allow the backend to store the heavy tokens in the cache and only issue a lightweight correlation ID to the browser.
 
 Remember:
 
@@ -315,7 +318,7 @@ Remember:
 - Authorization = what can you do?
 - Tenant context = which organization's data are you operating on?
 
-Create a server-side current-user abstraction. Endpoints should not manually parse JWT claims.
+Create a server-side current-user abstraction. Endpoints should not manually parse JWT claims, but instead rely on the claims populated by the authentication cookie handler.
 
 ---
 

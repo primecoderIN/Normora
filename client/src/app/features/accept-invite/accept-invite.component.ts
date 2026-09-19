@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from '@core/services/auth.service';
 import { InvitationService, InvitationDto } from '@core/services/invitation.service';
 import { take } from 'rxjs';
 
@@ -81,7 +81,7 @@ import { take } from 'rxjs';
 export class AcceptInviteComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private oidcSecurityService = inject(OidcSecurityService);
+  private authService = inject(AuthService);
   private invitationService = inject(InvitationService);
 
   token: string | null = null;
@@ -103,8 +103,8 @@ export class AcceptInviteComponent implements OnInit {
       return;
     }
 
-    // Check if user is logged in
-    this.oidcSecurityService.isAuthenticated$.pipe(take(1)).subscribe(({ isAuthenticated }) => {
+    // Check if user is logged in via BFF
+    this.authService.checkAuth().pipe(take(1)).subscribe((isAuthenticated) => {
       this.isAuthenticated.set(isAuthenticated);
       this.loadInvitation();
     });
@@ -140,7 +140,7 @@ export class AcceptInviteComponent implements OnInit {
     // Preserve the token across Keycloak's full-page redirect; app.ts consumes it after
     // authentication and routes back here before the normal workspace destination.
     localStorage.setItem('pending_invitation', this.token!);
-    this.oidcSecurityService.authorize();
+    this.authService.login();
   }
 
   acceptInvite() {

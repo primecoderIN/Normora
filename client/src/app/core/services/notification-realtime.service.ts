@@ -1,22 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
-import { firstValueFrom, Subject } from 'rxjs';
 import { environment } from '@env/environment';
+import { Subject } from 'rxjs';
 
-export interface InvitationReceivedEvent {
+export interface NotificationEvent {
+  id: string;
+  type: string;
+  message: string;
   tenantName: string;
-  timestamp: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class NotificationRealtimeService {
-  private oidcSecurityService = inject(OidcSecurityService);
   private connection?: HubConnection;
 
-  // We use a Subject so any component can easily subscribe to notifications
-  private invitationReceivedSubject = new Subject<InvitationReceivedEvent>();
-  public invitationReceived$ = this.invitationReceivedSubject.asObservable();
+  private invitationReceivedSource = new Subject<NotificationEvent>();
+  invitationReceived$ = this.invitationReceivedSource.asObservable();
 
   async connect(): Promise<void> {
     if (this.connection?.state === HubConnectionState.Connected) {
@@ -24,14 +23,12 @@ export class NotificationRealtimeService {
     }
 
     this.connection = new HubConnectionBuilder()
-      .withUrl(`${environment.apiUrl}/hubs/notifications`, {
-        accessTokenFactory: () => firstValueFrom(this.oidcSecurityService.getAccessToken())
-      })
+      .withUrl(`${environment.apiUrl}/hubs/notifications`)
       .withAutomaticReconnect()
       .build();
 
-    this.connection.on('ReceiveInvitation', (event: InvitationReceivedEvent) => {
-      this.invitationReceivedSubject.next(event);
+    this.connection.on('ReceiveInvitation', (event: NotificationEvent) => {
+      this.invitationReceivedSource.next(event);
     });
 
     await this.connection.start();

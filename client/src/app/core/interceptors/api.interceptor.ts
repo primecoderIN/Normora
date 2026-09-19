@@ -1,19 +1,23 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { MessageService } from 'primeng/api';
-import { catchError, switchMap, take } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { environment } from '@env/environment';
 
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
-  const oidcSecurityService = inject(OidcSecurityService);
   // Optional inject because not all components provide MessageService
   const messageService = inject(MessageService, { optional: true });
 
-  // Wait, angular-auth-oidc-client provides its own interceptor, but we can write a custom one 
-  // to also handle errors generically via MessageService.
-  // Actually, we already configure the authInterceptor in app.config.ts, so we might just need an error interceptor.
-  return next(req).pipe(
+  let apiReq = req;
+  
+  if (req.url.startsWith('/api/') || req.url.startsWith('/bff/')) {
+    apiReq = req.clone({
+      url: `${environment.apiUrl}${req.url}`
+    });
+  }
+
+  return next(apiReq).pipe(
     catchError(error => {
       console.error('API Error:', error);
       
@@ -22,6 +26,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           messageService.add({ severity: 'error', summary: 'Server Error', detail: 'An unexpected error occurred.' });
         }
       }
+      
       return throwError(() => error);
     })
   );

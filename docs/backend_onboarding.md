@@ -61,7 +61,42 @@ public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCo
 
 ---
 
-## 3. Security: BOLA & BFLA Prevention
+## 3. Authentication & BFF
+
+Normora uses the **Backend-For-Frontend (BFF)** pattern powered by `Duende.BFF`.
+1. **No JWTs in the Browser**: The Angular SPA does not receive access tokens.
+2. **Encrypted Cookies**: The API exchanges the OIDC code with Keycloak and issues a secure `__Host-spa` cookie containing the encrypted token payload.
+3. **Anti-Forgery (CSRF)**: All mutating requests (`POST`, `PUT`, `DELETE`) require an `X-CSRF: 1` header, which is enforced globally by the `AsBffApiEndpoint()` convention in `Program.cs`.
+
+### Docker Reverse-Proxy Gotcha
+When running in Docker, the API sits behind an nginx reverse proxy. The API container's internal hostname is `api:8080`, but the browser-facing public URL is `localhost:4200`. 
+
+If not corrected, the OIDC middleware will build an `redirect_uri` pointing to `api:8080/signin-oidc`, which Keycloak will reject as an unregistered URI.
+
+**Fix**: `UseForwardedHeaders` is registered early in `Program.cs`:
+```csharp
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor 
+                     | ForwardedHeaders.XForwardedHost 
+                     | ForwardedHeaders.XForwardedProto
+};
+// IMPORTANT: By default, ASP.NET Core only trusts loopback proxies (127.0.0.1).
+// In Docker, nginx runs on an internal bridge network (172.x.x.x) which is NOT loopback.
+// Without clearing these lists, the X-Forwarded-Host header is silently ignored
+// and redirect_uri is built from the internal Docker hostname (api:8080), not localhost:4200.
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
+```
+
+nginx injects `proxy_set_header X-Forwarded-Host $host;` so the API correctly reads `localhost:4200` as the public host when building OIDC URLs.
+
+> **Rule of thumb**: Always register `UseForwardedHeaders` **before** `UseAuthentication` and `UseBff` in any Docker/reverse-proxy deployment. Always clear `KnownNetworks` and `KnownProxies` when nginx is in a Docker network.
+
+---
+
+## 4. Security: BOLA & BFLA Prevention
 
 We strictly prevent Broken Object Level Authorization (BOLA) and Broken Function Level Authorization (BFLA) using context injection.
 

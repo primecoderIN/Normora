@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '@core/services/user.service';
 import { InvitationService } from '@core/services/invitation.service';
 import { signal } from '@angular/core';
@@ -14,7 +14,7 @@ import { signal } from '@angular/core';
   templateUrl: './employee-layout.html',
 })
 export class EmployeeLayout {
-  private oidcSecurityService = inject(OidcSecurityService);
+  private authService = inject(AuthService);
   public userService = inject(UserService);
   private router = inject(Router);
   private invitationService = inject(InvitationService);
@@ -50,9 +50,7 @@ export class EmployeeLayout {
   }
 
   logout() {
-    this.oidcSecurityService.getIdToken().subscribe((idToken) => {
-      this.oidcSecurityService.logoff('', { customParams: { id_token_hint: idToken } }).subscribe();
-    });
+    this.authService.logout();
   }
 
   acceptInvite(token: string) {

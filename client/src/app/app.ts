@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from './core/services/auth.service';
 import { UserService } from './core/services/user.service';
 import { TenantBrandingService } from './core/services/tenant-branding.service';
 import { ToastModule } from 'primeng/toast';
@@ -24,7 +24,7 @@ export class App implements OnInit {
   protected readonly title = signal('client');
   
   // 'inject' is the modern way to request a service from Angular's Dependency Injection system.
-  private oidcSecurityService = inject(OidcSecurityService);
+  private authService = inject(AuthService);
   private router = inject(Router);
   private userService = inject(UserService);
   private brandingService = inject(TenantBrandingService);
@@ -44,19 +44,19 @@ export class App implements OnInit {
       this.brandingService.applyBrandingForSlug(slug).subscribe();
     }
 
-    // Step 2: Check authentication state.
-    this.oidcSecurityService.checkAuth().subscribe({
-      next: ({ isAuthenticated }) => {
+    // Step 2: Check authentication state via BFF.
+    this.authService.checkAuth().subscribe({
+      next: (isAuthenticated) => {
       if (isAuthenticated) {
         // Connect to realtime notifications
         this.notificationService.connect();
 
         // Route to dashboard when the user lands on login, callback, or root.
-        // The /auth/callback route is where Keycloak redirects after OAuth.
         const isAuthRoute =
           this.router.url === '/' ||
           this.router.url.startsWith('/auth/login') ||
-          this.router.url.startsWith('/auth/callback');
+          this.router.url.startsWith('/auth/callback') ||
+          this.router.url.startsWith('/signin-oidc');
 
         // A browser refresh on a protected route still needs the profile before the
         // tenant interceptor can add X-Tenant-Id to API requests.
@@ -68,9 +68,8 @@ export class App implements OnInit {
             next: (response) => {
               if (!response.success || !response.data) {
                 this.authStatus.set('We could not load your profile. Returning to sign in...');
-                this.oidcSecurityService.logoffLocal();
+                this.authService.logout();
                 this.authInitializing.set(false);
-                this.router.navigate(['/auth/login']);
                 return;
               }
 
@@ -100,7 +99,6 @@ export class App implements OnInit {
               }
 
               // Route based on role. App always stays on localhost:4200.
-              // If they only have a personal workspace, route them to ask page by default, or employer dashboard?
               // Let's just use the first membership for now. The layout handles switching.
               const firstMembership = memberships.find(m => !m.isPersonal) || memberships[0];
               this.authInitializing.set(false);
@@ -114,15 +112,14 @@ export class App implements OnInit {
             error: () => {
               // API failure or unauthorized
               this.authStatus.set('We could not verify your account. Returning to sign in...');
-              this.oidcSecurityService.logoffLocal();
+              this.authService.logout();
               this.authInitializing.set(false);
-              this.router.navigate(['/auth/login']);
             }
           });
         } else {
           this.authInitializing.set(false);
         }
-      } else if (this.router.url.startsWith('/auth/callback')) {
+      } else if (this.router.url.startsWith('/auth/callback') || this.router.url.startsWith('/signin-oidc')) {
         this.authStatus.set('Sign-in could not be completed. Returning to sign in...');
         this.authInitializing.set(false);
         this.router.navigate(['/auth/login']);

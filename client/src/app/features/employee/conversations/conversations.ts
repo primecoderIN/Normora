@@ -253,16 +253,12 @@ export class Conversations implements OnInit, AfterViewChecked {
     this.shouldScrollToBottom = true;
 
     try {
-      const token = await new Promise<string>((resolve) => {
-        this.conversationService.getAccessToken().subscribe(resolve);
-      });
-
       const currentUser = this.userService.currentUser();
       const tenantId = currentUser?.memberships?.[0]?.tenantId;
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'X-CSRF': '1'
       };
       if (tenantId) {
         headers['X-Tenant-Id'] = tenantId;

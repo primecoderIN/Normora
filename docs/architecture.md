@@ -27,9 +27,47 @@ Crucially, there is no shared "Infrastructure" layer. Each module completely enc
 Modules communicate with each other exclusively through explicitly defined contracts (e.g., MediatR CQRS commands/queries or shared interfaces) rather than directly interacting with each other's databases.
 
 ## Identity & Access Management (IAM)
-Normora delegates authentication entirely to Keycloak. However, to maintain relational integrity with business data (like Tenant Memberships), the application employs **Just-In-Time (JIT) Provisioning**:
-- When a user successfully authenticates via Keycloak (or Google via Keycloak), their local shadow profile (`User.cs`) is updated or created.
-- The `GetCurrentUserQueryHandler` automatically syncs their latest `DisplayName` and `Email` from the Keycloak JWT token into the local PostgreSQL database on every login, guaranteeing profile consistency without relying on webhooks.
+Normora uses the **Backend-For-Frontend (BFF)** pattern powered by `Duende.BFF` to eliminate token exposure to the browser entirely.
+
+### Authentication Flow
+```
+Browser (localhost:4200)
+   ↓ clicks login
+Nginx (port 4200)
+   ↓ proxies /bff/login → X-Forwarded-Host: localhost:4200
+ASP.NET Core BFF (api:8080)
+   ↓ initiates OIDC with redirect_uri = http://localhost:4200/signin-oidc
+Keycloak (port 8080)
+   ↓ authenticates user, redirects back to /signin-oidc
+Nginx → ASP.NET Core BFF
+   ↓ exchanges code for tokens (back-channel, never reaches browser)
+   ↓ issues encrypted __Host-spa HttpOnly cookie
+Browser (authenticated, no tokens visible)
+```
+
+### Docker Reverse-Proxy Gotcha (UseForwardedHeaders)
+When the API runs inside Docker behind an nginx reverse proxy, `HttpContext.Request.Host` resolves to the internal Docker hostname (`api:8080`) rather than the public-facing address (`localhost:4200`). This causes the OIDC middleware to build an incorrect `redirect_uri`, which Keycloak rejects.
+
+**Fix**: `UseForwardedHeaders` middleware is registered in `Program.cs` to read the `X-Forwarded-Host`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers that nginx injects, allowing the API to correctly reconstruct the public URL.
+
+```csharp
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor 
+                     | ForwardedHeaders.XForwardedHost 
+                     | ForwardedHeaders.XForwardedProto
+});
+```
+
+Nginx must also set `proxy_set_header X-Forwarded-Host $host;` on all proxy blocks pointing to the API.
+
+### Token Lifecycle
+- **Access tokens** and **refresh tokens** are encrypted inside the `__Host-spa` cookie by the BFF — the browser never sees them.
+- **Token renewal** is fully automatic. When the access token expires, `Duende.BFF` performs a back-channel refresh with Keycloak and updates the cookie transparently.
+- **CSRF protection**: All mutating requests (`POST`, `PUT`, `DELETE`) must include the `X-CSRF: 1` header, enforced globally via `.AsBffApiEndpoint()`.
+
+### JIT User Provisioning
+When a user successfully authenticates via Keycloak (or Google/GitHub via Keycloak), their local shadow profile (`User.cs`) is updated or created. The `GetCurrentUserQueryHandler` automatically syncs their latest `DisplayName` and `Email` from the OIDC claims (populated from the BFF cookie) into PostgreSQL on every login.
 
 ## Observability
 The backend relies on **OpenTelemetry (OTLP)** for a unified observability layer:
@@ -63,7 +101,7 @@ This design physically prevents the accumulation of technical debt regarding ide
 
 ### Department & User Group Scoping (Isolated Answers)
 To support large organizations where sensitive documents (like HR policies or Executive reports) must be restricted, Normora extends its multi-tenancy with **Internal Data Scoping**:
-- **Effective Departments Resolution**: At login, the `Tenants` module resolves all departments a user is part of (both direct assignments and those inherited via `UserGroups`). These `DepartmentIds` are embedded in the user's JWT token claims.
+- **Effective Departments Resolution**: At login, the `Tenants` module resolves all departments a user is part of (both direct assignments and those inherited via `UserGroups`). These `DepartmentIds` are embedded in the user's OIDC claims.
 - **Scoped Hybrid Search**: When querying the RAG pipeline (`AskNormora`), the backend reads these claims and dynamically filters the `pgvector` hybrid search. It restricts results strictly to chunks from documents marked as **Company Wide** (no departments) or matching the user's **Effective Departments**. This guarantees that an employee cannot retrieve AI-generated answers from restricted departmental documents.
 
 ### Personal Workspaces
@@ -141,7 +179,7 @@ The employee `POST /api/ask` endpoint uses the same tenant-filtered retrieval, r
 
 ### Realtime Document Events
 
-Authenticated clients connect to `/hubs/documents` and explicitly join a tenant group. SignalR's bearer token is accepted from the WebSocket `access_token` query parameter only for `/hubs` paths. The hub validates the current user's membership before adding the connection. Upload and processing transitions publish `DocumentStatusChanged` events to that tenant group, allowing the employer document list to update without polling.
+Authenticated clients connect to `/hubs/documents` and explicitly join a tenant group. SignalR automatically forwards the secure `__Host-spa` cookie for authentication. The hub validates the current user's membership before adding the connection. Upload and processing transitions publish `DocumentStatusChanged` events to that tenant group, allowing the employer document list to update without polling.
 
 ### Subdomain Routing
 After a successful login:

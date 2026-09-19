@@ -59,9 +59,7 @@ export class DocumentUploadModalComponent {
   visible = input.required<boolean>();
   departments = input.required<Department[]>();
   uploadUrl = input.required<string>();
-  token = input.required<string>();
   isPersonal = input<boolean>(false);
-
   visibleChange = output<boolean>();
   uploadSuccess = output<any>();
   uploadError = output<any>();
@@ -69,9 +67,8 @@ export class DocumentUploadModalComponent {
   selectedDeptIds = signal<string[]>([]);
 
   handleBeforeSend(event: any) {
-    if (this.token()) {
-      event.xhr.setRequestHeader('Authorization', `Bearer ${this.token()}`);
-    }
+    // Add CSRF header for BFF
+    event.xhr.setRequestHeader('X-CSRF', '1');
     const deptIds = this.selectedDeptIds();
     if (deptIds && deptIds.length > 0) {
       deptIds.forEach(id => event.formData.append('departmentIds', id));

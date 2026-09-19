@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { environment } from '@env/environment';
 
 // ─── Domain models ────────────────────────────────────────────────────────────
@@ -54,13 +53,8 @@ interface ApiResponse<T> {
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
   private http = inject(HttpClient);
-  private oidcSecurityService = inject(OidcSecurityService);
   
   public readonly baseUrl = `${environment.apiUrl}/api/conversations`;
-
-  getAccessToken(): Observable<string> {
-    return this.oidcSecurityService.getAccessToken();
-  }
 
   /** List all conversations for the current user, newest first. */
   getConversations(limit = 50, offset = 0): Observable<ConversationDto[]> {
