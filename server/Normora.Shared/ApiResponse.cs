@@ -30,11 +30,11 @@ public sealed class ApiResponse<T>
     }
 
     /// <summary>
-    /// Creates a failure response with an error message.
+    /// Creates a failure response with an error message and optional data (e.g. validation errors).
     /// </summary>
-    public static ApiResponse<T> Failure(string message)
+    public static ApiResponse<T> Failure(string message, T? data = default)
     {
-        return new ApiResponse<T> { Success = false, Message = message, Data = default };
+        return new ApiResponse<T> { Success = false, Message = message, Data = data };
     }
 }
 

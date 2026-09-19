@@ -1,6 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+using Normora.Shared;
 
 namespace Normora.Api.Middleware;
 
@@ -26,15 +26,10 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
 
-            var problemDetails = new ValidationProblemDetails(errors)
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Validation Failed",
-                Detail = "One or more validation errors occurred."
-            };
+            var response = ApiResponse<Dictionary<string, string[]>>.Failure("One or more validation errors occurred.", errors);
 
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+            await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);
             return true;
         }
 
@@ -44,12 +39,8 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is InvalidOperationException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Bad Request",
-                Detail = env.IsProduction() ? "The request could not be processed." : exception.Message
-            }, cancellationToken);
+            var message = env.IsProduction() ? "The request could not be processed." : exception.Message;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
 
@@ -58,27 +49,16 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is UnauthorizedAccessException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Status = StatusCodes.Status401Unauthorized,
-                Title = "Unauthorized",
-                Detail = exception.Message
-            }, cancellationToken);
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(exception.Message), cancellationToken);
             return true;
         }
 
-        // 2. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
+        // 4. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
         logger.LogError(exception, "An unhandled exception occurred.");
         
-        var serverErrorDetails = new ProblemDetails
-        {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "Internal Server Error",
-            Detail = env.IsProduction() ? "An unexpected error occurred. Please try again later." : exception.Message
-        };
-        
+        var message = env.IsProduction() ? "An unexpected error occurred. Please try again later." : exception.Message;
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await httpContext.Response.WriteAsJsonAsync(serverErrorDetails, cancellationToken);
+        await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
         return true;
     }
 }

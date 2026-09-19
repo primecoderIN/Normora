@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
 using Normora.Modules.Tenants.Application.UserGroups;
+using Microsoft.AspNetCore.Http;
 using Normora.Shared;
 
 namespace Normora.Api.Controllers;
@@ -12,12 +13,16 @@ namespace Normora.Api.Controllers;
 [ApiController]
 [Route("api/user-groups")]
 [RequireTenant("admin")] // Only admins can manage user groups
+[Produces("application/json")]
 public class UserGroupsController(IMediator mediator) : ControllerBase
 {
     /// <summary>
     /// Retrieves a list of all user groups within the current tenant, including their assigned departments.
     /// </summary>
+    /// <returns>A list of user groups.</returns>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<List<UserGroupDto>>))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetUserGroups()
     {
         var result = await mediator.Send(new GetUserGroupsQuery());
@@ -27,7 +32,12 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     /// <summary>
     /// Creates a new user group and optionally assigns it to departments.
     /// </summary>
+    /// <param name="request">The payload containing the user group name and department assignments.</param>
+    /// <returns>The unique identifier of the newly created user group.</returns>
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Guid>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreateUserGroup([FromBody] CreateUserGroupRequest request)
     {
         var command = new CreateUserGroupCommand(request.Name, request.DepartmentIds ?? new List<Guid>());
@@ -38,7 +48,14 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     /// <summary>
     /// Updates an existing user group's name and its department assignments.
     /// </summary>
+    /// <param name="id">The unique identifier of the user group to update.</param>
+    /// <param name="request">The payload containing the updated name and department assignments.</param>
+    /// <returns>A success message if updated.</returns>
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> UpdateUserGroup(Guid id, [FromBody] UpdateUserGroupRequest request)
     {
         var command = new UpdateUserGroupCommand(id, request.Name, request.DepartmentIds ?? new List<Guid>());
@@ -55,7 +72,12 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     /// <summary>
     /// Deletes an existing user group.
     /// </summary>
+    /// <param name="id">The unique identifier of the user group to delete.</param>
+    /// <returns>A success message if deleted.</returns>
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> DeleteUserGroup(Guid id)
     {
         var command = new DeleteUserGroupCommand(id);

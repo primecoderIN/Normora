@@ -24,7 +24,20 @@ public static class ApiServiceExtensions
         services.AddOpenApi();
         services.AddSignalR();
         services.AddExceptionHandler<GlobalExceptionHandler>();
-        services.AddProblemDetails();
+
+        // Override ASP.NET's default behavior of returning ProblemDetails for bad requests (like malformed JSON)
+        services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+        {
+            options.InvalidModelStateResponseFactory = context =>
+            {
+                var errors = context.ModelState
+                    .Where(e => e.Value?.Errors.Count > 0)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+
+                var response = Normora.Shared.ApiResponse<System.Collections.Generic.Dictionary<string, string[]>>.Failure("One or more validation errors occurred.", errors);
+                return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(response);
+            };
+        });
 
         services.AddHttpContextAccessor();
 

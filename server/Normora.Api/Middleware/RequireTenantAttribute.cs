@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Normora.Shared;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Middleware;
@@ -26,7 +28,10 @@ public class RequireTenantAttribute : Attribute, IAsyncAuthorizationFilter
         // 2. Ensure the tenant is actually resolved (the user belongs to the tenant)
         if (!tenantContext.IsTenantResolved)
         {
-            context.Result = new UnauthorizedObjectResult(new { Message = "Tenant context is missing or invalid." });
+            context.Result = new ObjectResult(ApiResponse.Failure("Tenant context is missing or invalid."))
+            {
+                StatusCode = StatusCodes.Status401Unauthorized
+            };
             return Task.CompletedTask;
         }
 
@@ -39,7 +44,10 @@ public class RequireTenantAttribute : Attribute, IAsyncAuthorizationFilter
             if (string.IsNullOrEmpty(tenantContext.TenantRole) ||
                 !_roles.Contains(tenantContext.TenantRole, StringComparer.OrdinalIgnoreCase))
             {
-                context.Result = new ForbidResult();
+                context.Result = new ObjectResult(ApiResponse.Failure("You do not have the required role in this workspace."))
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
                 return Task.CompletedTask;
             }
         }
