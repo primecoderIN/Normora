@@ -41,6 +41,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         services.AddScoped<DocumentProcessingJob>();
 

@@ -1,15 +1,19 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { UserService } from './core/services/user.service';
 import { TenantBrandingService } from './core/services/tenant-branding.service';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { NotificationRealtimeService } from './core/services/notification-realtime.service';
 
 // This is the Root Component of our Angular application. 
 // Think of it as the main container that holds everything else.
 @Component({
   // The 'imports' array allows us to use other standalone components/directives in this component.
   // We need RouterOutlet so Angular knows where to render the page content based on the URL.
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ToastModule],
+  providers: [MessageService],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -23,6 +27,8 @@ export class App implements OnInit {
   private router = inject(Router);
   private userService = inject(UserService);
   private brandingService = inject(TenantBrandingService);
+  private messageService = inject(MessageService);
+  private notificationService = inject(NotificationRealtimeService);
 
   protected readonly authInitializing = signal(true);
   protected readonly authStatus = signal('Checking your sign-in...');
@@ -41,6 +47,8 @@ export class App implements OnInit {
     this.oidcSecurityService.checkAuth().subscribe({
       next: ({ isAuthenticated }) => {
       if (isAuthenticated) {
+        // Connect to realtime notifications
+        this.notificationService.connect();
 
         // Route to dashboard when the user lands on login, callback, or root.
         // The /auth/callback route is where Keycloak redirects after OAuth.
@@ -124,5 +132,19 @@ export class App implements OnInit {
         this.router.navigate(['/auth/login']);
       }
     });
+
+    // Step 3: Listen for real-time notifications
+    this.notificationService.invitationReceived$.subscribe(event => {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'New Invitation',
+        detail: `You have been invited to join ${event.tenantName}!`,
+        life: 10000 // 10 seconds
+      });
+    });
+  }
+
+  ngOnDestroy() {
+    this.notificationService.disconnect();
   }
 }

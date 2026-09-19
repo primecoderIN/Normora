@@ -63,5 +63,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<DocumentHub>("/hubs/documents");
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

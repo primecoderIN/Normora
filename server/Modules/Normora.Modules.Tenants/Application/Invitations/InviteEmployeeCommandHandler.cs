@@ -13,6 +13,7 @@ public class InviteEmployeeCommandHandler(
     TenantsDbContext context, 
     ITenantContext tenantContext, 
     IEmailService emailService,
+    INotificationService notificationService,
     Microsoft.Extensions.Configuration.IConfiguration configuration) 
     : IRequestHandler<InviteEmployeeCommand, Guid>
 {
@@ -52,6 +53,9 @@ public class InviteEmployeeCommandHandler(
         var acceptLink = $"{baseUrl}/accept-invite?token={invitation.Token}";
         var body = $"<p>You have been invited to join {tenantName} on Normora.</p><p><a href='{acceptLink}'>Click here to accept the invitation</a>.</p>";
         await emailService.SendEmailAsync(request.Email, $"Invitation to join {tenantName}", body, cancellationToken);
+
+        // Send real-time notification
+        await notificationService.NotifyInvitationReceivedAsync(request.Email, tenantName, cancellationToken);
 
         return invitation.Token;
     }
