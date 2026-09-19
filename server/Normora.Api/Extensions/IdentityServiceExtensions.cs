@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Duende.Bff;
+using Duende.Bff.EntityFramework;
+using Microsoft.EntityFrameworkCore;
 
 namespace Normora.Api.Extensions;
 
@@ -42,7 +44,11 @@ public static class IdentityServiceExtensions
         JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
         services.AddBff()
-            .AddServerSideSessions();
+        .AddEntityFrameworkServerSideSessions(options =>
+        {
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), sql => sql.MigrationsAssembly("Normora.Api"));
+        })
+        .AddSessionCleanupBackgroundProcess();
 
         services.AddAuthentication(options =>
             {

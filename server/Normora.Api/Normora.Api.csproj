@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Duende.BFF" Version="4.3.0" />
+    <PackageReference Include="Duende.BFF.EntityFramework" Version="4.3.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.21" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.20.12" />

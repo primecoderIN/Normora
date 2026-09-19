@@ -64,8 +64,70 @@ public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCo
 ## 3. Authentication & BFF
 
 Normora uses the **Backend-For-Frontend (BFF)** pattern powered by `Duende.BFF`.
-1. **No JWTs in the Browser**: The Angular SPA does not receive access tokens.
-2. **Encrypted Cookies**: The API exchanges the OIDC code with Keycloak and issues a secure `__Host-spa` cookie containing the encrypted token payload.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Browser as Angular (Browser)
+    participant API as .NET API (BFF)
+    participant Keycloak as Keycloak (OIDC)
+
+    Note over Browser, Keycloak: 1. Initiation
+    Browser->>API: 1. GET /bff/login
+    API->>Keycloak: 2. Generate PKCE & redirect to Keycloak
+
+    Note over Browser, Keycloak: 2. User Authentication
+    Keycloak->>Browser: 3. Displays Login / GitHub / Google Screen
+    Browser->>Keycloak: 4. User enters credentials & OTP
+    Keycloak->>API: 5. Redirect to /signin-oidc with an Auth Code
+
+    Note over API, Keycloak: 3. Secure Backchannel Exchange
+    API->>Keycloak: 6. API trades Auth Code for Access/Refresh Tokens (Internal Network)
+    Keycloak->>API: 7. Returns Tokens to API
+
+    Note over Browser, API: 4. Creating the Secure Session
+    API->>API: 8. API encrypts tokens and stores them in a secure Cookie
+    API->>Browser: 9. Returns HttpOnly, Secure, SameSite=Strict Cookie & Redirects to /
+    
+    Note over Browser, API: 5. Authenticated API Calls
+    Browser->>API: 10. GET /api/data (Browser automatically attaches Cookie)
+    API->>API: 11. API decrypts Cookie, extracts Access Token
+    API->>API: 12. API uses Access Token to authorize the request
+    API->>Browser: 13. Returns secure data
+```
+
+### Detailed Breakdown
+
+#### 1. Initiation
+When you click "Login" in Angular, it doesn't talk to Keycloak directly. Instead, it navigates to the .NET API at `/bff/login`. The API generates a secure challenge (PKCE) and redirects your browser to Keycloak.
+
+#### 2. User Authentication
+You land on the Keycloak login screen (`http://localhost:8080`). You enter your password, do the OTP challenge, or click GitHub. Keycloak verifies who you are.
+
+#### 3. The Callback & Backchannel (Where the magic happens)
+Once Keycloak approves you, it redirects your browser *back* to the API at `http://localhost:4200/signin-oidc` with a temporary, one-time-use **Authorization Code**.
+- The API takes this code and secretly talks to Keycloak over the internal Docker network (`http://keycloak:8080`).
+- The API trades the Authorization Code for your real Access Token and Refresh Token. 
+- *Crucially, these tokens never touch your browser.*
+
+#### 4. The Secure Cookie
+Because your Angular app needs a way to prove it's logged in, the API takes those tokens, encrypts them, and wraps them in a highly secure **Cookie** (named `normora-auth` or `__Host-spa`).
+- **HttpOnly**: JavaScript cannot read it (immune to XSS attacks).
+- **Secure**: It can only be sent over HTTPS.
+- **SameSite=Strict**: It can only be sent to your exact API, preventing Cross-Site Request Forgery (CSRF).
+
+#### 5. Authenticated API Calls
+From now on, whenever Angular makes an HTTP request to the API (e.g., fetching a user profile), the browser *automatically* attaches that secure cookie. 
+The API decrypts the cookie, finds the Keycloak Access Token inside, validates it, and processes your request!
+
+> [!NOTE]
+> All of the "weird" configuration we did earlier (like setting `KC_HOSTNAME_URL` and creating the `DockerOidcBackchannelHandler`) was necessary to ensure Step 3 and Step 6 could happen seamlessly across both the public browser network and the internal Docker network simultaneously.
+
+#### 6. Server-Side Session Persistence
+By default, Duende BFF stores user sessions in memory. This means every time the backend container restarts, all users are logged out. To fix this, we use the official `Duende.BFF.EntityFramework` library to persist sessions in our **PostgreSQL** database. 
+- You do **not** need to manually create C# models for this table. The library provides the `SessionDbContext` and the required models out of the box. 
+- The EF Core migrations tool reads these built-in models and automatically generates the `UserSessions` table for us.
+
 3. **Anti-Forgery (CSRF)**: All mutating requests (`POST`, `PUT`, `DELETE`) require an `X-CSRF: 1` header, which is enforced globally by the `AsBffApiEndpoint()` convention in `Program.cs`.
 
 ### Docker Reverse-Proxy Gotcha

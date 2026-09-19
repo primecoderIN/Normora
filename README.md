@@ -9,6 +9,8 @@
   <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/Gemini_Flash-8E75B2?logo=google-gemini&logoColor=white" alt="Google Gemini" />
   <img src="https://img.shields.io/badge/OpenTelemetry-000000?logo=opentelemetry&logoColor=white" alt="OpenTelemetry" />
+  <img src="https://img.shields.io/badge/Duende_BFF-000000?logo=csharp&logoColor=white" alt="Duende BFF" />
+  <img src="https://img.shields.io/badge/EF_Core-512BD4?logo=nuget&logoColor=white" alt="Entity Framework Core" />
 </div>
 <br>
 

@@ -41,6 +41,9 @@ using (var scope = app.Services.CreateScope())
 
     var conversationsDbContext = scope.ServiceProvider.GetRequiredService<Normora.Modules.Conversations.Persistence.ConversationsDbContext>();
     conversationsDbContext.Database.Migrate();
+
+    var sessionDbContext = scope.ServiceProvider.GetRequiredService<Duende.Bff.EntityFramework.SessionDbContext>();
+    sessionDbContext.Database.Migrate();
 }
 
 // Global Exception Handler interceptor (returns ProblemDetails JSON instead of crashing)
