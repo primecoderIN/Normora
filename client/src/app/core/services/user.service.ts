@@ -8,6 +8,7 @@ export interface UserTenantMembership {
   tenantName: string;
   tenantSlug: string;
   role: 'admin' | 'employee';
+  isPersonal: boolean;
 }
 
 export interface PendingInvitation {
@@ -34,12 +35,19 @@ export class UserService {
 
   // Application state using Signals
   public currentUser = signal<CurrentUser | null>(null);
+  public activeTenantId = signal<string | null>(null);
 
   public getMe(): Observable<ApiResponse<CurrentUser>> {
     return this.http.get<ApiResponse<CurrentUser>>(`${this.apiUrl}/me`).pipe(
       tap(response => {
         if (response.success) {
           this.currentUser.set(response.data);
+          // Set initial active tenant if not set
+          if (!this.activeTenantId() && response.data.memberships.length > 0) {
+            // Default to the first non-personal workspace if available, otherwise the personal one
+            const defaultWorkspace = response.data.memberships.find(m => !m.isPersonal) || response.data.memberships[0];
+            this.activeTenantId.set(defaultWorkspace.tenantId);
+          }
         }
       }),
       catchError(error => {

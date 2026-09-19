@@ -91,7 +91,7 @@ export class App implements OnInit {
                 return;
               }
 
-              // No tenants: go to onboarding.
+              // No tenants: go to onboarding. (This shouldn't happen with auto-provisioning)
               if (memberships.length === 0) {
                 this.authInitializing.set(false);
                 this.router.navigate(['/onboarding']);
@@ -99,8 +99,11 @@ export class App implements OnInit {
               }
 
               // Route based on role. App always stays on localhost:4200.
-              const firstMembership = memberships[0];
+              // If they only have a personal workspace, route them to ask page by default, or employer dashboard?
+              // Let's just use the first membership for now. The layout handles switching.
+              const firstMembership = memberships.find(m => !m.isPersonal) || memberships[0];
               this.authInitializing.set(false);
+              
               if (firstMembership.role === 'admin') {
                 this.router.navigate(['/employer/dashboard']);
               } else {

@@ -8,14 +8,26 @@
       </div>
     </div>
 
-    @if (userService.currentUser(); as user) {
+    @if (activeWorkspace) {
       <div class="items-center gap-3 p-3 my-6 bg-white/5 border border-white/10 rounded-lg hidden md:flex">
         <div class="flex items-center justify-center w-8 h-8 bg-white/10 text-surface-300 rounded-md">
-          <i class="pi pi-building"></i>
+          <i [class]="activeWorkspace.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
         </div>
-        <div class="min-w-0">
-          <div class="text-sm font-bold truncate">{{ user.memberships[0]?.tenantName || 'Workspace' }}</div>
-          <div class="text-xs text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Employer' }}</div>
+        <div class="min-w-0 flex-1 relative">
+          <select 
+            class="w-full bg-transparent text-sm font-bold truncate appearance-none focus:outline-none cursor-pointer pr-4"
+            [ngModel]="activeWorkspace.tenantId"
+            (ngModelChange)="changeWorkspace($event)"
+          >
+            <option [value]="activeWorkspace.tenantId" class="text-surface-900">{{ activeWorkspace.tenantName }}</option>
+            @for (ws of otherWorkspaces; track ws.tenantId) {
+              <option [value]="ws.tenantId" class="text-surface-900">{{ ws.tenantName }}</option>
+            }
+          </select>
+          <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-surface-400">
+            <i class="pi pi-chevron-down text-[0.6rem]"></i>
+          </div>
+          <div class="text-xs text-surface-400 capitalize mt-0.5">{{ activeWorkspace.role }}</div>
         </div>
       </div>
     }
@@ -38,21 +50,23 @@
         <i class="pi pi-comments text-base w-4"></i>
         <span>Conversations</span>
       </a>
-      <a routerLink="/employer/employees" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
-        <i class="pi pi-users text-base w-4"></i>
-        <span>Employees</span>
-      </a>
+      @if (!activeWorkspace?.isPersonal) {
+        <a routerLink="/employer/employees" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+          <i class="pi pi-users text-base w-4"></i>
+          <span>Employees</span>
+        </a>
 
-      <div class="text-[0.65rem] font-bold uppercase tracking-widest text-surface-600 pt-3 pb-1 px-3">Settings</div>
+        <div class="text-[0.65rem] font-bold uppercase tracking-widest text-surface-600 pt-3 pb-1 px-3">Settings</div>
 
-      <a routerLink="/employer/settings/departments" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
-        <i class="pi pi-sitemap text-base w-4"></i>
-        <span>Departments</span>
-      </a>
-      <a routerLink="/employer/settings/user-groups" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
-        <i class="pi pi-objects-column text-base w-4"></i>
-        <span>User Groups</span>
-      </a>
+        <a routerLink="/employer/settings/departments" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+          <i class="pi pi-sitemap text-base w-4"></i>
+          <span>Departments</span>
+        </a>
+        <a routerLink="/employer/settings/user-groups" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+          <i class="pi pi-objects-column text-base w-4"></i>
+          <span>User Groups</span>
+        </a>
+      }
     </nav>
 
     <div class="hidden md:grid gap-3 p-3.5 mt-6 bg-white/5 border border-white/10 rounded-lg">
@@ -74,7 +88,7 @@
           </div>
           <div class="min-w-0">
             <div class="text-[0.84rem] font-bold truncate">{{ user.displayName }}</div>
-            <div class="text-[0.72rem] text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Admin' }}</div>
+            <div class="text-[0.72rem] text-surface-400 capitalize">{{ activeWorkspace?.role || 'Admin' }}</div>
           </div>
         </div>
       }

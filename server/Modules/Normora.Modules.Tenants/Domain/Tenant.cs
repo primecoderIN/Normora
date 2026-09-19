@@ -26,6 +26,11 @@ public class Tenant
     /// </summary>
     public TenantStatus Status { get; set; } = TenantStatus.Active;
 
+    /// <summary>
+    /// True if this is a personal workspace for an individual user, false if it's an organization.
+    /// </summary>
+    public bool IsPersonal { get; set; } = false;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     

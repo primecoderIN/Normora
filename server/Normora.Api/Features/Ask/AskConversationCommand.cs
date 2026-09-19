@@ -48,6 +48,7 @@ public sealed record AskConversationCitation(
 public sealed class AskConversationCommandHandler(
     ConversationsDbContext conversationsContext,
     DocumentsDbContext documentsContext,
+    Normora.Modules.Tenants.Persistence.TenantsDbContext tenantsContext,
     IContextResolver contextResolver,
     IQueryRewriterService queryRewriter,
     ITokenBudgetService tokenBudget,
@@ -131,8 +132,17 @@ public sealed class AskConversationCommandHandler(
 
         // ── 5. Hybrid retrieval (vector + keyword + RRF) ──────────────────────
         var limit = Math.Clamp(request.Limit, 1, 8);
+        
+        // Find the user's personal tenant so we can include it in the retrieval
+        var userMemberships = await tenantsContext.TenantMemberships
+            .Include(m => m.Tenant)
+            .Where(m => m.User.KeycloakUserId == currentUser.KeycloakUserId)
+            .ToListAsync(cancellationToken);
+            
+        var personalTenantId = userMemberships.FirstOrDefault(m => m.Tenant.IsPersonal)?.TenantId;
+
         var (topCandidates, vectorSimOfFirst) =
-            await RunHybridRetrievalAsync(rewrittenQuestion, limit, cancellationToken);
+            await RunHybridRetrievalAsync(rewrittenQuestion, limit, personalTenantId, cancellationToken);
 
         // ── 6. Multi-turn grounded generation ─────────────────────────────────
         string answerText;
@@ -228,24 +238,27 @@ public sealed class AskConversationCommandHandler(
     // ─── Hybrid Retrieval ────────────────────────────────────────────────────────
 
     private async Task<(List<RetrievalCandidate> Candidates, double VectorSimOfFirst)>
-        RunHybridRetrievalAsync(string question, int limit, CancellationToken ct)
+        RunHybridRetrievalAsync(string question, int limit, Guid? personalTenantId, CancellationToken ct)
     {
         var queryVector = new Vector(await embeddingService.CreateEmbeddingAsync(question, ct));
         var effectiveDepartments = tenantContext.EffectiveDepartments;
+        var activeTenantId = tenantContext.TenantId;
 
         var queryWords = question.Split([' ', '\t', '\n', '\r', '.', ',', '?', '!', '\''],
             StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 2).ToArray();
         var tsQueryText = queryWords.Length > 0 ? string.Join(" | ", queryWords) : null;
 
         var baseQuery = documentsContext.DocumentChunks
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Join(
-                documentsContext.Documents.AsNoTracking().Where(d =>
+                documentsContext.Documents.IgnoreQueryFilters().AsNoTracking().Where(d =>
                     !d.DocumentDepartments.Any() ||
                     d.DocumentDepartments.Any(dd => effectiveDepartments.Contains(dd.DepartmentId))),
                 chunk => chunk.DocumentId,
                 doc => doc.Id,
-                (chunk, doc) => new { chunk, doc });
+                (chunk, doc) => new { chunk, doc })
+            .Where(x => x.chunk.TenantId == activeTenantId || (personalTenantId.HasValue && x.chunk.TenantId == personalTenantId.Value));
 
         // Vector search — top 20
         var vectorResults = await baseQuery

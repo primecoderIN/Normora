@@ -8,14 +8,26 @@
       </div>
     </div>
 
-    @if (userService.currentUser(); as user) {
+    @if (activeWorkspace) {
       <div class="items-center gap-3 p-3 my-6 bg-white/5 border border-white/10 rounded-lg hidden md:flex">
         <div class="flex items-center justify-center w-8 h-8 bg-white/10 text-surface-300 rounded-md">
-          <i class="pi pi-building"></i>
+          <i [class]="activeWorkspace.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
         </div>
-        <div class="min-w-0">
-          <div class="text-sm font-bold truncate">{{ user.memberships[0]?.tenantName || 'Workspace' }}</div>
-          <div class="text-xs text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Employee' }}</div>
+        <div class="min-w-0 flex-1 relative">
+          <select 
+            class="w-full bg-transparent text-sm font-bold truncate appearance-none focus:outline-none cursor-pointer pr-4"
+            [ngModel]="activeWorkspace.tenantId"
+            (ngModelChange)="changeWorkspace($event)"
+          >
+            <option [value]="activeWorkspace.tenantId" class="text-surface-900">{{ activeWorkspace.tenantName }}</option>
+            @for (ws of otherWorkspaces; track ws.tenantId) {
+              <option [value]="ws.tenantId" class="text-surface-900">{{ ws.tenantName }}</option>
+            }
+          </select>
+          <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-surface-400">
+            <i class="pi pi-chevron-down text-[0.6rem]"></i>
+          </div>
+          <div class="text-xs text-surface-400 capitalize mt-0.5">{{ activeWorkspace.role }}</div>
         </div>
       </div>
     }
@@ -40,7 +52,7 @@
           </div>
           <div class="min-w-0">
             <div class="text-[0.84rem] font-bold truncate">{{ user.displayName }}</div>
-            <div class="text-[0.72rem] text-surface-400 capitalize">{{ user.memberships[0]?.role || 'Employee' }}</div>
+            <div class="text-[0.72rem] text-surface-400 capitalize">{{ activeWorkspace?.role || 'Employee' }}</div>
           </div>
         </div>
       }

@@ -20,4 +20,4 @@ public record PendingInvitationDto(Guid Token, string TenantName);
 /// <summary>
 /// Represents a single tenant membership entry for a user, including their role within that tenant.
 /// </summary>
-public record UserTenantMembershipDto(Guid TenantId, string TenantName, string TenantSlug, string Role);
+public record UserTenantMembershipDto(Guid TenantId, string TenantName, string TenantSlug, string Role, bool IsPersonal);
