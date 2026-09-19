@@ -88,6 +88,19 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 ---
 
+## 📘 OpenAPI Documentation (Scalar UI)
+
+Normora automatically generates full OpenAPI (Swagger) specifications for all endpoints. 
+You can view the beautifully rendered interactive API documentation by navigating to:
+`http://localhost:5000/scalar` (or `/scalar` in production).
+
+The documentation includes:
+- Request/Response JSON schemas mapped strictly to the `ApiResponse<T>` wrapper.
+- Explicitly documented HTTP status codes (200, 400, 401, 403, 404, 500).
+- Developer-friendly descriptions and XML comments.
+
+---
+
 ## API Response Envelope
 
 Every endpoint returns a standardized JSON shape:

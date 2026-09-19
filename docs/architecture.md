@@ -66,6 +66,12 @@ To support large organizations where sensitive documents (like HR policies or Ex
 - **Effective Departments Resolution**: At login, the `Tenants` module resolves all departments a user is part of (both direct assignments and those inherited via `UserGroups`). These `DepartmentIds` are embedded in the user's JWT token claims.
 - **Scoped Hybrid Search**: When querying the RAG pipeline (`AskNormora`), the backend reads these claims and dynamically filters the `pgvector` hybrid search. It restricts results strictly to chunks from documents marked as **Company Wide** (no departments) or matching the user's **Effective Departments**. This guarantees that an employee cannot retrieve AI-generated answers from restricted departmental documents.
 
+## Code Quality Standards
+To ensure a maintainable and robust codebase, Normora adheres to strict clean code principles:
+- **No Magic Strings**: Authorization roles and API response messages are centralized into statically typed constant classes (e.g., `TenantRoles.cs` and `ApiMessages.cs` in the backend, and equivalent TypeScript constants in the frontend). This prevents typo-driven security vulnerabilities and simplifies localization or future refactoring.
+- **Unified API Responses**: Every API endpoint uses a generic `ApiResponse<T>` wrapper, guaranteeing that successful data payloads, validation errors, and server exceptions all return identical JSON envelopes.
+- **OpenAPI Documentation**: The backend leverages Scalar UI to auto-generate interactive, developer-friendly OpenAPI specifications that strictly map to the `ApiResponse<T>` schemas and XML comments.
+
 ## Application Security (BOLA & BFLA)
 Security and data isolation are critical in a multi-tenant environment. Normora is specifically designed to mitigate common API vulnerabilities, notably **Broken Object Level Authorization (BOLA/IDOR)** and **Broken Function Level Authorization (BFLA)**.
 

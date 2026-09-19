@@ -112,3 +112,12 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Angular `SavedAnswerService` — thin HttpClient wrapper
 - [x] Bookmark (save/unsave) button added to every assistant message bubble in `ConversationChatComponent` with optimistic toggle
 - [x] Full `SavedAnswers` Angular page — loading skeleton, empty state, answer cards with markdown + citations, optimistic unsave, load-more pagination
+
+## ✅ Codebase Quality Audit & Standardization
+- [x] Conducted comprehensive static and architectural audit against enterprise industry best practices.
+- [x] Integrated Scalar UI for interactive OpenAPI documentation, documenting 8 core controllers with XML comments and `[ProducesResponseType]`.
+- [x] Standardized all endpoint responses to use a unified `ApiResponse<T>` envelope.
+- [x] Patched `GlobalExceptionHandler` to enforce the `ApiResponse<T>` schema on all generic HTTP errors and validation failures.
+- [x] Eliminated "magic strings" in the backend by extracting authorization scopes and global error responses into `TenantRoles` and `ApiMessages` constants.
+- [x] Eliminated "magic strings" in the Angular frontend by extracting role strings into a `tenant-roles.ts` constants file.
+- [x] Resolved static analyzer and compiler warnings (e.g. `CA2024` and `CS8603`) for a zero-warning build output.

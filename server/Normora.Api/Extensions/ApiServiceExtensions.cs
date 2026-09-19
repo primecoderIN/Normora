@@ -23,6 +23,7 @@ public static class ApiServiceExtensions
 
         services.AddOpenApi();
         services.AddSignalR();
+        services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
         // Override ASP.NET's default behavior of returning ProblemDetails for bad requests (like malformed JSON)
