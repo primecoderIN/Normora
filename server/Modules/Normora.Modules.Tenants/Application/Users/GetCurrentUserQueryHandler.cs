@@ -22,12 +22,25 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             .ThenInclude(m => m.Tenant)
             .FirstOrDefaultAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
 
+        var pendingInvitations = new List<PendingInvitationDto>();
+        if (!string.IsNullOrEmpty(currentUser.Email))
+        {
+            var invites = await context.TenantInvitations
+                .Include(i => i.Tenant)
+                .Where(i => i.Email == currentUser.Email 
+                         && i.Status == Normora.Modules.Tenants.Domain.InvitationStatus.Pending 
+                         && i.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync(cancellationToken);
+
+            pendingInvitations = invites.Select(i => new PendingInvitationDto(i.Token, i.Tenant.Name)).ToList();
+        }
+
         if (user == null)
         {
             // If the user doesn't exist in our DB yet, they just signed up via Keycloak.
             // We should create a baseline record for them here, or return an empty profile.
             // Returning an empty profile so the frontend knows they need to onboard.
-            return new CurrentUserDto(Guid.Empty, string.Empty, string.Empty, new List<UserTenantMembershipDto>());
+            return new CurrentUserDto(Guid.Empty, currentUser.Email ?? string.Empty, currentUser.DisplayName ?? string.Empty, new List<UserTenantMembershipDto>(), pendingInvitations);
         }
 
         // Sync any changes from Keycloak (like if they updated their name or email)
@@ -58,6 +71,6 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             m.Role.ToString().ToLowerInvariant()
         )).ToList();
 
-        return new CurrentUserDto(user.Id, user.Email ?? string.Empty, user.DisplayName ?? string.Empty, memberships);
+        return new CurrentUserDto(user.Id, user.Email ?? string.Empty, user.DisplayName ?? string.Empty, memberships, pendingInvitations);
     }
 }

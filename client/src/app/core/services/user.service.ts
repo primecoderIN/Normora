@@ -10,11 +10,17 @@ export interface UserTenantMembership {
   role: 'admin' | 'employee';
 }
 
+export interface PendingInvitation {
+  token: string;
+  tenantName: string;
+}
+
 export interface CurrentUser {
   id: string;
   email: string;
   displayName: string;
   memberships: UserTenantMembership[];
+  pendingInvitations: PendingInvitation[];
 }
 
 import { ApiResponse } from '../models/api-response.model';

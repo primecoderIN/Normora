@@ -10,7 +10,12 @@ public record GetCurrentUserQuery : IRequest<CurrentUserDto>;
 /// <summary>
 /// Data transfer object representing the authenticated user's profile.
 /// </summary>
-public record CurrentUserDto(Guid Id, string Email, string DisplayName, List<UserTenantMembershipDto> Memberships);
+public record CurrentUserDto(Guid Id, string Email, string DisplayName, List<UserTenantMembershipDto> Memberships, List<PendingInvitationDto> PendingInvitations);
+
+/// <summary>
+/// Represents a pending invitation to join a tenant.
+/// </summary>
+public record PendingInvitationDto(Guid Token, string TenantName);
 
 /// <summary>
 /// Represents a single tenant membership entry for a user, including their role within that tenant.
