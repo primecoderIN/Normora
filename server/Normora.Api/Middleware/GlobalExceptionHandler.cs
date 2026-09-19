@@ -56,9 +56,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         // 4. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
         logger.LogError(exception, "An unhandled exception occurred.");
         
-        var message = env.IsProduction() ? "An unexpected error occurred. Please try again later." : exception.Message;
+        var serverErrorMessage = env.IsProduction() ? "An unexpected error occurred. Please try again later." : exception.Message;
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
+        await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(serverErrorMessage), cancellationToken);
         return true;
     }
 }
