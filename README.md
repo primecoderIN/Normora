@@ -14,6 +14,11 @@
 </div>
 <br>
 
+<div align="center">
+  <img src="./docs/hero.png" alt="Normora Dashboard Highlight" width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
+</div>
+<br>
+
 **Normora** is an enterprise-grade full-stack web application designed for high scalability, stringent security, and an exceptional developer experience.
 
 ## 🌟 Why Normora?
