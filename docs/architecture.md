@@ -66,6 +66,11 @@ To support large organizations where sensitive documents (like HR policies or Ex
 - **Effective Departments Resolution**: At login, the `Tenants` module resolves all departments a user is part of (both direct assignments and those inherited via `UserGroups`). These `DepartmentIds` are embedded in the user's JWT token claims.
 - **Scoped Hybrid Search**: When querying the RAG pipeline (`AskNormora`), the backend reads these claims and dynamically filters the `pgvector` hybrid search. It restricts results strictly to chunks from documents marked as **Company Wide** (no departments) or matching the user's **Effective Departments**. This guarantees that an employee cannot retrieve AI-generated answers from restricted departmental documents.
 
+### Personal Workspaces
+Every user is automatically provisioned a private `Tenant` marked as `IsPersonal = true`. This ensures that individual users have a secure, isolated sandbox to upload and query their own private documents without polluting corporate workspace databases or search results.
+- **Simplified Capabilities**: Personal workspaces bypass complex B2B features. For example, document uploads in a personal workspace automatically hide the Department Assignment UI, as there is no organizational hierarchy within a personal tenant.
+- **Unified Data Model**: By treating the personal sandbox as simply another `Tenant`, the backend requires zero specialized schema alterations. The standard data isolation, hybrid search, and generative boundaries work flawlessly and uniformly.
+
 ## Code Quality Standards
 To ensure a maintainable and robust codebase, Normora adheres to strict clean code principles:
 - **No Magic Strings**: Authorization roles and API response messages are centralized into statically typed constant classes (e.g., `TenantRoles.cs` and `ApiMessages.cs` in the backend, and equivalent TypeScript constants in the frontend). This prevents typo-driven security vulnerabilities and simplifies localization or future refactoring.

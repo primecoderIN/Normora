@@ -18,6 +18,7 @@ Normora is an enterprise-grade full-stack web application. It is designed to be 
 - **Tenant-Safe Retrieval**: Ready document chunks can be ranked by semantic similarity while preserving tenant isolation and source metadata.
 - **Ask Normora**: Employees can ask questions and receive grounded answers with source document and chunk citations.
 - **Department & User Group Isolation**: Documents and users can be segmented into Departments and User Groups. The hybrid search pipeline strictly filters answers so employees only ever interact with Company Wide documents or documents restricted to their assigned departments.
+- **Personal Workspaces**: Every user is automatically provisioned a private, personal workspace. Personal workspaces offer simplified organization (e.g. no departmental segregation) and allow individuals to curate and chat with their own private documents securely.
 
 ## Target Audience
 This platform is built to accommodate complex enterprise workloads, providing robust multi-tenant data isolation, stringent user management, and seamless document handling out of the box.
