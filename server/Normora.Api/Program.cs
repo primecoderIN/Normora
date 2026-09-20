@@ -85,7 +85,7 @@ app.UseAuthorization();
 
 app.MapControllers().AsBffApiEndpoint(); // Enforces CSRF protection
 app.MapBffManagementEndpoints(); // Adds /bff/login, /bff/logout, /bff/user
-app.MapHub<DocumentHub>("/hubs/documents");
-app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint();
+app.MapHub<NotificationHub>("/hubs/notifications").AsBffApiEndpoint();
 
 app.Run();
