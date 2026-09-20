@@ -13,7 +13,6 @@ public static class AuthConstants
     public const string OpenIdScope = "openid";
     public const string ProfileScope = "profile";
     public const string EmailScope = "email";
-    public const string OfflineAccessScope = "offline_access";
     
     // Claims
     public const string PreferredUsernameClaim = "preferred_username";

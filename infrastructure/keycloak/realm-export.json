@@ -7,6 +7,8 @@
     "registrationAllowed":  true,
     "resetPasswordAllowed":  true,
     "verifyEmail":  false,
+    "ssoSessionIdleTimeout": 604800,
+    "ssoSessionMaxLifespan": 604800,
     "bruteForceProtected":  true,
     "failureFactor":  5,
     "sslRequired":  "external",
