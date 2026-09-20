@@ -12,7 +12,7 @@ import { signal } from '@angular/core';
 @Component({
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, SelectModule, FormsModule, CommonModule],
   selector: 'app-employee-layout',
-  styleUrl: './employee-layout.css',
+
   templateUrl: './employee-layout.html',
 })
 export class EmployeeLayout {

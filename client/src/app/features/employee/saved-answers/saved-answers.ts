@@ -97,7 +97,7 @@ import { marked } from 'marked';
               <div class="flex-1 px-5 py-4 prose-normora text-[0.875rem] leading-relaxed text-surface-800 overflow-hidden max-h-48 relative">
                 <div [innerHTML]="renderMarkdown(answer.content)"></div>
                 <!-- Fade mask at bottom -->
-                <div class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-white to-transparent pointer-events-none"></div>
               </div>
 
               <!-- Citations -->

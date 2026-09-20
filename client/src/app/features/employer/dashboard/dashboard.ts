@@ -11,7 +11,7 @@ import { UserService } from '@core/services/user.service';
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, DatePipe, InputText, ChartModule, StatCardComponent, ButtonModule],
-  styleUrl: './dashboard.css',
+
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {

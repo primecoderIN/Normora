@@ -12,7 +12,7 @@ import { SkeletonModule } from 'primeng/skeleton';
   standalone: true,
   imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent, SkeletonModule],
   templateUrl: './departments.html',
-  styleUrl: './departments.css',
+
 })
 export class Departments implements OnInit {
   private deptService = inject(DepartmentService);

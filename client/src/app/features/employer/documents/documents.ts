@@ -37,7 +37,7 @@ import { SkeletonModule } from 'primeng/skeleton';
   ],
   providers: [MessageService],
   templateUrl: './documents.html',
-  styleUrl: './documents.css',
+
 })
 export class Documents implements OnInit, OnDestroy {
   private documentService = inject(DocumentService);

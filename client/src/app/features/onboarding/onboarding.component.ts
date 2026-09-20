@@ -14,11 +14,11 @@ import { InvitationService } from '@core/services/invitation.service';
   template: `
     <div class="min-h-screen bg-[#fafcff] flex relative overflow-hidden">
       <!-- Background decorators -->
-      <div class="absolute top-0 right-0 w-[900px] h-[900px] bg-blue-50 rounded-full blur-[120px] opacity-50 -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-      <div class="absolute bottom-0 left-0 w-[700px] h-[700px] bg-indigo-50 rounded-full blur-[120px] opacity-60 translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
+      <div class="absolute -top-40 -left-40 w-225 h-225 bg-indigo-500/20 rounded-full blur-[100px] mix-blend-multiply opacity-50 pointer-events-none"></div>
+      <div class="absolute -bottom-40 -right-40 w-175 h-175 bg-purple-500/20 rounded-full blur-[80px] mix-blend-multiply opacity-40 pointer-events-none"></div>
 
       <!-- Left branding panel -->
-      <div class="hidden lg:flex flex-col justify-between w-[420px] flex-none bg-slate-950 text-white p-10 relative overflow-hidden">
+      <div class="hidden lg:flex flex-col justify-between w-105 flex-none bg-slate-950 text-white p-10 relative overflow-hidden">
         <!-- Panel decorators -->
         <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
         <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>

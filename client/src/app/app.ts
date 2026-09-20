@@ -16,7 +16,7 @@ import { TenantRoles } from './core/constants/tenant-roles';
   imports: [RouterOutlet, ToastModule],
   providers: [MessageService],
   selector: 'app-root',
-  styleUrl: './app.css',
+
   templateUrl: './app.html',
 })
 export class App implements OnInit {
