@@ -117,6 +117,13 @@ app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint();
 ### Token Lifecycle
 - **Access tokens** and **refresh tokens** are encrypted inside the `__Host-spa` cookie by the BFF — the browser never sees them.
 - **Token renewal** is fully automatic. When the access token expires, `Duende.BFF` performs a back-channel refresh with Keycloak and updates the cookie transparently.
+- **Important**: To ensure a refresh token is actually issued by Keycloak, the `offline_access` scope must be explicitly requested during the OIDC login flow. This is configured in `IdentityServiceExtensions.cs` using the `AuthConstants.OfflineAccessScope` constant. Without this scope, the backend session will irretrievably expire as soon as the initial 5-minute access token expires.
+- **CSRF protection**: All mutating requests (`POST`, `PUT`, `DELETE`) must include the `X-CSRF: 1` header, enforced globally via `.AsBffApiEndpoint()`.
+
+### Angular Route Guard Synchronization
+The SPA's routing decisions (`AuthGuard`) rely on the authentication state provided by the BFF (`/bff/user`). Because the BFF network check is asynchronous, `AuthGuard` must wait for the initial check to complete before executing.
+- If `AuthGuard` evaluates the state before the check completes (e.g., during a hard page reload), it will incorrectly assume the user is unauthenticated and trigger a premature redirect to the `/auth/login` route.
+- **Fix**: The `AuthService` uses a nullable `BehaviorSubject<boolean | null>` to track initialization. The `AuthGuard` uses an RxJS `filter(state => state !== null)` pipe to pause route evaluation until the BFF check conclusively returns `true` or `false`.
 - **CSRF protection**: All mutating requests (`POST`, `PUT`, `DELETE`) must include the `X-CSRF: 1` header, enforced globally via `.AsBffApiEndpoint()`.
 
 ### JIT User Provisioning

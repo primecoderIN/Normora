@@ -8,7 +8,7 @@ import { BehaviorSubject, Observable, catchError, map, of } from 'rxjs';
 export class AuthService {
   private http = inject(HttpClient);
   
-  private authStatus = new BehaviorSubject<boolean>(false);
+  private authStatus = new BehaviorSubject<boolean | null>(null);
   public isAuthenticated$ = this.authStatus.asObservable();
 
   // Duende BFF provides the logout URL (with the anti-forgery `sid` parameter)

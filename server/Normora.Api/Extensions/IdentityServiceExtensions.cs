@@ -101,6 +101,7 @@ public static class IdentityServiceExtensions
                 options.Scope.Add(AuthConstants.OpenIdScope);
                 options.Scope.Add(AuthConstants.ProfileScope);
                 options.Scope.Add(AuthConstants.EmailScope);
+                options.Scope.Add(AuthConstants.OfflineAccessScope);
                 
                 // Save tokens into the cookie so the BFF can use them to call downstream APIs (if any)
                 options.SaveTokens = true;
