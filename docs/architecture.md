@@ -105,6 +105,15 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 Nginx must also set `proxy_set_header X-Forwarded-Host $host;` on all proxy blocks pointing to the API.
 
+### SignalR & BFF Authentication Gotcha
+When unauthenticated users attempt to connect to SignalR Hubs (`/hub/negotiate`), ASP.NET Core's default behavior is to return a `302 Redirect` to the Identity Provider (Keycloak). Because this is an AJAX/Fetch request from the SignalR client, the browser will automatically follow the redirect in the background, resulting in failed or cancelled cross-origin API calls to Keycloak's `/auth` endpoint.
+
+**Fix**: All SignalR Hub route mappings in `Program.cs` must be explicitly appended with `.AsBffApiEndpoint()`. This tells the Duende BFF middleware to intercept unauthenticated requests to the hub and correctly return a `401 Unauthorized` response instead of a redirect.
+
+```csharp
+app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint();
+```
+
 ### Token Lifecycle
 - **Access tokens** and **refresh tokens** are encrypted inside the `__Host-spa` cookie by the BFF — the browser never sees them.
 - **Token renewal** is fully automatic. When the access token expires, `Duende.BFF` performs a back-channel refresh with Keycloak and updates the cookie transparently.
