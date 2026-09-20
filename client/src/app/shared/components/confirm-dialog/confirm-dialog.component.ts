@@ -8,14 +8,14 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, ButtonModule],
   template: `
     @if (visible()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-900/40 backdrop-blur-sm" (click)="onCancel()">
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" (click)="onCancel()">
         <div class="w-full max-w-sm bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
-          <div class="flex items-center justify-between p-5 border-b border-surface-100">
-            <h3 class="text-lg font-bold text-surface-900 m-0">{{ title() }}</h3>
-            <p-button icon="pi pi-times" (onClick)="onCancel()" styleClass="!w-8 !h-8 !p-0 flex items-center justify-center !bg-transparent !border-transparent !text-surface-400 hover:!bg-surface-100 hover:!text-surface-700 rounded-full transition-colors"></p-button>
+          <div class="flex items-center justify-between p-5 border-b border-slate-100">
+            <h3 class="text-lg font-bold text-slate-900 m-0">{{ title() }}</h3>
+            <p-button icon="pi pi-times" (onClick)="onCancel()" styleClass="!w-8 !h-8 !p-0 flex items-center justify-center !bg-transparent !border-transparent !text-slate-400 hover:!bg-slate-100 hover:!text-slate-700 rounded-full transition-colors"></p-button>
           </div>
           <div class="p-5">
-            <p class="text-[0.95rem] text-surface-700 leading-relaxed m-0 mb-4">
+            <p class="text-[0.95rem] text-slate-700 leading-relaxed m-0 mb-4">
               <ng-content></ng-content>
             </p>
             @if (error()) {
@@ -25,8 +25,8 @@ import { CommonModule } from '@angular/common';
               </div>
             }
             <div class="flex items-center justify-end gap-3 pt-2">
-              <p-button [label]="cancelLabel()" (onClick)="onCancel()" styleClass="!bg-white !border-surface-300 !text-surface-700 hover:!bg-surface-50 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
-              <p-button [label]="confirmLabel()" (onClick)="confirm.emit()" [disabled]="isLoading()" [icon]="isLoading() ? 'pi pi-spin pi-spinner' : ''" [styleClass]="confirmButtonClass() + ' font-bold !px-4 !py-2 !h-9 !text-sm transition-colors disabled:!bg-surface-300 disabled:!border-surface-300 disabled:!text-surface-500'"></p-button>
+              <p-button [label]="cancelLabel()" (onClick)="onCancel()" styleClass="!bg-white !border-slate-300 !text-slate-700 hover:!bg-slate-50 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
+              <p-button [label]="confirmLabel()" (onClick)="confirm.emit()" [disabled]="isLoading()" [icon]="isLoading() ? 'pi pi-spin pi-spinner' : ''" [styleClass]="confirmButtonClass() + ' font-bold !px-4 !py-2 !h-9 !text-sm transition-colors disabled:!bg-slate-300 disabled:!border-slate-300 disabled:!text-slate-500'"></p-button>
             </div>
           </div>
         </div>

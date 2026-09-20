@@ -15,12 +15,12 @@ import { marked } from 'marked';
       
       @if (!conversation) {
         <!-- Empty State -->
-        <div class="flex flex-col flex-1 items-center justify-center gap-4 p-8 text-center bg-surface-50">
+        <div class="flex flex-col flex-1 items-center justify-center gap-4 p-8 text-center bg-slate-50">
           <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-indigo-100 to-purple-100 text-indigo-600 text-3xl rounded-2xl mb-2 shadow-sm">
             <i class="pi pi-comments"></i>
           </div>
-          <h2 class="text-xl font-bold text-surface-900 m-0">Ask Normora anything</h2>
-          <p class="text-sm text-surface-500 max-w-sm m-0">Select a conversation on the left, or start a new one to get grounded answers from your company documents.</p>
+          <h2 class="text-xl font-bold text-slate-900 m-0">Ask Normora anything</h2>
+          <p class="text-sm text-slate-500 max-w-sm m-0">Select a conversation on the left, or start a new one to get grounded answers from your company documents.</p>
           <button
             type="button"
             class="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg border-none cursor-pointer transition-colors shadow-sm"
@@ -31,11 +31,11 @@ import { marked } from 'marked';
         </div>
       } @else {
         <!-- Chat Header -->
-        <header class="flex items-center justify-between p-4 px-5 bg-white border-b border-surface-200 flex-none gap-4">
+        <header class="flex items-center justify-between p-4 px-5 bg-white border-b border-slate-200 flex-none gap-4">
           <div class="flex items-center gap-3 min-w-0">
             <button
               type="button"
-              class="flex md:hidden items-center justify-center flex-none w-9 h-9 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-lg text-surface-600 cursor-pointer transition-colors"
+              class="flex md:hidden items-center justify-center flex-none w-9 h-9 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-600 cursor-pointer transition-colors"
               (click)="onToggleSidebar.emit()"
               aria-label="Toggle sidebar"
             >
@@ -45,8 +45,8 @@ import { marked } from 'marked';
               <i class="pi pi-comments"></i>
             </div>
             <div class="min-w-0">
-              <div class="text-[0.95rem] font-bold text-surface-900 truncate">{{ conversation.title }}</div>
-              <div class="text-[0.75rem] text-surface-400">
+              <div class="text-[0.95rem] font-bold text-slate-900 truncate">{{ conversation.title }}</div>
+              <div class="text-[0.75rem] text-slate-400">
                 {{ conversation.messages.length > 0 ? (conversation.messages.length + ' messages') : 'No messages yet' }}
               </div>
             </div>
@@ -63,12 +63,12 @@ import { marked } from 'marked';
             <div class="flex flex-col gap-4">
               @for (n of [1,2,3]; track n) {
                 <div class="flex" [class.justify-end]="n % 2 === 0">
-                  <div class="w-7/12 h-14 bg-surface-100 rounded-2xl animate-pulse"></div>
+                  <div class="w-7/12 h-14 bg-slate-100 rounded-2xl animate-pulse"></div>
                 </div>
               }
             </div>
           } @else if (conversation.messages.length === 0) {
-            <div class="flex flex-col flex-1 items-center justify-center gap-3 text-center text-surface-400">
+            <div class="flex flex-col flex-1 items-center justify-center gap-3 text-center text-slate-400">
               <div class="w-16 h-16 flex items-center justify-center bg-linear-to-br from-indigo-50 to-purple-50 rounded-2xl">
                 <i class="pi pi-sparkles text-3xl text-indigo-300"></i>
               </div>
@@ -95,9 +95,9 @@ import { marked } from 'marked';
                        [class.text-white]="msg.role === 'User'"
                        [class.rounded-br-sm]="msg.role === 'User'"
                        [class.bg-white]="msg.role === 'Assistant'"
-                       [class.text-surface-800]="msg.role === 'Assistant'"
+                       [class.text-slate-800]="msg.role === 'Assistant'"
                        [class.border]="msg.role === 'Assistant'"
-                       [class.border-surface-200]="msg.role === 'Assistant'"
+                       [class.border-slate-200]="msg.role === 'Assistant'"
                        [class.rounded-bl-sm]="msg.role === 'Assistant'"
                        [class.shadow-sm]="msg.role === 'Assistant'">
                     
@@ -113,7 +113,7 @@ import { marked } from 'marked';
                         <!-- Bookmark button -->
                         <button
                           type="button"
-                          class="flex items-center justify-center w-7 h-7 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-md text-surface-400 hover:text-amber-500 transition-all cursor-pointer"
+                          class="flex items-center justify-center w-7 h-7 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-400 hover:text-amber-500 transition-all cursor-pointer"
                           (click)="toggleSave(msg.id)"
                           [pTooltip]="isSaved(msg.id) ? 'Unsave' : 'Save answer'"
                           tooltipPosition="top"
@@ -127,7 +127,7 @@ import { marked } from 'marked';
                         <!-- Copy button -->
                         <button
                           type="button"
-                          class="flex items-center justify-center w-7 h-7 bg-surface-50 hover:bg-surface-100 border border-surface-200 rounded-md text-surface-400 hover:text-surface-600 transition-all cursor-pointer"
+                          class="flex items-center justify-center w-7 h-7 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
                           (click)="copyToClipboard(msg.content)"
                           [pTooltip]="copiedId === msg.id ? 'Copied!' : 'Copy'"
                           tooltipPosition="top"
@@ -142,11 +142,11 @@ import { marked } from 'marked';
                   <!-- Citations -->
                   @if (msg.role === 'Assistant' && msg.citations.length > 0) {
                     <div class="flex flex-wrap items-center gap-1.5 px-1">
-                      <span class="text-[0.68rem] font-bold text-surface-400 tracking-widest uppercase mr-1">Sources</span>
+                      <span class="text-[0.68rem] font-bold text-slate-400 tracking-widest uppercase mr-1">Sources</span>
                       @for (cite of msg.citations; track cite.documentId + cite.fileName) {
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-50 border border-surface-200 rounded-full text-surface-600 text-[0.72rem] font-medium max-w-40"
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-full text-slate-600 text-[0.72rem] font-medium max-w-40"
                              [pTooltip]="cite.fileName" tooltipPosition="top">
-                          <i class="pi pi-file-pdf text-surface-400 text-[0.7rem] flex-none"></i>
+                          <i class="pi pi-file-pdf text-slate-400 text-[0.7rem] flex-none"></i>
                           <span class="truncate">{{ cite.fileName }}</span>
                           <span class="text-indigo-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
                         </div>
@@ -161,7 +161,7 @@ import { marked } from 'marked';
                     </div>
                   }
 
-                  <span class="text-[0.68rem] text-surface-400 px-1"
+                  <span class="text-[0.68rem] text-slate-400 px-1"
                         [class.text-right]="msg.role === 'User'">
                     {{ msg.createdAt | date:'h:mm a' }}
                   </span>
@@ -183,7 +183,7 @@ import { marked } from 'marked';
               <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-indigo-50 to-purple-50 text-indigo-600 rounded-full text-xs shadow-sm">
                 <i class="pi pi-sparkles"></i>
               </div>
-              <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white border border-surface-200 rounded-2xl rounded-bl-sm shadow-sm">
+              <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white border border-slate-200 rounded-2xl rounded-bl-sm shadow-sm">
                 <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce animate-delay-none"></span>
                 <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                 <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
@@ -209,12 +209,12 @@ import { marked } from 'marked';
         </div>
 
         <!-- Input Bar -->
-        <div class="p-3 md:p-4 bg-white border-t border-surface-200 flex-none">
-          <form class="flex items-end gap-2.5 p-2 bg-surface-50 border border-surface-200 rounded-xl transition-all focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100"
+        <div class="p-3 md:p-4 bg-white border-t border-slate-200 flex-none">
+          <form class="flex items-end gap-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl transition-all focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100"
                 (ngSubmit)="onSubmit()">
             <textarea
               #textareaEl
-              class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-1.5 text-[0.9rem] text-surface-900 placeholder:text-surface-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
+              class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-1.5 text-[0.9rem] text-slate-900 placeholder:text-slate-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
               [(ngModel)]="question"
               name="question"
               rows="1"
@@ -227,16 +227,16 @@ import { marked } from 'marked';
             ></textarea>
             <button
               type="submit"
-              class="flex items-center justify-center flex-none w-9 h-9 bg-indigo-600 text-white border-none rounded-lg cursor-pointer transition-all hover:bg-indigo-700 disabled:bg-surface-200 disabled:text-surface-400 disabled:cursor-not-allowed"
+              class="flex items-center justify-center flex-none w-9 h-9 bg-indigo-600 text-white border-none rounded-lg cursor-pointer transition-all hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
               [disabled]="!question.trim() || isSending"
               aria-label="Send message"
             >
               <i class="text-sm" [class.pi-spin]="isSending" [class.pi-spinner]="isSending" [class.pi-arrow-up]="!isSending"></i>
             </button>
           </form>
-          <p class="text-center text-[0.7rem] text-surface-400 mt-2 mb-0">
-            Press <kbd class="px-1 py-0.5 bg-surface-100 border border-surface-200 rounded text-[0.65rem] font-sans">Enter</kbd> to send · 
-            <kbd class="px-1 py-0.5 bg-surface-100 border border-surface-200 rounded text-[0.65rem] font-sans">Shift+Enter</kbd> for new line
+          <p class="text-center text-[0.7rem] text-slate-400 mt-2 mb-0">
+            Press <kbd class="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[0.65rem] font-sans">Enter</kbd> to send · 
+            <kbd class="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[0.65rem] font-sans">Shift+Enter</kbd> for new line
           </p>
         </div>
       }

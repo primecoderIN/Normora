@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="flex flex-col items-center justify-center p-8 text-center bg-white rounded-lg border border-surface-200 border-dashed min-h-72">
+    <div class="flex flex-col items-center justify-center p-8 text-center bg-white rounded-lg border border-slate-200 border-dashed min-h-72">
       <div 
         class="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
         [class]="iconBgClass()"
@@ -14,8 +14,8 @@ import { CommonModule } from '@angular/common';
         <i class="pi text-xl" [class]="iconClasses"></i>
       </div>
       
-      <h3 class="text-base font-bold text-surface-900 mb-1">{{ title() }}</h3>
-      <p class="text-sm text-surface-500 max-w-sm mb-6">{{ description() }}</p>
+      <h3 class="text-base font-bold text-slate-900 mb-1">{{ title() }}</h3>
+      <p class="text-sm text-slate-500 max-w-sm mb-6">{{ description() }}</p>
       
       @if (actionLabel()) {
         <button 
@@ -36,7 +36,7 @@ export class EmptyStateComponent {
   title = input.required<string>();
   description = input.required<string>();
   
-  iconBgClass = input<string>('bg-surface-50');
+  iconBgClass = input<string>('bg-slate-50');
   iconColorClass = input<string>('');
   
   actionLabel = input<string>();
@@ -45,6 +45,6 @@ export class EmptyStateComponent {
   action = output<void>();
 
   get iconClasses() {
-    return `${this.icon()} ${this.iconColorClass() || 'text-surface-400'}`;
+    return `${this.icon()} ${this.iconColorClass() || 'text-slate-400'}`;
   }
 }

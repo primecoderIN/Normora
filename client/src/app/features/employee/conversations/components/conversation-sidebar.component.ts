@@ -11,13 +11,13 @@ import { ConversationDto } from '@core/services/conversation.service';
   standalone: true,
   imports: [CommonModule, FormsModule, TooltipModule, ScrollingModule, ConfirmDialogComponent],
   template: `
-    <aside class="flex flex-col flex-none w-72 bg-surface-50 border-r border-surface-200 overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.02)]">
+    <aside class="flex flex-col flex-none w-72 bg-slate-50 border-r border-slate-200 overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.02)]">
       <!-- Header -->
-      <div class="flex flex-col p-4 pb-3 border-b border-surface-200 bg-white flex-none gap-3 z-10 shadow-sm relative">
+      <div class="flex flex-col p-4 pb-3 border-b border-slate-200 bg-white flex-none gap-3 z-10 shadow-sm relative">
         <div class="flex items-center justify-between gap-2">
           <div>
             <p class="text-[0.65rem] font-black tracking-[0.15em] text-indigo-500 uppercase m-0 mb-1">Knowledge Assistant</p>
-            <h1 class="text-xl font-black text-surface-900 m-0 tracking-tight">Conversations</h1>
+            <h1 class="text-xl font-black text-slate-900 m-0 tracking-tight">Conversations</h1>
           </div>
           <button
             type="button"
@@ -33,18 +33,18 @@ import { ConversationDto } from '@core/services/conversation.service';
 
         <!-- Search Bar -->
         <div class="relative group">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm group-focus-within:text-indigo-500 transition-colors"></i>
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-indigo-500 transition-colors"></i>
           <input 
             type="text" 
             [(ngModel)]="searchQuery" 
             (ngModelChange)="onSearchChange()"
             placeholder="Search history..." 
-            class="w-full bg-surface-50 border border-surface-200 text-surface-900 text-[0.82rem] rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 block pl-8 p-2 transition-all outline-none"
+            class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-[0.82rem] rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 block pl-8 p-2 transition-all outline-none"
           />
           @if (searchQuery()) {
             <button 
               type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full hover:bg-surface-200 text-surface-400 border-none cursor-pointer transition-colors"
+              class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full hover:bg-slate-200 text-slate-400 border-none cursor-pointer transition-colors"
               (click)="clearSearch()"
             >
               <i class="pi pi-times text-[0.6rem]"></i>
@@ -54,13 +54,13 @@ import { ConversationDto } from '@core/services/conversation.service';
       </div>
 
       <!-- List -->
-      <div class="flex-1 overflow-hidden p-2 flex flex-col gap-1 relative bg-surface-50">
+      <div class="flex-1 overflow-hidden p-2 flex flex-col gap-1 relative bg-slate-50">
         @if (isLoading && conversations.length === 0) {
           <div class="flex flex-col gap-2 p-2">
             @for (n of [1,2,3,4,5]; track n) {
-              <div class="flex flex-col gap-2 p-3 bg-white border border-surface-100 rounded-xl animate-pulse">
-                <div class="h-3 bg-surface-200 rounded-full w-3/4"></div>
-                <div class="h-2 bg-surface-100 rounded-full w-1/3"></div>
+              <div class="flex flex-col gap-2 p-3 bg-white border border-slate-100 rounded-xl animate-pulse">
+                <div class="h-3 bg-slate-200 rounded-full w-3/4"></div>
+                <div class="h-2 bg-slate-100 rounded-full w-1/3"></div>
               </div>
             }
           </div>
@@ -72,8 +72,8 @@ import { ConversationDto } from '@core/services/conversation.service';
             <span class="text-[0.85rem] font-medium">{{ error }}</span>
           </div>
         } @else if (filteredConversations().length === 0) {
-          <div class="flex flex-col items-center justify-center h-full gap-3 p-6 text-center text-surface-400">
-            <div class="w-14 h-14 rounded-2xl bg-white border border-surface-200 flex items-center justify-center shadow-sm">
+          <div class="flex flex-col items-center justify-center h-full gap-3 p-6 text-center text-slate-400">
+            <div class="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
               <i class="pi pi-comments text-2xl text-indigo-300"></i>
             </div>
             <span class="text-[0.85rem] font-medium">
@@ -85,7 +85,7 @@ import { ConversationDto } from '@core/services/conversation.service';
             <button
               *cdkVirtualFor="let conv of filteredConversations(); trackBy: trackById"
               type="button"
-              class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-white hover:border-surface-200 hover:shadow-sm mb-1.5 overflow-hidden"
+              class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm mb-1.5 overflow-hidden"
               [class.!bg-white]="activeId === conv.id"
               [class.!border-indigo-200]="activeId === conv.id"
               [class.shadow-[0_2px_4px_rgba(0,0,0,0.02)]]="activeId === conv.id"
@@ -99,19 +99,19 @@ import { ConversationDto } from '@core/services/conversation.service';
               <div class="flex flex-col flex-1 min-w-0 gap-1 pl-1">
                 <span class="text-[0.85rem] font-semibold truncate transition-colors"
                       [class.text-indigo-700]="activeId === conv.id"
-                      [class.text-surface-800]="activeId !== conv.id">
+                      [class.text-slate-800]="activeId !== conv.id">
                   {{ conv.title || 'New conversation' }}
                 </span>
                 <span class="text-[0.7rem] font-medium"
                       [class.text-indigo-400]="activeId === conv.id"
-                      [class.text-surface-400]="activeId !== conv.id">
+                      [class.text-slate-400]="activeId !== conv.id">
                   {{ getRelativeTime(conv.lastMessageAt) }}
                 </span>
               </div>
               
               <button
                 type="button"
-                class="flex items-center justify-center flex-none w-7 h-7 bg-white border border-surface-200 rounded-md text-surface-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-sm z-10"
+                class="flex items-center justify-center flex-none w-7 h-7 bg-white border border-slate-200 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-sm z-10"
                 (click)="confirmDelete(conv.id, $event)"
                 pTooltip="Delete"
                 tooltipPosition="left"
@@ -123,7 +123,7 @@ import { ConversationDto } from '@core/services/conversation.service';
             
             @if (isLoading && conversations.length > 0) {
               <div class="flex justify-center p-4">
-                 <div class="w-5 h-5 border-2 border-surface-300 border-t-indigo-500 rounded-full animate-spin"></div>
+                 <div class="w-5 h-5 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin"></div>
               </div>
             }
           </cdk-virtual-scroll-viewport>

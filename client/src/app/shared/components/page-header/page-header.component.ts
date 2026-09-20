@@ -9,9 +9,9 @@ import { Component, input, output } from '@angular/core';
         @if (eyebrow()) {
           <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-indigo-600 m-0 mb-1">{{ eyebrow() }}</p>
         }
-        <h1 class="text-[1.75rem] font-bold text-surface-900 leading-[1.15] m-0">{{ title() }}</h1>
+        <h1 class="text-[1.75rem] font-bold text-slate-900 leading-[1.15] m-0">{{ title() }}</h1>
         @if (subtitle()) {
-          <p class="text-[0.9rem] text-surface-500 m-0 mt-1.5">{{ subtitle() }}</p>
+          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">{{ subtitle() }}</p>
         }
       </div>
       @if (actionLabel()) {

@@ -8,52 +8,52 @@ import { ButtonModule } from 'primeng/button';
   standalone: true,
   imports: [ReactiveFormsModule, ButtonModule],
   template: `
-    <div class="grid gap-8 text-surface-900 page-enter">
+    <div class="grid gap-8 text-slate-900 page-enter">
       <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-indigo-600 m-0 mb-1">Workspace access</p>
-          <h1 class="text-[1.75rem] font-bold text-surface-900 leading-[1.15] m-0">Employees</h1>
-          <p class="text-[0.9rem] text-surface-500 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
+          <h1 class="text-[1.75rem] font-bold text-slate-900 leading-[1.15] m-0">Employees</h1>
+          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
         </div>
-        <p-button label="Export" icon="pi pi-download" styleClass="!bg-white !border-surface-200 !text-surface-700 hover:!bg-surface-50 font-bold !px-4 !py-2 !h-10 transition-colors"></p-button>
+        <p-button label="Export" icon="pi pi-download" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 font-bold !px-4 !py-2 !h-10 transition-colors"></p-button>
       </header>
 
       <!-- Stat cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
           <div class="flex items-center justify-center flex-none w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl">
             <i class="pi pi-users text-lg"></i>
           </div>
           <div>
-            <p class="text-xs font-medium text-surface-500 m-0 mb-0.5">Active employees</p>
-            <strong class="text-2xl font-bold text-surface-900">342</strong>
+            <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Active employees</p>
+            <strong class="text-2xl font-bold text-slate-900">342</strong>
           </div>
         </div>
-        <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
           <div class="flex items-center justify-center flex-none w-11 h-11 bg-amber-50 text-amber-600 rounded-xl">
             <i class="pi pi-envelope text-lg"></i>
           </div>
           <div>
-            <p class="text-xs font-medium text-surface-500 m-0 mb-0.5">Pending invites</p>
-            <strong class="text-2xl font-bold text-surface-900">4</strong>
+            <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Pending invites</p>
+            <strong class="text-2xl font-bold text-slate-900">4</strong>
           </div>
         </div>
-        <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
           <div class="flex items-center justify-center flex-none w-11 h-11 bg-purple-50 text-purple-600 rounded-xl">
             <i class="pi pi-shield text-lg"></i>
           </div>
           <div>
-            <p class="text-xs font-medium text-surface-500 m-0 mb-0.5">Admin seats</p>
-            <strong class="text-2xl font-bold text-surface-900">3</strong>
+            <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Admin seats</p>
+            <strong class="text-2xl font-bold text-slate-900">3</strong>
           </div>
         </div>
       </div>
 
       <!-- Invite section -->
-      <section class="bg-white border border-surface-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="border-b border-surface-100 px-6 py-5">
-          <h2 class="text-base font-bold text-surface-900 m-0">Invite employee</h2>
-          <p class="text-sm text-surface-500 m-0 mt-0.5">Send an invitation link to join this workspace.</p>
+      <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="border-b border-slate-100 px-6 py-5">
+          <h2 class="text-base font-bold text-slate-900 m-0">Invite employee</h2>
+          <p class="text-sm text-slate-500 m-0 mt-0.5">Send an invitation link to join this workspace.</p>
         </div>
         <div class="px-6 py-5">
           @if (successMessage()) {
@@ -82,11 +82,11 @@ import { ButtonModule } from 'primeng/button';
             class="flex flex-col sm:flex-row gap-3 max-w-xl"
           >
             <div class="flex-1 relative">
-              <i class="pi pi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm pointer-events-none"></i>
+              <i class="pi pi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
               <input
                 type="email"
                 formControlName="email"
-                class="w-full h-10 pl-9 pr-3 bg-surface-50 border border-surface-200 rounded-lg text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-surface-400"
+                class="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400"
                 placeholder="employee@company.com"
               />
             </div>
@@ -95,32 +95,32 @@ import { ButtonModule } from 'primeng/button';
               type="submit"
               [disabled]="inviteForm.invalid || isLoading()"
               [icon]="isLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
-              styleClass="!bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-surface-200 disabled:!border-surface-200 disabled:!text-surface-400 font-bold !px-4 !h-10 transition-colors whitespace-nowrap">
+              styleClass="!bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-slate-200 disabled:!border-slate-200 disabled:!text-slate-400 font-bold !px-4 !h-10 transition-colors whitespace-nowrap">
             </p-button>
           </form>
         </div>
       </section>
 
       <!-- Employees table -->
-      <section class="bg-white border border-surface-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="flex items-center justify-between gap-4 border-b border-surface-100 px-6 py-4">
-          <h2 class="text-base font-bold text-surface-900 m-0">Members</h2>
-          <label class="flex items-center gap-2 h-9 px-3 bg-surface-50 border border-surface-200 rounded-lg w-52 focus-within:border-indigo-400 transition-colors">
-            <i class="pi pi-search text-surface-400 text-xs"></i>
-            <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-surface-900 placeholder:text-surface-400 p-0" />
+      <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-6 py-4">
+          <h2 class="text-base font-bold text-slate-900 m-0">Members</h2>
+          <label class="flex items-center gap-2 h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg w-52 focus-within:border-indigo-400 transition-colors">
+            <i class="pi pi-search text-slate-400 text-xs"></i>
+            <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-slate-900 placeholder:text-slate-400 p-0" />
           </label>
         </div>
-        <div class="divide-y divide-surface-100">
+        <div class="divide-y divide-slate-100">
           <!-- Skeleton rows while data loads -->
           @for (row of skeletonRows; track row) {
             <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
-              <div class="flex-none w-9 h-9 bg-surface-200 rounded-full"></div>
+              <div class="flex-none w-9 h-9 bg-slate-200 rounded-full"></div>
               <div class="flex-1 space-y-2">
-                <div class="h-3 bg-surface-200 rounded-full w-1/4"></div>
-                <div class="h-2.5 bg-surface-100 rounded-full w-1/3"></div>
+                <div class="h-3 bg-slate-200 rounded-full w-1/4"></div>
+                <div class="h-2.5 bg-slate-100 rounded-full w-1/3"></div>
               </div>
-              <div class="h-6 w-16 bg-surface-100 rounded-full"></div>
-              <div class="h-6 w-14 bg-surface-100 rounded-full"></div>
+              <div class="h-6 w-16 bg-slate-100 rounded-full"></div>
+              <div class="h-6 w-14 bg-slate-100 rounded-full"></div>
             </div>
           }
         </div>
@@ -129,7 +129,7 @@ import { ButtonModule } from 'primeng/button';
           <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400">
             <i class="pi pi-users text-2xl"></i>
           </div>
-          <p class="text-sm font-medium text-surface-500 m-0">No members yet — invite your first employee above.</p>
+          <p class="text-sm font-medium text-slate-500 m-0">No members yet — invite your first employee above.</p>
         </div>
       </section>
     </div>

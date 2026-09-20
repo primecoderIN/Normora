@@ -22,7 +22,7 @@ import { UserService } from '@core/services/user.service';
   standalone: true,
   imports: [ConversationSidebarComponent, ConversationChatComponent],
   template: `
-    <div class="flex h-full min-h-0 bg-surface-50 rounded-xl border border-surface-200 shadow-sm overflow-hidden relative">
+    <div class="flex h-full min-h-0 bg-slate-50 rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
       <!-- Mobile sidebar overlay -->
       @if (showMobileSidebar()) {
         <div class="absolute inset-0 z-20 bg-black/30 md:hidden" (click)="showMobileSidebar.set(false)"></div>

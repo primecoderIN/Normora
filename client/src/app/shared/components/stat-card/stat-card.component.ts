@@ -4,7 +4,7 @@ import { Component, input } from '@angular/core';
   selector: 'app-stat-card',
   standalone: true,
   template: `
-    <div class="bg-white rounded-lg p-4 border border-surface-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex items-start gap-3 min-h-28">
+    <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex items-start gap-3 min-h-28">
       <div
         class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
         [class]="colorClass()"
@@ -12,8 +12,8 @@ import { Component, input } from '@angular/core';
         <i class="pi text-lg" [class]="icon()"></i>
       </div>
       <div class="min-w-0">
-        <div class="text-xs font-semibold text-surface-500 mb-0.5">{{ title() }}</div>
-        <div class="text-2xl font-bold text-surface-900 leading-tight">{{ value() }}</div>
+        <div class="text-xs font-semibold text-slate-500 mb-0.5">{{ title() }}</div>
+        <div class="text-2xl font-bold text-slate-900 leading-tight">{{ value() }}</div>
 
         @if (trendText()) {
           <div
@@ -47,7 +47,7 @@ export class StatCardComponent {
     switch (this.trend()) {
       case 'up': return 'text-emerald-500';
       case 'down': return 'text-red-500';
-      default: return 'text-surface-400';
+      default: return 'text-slate-400';
     }
   }
 }

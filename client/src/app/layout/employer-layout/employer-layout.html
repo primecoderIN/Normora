@@ -1,16 +1,16 @@
-<div class="flex flex-col md:flex-row h-screen bg-surface-50 text-surface-900 overflow-hidden">
-  <aside class="md:flex-none flex-col p-4 md:p-5 bg-surface-950 text-white w-full md:w-64 border-r border-white/10 hidden md:flex">
+<div class="flex flex-col md:flex-row h-screen bg-slate-50 text-slate-900 overflow-hidden">
+  <aside class="md:flex-none flex-col p-4 md:p-5 bg-slate-950 text-white w-full md:w-64 border-r border-white/10 hidden md:flex">
     <div class="flex items-center gap-3 min-h-12">
       <div class="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-lg font-extrabold">N</div>
       <div>
         <div class="text-base font-extrabold leading-tight">Normora</div>
-        <div class="text-xs text-surface-400">Admin console</div>
+        <div class="text-xs text-slate-400">Admin console</div>
       </div>
     </div>
 
     @if (activeWorkspace) {
       <div class="items-center gap-3 p-3 my-6 bg-white/5 border border-white/10 rounded-lg hidden md:flex">
-        <div class="flex items-center justify-center w-8 h-8 bg-white/10 text-surface-300 rounded-md">
+        <div class="flex items-center justify-center w-8 h-8 bg-white/10 text-slate-300 rounded-md">
           <i [class]="activeWorkspace.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
         </div>
         <div class="min-w-0 flex-1 relative">
@@ -21,22 +21,21 @@
             optionLabel="tenantName"
             optionValue="tenantId"
             styleClass="!bg-transparent !border-none !shadow-none w-full !p-0"
-            panelStyleClass="!bg-surface-800 !border-surface-700 text-sm overflow-hidden"
+            panelStyleClass="!bg-slate-800 !border-slate-700 text-sm overflow-hidden"
             class="w-full"
-            [dropdownIcon]="'pi pi-chevron-down text-[0.6rem] text-surface-400'"
+            [dropdownIcon]="'pi pi-chevron-down text-[0.6rem] text-slate-400'"
           >
-            <ng-template pTemplate="selectedItem" let-selectedOption>
+            <ng-template pTemplate="selected" let-selectedOption>
               <div class="text-sm font-bold truncate text-white" style="margin-top: -2px;">
                 {{ selectedOption.tenantName }}
               </div>
             </ng-template>
             <ng-template pTemplate="item" let-option>
-              <div class="text-sm font-medium text-surface-200 hover:text-white truncate">
+              <div class="text-sm font-medium text-slate-200 hover:text-white truncate">
                 {{ option.tenantName }}
               </div>
             </ng-template>
           </p-select>
-          <div class="text-xs text-surface-400 capitalize -mt-1.5">{{ activeWorkspace.role }}</div>
         </div>
       </div>
     }
@@ -46,32 +45,32 @@
         routerLink="/employer/dashboard"
         routerLinkActive="!bg-indigo-600/20 !text-white"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto"
+        class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto"
       >
         <i class="pi pi-home text-base w-4"></i>
         <span>Overview</span>
       </a>
-      <a routerLink="/employer/documents" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+      <a routerLink="/employer/documents" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
         <i class="pi pi-file text-base w-4"></i>
         <span>Documents</span>
       </a>
-      <a routerLink="/employer/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+      <a routerLink="/employer/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
         <i class="pi pi-comments text-base w-4"></i>
         <span>Conversations</span>
       </a>
       @if (!activeWorkspace?.isPersonal) {
-        <a routerLink="/employer/employees" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+        <a routerLink="/employer/employees" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
           <i class="pi pi-users text-base w-4"></i>
           <span>Employees</span>
         </a>
 
-        <div class="text-[0.65rem] font-bold uppercase tracking-widest text-surface-600 pt-3 pb-1 px-3">Settings</div>
+        <div class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-600 pt-3 pb-1 px-3">Settings</div>
 
-        <a routerLink="/employer/settings/departments" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+        <a routerLink="/employer/settings/departments" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
           <i class="pi pi-sitemap text-base w-4"></i>
           <span>Departments</span>
         </a>
-        <a routerLink="/employer/settings/user-groups" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-surface-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+        <a routerLink="/employer/settings/user-groups" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
           <i class="pi pi-objects-column text-base w-4"></i>
           <span>User Groups</span>
         </a>
@@ -88,21 +87,21 @@
           </div>
           <div class="min-w-0">
             <div class="text-[0.84rem] font-bold truncate">{{ user.displayName }}</div>
-            <div class="text-[0.72rem] text-surface-400 capitalize">{{ activeWorkspace?.role || 'Admin' }}</div>
+            <div class="text-[0.72rem] text-slate-400 capitalize">{{ activeWorkspace?.role || 'Admin' }}</div>
           </div>
         </div>
       }
       <p-button 
         label="Sign out" 
         icon="pi pi-sign-out" 
-        styleClass="w-full !bg-transparent !border-white/10 !text-surface-300 hover:!bg-white/5 hover:!text-white hover:!border-white/20 transition-colors"
+        styleClass="w-full !bg-transparent !border-white/10 !text-slate-300 hover:!bg-white/5 hover:!text-white hover:!border-white/20 transition-colors"
         (onClick)="logout()">
       </p-button>
     </div>
   </aside>
 
   <!-- Mobile Top Bar (Visible only on small screens) -->
-  <div class="md:hidden flex items-center justify-between p-4 bg-surface-950 text-white border-b border-white/10">
+  <div class="md:hidden flex items-center justify-between p-4 bg-slate-950 text-white border-b border-white/10">
     <div class="flex items-center gap-2">
       <div class="flex items-center justify-center w-6 h-6 bg-indigo-600 rounded font-extrabold text-sm">N</div>
       <div class="text-sm font-extrabold">Normora</div>
@@ -115,15 +114,15 @@
   </div>
   
   <!-- Mobile Nav (Visible only on small screens) -->
-  <div class="md:hidden overflow-x-auto bg-surface-900 border-b border-white/10">
+  <div class="md:hidden overflow-x-auto bg-slate-900 border-b border-white/10">
     <nav class="flex px-2 py-2 gap-1 custom-scrollbar">
-      <a routerLink="/employer/dashboard" routerLinkActive="!bg-indigo-600/20 !text-white" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 rounded-lg text-surface-400 whitespace-nowrap text-sm font-medium">
+      <a routerLink="/employer/dashboard" routerLinkActive="!bg-indigo-600/20 !text-white" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-home"></i> Overview
       </a>
-      <a routerLink="/employer/documents" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-surface-400 whitespace-nowrap text-sm font-medium">
+      <a routerLink="/employer/documents" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-file"></i> Documents
       </a>
-      <a routerLink="/employer/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-surface-400 whitespace-nowrap text-sm font-medium">
+      <a routerLink="/employer/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-comments"></i> Conversations
       </a>
     </nav>

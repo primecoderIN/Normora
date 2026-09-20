@@ -21,7 +21,7 @@ import { Department } from '@core/services/department.service';
       <div class="flex flex-col gap-4">
         @if (!isPersonal()) {
           <div class="flex flex-col gap-2">
-            <label class="text-sm font-semibold text-surface-700">Departments (Optional)</label>
+            <label class="text-sm font-semibold text-slate-700">Departments (Optional)</label>
             <p-multiselect
               [options]="departments()"
               [ngModel]="selectedDeptIds()"
@@ -33,7 +33,7 @@ import { Department } from '@core/services/department.service';
               display="chip"
               styleClass="w-full">
             </p-multiselect>
-            <small class="text-xs text-surface-500">If no departments are selected, all employees can search this document.</small>
+            <small class="text-xs text-slate-500">If no departments are selected, all employees can search this document.</small>
           </div>
         }
 
