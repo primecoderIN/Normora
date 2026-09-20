@@ -1,14 +1,16 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '@core/services/user.service';
 import { InvitationService } from '@core/services/invitation.service';
 import { signal } from '@angular/core';
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, SelectModule, FormsModule, CommonModule],
   selector: 'app-employee-layout',
   styleUrl: './employee-layout.css',
   templateUrl: './employee-layout.html',
@@ -35,6 +37,11 @@ export class EmployeeLayout {
     const activeId = this.activeWorkspace?.tenantId;
     return user.memberships.filter(m => m.tenantId !== activeId);
   }
+
+  get allWorkspaces() {
+    return this.userService.currentUser()?.memberships || [];
+  }
+
 
   // Switch the user's active workspace and enforce role-based redirection if they are an admin in the new workspace
   changeWorkspace(tenantId: string) {

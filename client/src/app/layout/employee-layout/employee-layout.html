@@ -14,20 +14,29 @@
           <i [class]="activeWorkspace.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
         </div>
         <div class="min-w-0 flex-1 relative">
-          <select 
-            class="w-full bg-transparent text-sm font-bold truncate appearance-none focus:outline-none cursor-pointer pr-4"
+          <p-select 
+            [options]="allWorkspaces" 
             [ngModel]="activeWorkspace.tenantId"
-            (ngModelChange)="changeWorkspace($event)"
+            (onChange)="changeWorkspace($event.value)"
+            optionLabel="tenantName"
+            optionValue="tenantId"
+            styleClass="!bg-transparent !border-none !shadow-none w-full !p-0"
+            panelStyleClass="!bg-surface-800 !border-surface-700 text-sm overflow-hidden"
+            class="w-full"
+            [dropdownIcon]="'pi pi-chevron-down text-[0.6rem] text-surface-400'"
           >
-            <option [value]="activeWorkspace.tenantId" class="text-surface-900">{{ activeWorkspace.tenantName }}</option>
-            @for (ws of otherWorkspaces; track ws.tenantId) {
-              <option [value]="ws.tenantId" class="text-surface-900">{{ ws.tenantName }}</option>
-            }
-          </select>
-          <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-surface-400">
-            <i class="pi pi-chevron-down text-[0.6rem]"></i>
-          </div>
-          <div class="text-xs text-surface-400 capitalize mt-0.5">{{ activeWorkspace.role }}</div>
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              <div class="text-sm font-bold truncate text-white" style="margin-top: -2px;">
+                {{ selectedOption.tenantName }}
+              </div>
+            </ng-template>
+            <ng-template pTemplate="item" let-option>
+              <div class="text-sm font-medium text-surface-200 hover:text-white truncate">
+                {{ option.tenantName }}
+              </div>
+            </ng-template>
+          </p-select>
+          <div class="text-xs text-surface-400 capitalize -mt-1.5">{{ activeWorkspace.role }}</div>
         </div>
       </div>
     }

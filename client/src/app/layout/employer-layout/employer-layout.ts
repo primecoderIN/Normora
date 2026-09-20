@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
@@ -11,7 +12,7 @@ import { InvitationService } from '@core/services/invitation.service';
 @Component({
   selector: 'app-employer-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ButtonModule, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ButtonModule, SelectModule, FormsModule],
   templateUrl: './employer-layout.html',
 })
 export class EmployerLayout {
@@ -40,6 +41,11 @@ export class EmployerLayout {
     const activeId = this.activeWorkspace?.tenantId;
     return user.memberships.filter(m => m.tenantId !== activeId);
   }
+
+  get allWorkspaces() {
+    return this.userService.currentUser()?.memberships || [];
+  }
+
 
   // Switch the user's active workspace and enforce role-based redirection based on their access level in the new workspace
   changeWorkspace(tenantId: string) {
