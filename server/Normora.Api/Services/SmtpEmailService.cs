@@ -1,8 +1,9 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Normora.Shared.Interfaces;
+using Normora.Shared.Options;
 
 namespace Normora.Api.Services;
 
@@ -16,14 +17,14 @@ public class SmtpEmailService : IEmailService, IDisposable
     private readonly ILogger<SmtpEmailService> _logger;
     private readonly string _fromAddress;
 
-    public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger)
+    public SmtpEmailService(IOptions<SmtpOptions> options, ILogger<SmtpEmailService> logger)
     {
         _logger = logger;
         
-        var host = configuration["Smtp:Host"] ?? "localhost";
-        var portStr = configuration["Smtp:Port"] ?? "1025";
-        var port = int.Parse(portStr);
-        _fromAddress = configuration["Smtp:From"] ?? "noreply@normora.local";
+        var smtpOptions = options.Value;
+        var host = smtpOptions.Host;
+        var port = smtpOptions.Port;
+        _fromAddress = smtpOptions.From;
 
         _client = new SmtpClient(host, port)
         {

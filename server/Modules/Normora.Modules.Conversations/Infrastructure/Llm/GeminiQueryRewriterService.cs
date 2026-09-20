@@ -1,16 +1,36 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Normora.Shared.Options;
 using Normora.Modules.Conversations.Application.Services;
 
 namespace Normora.Modules.Conversations.Infrastructure.Llm;
 
-public class GeminiQueryRewriterService(
-    HttpClient httpClient,
-    IConfiguration configuration) : IQueryRewriterService
+public class GeminiQueryRewriterService : IQueryRewriterService
 {
-    private readonly string? apiKey = configuration["Gemini:ApiKey"];
-    private readonly string model = configuration["Gemini:GenerationModel"] ?? "gemini-2.0-flash";
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<GeminiQueryRewriterService> _logger;
+    private readonly string? apiKey;
+    private readonly string model;
+
+    public GeminiQueryRewriterService(
+        HttpClient httpClient,
+        IOptions<GeminiOptions> options,
+        ILogger<GeminiQueryRewriterService> logger)
+    {
+        _httpClient = httpClient;
+        _logger = logger;
+
+        var geminiOptions = options.Value;
+        apiKey = geminiOptions.ApiKey;
+        model = geminiOptions.GenerationModel;
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Gemini API key is not configured. Query rewriter service will fail.");
+        }
+    }
 
     public async Task<string> RewriteQueryAsync(
         string currentQuestion,
@@ -48,7 +68,7 @@ public class GeminiQueryRewriterService(
             [new GeminiContent([new GeminiPart(prompt)])],
             new GeminiGenerationConfig(0.0)); // low temperature for consistent rewrites
 
-        using var response = await httpClient.PostAsJsonAsync(
+        using var response = await _httpClient.PostAsJsonAsync(
             $"models/{model}:generateContent?key={apiKey}",
             request,
             cancellationToken);

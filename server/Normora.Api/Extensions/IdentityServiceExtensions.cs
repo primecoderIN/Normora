@@ -9,6 +9,9 @@ using Duende.Bff;
 using Duende.Bff.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 
+using Normora.Shared.Constants;
+using Normora.Shared.Options;
+
 namespace Normora.Api.Extensions;
 
 /// <summary>
@@ -16,15 +19,22 @@ namespace Normora.Api.Extensions;
 /// </summary>
 public class DockerOidcBackchannelHandler : DelegatingHandler
 {
-    public DockerOidcBackchannelHandler(HttpMessageHandler innerHandler) : base(innerHandler) { }
+    private readonly string _externalHost;
+    private readonly string _internalHost;
+
+    public DockerOidcBackchannelHandler(HttpMessageHandler innerHandler, string externalHost = "localhost", string internalHost = "keycloak") : base(innerHandler) 
+    { 
+        _externalHost = externalHost;
+        _internalHost = internalHost;
+    }
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (request.RequestUri != null && request.RequestUri.Host == "localhost")
+        if (request.RequestUri != null && request.RequestUri.Host == _externalHost)
         {
             var builder = new UriBuilder(request.RequestUri)
             {
-                Host = "keycloak"
+                Host = _internalHost
             };
             request.RequestUri = builder.Uri;
         }
@@ -40,6 +50,8 @@ public static class IdentityServiceExtensions
 {
     public static IServiceCollection AddIdentityServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        var keycloakOptions = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>() ?? new KeycloakOptions();
+
         // Prevents mapping standard claim types (like 'sub') to Microsoft proprietary schemas
         JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
@@ -58,33 +70,37 @@ public static class IdentityServiceExtensions
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
-                options.Cookie.Name = environment.IsDevelopment() ? "normora-auth" : "__Host-spa";
+                options.Cookie.Name = environment.IsDevelopment() ? AuthConstants.DevCookieName : AuthConstants.ProdCookieName;
                 options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
                 // Secure should be true in production, false for local development without HTTPS
                 options.Cookie.SecurePolicy = environment.IsDevelopment() ? Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest : Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
             })
             .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
-                options.Authority = configuration["Keycloak:Authority"];
-                options.MetadataAddress = configuration["Keycloak:MetadataAddress"]!;
+                options.Authority = keycloakOptions.Authority;
+                options.MetadataAddress = keycloakOptions.MetadataAddress;
                 options.RequireHttpsMetadata = false;
 
-                // Rewrite localhost to keycloak for internal Docker backchannel requests
+                // Extract hosts from options for Docker backchannel rewriting
+                var externalHost = new Uri(keycloakOptions.ExternalAuthority).Host;
+                var internalHost = new Uri(keycloakOptions.InternalAuthority).Host;
+
+                // Rewrite external host to internal host for Docker backchannel requests
                 options.BackchannelHttpHandler = new DockerOidcBackchannelHandler(new HttpClientHandler
                 {
                     ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                });
+                }, externalHost, internalHost);
 
-                options.ClientId = "normora-web";
+                options.ClientId = AuthConstants.WebClientId;
                 // normora-web is a public client in our realm, so no secret is needed, but we MUST use PKCE
                 options.ResponseType = OpenIdConnectResponseType.Code;
                 options.UsePkce = true;
 
                 // Configure Scopes
                 options.Scope.Clear();
-                options.Scope.Add("openid");
-                options.Scope.Add("profile");
-                options.Scope.Add("email");
+                options.Scope.Add(AuthConstants.OpenIdScope);
+                options.Scope.Add(AuthConstants.ProfileScope);
+                options.Scope.Add(AuthConstants.EmailScope);
                 
                 // Save tokens into the cookie so the BFF can use them to call downstream APIs (if any)
                 options.SaveTokens = true;
@@ -94,13 +110,13 @@ public static class IdentityServiceExtensions
                 // Name and Role claim mappings
                 options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
-                    NameClaimType = "preferred_username",
-                    RoleClaimType = "role",
+                    NameClaimType = AuthConstants.PreferredUsernameClaim,
+                    RoleClaimType = AuthConstants.RoleClaim,
                     ValidateIssuer = true,
                     ValidIssuers = new[] 
                     { 
-                        configuration["Keycloak:Authority"]!, 
-                        "http://localhost:8080/realms/normora" 
+                        keycloakOptions.Authority, 
+                        $"{keycloakOptions.ExternalAuthority}/realms/normora" 
                     }
                 };
 
@@ -108,23 +124,23 @@ public static class IdentityServiceExtensions
                 {
                     OnRedirectToIdentityProvider = context =>
                     {
-                        // The Authority is http://keycloak:8080 so the API can reach Keycloak internally,
-                        // but we must rewrite the authorize URL to localhost for the user's browser.
+                        // The Authority might be internal so the API can reach Keycloak internally,
+                        // but we must rewrite the authorize URL to external for the user's browser.
                         context.ProtocolMessage.IssuerAddress = context.ProtocolMessage.IssuerAddress
-                            .Replace("http://keycloak:8080", "http://localhost:8080");
+                            .Replace(keycloakOptions.InternalAuthority, keycloakOptions.ExternalAuthority);
 
                         // Pass IDP hints (like google, github) to Keycloak if requested
-                        if (context.Properties.Items.TryGetValue("provider", out var provider))
+                        if (context.Properties.Items.TryGetValue(AuthConstants.ProviderProperty, out var provider))
                         {
-                            context.ProtocolMessage.SetParameter("kc_idp_hint", provider);
+                            context.ProtocolMessage.SetParameter(AuthConstants.KeycloakIdpHintParameter, provider);
                         }
                         return Task.CompletedTask;
                     },
                     OnRedirectToIdentityProviderForSignOut = context =>
                     {
-                        // Rewrite the logout URL to localhost for the user's browser
+                        // Rewrite the logout URL to external for the user's browser
                         context.ProtocolMessage.IssuerAddress = context.ProtocolMessage.IssuerAddress
-                            .Replace("http://keycloak:8080", "http://localhost:8080");
+                            .Replace(keycloakOptions.InternalAuthority, keycloakOptions.ExternalAuthority);
                         return Task.CompletedTask;
                     }
                 };

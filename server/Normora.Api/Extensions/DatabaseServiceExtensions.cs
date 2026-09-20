@@ -38,36 +38,38 @@ public static class DatabaseServiceExtensions
         services.AddHangfireServer();
 
         // Configure MinIO S3-compatible storage
-        var minioEndpoint = configuration["Minio:Endpoint"] ?? "localhost:9000";
-        var minioAccessKey = configuration["Minio:AccessKey"] ?? "admin";
-        var minioSecretKey = configuration["Minio:SecretKey"] ?? "password";
+        var minioOptions = configuration.GetSection(Normora.Shared.Options.MinioOptions.SectionName).Get<Normora.Shared.Options.MinioOptions>() ?? new Normora.Shared.Options.MinioOptions();
 
         services.AddMinio(configureClient => configureClient
-            .WithEndpoint(minioEndpoint)
-            .WithCredentials(minioAccessKey, minioSecretKey)
+            .WithEndpoint(minioOptions.Endpoint)
+            .WithCredentials(minioOptions.AccessKey, minioOptions.SecretKey)
             .WithSSL(false)
             .Build());
 
         services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>();
+        
+        var tikaOptions = configuration.GetSection(Normora.Shared.Options.TikaOptions.SectionName).Get<Normora.Shared.Options.TikaOptions>() ?? new Normora.Shared.Options.TikaOptions();
         services.AddHttpClient<IDocumentTextExtractor, TikaDocumentTextExtractor>(client =>
         {
-            client.BaseAddress = new Uri(configuration["Tika:Endpoint"] ?? "http://localhost:9998/");
+            client.BaseAddress = new Uri(tikaOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(5);
         });
+
+        var geminiOptions = configuration.GetSection(Normora.Shared.Options.GeminiOptions.SectionName).Get<Normora.Shared.Options.GeminiOptions>() ?? new Normora.Shared.Options.GeminiOptions();
         services.AddHttpClient<ITextEmbeddingService, GeminiEmbeddingService>(client =>
         {
-            client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
+            client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(2);
         });
         services.AddHttpClient<ITextGenerationService, GeminiTextGenerationService>(client =>
         {
-            client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
+            client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(2);
         });
         
         services.AddHttpClient<Normora.Modules.Conversations.Application.Services.IQueryRewriterService, Normora.Modules.Conversations.Infrastructure.Llm.GeminiQueryRewriterService>(client =>
         {
-            client.BaseAddress = new Uri(configuration["Gemini:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/");
+            client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(2);
         });
 

@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
+using Normora.Shared.Options;
 
 namespace Normora.Api.Features.Ask;
 
@@ -8,12 +10,19 @@ namespace Normora.Api.Features.Ask;
 /// Implementation of <see cref="ITextGenerationService"/> that uses Google's Gemini API.
 /// Supports both stateless grounded answering and multi-turn conversational RAG.
 /// </summary>
-public sealed class GeminiTextGenerationService(
-    HttpClient httpClient,
-    IConfiguration configuration) : ITextGenerationService
+public sealed class GeminiTextGenerationService : ITextGenerationService
 {
-    private readonly string? _apiKey = configuration["Gemini:ApiKey"];
-    private readonly string _model = configuration["Gemini:GenerationModel"] ?? "gemini-2.0-flash";
+    private readonly HttpClient httpClient;
+    private readonly string? _apiKey;
+    private readonly string _model;
+
+    public GeminiTextGenerationService(HttpClient httpClient, IOptions<GeminiOptions> options)
+    {
+        this.httpClient = httpClient;
+        var geminiOptions = options.Value;
+        this._apiKey = geminiOptions.ApiKey;
+        this._model = geminiOptions.GenerationModel;
+    }
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_apiKey);
 

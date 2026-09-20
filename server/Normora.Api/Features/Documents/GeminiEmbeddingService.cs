@@ -1,18 +1,27 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
+using Normora.Shared.Options;
 
 namespace Normora.Api.Features.Documents;
 
 /// <summary>
 /// Implementation of <see cref="ITextEmbeddingService"/> that uses Google's Gemini API for generating 768-dimensional embeddings.
 /// </summary>
-public sealed class GeminiEmbeddingService(
-    HttpClient httpClient,
-    IConfiguration configuration) : ITextEmbeddingService
+public sealed class GeminiEmbeddingService : ITextEmbeddingService
 {
     private const int EmbeddingDimensions = 768;
-    private readonly string? apiKey = configuration["Gemini:ApiKey"];
-    private readonly string model = configuration["Gemini:EmbeddingModel"] ?? "gemini-embedding-001";
+    private readonly HttpClient httpClient;
+    private readonly string? apiKey;
+    private readonly string model;
+
+    public GeminiEmbeddingService(HttpClient httpClient, IOptions<GeminiOptions> options)
+    {
+        this.httpClient = httpClient;
+        var geminiOptions = options.Value;
+        this.apiKey = geminiOptions.ApiKey;
+        this.model = geminiOptions.EmbeddingModel;
+    }
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(apiKey);
 

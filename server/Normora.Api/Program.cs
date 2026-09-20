@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. Dependency Injection Configuration
 // Separated into extension methods by architectural layer to keep Program.cs clean.
+builder.Services.AddConfigurationServices(builder.Configuration); // Options pattern and typed configs
 builder.Services.AddDatabaseServices(builder.Configuration); // EF Core, MinIO
 builder.Services.AddApplicationServices();                   // MediatR, FluentValidation, Scoped Services
 builder.Services.AddApiServices(builder.Configuration);      // Controllers, CORS, OpenAPI, Exception Handling
