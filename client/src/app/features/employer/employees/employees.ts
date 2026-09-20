@@ -8,7 +8,7 @@ import { ButtonModule } from 'primeng/button';
   standalone: true,
   imports: [ReactiveFormsModule, ButtonModule],
   template: `
-    <div class="grid gap-8 text-surface-900">
+    <div class="grid gap-8 text-surface-900 page-enter">
       <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-indigo-600 m-0 mb-1">Workspace access</p>
@@ -18,58 +18,118 @@ import { ButtonModule } from 'primeng/button';
         <p-button label="Export" icon="pi pi-download" styleClass="!bg-white !border-surface-200 !text-surface-700 hover:!bg-surface-50 font-bold !px-4 !py-2 !h-10 transition-colors"></p-button>
       </header>
 
+      <!-- Stat cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white border border-surface-200 rounded-lg p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <p class="text-sm font-medium text-surface-500 m-0">Active employees</p>
-          <strong class="block text-2xl font-bold text-surface-900 mt-2">342</strong>
+        <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+          <div class="flex items-center justify-center flex-none w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl">
+            <i class="pi pi-users text-lg"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-surface-500 m-0 mb-0.5">Active employees</p>
+            <strong class="text-2xl font-bold text-surface-900">342</strong>
+          </div>
         </div>
-        <div class="bg-white border border-surface-200 rounded-lg p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <p class="text-sm font-medium text-surface-500 m-0">Pending invites</p>
-          <strong class="block text-2xl font-bold text-surface-900 mt-2">4</strong>
+        <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+          <div class="flex items-center justify-center flex-none w-11 h-11 bg-amber-50 text-amber-600 rounded-xl">
+            <i class="pi pi-envelope text-lg"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-surface-500 m-0 mb-0.5">Pending invites</p>
+            <strong class="text-2xl font-bold text-surface-900">4</strong>
+          </div>
         </div>
-        <div class="bg-white border border-surface-200 rounded-lg p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <p class="text-sm font-medium text-surface-500 m-0">Admin seats</p>
-          <strong class="block text-2xl font-bold text-surface-900 mt-2">3</strong>
+        <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+          <div class="flex items-center justify-center flex-none w-11 h-11 bg-purple-50 text-purple-600 rounded-xl">
+            <i class="pi pi-shield text-lg"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-surface-500 m-0 mb-0.5">Admin seats</p>
+            <strong class="text-2xl font-bold text-surface-900">3</strong>
+          </div>
         </div>
       </div>
 
-      <section class="bg-white border border-surface-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
-        <div class="border-b border-surface-100 p-5">
-          <h2 class="text-lg font-bold text-surface-900 m-0">Invite employee</h2>
-          <p class="text-sm text-surface-500 m-0 mt-1">Send an invitation to join this workspace.</p>
+      <!-- Invite section -->
+      <section class="bg-white border border-surface-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="border-b border-surface-100 px-6 py-5">
+          <h2 class="text-base font-bold text-surface-900 m-0">Invite employee</h2>
+          <p class="text-sm text-surface-500 m-0 mt-0.5">Send an invitation link to join this workspace.</p>
         </div>
-        <div class="p-5">
-          <form
-            [formGroup]="inviteForm"
-            (ngSubmit)="onSubmit()"
-            class="grid sm:grid-cols-[minmax(0,1fr)_auto] gap-4 max-w-xl"
-          >
-            <label class="flex flex-col gap-1.5">
-              <span class="text-sm font-semibold text-surface-700">Email address</span>
-              <input
-                type="email"
-                formControlName="email"
-                class="w-full h-10 px-3 bg-white border border-surface-300 rounded-md text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                placeholder="employee@company.com"
-              />
-            </label>
-            <div class="self-end pb-0.5">
-              <p-button [label]="isLoading() ? 'Sending...' : 'Send invite'" type="submit" [disabled]="inviteForm.invalid || isLoading()" [icon]="isLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-send'" styleClass="!bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-surface-300 disabled:!border-surface-300 disabled:!text-surface-500 font-bold !px-4 !py-2 !h-10 transition-colors"></p-button>
-            </div>
-          </form>
-
+        <div class="px-6 py-5">
           @if (successMessage()) {
-            <div class="flex items-start gap-2 p-3 mt-4 bg-emerald-50 border border-emerald-200 rounded-md text-sm text-emerald-700">
-              <i class="pi pi-check-circle mt-0.5"></i>
-              <span>{{ successMessage() }}</span>
+            <div class="flex items-center gap-3 p-4 mb-5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800">
+              <div class="flex items-center justify-center flex-none w-9 h-9 bg-emerald-100 rounded-lg">
+                <i class="pi pi-check-circle text-emerald-600"></i>
+              </div>
+              <div>
+                <p class="text-sm font-bold m-0">Invitation sent!</p>
+                <p class="text-xs text-emerald-700 m-0 mt-0.5">{{ successMessage() }}</p>
+              </div>
+              <button type="button" class="ml-auto flex items-center justify-center w-6 h-6 rounded-md hover:bg-emerald-100 text-emerald-500 border-none cursor-pointer transition-colors" (click)="successMessage.set('')">
+                <i class="pi pi-times text-xs"></i>
+              </button>
             </div>
           }
           @if (errorMessage()) {
-            <div class="flex items-start gap-2 p-3 mt-4 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
-              <i class="pi pi-exclamation-circle mt-0.5"></i>
+            <div class="flex items-start gap-2 p-3 mb-5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              <i class="pi pi-exclamation-circle mt-0.5 flex-none"></i>
               <span>{{ errorMessage() }}</span>
             </div>
           }
+          <form
+            [formGroup]="inviteForm"
+            (ngSubmit)="onSubmit()"
+            class="flex flex-col sm:flex-row gap-3 max-w-xl"
+          >
+            <div class="flex-1 relative">
+              <i class="pi pi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm pointer-events-none"></i>
+              <input
+                type="email"
+                formControlName="email"
+                class="w-full h-10 pl-9 pr-3 bg-surface-50 border border-surface-200 rounded-lg text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-surface-400"
+                placeholder="employee@company.com"
+              />
+            </div>
+            <p-button
+              [label]="isLoading() ? 'Sending...' : 'Send invite'"
+              type="submit"
+              [disabled]="inviteForm.invalid || isLoading()"
+              [icon]="isLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
+              styleClass="!bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-surface-200 disabled:!border-surface-200 disabled:!text-surface-400 font-bold !px-4 !h-10 transition-colors whitespace-nowrap">
+            </p-button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Employees table -->
+      <section class="bg-white border border-surface-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between gap-4 border-b border-surface-100 px-6 py-4">
+          <h2 class="text-base font-bold text-surface-900 m-0">Members</h2>
+          <label class="flex items-center gap-2 h-9 px-3 bg-surface-50 border border-surface-200 rounded-lg w-52 focus-within:border-indigo-400 transition-colors">
+            <i class="pi pi-search text-surface-400 text-xs"></i>
+            <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-surface-900 placeholder:text-surface-400 p-0" />
+          </label>
+        </div>
+        <div class="divide-y divide-surface-100">
+          <!-- Skeleton rows while data loads -->
+          @for (row of skeletonRows; track row) {
+            <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
+              <div class="flex-none w-9 h-9 bg-surface-200 rounded-full"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-3 bg-surface-200 rounded-full w-1/4"></div>
+                <div class="h-2.5 bg-surface-100 rounded-full w-1/3"></div>
+              </div>
+              <div class="h-6 w-16 bg-surface-100 rounded-full"></div>
+              <div class="h-6 w-14 bg-surface-100 rounded-full"></div>
+            </div>
+          }
+        </div>
+        <!-- Empty state shown when no real data -->
+        <div class="flex flex-col items-center justify-center gap-3 py-12 text-center">
+          <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400">
+            <i class="pi pi-users text-2xl"></i>
+          </div>
+          <p class="text-sm font-medium text-surface-500 m-0">No members yet — invite your first employee above.</p>
         </div>
       </section>
     </div>
@@ -86,6 +146,9 @@ export class Employees {
   isLoading = signal(false);
   successMessage = signal('');
   errorMessage = signal('');
+
+  /** Placeholder skeleton rows shown while employee list loads */
+  readonly skeletonRows = [1, 2, 3, 4, 5];
 
   onSubmit() {
     if (this.inviteForm.invalid) return;
