@@ -59,6 +59,68 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
     }
 
     /// <summary>
+    /// Updates the active tenant's white-label branding configuration.
+    /// </summary>
+    [HttpPut("branding")]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantBrandingDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> UpdateTenantBranding(
+        [FromForm] string? primaryColor,
+        [FromForm] string? secondaryColor,
+        [FromForm] IFormFile? logoFile,
+        [FromForm] IFormFile? logoFileDark,
+        [FromForm] IFormFile? faviconFile)
+    {
+        if (!tenantContext.TenantId.HasValue)
+            return Forbid();
+
+        var command = new UpdateTenantBrandingCommand(
+            tenantContext.TenantId.Value,
+            primaryColor,
+            secondaryColor,
+            logoFile,
+            logoFileDark,
+            faviconFile
+        );
+
+        var result = await mediator.Send(command);
+
+        if (result == null)
+            return NotFound(ApiResponse.Failure("Tenant not found."));
+
+        return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
+    }
+
+    /// <summary>
+    /// Serves a branding asset (logo or favicon) for a given tenant slug.
+    /// Allows the frontend to load the image anonymously without MinIO pre-signed URLs.
+    /// </summary>
+    [HttpGet("branding/{slug}/{assetType}")]
+    [AllowAnonymous]
+    [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)] // Cache for 24 hours
+    public async Task<IActionResult> GetBrandingAsset(
+        string slug, 
+        string assetType, 
+        [FromServices] Normora.Modules.Tenants.Persistence.IBrandingStorageService storageService)
+    {
+        if (assetType != "logo" && assetType != "logo-dark" && assetType != "favicon")
+            return BadRequest();
+
+        try
+        {
+            var objectName = $"{slug}/{assetType}";
+            var (stream, contentType) = await storageService.DownloadAssetAsync(objectName);
+            return File(stream, contentType);
+        }
+        catch
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>
     /// Suspends a tenant, preventing its members from accessing tenant resources.
     /// Only users with the 'admin' role within this specific tenant can perform this action.
     /// </summary>

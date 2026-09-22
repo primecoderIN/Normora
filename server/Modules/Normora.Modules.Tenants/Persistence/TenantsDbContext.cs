@@ -102,6 +102,7 @@ public class TenantsDbContext : DbContext
             entity.Property(b => b.PrimaryColor).HasMaxLength(20);
             entity.Property(b => b.SecondaryColor).HasMaxLength(20);
             entity.Property(b => b.LogoUrl).HasMaxLength(500);
+            entity.Property(b => b.LogoUrlDark).HasMaxLength(500);
             entity.Property(b => b.FaviconUrl).HasMaxLength(500);
 
             entity.HasOne(b => b.Tenant)

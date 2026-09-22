@@ -47,6 +47,7 @@ public static class DatabaseServiceExtensions
             .Build());
 
         services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>();
+        services.AddScoped<IBrandingStorageService, MinioBrandingStorageService>();
         
         var tikaOptions = configuration.GetSection(Normora.Shared.Options.TikaOptions.SectionName).Get<Normora.Shared.Options.TikaOptions>() ?? new Normora.Shared.Options.TikaOptions();
         services.AddHttpClient<IDocumentTextExtractor, TikaDocumentTextExtractor>(client =>

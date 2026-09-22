@@ -13,6 +13,7 @@ public record TenantBrandingDto(
     string? PrimaryColor,
     string? SecondaryColor,
     string? LogoUrl,
+    string? LogoUrlDark,
     string? FaviconUrl
 );
 
@@ -44,6 +45,7 @@ public class GetTenantBrandingQueryHandler(TenantsDbContext context)
             tenant.Branding?.PrimaryColor,
             tenant.Branding?.SecondaryColor,
             tenant.Branding?.LogoUrl,
+            tenant.Branding?.LogoUrlDark,
             tenant.Branding?.FaviconUrl
         );
     }

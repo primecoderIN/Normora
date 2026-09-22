@@ -32,6 +32,11 @@ public class TenantBranding
     public string? LogoUrl { get; set; }
 
     /// <summary>
+    /// URL to the tenant's dark mode logo image (optional, for better contrast on dark backgrounds).
+    /// </summary>
+    public string? LogoUrlDark { get; set; }
+
+    /// <summary>
     /// URL to the tenant's favicon.
     /// </summary>
     public string? FaviconUrl { get; set; }
