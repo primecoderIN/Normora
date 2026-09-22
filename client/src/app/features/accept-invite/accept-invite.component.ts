@@ -168,6 +168,6 @@ export class AcceptInviteComponent implements OnInit {
   }
 
   goToApp() {
-    this.router.navigate(['/employee/ask']);
+    this.router.navigate(['/']);
   }
 }

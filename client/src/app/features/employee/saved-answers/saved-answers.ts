@@ -15,7 +15,7 @@ import { marked } from 'marked';
       <!-- Header -->
       <header class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-indigo-600 m-0 mb-1">Library</p>
+          <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-primary-600 m-0 mb-1">Library</p>
           <h1 class="text-[1.75rem] font-bold text-slate-900 leading-[1.15] m-0">Saved Answers</h1>
           <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">
             {{ isLoading() ? 'Loading…' : (savedAnswers().length + ' saved answer' + (savedAnswers().length === 1 ? '' : 's')) }}
@@ -45,7 +45,7 @@ import { marked } from 'marked';
           </div>
           <h2 class="text-lg font-bold text-slate-900 m-0">Could not load saved answers</h2>
           <p class="text-sm text-slate-500 m-0 max-w-sm">{{ error() }}</p>
-          <button class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors" (click)="load()">
+          <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors" (click)="load()">
             <i class="pi pi-refresh text-xs"></i> Try again
           </button>
         </div>
@@ -63,7 +63,7 @@ import { marked } from 'marked';
             <span class="inline-flex items-center justify-center w-5 h-5 bg-slate-100 rounded mx-0.5 align-middle"><i class="pi pi-bookmark text-[0.65rem]"></i></span>
             icon to save it here.
           </p>
-          <a routerLink="/employee/conversations" class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg no-underline transition-colors shadow-sm">
+          <a routerLink="../conversations" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg no-underline transition-colors shadow-sm">
             <i class="pi pi-comments text-xs"></i> Start a conversation
           </a>
         </div>
@@ -77,7 +77,7 @@ import { marked } from 'marked';
               <!-- Card Header -->
               <div class="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 bg-slate-50/60">
                 <div class="flex items-center gap-2">
-                  <div class="flex items-center justify-center w-6 h-6 bg-indigo-50 text-indigo-500 rounded-md">
+                  <div class="flex items-center justify-center w-6 h-6 bg-primary-50 text-primary-500 rounded-md">
                     <i class="pi pi-sparkles text-[0.65rem]"></i>
                   </div>
                   <span class="text-[0.72rem] text-slate-500 font-medium">{{ answer.savedAt | date:'MMM d, y · h:mm a' }}</span>
@@ -109,7 +109,7 @@ import { marked } from 'marked';
                          [pTooltip]="cite.fileName" tooltipPosition="top">
                       <i class="pi pi-file-pdf text-slate-400 text-[0.65rem] flex-none"></i>
                       <span class="truncate">{{ cite.fileName }}</span>
-                      <span class="text-indigo-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
+                      <span class="text-primary-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
                     </div>
                   }
                 </div>
@@ -118,9 +118,9 @@ import { marked } from 'marked';
               <!-- Footer -->
               <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/40">
                 <a
-                  [routerLink]="['/employee/conversations']"
+                  [routerLink]="['../conversations']"
                   [queryParams]="{ conversationId: answer.conversationId }"
-                  class="inline-flex items-center gap-1.5 text-[0.8rem] font-semibold text-indigo-600 hover:text-indigo-700 no-underline transition-colors"
+                  class="inline-flex items-center gap-1.5 text-[0.8rem] font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors"
                 >
                   <i class="pi pi-arrow-right text-[0.7rem]"></i> View conversation
                 </a>

@@ -8,6 +8,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { InvitationService } from '@core/services/invitation.service';
+import { ThemeService } from '@core/services/theme.service';
+import { TenantBrandingService } from '@core/services/tenant-branding.service';
 
 @Component({
   selector: 'app-employer-layout',
@@ -20,6 +22,8 @@ export class EmployerLayout {
   public userService = inject(UserService);
   public tenantService = inject(TenantService);
   private invitationService = inject(InvitationService);
+  public themeService = inject(ThemeService);
+  public brandingService = inject(TenantBrandingService);
   
   isAccepting = signal(false);
 
@@ -53,8 +57,12 @@ export class EmployerLayout {
     
     // Check if the new workspace is employee only so we can redirect them appropriately
     const newWorkspace = this.userService.currentUser()?.memberships.find(m => m.tenantId === tenantId);
-    if (newWorkspace?.role !== 'admin') {
-      window.location.href = '/employee/ask';
+    if (newWorkspace) {
+      if (newWorkspace.role !== 'admin') {
+        window.location.href = `/app/workspaces/${newWorkspace.tenantSlug}/employee/conversations`;
+      } else {
+        window.location.href = `/app/workspaces/${newWorkspace.tenantSlug}/employer/dashboard`;
+      }
     } else {
       window.location.reload();
     }

@@ -7,6 +7,9 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '@core/services/user.service';
 import { InvitationService } from '@core/services/invitation.service';
+import { TenantService } from '@core/services/tenant.service';
+import { ThemeService } from '@core/services/theme.service';
+import { TenantBrandingService } from '@core/services/tenant-branding.service';
 import { signal } from '@angular/core';
 
 @Component({
@@ -18,7 +21,9 @@ import { signal } from '@angular/core';
 export class EmployeeLayout {
   private authService = inject(AuthService);
   public userService = inject(UserService);
-  private router = inject(Router);
+  public tenantService = inject(TenantService);
+  public themeService = inject(ThemeService);
+  public brandingService = inject(TenantBrandingService);
   private invitationService = inject(InvitationService);
   
   isAccepting = signal(false);
@@ -49,8 +54,12 @@ export class EmployeeLayout {
     
     // Check if the new workspace is admin
     const newWorkspace = this.userService.currentUser()?.memberships.find(m => m.tenantId === tenantId);
-    if (newWorkspace?.role === 'admin') {
-      window.location.href = '/employer/dashboard';
+    if (newWorkspace) {
+      if (newWorkspace.role === 'admin') {
+        window.location.href = `/app/workspaces/${newWorkspace.tenantSlug}/employer/dashboard`;
+      } else {
+        window.location.href = `/app/workspaces/${newWorkspace.tenantSlug}/employee/conversations`;
+      }
     } else {
       window.location.reload();
     }

@@ -36,13 +36,8 @@ export class App implements OnInit {
 
   // ngOnInit is a lifecycle hook. It runs exactly once when this component is first created.
   ngOnInit() {
-    // Step 1: Fetch and apply tenant branding based on the current subdomain (if any).
-    // e.g. on intel.localhost:4200 we load Intel's colors/favicon before the login page renders.
-    // The app always stays on localhost:4200 — subdomain is only used for branding context.
-    const slug = this.brandingService.getSlugFromSubdomain();
-    if (slug) {
-      this.brandingService.applyBrandingForSlug(slug).subscribe();
-    }
+    // Step 1: Subdomain routing has been removed in favor of path-based workspace routing.
+    // Branding is now applied after authentication in the workspace routing logic.
 
     // Step 2: Check authentication state via BFF.
     this.authService.checkAuth().subscribe({
@@ -51,19 +46,15 @@ export class App implements OnInit {
         // Connect to realtime notifications
         this.notificationService.connect();
 
-        // Route to dashboard when the user lands on login, callback, or root.
         const isAuthRoute =
           this.router.url === '/' ||
           this.router.url.startsWith('/auth/login') ||
           this.router.url.startsWith('/auth/callback') ||
           this.router.url.startsWith('/signin-oidc');
 
-        // A browser refresh on a protected route still needs the profile before the
-        // tenant interceptor can add X-Tenant-Id to API requests.
         if (isAuthRoute || !this.userService.currentUser()) {
           this.authStatus.set('Loading your workspace...');
 
-          // We now rely on our backend DB for roles (Memberships), not Keycloak realm_access
           this.userService.getMe().subscribe({
             next: (response) => {
               if (!response.success || !response.data) {
@@ -75,15 +66,11 @@ export class App implements OnInit {
 
               const memberships = response.data.memberships;
 
-              // Direct protected-route loads only need profile initialization. Do not
-              // redirect away from the route the user explicitly refreshed.
               if (!isAuthRoute) {
                 this.authInitializing.set(false);
                 return;
               }
-              
-              // Invitation acceptance takes precedence over normal workspace routing because
-              // the OAuth redirect may have started from a public invite URL.
+
               const pendingToken = localStorage.getItem('pending_invitation');
               if (pendingToken) {
                 this.authInitializing.set(false);
@@ -91,26 +78,34 @@ export class App implements OnInit {
                 return;
               }
 
-              // No tenants: go to onboarding. (This shouldn't happen with auto-provisioning)
               if (memberships.length === 0) {
                 this.authInitializing.set(false);
                 this.router.navigate(['/onboarding']);
                 return;
               }
 
-              // Route based on role. App always stays on localhost:4200.
-              // Let's just use the first membership for now. The layout handles switching.
-              const firstMembership = memberships.find(m => !m.isPersonal) || memberships[0];
-              this.authInitializing.set(false);
-              
-              if (firstMembership.role === TenantRoles.Admin) {
-                this.router.navigate(['/employer/dashboard']);
+              // Determine the default workspace (prefer non-personal)
+              const defaultMembership = memberships.find(m => !m.isPersonal) || memberships[0];
+              const tenantSlug = defaultMembership.tenantSlug;
+              const isAdmin = defaultMembership.role === TenantRoles.Admin;
+              const targetPath = isAdmin ? '/employer/dashboard' : '/employee/conversations';
+
+              // Route user to their workspace
+              if (tenantSlug) {
+                // Apply branding directly
+                this.brandingService.applyBrandingForSlug(tenantSlug).subscribe();
+                
+                // Navigate to the workspace path
+                const fullPath = `/app/workspaces/${tenantSlug}${targetPath}`;
+                this.authInitializing.set(false);
+                this.router.navigateByUrl(fullPath);
               } else {
-                this.router.navigate(['/employee/ask']);
+                // Fallback if no memberships (should rarely happen if backend creates personal workspace)
+                this.authInitializing.set(false);
+                this.router.navigate([targetPath]);
               }
             },
             error: () => {
-              // API failure or unauthorized
               this.authStatus.set('We could not verify your account. Returning to sign in...');
               this.authService.logout();
               this.authInitializing.set(false);
