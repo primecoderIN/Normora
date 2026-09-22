@@ -1,11 +1,17 @@
 <div class="flex flex-col md:flex-row h-screen bg-slate-50 text-slate-900 overflow-hidden">
   <aside class="md:flex-none flex-col p-4 md:p-5 bg-slate-950 text-white w-full md:w-64 border-r border-white/10 hidden md:flex">
     <div class="flex items-center gap-3 min-h-12">
-      <div class="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-lg font-extrabold">N</div>
-      <div>
-        <div class="text-base font-extrabold leading-tight">Normora</div>
-        <div class="text-xs text-slate-400">Admin console</div>
-      </div>
+      @if (themeService.isDarkMode() && brandingService.currentBranding()?.logoUrlDark) {
+        <img [src]="brandingService.currentBranding()?.logoUrlDark" alt="Logo" class="h-8 max-w-full object-contain">
+      } @else if (brandingService.currentBranding()?.logoUrl) {
+        <img [src]="brandingService.currentBranding()?.logoUrl" alt="Logo" class="h-8 max-w-full object-contain">
+      } @else {
+        <div class="flex items-center justify-center w-8 h-8 bg-primary-600 rounded-lg font-extrabold text-white">N</div>
+        <div>
+          <div class="text-base font-extrabold leading-tight">Normora</div>
+          <div class="text-xs text-slate-400">Admin console</div>
+        </div>
+      }
     </div>
 
     @if (activeWorkspace) {
@@ -42,38 +48,44 @@
 
     <nav class="grid gap-1 overflow-y-auto mt-4 md:mt-0 flex-row md:flex-col overflow-x-auto md:overflow-x-visible custom-scrollbar" aria-label="Employer navigation">
       <a
-        routerLink="/employer/dashboard"
-        routerLinkActive="!bg-indigo-600/20 !text-white"
+        [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'dashboard']"
+        routerLinkActive="!bg-primary-600/20 !text-white"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto"
+        class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto"
       >
         <i class="pi pi-home text-base w-4"></i>
         <span>Overview</span>
       </a>
-      <a routerLink="/employer/documents" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'documents']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
         <i class="pi pi-file text-base w-4"></i>
         <span>Documents</span>
       </a>
-      <a routerLink="/employer/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'conversations']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
         <i class="pi pi-comments text-base w-4"></i>
         <span>Conversations</span>
       </a>
       @if (!activeWorkspace?.isPersonal) {
-        <a routerLink="/employer/employees" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
+        <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'employees']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
           <i class="pi pi-users text-base w-4"></i>
           <span>Employees</span>
         </a>
 
-        <div class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-600 pt-3 pb-1 px-3">Settings</div>
+        <div class="mt-4 pt-4 border-t border-white/10">
+          <div class="px-3 mb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Settings</div>
 
-        <a routerLink="/employer/settings/departments" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
-          <i class="pi pi-sitemap text-base w-4"></i>
-          <span>Departments</span>
-        </a>
-        <a routerLink="/employer/settings/user-groups" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-indigo-600/20 hover:text-white no-underline flex-none md:flex-auto">
-          <i class="pi pi-objects-column text-base w-4"></i>
-          <span>User Groups</span>
-        </a>
+          <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'settings', 'departments']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
+            <i class="pi pi-building text-base w-4"></i>
+            <span>Departments</span>
+          </a>
+          <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'settings', 'user-groups']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
+            <i class="pi pi-users text-base w-4"></i>
+            <span>User groups</span>
+          </a>
+          <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'settings', 'branding']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
+            <i class="pi pi-palette text-base w-4"></i>
+            <span>Branding & Theme</span>
+          </a>
+        </div>
       }
     </nav>
 
@@ -82,7 +94,7 @@
     <div class="hidden md:grid gap-3.5 mt-auto pt-4 border-t border-white/10">
       @if (userService.currentUser(); as user) {
         <div class="flex items-center gap-3 min-w-0">
-          <div class="flex items-center justify-center flex-none w-9 h-9 bg-indigo-100 text-indigo-800 font-extrabold rounded-full">
+          <div class="flex items-center justify-center flex-none w-9 h-9 bg-primary-100 text-primary-800 font-extrabold rounded-full">
             {{ user.displayName.charAt(0) || 'U' }}
           </div>
           <div class="min-w-0">
@@ -91,20 +103,33 @@
           </div>
         </div>
       }
-      <p-button 
-        label="Sign out" 
-        icon="pi pi-sign-out" 
-        styleClass="w-full !bg-transparent !border-white/10 !text-slate-300 hover:!bg-white/5 hover:!text-white hover:!border-white/20 transition-colors"
-        (onClick)="logout()">
-      </p-button>
+      <div class="flex gap-2">
+        <p-button 
+          [icon]="themeService.isDarkMode() ? 'pi pi-moon' : 'pi pi-sun'" 
+          styleClass="!bg-transparent !border-white/10 !text-slate-300 hover:!bg-white/5 hover:!text-white hover:!border-white/20 transition-colors"
+          (onClick)="themeService.toggleTheme()">
+        </p-button>
+        <p-button 
+          label="Sign out" 
+          icon="pi pi-sign-out" 
+          styleClass="w-full !bg-transparent !border-white/10 !text-slate-300 hover:!bg-white/5 hover:!text-white hover:!border-white/20 transition-colors"
+          (onClick)="logout()">
+        </p-button>
+      </div>
     </div>
   </aside>
 
   <!-- Mobile Top Bar (Visible only on small screens) -->
   <div class="md:hidden flex items-center justify-between p-4 bg-slate-950 text-white border-b border-white/10">
     <div class="flex items-center gap-2">
-      <div class="flex items-center justify-center w-6 h-6 bg-indigo-600 rounded font-extrabold text-sm">N</div>
-      <div class="text-sm font-extrabold">Normora</div>
+      @if (themeService.isDarkMode() && brandingService.currentBranding()?.logoUrlDark) {
+        <img [src]="brandingService.currentBranding()?.logoUrlDark" alt="Logo" class="h-6 max-w-full object-contain">
+      } @else if (brandingService.currentBranding()?.logoUrl) {
+        <img [src]="brandingService.currentBranding()?.logoUrl" alt="Logo" class="h-6 max-w-full object-contain">
+      } @else {
+        <div class="flex items-center justify-center w-6 h-6 bg-primary-600 rounded font-extrabold text-sm">N</div>
+        <div class="text-sm font-extrabold">Normora</div>
+      }
     </div>
     
     <!-- Mobile Nav trigger could go here -->
@@ -116,13 +141,13 @@
   <!-- Mobile Nav (Visible only on small screens) -->
   <div class="md:hidden overflow-x-auto bg-slate-900 border-b border-white/10">
     <nav class="flex px-2 py-2 gap-1 custom-scrollbar">
-      <a routerLink="/employer/dashboard" routerLinkActive="!bg-indigo-600/20 !text-white" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
+      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'dashboard']" routerLinkActive="!bg-primary-600/20 !text-white" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-home"></i> Overview
       </a>
-      <a routerLink="/employer/documents" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
+      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'documents']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-file"></i> Documents
       </a>
-      <a routerLink="/employer/conversations" routerLinkActive="!bg-indigo-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
+      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employer', 'conversations']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-comments"></i> Conversations
       </a>
     </nav>
@@ -131,17 +156,17 @@
   <main class="flex-1 min-w-0 overflow-y-auto p-4 custom-scrollbar page-enter">
     @if (userService.currentUser()?.pendingInvitations; as invites) {
       @if (invites.length > 0) {
-        <div class="bg-indigo-600 rounded-lg p-3 mb-4 text-white flex items-center justify-between shadow-sm">
+        <div class="bg-primary-600 rounded-lg p-3 mb-4 text-white flex items-center justify-between shadow-sm">
           <div class="flex items-center gap-3">
             <i class="pi pi-envelope text-xl"></i>
             <div>
               <div class="font-bold text-sm">You have pending workspace invitations</div>
-              <div class="text-xs text-indigo-200">You've been invited to join {{ invites.length }} workspace(s).</div>
+              <div class="text-xs text-primary-200">You've been invited to join {{ invites.length }} workspace(s).</div>
             </div>
           </div>
           <div class="flex gap-2">
             @for (invite of invites; track invite.token) {
-              <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-white text-indigo-600 hover:bg-indigo-50 text-xs font-bold rounded shadow-sm transition-colors disabled:opacity-50">
+              <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-white text-primary-600 hover:bg-primary-50 text-xs font-bold rounded shadow-sm transition-colors disabled:opacity-50">
                 Join {{ invite.tenantName }}
               </button>
             }

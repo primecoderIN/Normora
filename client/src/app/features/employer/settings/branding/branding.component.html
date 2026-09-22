@@ -1,0 +1,374 @@
+<!-- Hidden file inputs -->
+<input id="logoUploadInput" type="file" accept="image/*" class="hidden" (change)="onLogoFileChange($event)">
+<input id="logoDarkUploadInput" type="file" accept="image/*" class="hidden" (change)="onLogoDarkFileChange($event)">
+<input id="faviconUploadInput" type="file" accept="image/*" class="hidden" (change)="onFaviconFileChange($event)">
+
+<!-- Page wrapper -->
+<div class="min-h-full bg-slate-50 p-5">
+
+  <!-- Breadcrumb + Header -->
+  <div class="flex items-start justify-between gap-4 mb-6">
+    <div>
+      <div class="text-xs text-slate-400 mb-1 flex items-center gap-1.5">
+        <i class="pi pi-chevron-left text-[10px]"></i>
+        <span>Settings</span>
+        <i class="pi pi-chevron-right text-[10px]"></i>
+        <span class="text-slate-600 font-medium">Branding &amp; Theme</span>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 leading-tight">White-Label Branding</h1>
+      <p class="text-sm text-slate-500 mt-1">Customize the look and feel of your tenant workspace. Changes are applied instantly for all users in your organization.</p>
+    </div>
+    <div class="flex items-center gap-2 flex-none pt-1">
+      <p-button label="Reset to default" icon="pi pi-refresh" [outlined]="true" severity="secondary" size="small" (onClick)="resetToDefault()"></p-button>
+      <p-button label="Save changes" icon="pi pi-check" size="small" [loading]="isSaving()" (onClick)="save()"></p-button>
+    </div>
+  </div>
+
+  <!-- Two-column layout -->
+  <div class="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-5">
+
+    <!-- LEFT COLUMN -->
+    <div class="flex flex-col gap-5">
+
+      <!-- Brand Colors Card -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div class="flex items-start gap-3 mb-5">
+          <div class="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center flex-none">
+            <i class="pi pi-palette text-primary-600"></i>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-800">Brand Colors</div>
+            <div class="text-sm text-primary-500">Choose your brand colors. These colors will be used across the application.</div>
+          </div>
+        </div>
+
+        <!-- Color Inputs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+
+          <!-- Primary Color -->
+          <div>
+            <div class="font-medium text-slate-700 text-sm mb-1">Primary Color</div>
+            <div class="text-xs text-slate-400 mb-3">Used for primary buttons, focus rings, and active states.</div>
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 rounded-lg border-2 border-slate-200 flex-none shadow-sm cursor-pointer transition-transform hover:scale-105"
+                   [style.background]="primaryColor()"></div>
+              <div class="flex-1 flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-primary-300 focus-within:border-primary-400">
+                <input type="text"
+                       class="flex-1 px-3 py-2 text-sm font-mono text-slate-700 outline-none bg-transparent"
+                       [value]="primaryColor()"
+                       (input)="primaryColor.set(($any($event.target)).value)">
+                <div class="px-2 border-l border-slate-200">
+                  <p-colorpicker
+                    [ngModel]="primaryColor()"
+                    (ngModelChange)="primaryColor.set($event)"
+                    format="hex">
+                  </p-colorpicker>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Color -->
+          <div>
+            <div class="font-medium text-slate-700 text-sm mb-1">Secondary Color</div>
+            <div class="text-xs text-slate-400 mb-3">Used for secondary accents and illustrations.</div>
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 rounded-lg border-2 border-slate-200 flex-none shadow-sm cursor-pointer transition-transform hover:scale-105"
+                   [style.background]="secondaryColor()"></div>
+              <div class="flex-1 flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-primary-300 focus-within:border-primary-400">
+                <input type="text"
+                       class="flex-1 px-3 py-2 text-sm font-mono text-slate-700 outline-none bg-transparent"
+                       [value]="secondaryColor()"
+                       (input)="secondaryColor.set(($any($event.target)).value)">
+                <div class="px-2 border-l border-slate-200">
+                  <p-colorpicker
+                    [ngModel]="secondaryColor()"
+                    (ngModelChange)="secondaryColor.set($event)"
+                    format="hex">
+                  </p-colorpicker>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Suggested Palettes -->
+        <div>
+          <div class="text-sm font-medium text-slate-600 mb-3">Suggested palettes</div>
+          <div class="flex flex-wrap gap-2">
+            @for (palette of suggestedPalettes; track palette.name) {
+              <button
+                type="button"
+                class="flex items-center gap-0 rounded-lg border-2 border-slate-200 overflow-hidden hover:border-primary-400 hover:shadow-md transition-all cursor-pointer"
+                [title]="palette.name"
+                (click)="applyPalette(palette)">
+                <div class="w-8 h-8" [style.background]="palette.primary"></div>
+                <div class="w-8 h-8" [style.background]="palette.secondary"></div>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Brand Assets Card -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div class="flex items-start gap-3 mb-5">
+          <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center flex-none">
+            <i class="pi pi-image text-purple-600"></i>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-800">Brand Assets</div>
+            <div class="text-sm text-slate-400">Upload your logos and favicon. Recommended formats: PNG or SVG.</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
+          <!-- Main Logo -->
+          <div>
+            <div class="font-medium text-slate-700 text-sm mb-3">Main Logo (Light Mode)</div>
+            <div class="rounded-xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center p-4 h-24 mb-2">
+              @if (logoPreviewUrl()) {
+                <img [src]="logoPreviewUrl()" alt="Logo" class="max-h-full max-w-full object-contain">
+              } @else {
+                <div class="flex items-center gap-2 text-slate-700">
+                  <div class="w-7 h-7 rounded-md flex items-center justify-center font-extrabold text-white text-sm" [style.background]="primaryColor()">N</div>
+                  <span class="font-bold text-base">Normora</span>
+                </div>
+              }
+            </div>
+            <div class="text-xs text-slate-400 mb-3">Recommended size: 200×50px PNG or SVG</div>
+            <div class="flex items-center gap-2">
+              <p-button label="Change" icon="pi pi-upload" size="small" [outlined]="true" styleClass="flex-1" (onClick)="triggerLogoUpload()"></p-button>
+              @if (logoPreviewUrl()) {
+                <p-button icon="pi pi-trash" size="small" severity="danger" [outlined]="true" (onClick)="removeLogo()"></p-button>
+              }
+            </div>
+          </div>
+
+          <!-- Dark Mode Logo -->
+          <div>
+            <div class="font-medium text-slate-700 text-sm mb-3">Dark Mode Logo <span class="text-slate-400 font-normal">(Optional)</span></div>
+            <div class="rounded-xl border-2 border-slate-700 bg-slate-900 flex items-center justify-center p-4 h-24 mb-2">
+              @if (logoDarkPreviewUrl()) {
+                <img [src]="logoDarkPreviewUrl()" alt="Dark Logo" class="max-h-full max-w-full object-contain">
+              } @else {
+                <div class="flex items-center gap-2 text-white">
+                  <div class="w-7 h-7 rounded-md flex items-center justify-center font-extrabold text-white text-sm" [style.background]="primaryColor()">N</div>
+                  <span class="font-bold text-base">Normora</span>
+                </div>
+              }
+            </div>
+            <div class="text-xs text-slate-400 mb-3">Used when users switch to dark mode.</div>
+            <div class="flex items-center gap-2">
+              <p-button label="Change" icon="pi pi-upload" size="small" [outlined]="true" styleClass="flex-1" (onClick)="triggerLogoDarkUpload()"></p-button>
+              @if (logoDarkPreviewUrl()) {
+                <p-button icon="pi pi-trash" size="small" severity="danger" [outlined]="true" (onClick)="removeLogoDark()"></p-button>
+              }
+            </div>
+          </div>
+
+          <!-- Favicon -->
+          <div>
+            <div class="font-medium text-slate-700 text-sm mb-3">Favicon</div>
+            <div class="rounded-xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center p-4 h-24 mb-2">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-white text-lg shadow-md" [style.background]="primaryColor()">N</div>
+            </div>
+            <div class="text-xs text-slate-400 mb-3">Recommended size: 32×32px ICO or PNG</div>
+            <div class="flex items-center gap-2">
+              <p-button label="Change" icon="pi pi-upload" size="small" [outlined]="true" styleClass="flex-1" (onClick)="triggerFaviconUpload()"></p-button>
+              @if (faviconFile()) {
+                <p-button icon="pi pi-trash" size="small" severity="danger" [outlined]="true" (onClick)="removeFavicon()"></p-button>
+              }
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Live Preview -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
+
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center flex-none">
+            <i class="pi pi-eye text-emerald-600"></i>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-800">Live Preview</div>
+            <div class="text-xs text-slate-400">See how the app will look with your brand settings.</div>
+          </div>
+        </div>
+        <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden text-xs font-medium flex-none">
+          <button type="button" class="px-3 py-1.5 flex items-center gap-1.5 transition-colors"
+                  [class.bg-white]="previewMode() === 'light'"
+                  [class.text-slate-700]="previewMode() === 'light'"
+                  [class.bg-slate-50]="previewMode() !== 'light'"
+                  [class.text-slate-400]="previewMode() !== 'light'"
+                  (click)="previewMode.set('light')">
+            <i class="pi pi-sun text-[11px]"></i> Light mode
+          </button>
+          <button type="button" class="px-3 py-1.5 flex items-center gap-1.5 transition-colors"
+                  [class.bg-slate-900]="previewMode() === 'dark'"
+                  [class.text-white]="previewMode() === 'dark'"
+                  [class.bg-slate-50]="previewMode() !== 'dark'"
+                  [class.text-slate-400]="previewMode() !== 'dark'"
+                  (click)="previewMode.set('dark')">
+            <i class="pi pi-moon text-[11px]"></i> Dark mode
+          </button>
+        </div>
+      </div>
+
+      <!-- App Mockup -->
+      <div class="flex-1 rounded-xl border border-slate-200 overflow-hidden shadow-inner"
+           [class.bg-white]="previewMode() === 'light'"
+           [class.bg-slate-950]="previewMode() === 'dark'">
+
+        <!-- Mockup window bar -->
+        <div class="flex items-center gap-1.5 px-3 py-2 border-b"
+             [class.border-slate-200]="previewMode() === 'light'"
+             [class.border-slate-800]="previewMode() === 'dark'"
+             [class.bg-slate-50]="previewMode() === 'light'"
+             [class.bg-slate-900]="previewMode() === 'dark'">
+          <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+        </div>
+
+        <!-- Mockup layout -->
+        <div class="flex h-[380px]">
+
+          <!-- Sidebar -->
+          <div class="w-28 flex-none border-r flex flex-col py-3 px-2"
+               [class.bg-slate-950]="true"
+               [class.border-slate-800]="true">
+            <!-- Logo -->
+            <div class="flex items-center gap-1.5 px-1 mb-4">
+              <div class="w-5 h-5 rounded flex items-center justify-center text-[9px] font-extrabold text-white flex-none"
+                   [style.background]="primaryColor()">N</div>
+              <span class="text-[11px] font-bold text-white">Normora</span>
+            </div>
+            <!-- Nav items -->
+            @for (item of [
+              {icon: 'pi-th-large', label: 'Overview', active: true},
+              {icon: 'pi-file', label: 'Documents', active: false},
+              {icon: 'pi-comments', label: 'Conversations', active: false},
+              {icon: 'pi-users', label: 'Employees', active: false}
+            ]; track item.label) {
+              <div class="flex items-center gap-1.5 px-2 py-1.5 rounded-md mb-0.5 text-[10px] cursor-pointer"
+                   [class.text-white]="item.active"
+                   [class.font-semibold]="item.active"
+                   [class.text-slate-400]="!item.active"
+                   [style.background]="item.active ? primaryColor() + '33' : 'transparent'">
+                <i [class]="'pi ' + item.icon + ' text-[10px]'"></i>
+                <span>{{ item.label }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Main content -->
+          <div class="flex-1 overflow-hidden p-3"
+               [class.bg-white]="previewMode() === 'light'"
+               [class.bg-slate-950]="previewMode() === 'dark'">
+
+            <!-- Top bar -->
+            <div class="flex items-center justify-between mb-3">
+              <div class="h-5 w-24 rounded flex items-center justify-center text-[9px] border"
+                   [class.bg-slate-100]="previewMode() === 'light'"
+                   [class.border-slate-200]="previewMode() === 'light'"
+                   [class.text-slate-400]="previewMode() === 'light'"
+                   [class.bg-slate-800]="previewMode() === 'dark'"
+                   [class.border-slate-700]="previewMode() === 'dark'"
+                   [class.text-slate-500]="previewMode() === 'dark'">
+                Search anything...
+              </div>
+              <div class="flex items-center gap-1.5">
+                <div class="w-5 h-5 rounded-full flex items-center justify-center"
+                     [class.bg-slate-100]="previewMode() === 'light'"
+                     [class.bg-slate-800]="previewMode() === 'dark'">
+                  <i class="pi pi-bell text-[8px]"
+                     [class.text-slate-500]="previewMode() === 'light'"
+                     [class.text-slate-400]="previewMode() === 'dark'"></i>
+                </div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold text-white"
+                     [style.background]="primaryColor()">JK</div>
+              </div>
+            </div>
+
+            <!-- Greeting -->
+            <div class="mb-3">
+              <div class="text-[11px] font-bold mb-0.5"
+                   [class.text-slate-900]="previewMode() === 'light'"
+                   [class.text-white]="previewMode() === 'dark'">Welcome back, {{ userName }}!</div>
+              <div class="text-[9px]"
+                   [class.text-slate-400]="true">Here's what's happening in your workspace.</div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-2 mb-3">
+              @for (stat of [{label:'Documents',value:'124',delta:'+12%'},{label:'Conversations',value:'48',delta:'+8%'},{label:'Employees',value:'16',delta:'+4%'}]; track stat.label) {
+                <div class="rounded-lg p-2 border"
+                     [class.bg-slate-50]="previewMode() === 'light'"
+                     [class.border-slate-100]="previewMode() === 'light'"
+                     [class.bg-slate-900]="previewMode() === 'dark'"
+                     [class.border-slate-800]="previewMode() === 'dark'">
+                  <div class="text-[8px] mb-1"
+                       [class.text-slate-400]="true">{{ stat.label }}</div>
+                  <div class="text-[12px] font-bold"
+                       [class.text-slate-900]="previewMode() === 'light'"
+                       [class.text-white]="previewMode() === 'dark'">{{ stat.value }}</div>
+                  <div class="text-[8px] font-medium" style="color:#10b981">{{ stat.delta }}</div>
+                </div>
+              }
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="text-[9px] font-semibold mb-1.5"
+                 [class.text-slate-700]="previewMode() === 'light'"
+                 [class.text-slate-300]="previewMode() === 'dark'">Recent Activity</div>
+            @for (act of [
+              {icon:'pi-file-pdf', label:'Product Requirements.pdf', sub:'Uploaded 2 hours ago'},
+              {icon:'pi-comments', label:'Q3 Planning Discussion', sub:'New message · 4 hours ago'},
+              {icon:'pi-user-plus', label:'New employee added', sub:'john.doe@intel.com · 1 day ago'}
+            ]; track act.label) {
+              <div class="flex items-center gap-2 py-1.5 border-b last:border-0"
+                   [class.border-slate-100]="previewMode() === 'light'"
+                   [class.border-slate-800]="previewMode() === 'dark'">
+                <div class="w-5 h-5 rounded-md flex items-center justify-center flex-none"
+                     [style.background]="primaryColor() + '22'">
+                  <i [class]="'pi ' + act.icon + ' text-[9px]'"
+                     [style.color]="primaryColor()"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[9px] font-medium truncate"
+                       [class.text-slate-800]="previewMode() === 'light'"
+                       [class.text-slate-200]="previewMode() === 'dark'">{{ act.label }}</div>
+                  <div class="text-[8px] text-slate-400 truncate">{{ act.sub }}</div>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <!-- Bottom notice -->
+        <div class="px-3 py-2 border-t flex items-center gap-2"
+             [class.border-slate-100]="previewMode() === 'light'"
+             [class.border-slate-800]="previewMode() === 'dark'"
+             [class.bg-slate-50]="previewMode() === 'light'"
+             [class.bg-slate-900]="previewMode() === 'dark'">
+          <i class="pi pi-info-circle text-[10px]" [style.color]="primaryColor()"></i>
+          <span class="text-[9px]"
+                [class.text-slate-400]="true">Changes are applied instantly for all users in your organization.</span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<p-toast position="bottom-right"></p-toast>

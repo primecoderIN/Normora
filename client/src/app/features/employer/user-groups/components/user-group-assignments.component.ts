@@ -19,25 +19,25 @@ import { Department } from '@core/services/department.service';
         <div class="p-5 overflow-y-auto max-h-[70vh] custom-scrollbar">
           @if (isLoadingDetail()) {
             <div class="flex items-center justify-center py-8 gap-3">
-              <div class="w-8 h-8 border-3 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+              <div class="w-8 h-8 border-3 border-primary-100 border-t-indigo-600 rounded-full animate-spin"></div>
               <span class="text-sm font-medium text-slate-500">Loading assignments…</span>
             </div>
           } @else {
             <div class="grid gap-6">
               <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <h4 class="text-sm font-bold text-slate-900 mb-1 flex items-center gap-2">
-                  <i class="pi pi-sitemap text-indigo-600"></i> Departments
+                  <i class="pi pi-sitemap text-primary-600"></i> Departments
                 </h4>
                 <p class="text-sm text-slate-500 mb-4">Members of this group will have access to documents in these departments.</p>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                   @for (dept of allDepartments(); track dept.id) {
-                    <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-200 transition-colors">
+                    <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-primary-50/50 hover:border-primary-200 transition-colors">
                       <input
                         type="checkbox"
                         [checked]="selectedDeptIds().includes(dept.id)"
                         (change)="toggleDept(dept.id)"
-                        class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                        class="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500 accent-indigo-600 cursor-pointer"
                       />
                       <span class="text-sm font-medium text-slate-700">{{ dept.name }}</span>
                     </label>
@@ -55,7 +55,7 @@ import { Department } from '@core/services/department.service';
         
         <div class="flex items-center justify-end gap-3 p-5 border-t border-slate-100 bg-slate-50">
           <p-button label="Cancel" (onClick)="onCancel()" styleClass="!bg-white !border-slate-300 !text-slate-700 hover:!bg-slate-100 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
-          <p-button label="Save assignments" (onClick)="onSave()" [disabled]="isSaving() || isLoadingDetail()" [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''" styleClass="!bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-slate-300 disabled:!border-slate-300 disabled:!text-slate-500 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
+          <p-button label="Save assignments" (onClick)="onSave()" [disabled]="isSaving() || isLoadingDetail()" [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''" styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 disabled:!bg-slate-300 disabled:!border-slate-300 disabled:!text-slate-500 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
         </div>
       </div>
     </div>

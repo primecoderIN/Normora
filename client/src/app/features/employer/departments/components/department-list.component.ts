@@ -23,7 +23,7 @@ import { Department } from '@core/services/department.service';
             <tr class="hover:bg-slate-50/50 transition-colors group">
               <td class="px-5 py-3.5">
                 <div class="flex items-center gap-3">
-                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs">{{ dept.name.charAt(0) }}</span>
+                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-50 text-primary-700 font-bold text-xs">{{ dept.name.charAt(0) }}</span>
                   <span class="font-semibold text-slate-900">{{ dept.name }}</span>
                 </div>
               </td>

@@ -14,18 +14,18 @@ import { InvitationService } from '@core/services/invitation.service';
   template: `
     <div class="min-h-screen bg-[#fafcff] flex relative overflow-hidden">
       <!-- Background decorators -->
-      <div class="absolute -top-40 -left-40 w-225 h-225 bg-indigo-500/20 rounded-full blur-[100px] mix-blend-multiply opacity-50 pointer-events-none"></div>
+      <div class="absolute -top-40 -left-40 w-225 h-225 bg-primary-500/20 rounded-full blur-[100px] mix-blend-multiply opacity-50 pointer-events-none"></div>
       <div class="absolute -bottom-40 -right-40 w-175 h-175 bg-purple-500/20 rounded-full blur-[80px] mix-blend-multiply opacity-40 pointer-events-none"></div>
 
       <!-- Left branding panel -->
       <div class="hidden lg:flex flex-col justify-between w-105 flex-none bg-slate-950 text-white p-10 relative overflow-hidden">
         <!-- Panel decorators -->
-        <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <div class="absolute top-0 right-0 w-64 h-64 bg-primary-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
         <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
 
         <!-- Logo -->
         <div class="relative z-10 flex items-center gap-3">
-          <div class="flex items-center justify-center w-10 h-10 bg-indigo-600 rounded-xl font-extrabold text-xl shadow-lg shadow-indigo-900/50">N</div>
+          <div class="flex items-center justify-center w-10 h-10 bg-primary-600 rounded-xl font-extrabold text-xl shadow-lg shadow-primary-900/50">N</div>
           <div>
             <div class="font-extrabold text-lg leading-tight">Normora</div>
             <div class="text-xs text-slate-400">Your Knowledge Workspace</div>
@@ -47,8 +47,8 @@ import { InvitationService } from '@core/services/invitation.service';
           <ul class="space-y-3.5">
             @for (feature of features; track feature.label) {
               <li class="flex items-start gap-3">
-                <div class="flex items-center justify-center flex-none w-7 h-7 bg-indigo-600/20 border border-indigo-500/30 rounded-lg mt-0.5">
-                  <i [class]="'pi ' + feature.icon + ' text-indigo-400 text-xs'"></i>
+                <div class="flex items-center justify-center flex-none w-7 h-7 bg-primary-600/20 border border-primary-500/30 rounded-lg mt-0.5">
+                  <i [class]="'pi ' + feature.icon + ' text-primary-400 text-xs'"></i>
                 </div>
                 <div>
                   <div class="text-sm font-semibold text-white">{{ feature.label }}</div>
@@ -68,7 +68,7 @@ import { InvitationService } from '@core/services/invitation.service';
 
         <!-- Mobile logo -->
         <div class="lg:hidden flex items-center gap-2 mb-8">
-          <div class="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-lg font-extrabold text-white">N</div>
+          <div class="flex items-center justify-center w-8 h-8 bg-primary-600 rounded-lg font-extrabold text-white">N</div>
           <span class="font-extrabold text-slate-900">Normora</span>
         </div>
 
@@ -79,8 +79,8 @@ import { InvitationService } from '@core/services/invitation.service';
             <div class="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
               <div class="px-8 pt-8 pb-6">
                 <div class="flex items-center gap-3 mb-5">
-                  <div class="flex items-center justify-center w-11 h-11 bg-indigo-50 rounded-xl">
-                    <i class="pi pi-envelope text-indigo-600 text-lg"></i>
+                  <div class="flex items-center justify-center w-11 h-11 bg-primary-50 rounded-xl">
+                    <i class="pi pi-envelope text-primary-600 text-lg"></i>
                   </div>
                   <div>
                     <h2 class="text-lg font-bold text-slate-900 m-0">You've been invited!</h2>
@@ -90,7 +90,7 @@ import { InvitationService } from '@core/services/invitation.service';
 
                 <div class="space-y-2.5">
                   @for (invite of pendingInvitations(); track invite.token) {
-                    <div class="flex items-center justify-between gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors group">
+                    <div class="flex items-center justify-between gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl hover:border-primary-200 hover:bg-primary-50/30 transition-colors group">
                       <div class="flex items-center gap-3 min-w-0">
                         <div class="flex items-center justify-center flex-none w-9 h-9 bg-white border border-slate-200 rounded-lg shadow-sm">
                           <i class="pi pi-building text-slate-500 text-sm"></i>
@@ -101,7 +101,7 @@ import { InvitationService } from '@core/services/invitation.service';
                         type="button"
                         (click)="acceptInvite(invite.token)"
                         [disabled]="isAccepting()"
-                        class="flex-none inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors shadow-sm shadow-indigo-500/20 border-none cursor-pointer whitespace-nowrap"
+                        class="flex-none inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors shadow-sm shadow-primary-500/20 border-none cursor-pointer whitespace-nowrap"
                       >
                         @if (isAccepting() && acceptingToken() === invite.token) {
                           <i class="pi pi-spin pi-spinner text-[0.65rem]"></i> Joining...
@@ -122,7 +122,7 @@ import { InvitationService } from '@core/services/invitation.service';
               </div>
 
               <div class="px-8 py-4 bg-slate-50 border-t border-slate-100 text-center">
-                <button type="button" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors border-none bg-transparent cursor-pointer" (click)="showCreateForm.set(!showCreateForm())">
+                <button type="button" class="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors border-none bg-transparent cursor-pointer" (click)="showCreateForm.set(!showCreateForm())">
                   {{ showCreateForm() ? '← Hide workspace form' : 'Or create a new workspace →' }}
                 </button>
               </div>
@@ -134,8 +134,8 @@ import { InvitationService } from '@core/services/invitation.service';
             <div class="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
               <div class="px-8 pt-8 pb-8">
                 <div class="flex items-center gap-3 mb-6">
-                  <div class="flex items-center justify-center w-11 h-11 bg-indigo-50 rounded-xl">
-                    <i class="pi pi-building text-indigo-600 text-lg"></i>
+                  <div class="flex items-center justify-center w-11 h-11 bg-primary-50 rounded-xl">
+                    <i class="pi pi-building text-primary-600 text-lg"></i>
                   </div>
                   <div>
                     <h2 class="text-lg font-bold text-slate-900 m-0">Create a workspace</h2>
@@ -159,13 +159,13 @@ import { InvitationService } from '@core/services/invitation.service';
                       formControlName="name"
                       (input)="autoSlug()"
                       placeholder="Acme Corp"
-                      class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                      class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all"
                     />
                   </div>
 
                   <div class="space-y-1.5">
                     <label for="slug" class="block text-sm font-semibold text-slate-700">Workspace URL</label>
-                    <div class="flex items-center h-11 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                    <div class="flex items-center h-11 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
                       <span class="flex items-center h-full px-3 text-slate-400 text-sm border-r border-slate-200 bg-slate-100 whitespace-nowrap select-none">normora.com/</span>
                       <input
                         id="slug"
@@ -181,7 +181,7 @@ import { InvitationService } from '@core/services/invitation.service';
                   <button
                     type="submit"
                     [disabled]="onboardingForm.invalid || isLoading()"
-                    class="w-full flex items-center justify-center gap-2 h-11 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-sm rounded-xl border-none cursor-pointer transition-colors shadow-sm shadow-indigo-500/20 disabled:cursor-not-allowed"
+                    class="w-full flex items-center justify-center gap-2 h-11 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-sm rounded-xl border-none cursor-pointer transition-colors shadow-sm shadow-primary-500/20 disabled:cursor-not-allowed"
                   >
                     @if (isLoading()) {
                       <i class="pi pi-spin pi-spinner text-sm"></i> Creating workspace…

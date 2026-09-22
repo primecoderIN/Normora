@@ -24,7 +24,7 @@ import { Department } from '@core/services/department.service';
               <tr class="hover:bg-slate-50/50 transition-colors group">
                 <td class="px-5 py-3">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                    <div class="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 shrink-0">
                       <i class="pi pi-file text-sm"></i>
                     </div>
                     <div class="min-w-0">
@@ -35,7 +35,7 @@ import { Department } from '@core/services/department.service';
                         } @else {
                           <div class="flex gap-1 flex-wrap">
                             @for (deptId of doc.departmentIds; track deptId) {
-                              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-50 text-primary-700 border border-primary-100">
                                 {{ getDepartmentName(deptId) }}
                               </span>
                             }

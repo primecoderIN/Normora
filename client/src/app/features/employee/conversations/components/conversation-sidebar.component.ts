@@ -16,12 +16,12 @@ import { ConversationDto } from '@core/services/conversation.service';
       <div class="flex flex-col p-4 pb-3 border-b border-slate-200 bg-white flex-none gap-3 z-10 shadow-sm relative">
         <div class="flex items-center justify-between gap-2">
           <div>
-            <p class="text-[0.65rem] font-black tracking-[0.15em] text-indigo-500 uppercase m-0 mb-1">Knowledge Assistant</p>
+            <p class="text-[0.65rem] font-black tracking-[0.15em] text-primary-500 uppercase m-0 mb-1">Knowledge Assistant</p>
             <h1 class="text-xl font-black text-slate-900 m-0 tracking-tight">Conversations</h1>
           </div>
           <button
             type="button"
-            class="flex items-center justify-center flex-none w-9 h-9 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 transition-all border-none cursor-pointer"
+            class="flex items-center justify-center flex-none w-9 h-9 bg-primary-600 hover:bg-primary-700 rounded-xl text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 transition-all border-none cursor-pointer"
             pTooltip="New conversation"
             tooltipPosition="bottom"
             (click)="onNewConversation.emit()"
@@ -33,13 +33,13 @@ import { ConversationDto } from '@core/services/conversation.service';
 
         <!-- Search Bar -->
         <div class="relative group">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-indigo-500 transition-colors"></i>
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-primary-500 transition-colors"></i>
           <input 
             type="text" 
             [(ngModel)]="searchQuery" 
             (ngModelChange)="onSearchChange()"
             placeholder="Search history..." 
-            class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-[0.82rem] rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 block pl-8 p-2 transition-all outline-none"
+            class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-[0.82rem] rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-400 block pl-8 p-2 transition-all outline-none"
           />
           @if (searchQuery()) {
             <button 
@@ -74,7 +74,7 @@ import { ConversationDto } from '@core/services/conversation.service';
         } @else if (filteredConversations().length === 0) {
           <div class="flex flex-col items-center justify-center h-full gap-3 p-6 text-center text-slate-400">
             <div class="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-              <i class="pi pi-comments text-2xl text-indigo-300"></i>
+              <i class="pi pi-comments text-2xl text-primary-300"></i>
             </div>
             <span class="text-[0.85rem] font-medium">
               {{ searchQuery() ? 'No matching conversations' : 'No history yet' }}
@@ -87,23 +87,23 @@ import { ConversationDto } from '@core/services/conversation.service';
               type="button"
               class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm mb-1.5 overflow-hidden"
               [class.!bg-white]="activeId === conv.id"
-              [class.!border-indigo-200]="activeId === conv.id"
+              [class.!border-primary-200]="activeId === conv.id"
               [class.shadow-[0_2px_4px_rgba(0,0,0,0.02)]]="activeId === conv.id"
               (click)="onSelect.emit(conv.id)"
             >
               <!-- Active Indicator Strip -->
               @if (activeId === conv.id) {
-                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-indigo-500 rounded-r-full"></div>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-500 rounded-r-full"></div>
               }
 
               <div class="flex flex-col flex-1 min-w-0 gap-1 pl-1">
                 <span class="text-[0.85rem] font-semibold truncate transition-colors"
-                      [class.text-indigo-700]="activeId === conv.id"
+                      [class.text-primary-700]="activeId === conv.id"
                       [class.text-slate-800]="activeId !== conv.id">
                   {{ conv.title || 'New conversation' }}
                 </span>
                 <span class="text-[0.7rem] font-medium"
-                      [class.text-indigo-400]="activeId === conv.id"
+                      [class.text-primary-400]="activeId === conv.id"
                       [class.text-slate-400]="activeId !== conv.id">
                   {{ getRelativeTime(conv.lastMessageAt) }}
                 </span>

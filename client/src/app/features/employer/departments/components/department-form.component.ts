@@ -22,7 +22,7 @@ import { FormErrorComponent } from '@shared/components/form-error/form-error.com
             <input
               type="text"
               formControlName="name"
-              class="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              class="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
               placeholder="e.g. Engineering"
               id="dept-name"
             />
@@ -34,7 +34,7 @@ import { FormErrorComponent } from '@shared/components/form-error/form-error.com
             <span class="text-sm font-semibold text-slate-700">Description</span>
             <textarea
               formControlName="description"
-              class="w-full p-3 bg-white border border-slate-300 rounded-md text-sm outline-none resize-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all custom-scrollbar"
+              class="w-full p-3 bg-white border border-slate-300 rounded-md text-sm outline-none resize-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all custom-scrollbar"
               rows="3"
               placeholder="Optional description…"
               id="dept-description"
@@ -45,7 +45,7 @@ import { FormErrorComponent } from '@shared/components/form-error/form-error.com
 
           <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
             <p-button label="Cancel" (onClick)="onCancel()" styleClass="!bg-white !border-slate-300 !text-slate-700 hover:!bg-slate-50 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
-            <p-button [label]="department() ? 'Save changes' : 'Create department'" type="submit" [disabled]="form.invalid || isSaving()" [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''" styleClass="!bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 disabled:!bg-slate-300 disabled:!border-slate-300 disabled:!text-slate-500 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
+            <p-button [label]="department() ? 'Save changes' : 'Create department'" type="submit" [disabled]="form.invalid || isSaving()" [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''" styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 disabled:!bg-slate-300 disabled:!border-slate-300 disabled:!text-slate-500 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
           </div>
         </form>
       </div>

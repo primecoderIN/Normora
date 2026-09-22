@@ -20,7 +20,7 @@ import { CommonModule } from '@angular/common';
       @if (actionLabel()) {
         <button 
           (click)="action.emit()"
-          class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm"
+          class="px-4 py-2 rounded-lg bg-primary-600 text-white font-medium text-sm hover:bg-primary-700 transition-colors flex items-center gap-2 shadow-sm"
         >
           @if (actionIcon()) {
             <i class="pi" [class]="actionIcon()"></i>

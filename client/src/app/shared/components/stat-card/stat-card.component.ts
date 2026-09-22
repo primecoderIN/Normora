@@ -38,7 +38,7 @@ export class StatCardComponent {
   title = input.required<string>();
   value = input.required<string | number>();
   icon = input.required<string>();
-  colorClass = input<string>('bg-indigo-50 text-indigo-600');
+  colorClass = input<string>('bg-primary-50 text-primary-600');
 
   trend = input<'up' | 'down' | 'neutral'>('neutral');
   trendText = input<string>('');

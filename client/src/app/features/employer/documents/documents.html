@@ -3,13 +3,13 @@
 
   <header class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
     <div>
-      <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-indigo-600 m-0 mb-1">Knowledge base</p>
+      <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-primary-600 m-0 mb-1">Knowledge base</p>
       <h1 class="text-[1.75rem] font-bold text-slate-900 leading-[1.15] m-0">Documents</h1>
       <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Upload, monitor, and curate the files employees can search.</p>
     </div>
 
     <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
-      <label class="flex items-center gap-2 h-10 px-3 bg-white border border-slate-200 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-indigo-500 transition-colors">
+      <label class="flex items-center gap-2 h-10 px-3 bg-white border border-slate-200 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
         <i class="pi pi-search text-slate-500"></i>
         <input
           type="text"
@@ -21,14 +21,14 @@
         />
       </label>
       <p-button icon="pi pi-bell" styleClass="!w-10 !h-10 !p-0 flex items-center justify-center !bg-white !border-slate-200 !text-slate-500 hover:!bg-slate-50 transition-colors rounded-lg" ariaLabel="Notifications"></p-button>
-      <button type="button" class="flex items-center justify-center gap-2 h-10 px-4 bg-indigo-600 text-white border border-indigo-600 rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors whitespace-nowrap" (click)="showUploadDialog.set(true)">
+      <button type="button" class="flex items-center justify-center gap-2 h-10 px-4 bg-primary-600 text-white border border-primary-600 rounded-lg font-bold text-sm hover:bg-primary-700 transition-colors whitespace-nowrap" (click)="showUploadDialog.set(true)">
         <i class="pi pi-cloud-upload"></i> Upload
       </button>
     </div>
   </header>
 
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Document status">
-    <app-stat-card title="Total" [value]="documents().length" icon="pi-file" colorClass="bg-indigo-50 text-indigo-600" trend="neutral" trendText="All uploaded files"></app-stat-card>
+    <app-stat-card title="Total" [value]="documents().length" icon="pi-file" colorClass="bg-primary-50 text-primary-600" trend="neutral" trendText="All uploaded files"></app-stat-card>
     <app-stat-card title="Ready" [value]="readyCount()" icon="pi-check-circle" colorClass="bg-emerald-50 text-emerald-600" trend="up" trendText="Searchable now"></app-stat-card>
     <app-stat-card title="Processing" [value]="processingCount()" icon="pi-spin pi-spinner" colorClass="bg-blue-50 text-blue-600" trend="neutral" trendText="Being indexed"></app-stat-card>
     <app-stat-card title="Failed" [value]="failedCount()" icon="pi-exclamation-circle" colorClass="bg-red-50 text-red-600" trend="down" trendText="Needs attention"></app-stat-card>
@@ -79,8 +79,8 @@
         description="Upload a file or adjust the current filters."
         actionLabel="Upload document"
         actionIcon="pi-cloud-upload"
-        iconBgClass="bg-indigo-50"
-        iconColorClass="text-indigo-600"
+        iconBgClass="bg-primary-50"
+        iconColorClass="text-primary-600"
         (action)="showUploadDialog.set(true)">
       </app-empty-state>
     }

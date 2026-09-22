@@ -16,14 +16,14 @@ import { marked } from 'marked';
       @if (!conversation) {
         <!-- Empty State -->
         <div class="flex flex-col flex-1 items-center justify-center gap-4 p-8 text-center bg-slate-50">
-          <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-indigo-100 to-purple-100 text-indigo-600 text-3xl rounded-2xl mb-2 shadow-sm">
+          <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-primary-100 to-purple-100 text-primary-600 text-3xl rounded-2xl mb-2 shadow-sm">
             <i class="pi pi-comments"></i>
           </div>
           <h2 class="text-xl font-bold text-slate-900 m-0">Ask Normora anything</h2>
           <p class="text-sm text-slate-500 max-w-sm m-0">Select a conversation on the left, or start a new one to get grounded answers from your company documents.</p>
           <button
             type="button"
-            class="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg border-none cursor-pointer transition-colors shadow-sm"
+            class="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm rounded-lg border-none cursor-pointer transition-colors shadow-sm"
             (click)="onNewConversation.emit()"
           >
             <i class="pi pi-plus text-xs"></i> New conversation
@@ -41,7 +41,7 @@ import { marked } from 'marked';
             >
               <i class="pi pi-bars text-sm"></i>
             </button>
-            <div class="flex items-center justify-center flex-none w-9 h-9 bg-indigo-50 text-indigo-600 rounded-lg text-sm">
+            <div class="flex items-center justify-center flex-none w-9 h-9 bg-primary-50 text-primary-600 rounded-lg text-sm">
               <i class="pi pi-comments"></i>
             </div>
             <div class="min-w-0">
@@ -69,8 +69,8 @@ import { marked } from 'marked';
             </div>
           } @else if (conversation.messages.length === 0) {
             <div class="flex flex-col flex-1 items-center justify-center gap-3 text-center text-slate-400">
-              <div class="w-16 h-16 flex items-center justify-center bg-linear-to-br from-indigo-50 to-purple-50 rounded-2xl">
-                <i class="pi pi-sparkles text-3xl text-indigo-300"></i>
+              <div class="w-16 h-16 flex items-center justify-center bg-linear-to-br from-primary-50 to-purple-50 rounded-2xl">
+                <i class="pi pi-sparkles text-3xl text-primary-300"></i>
               </div>
               <p class="text-sm m-0">Ask your first question below.</p>
             </div>
@@ -83,7 +83,7 @@ import { marked } from 'marked';
                 
                 <!-- Avatar -->
                 @if (msg.role === 'Assistant') {
-                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-indigo-50 to-purple-50 text-indigo-600 rounded-full text-xs shadow-sm">
+                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-xs shadow-sm">
                     <i class="pi pi-sparkles"></i>
                   </div>
                 }
@@ -91,7 +91,7 @@ import { marked } from 'marked';
                 <div class="flex flex-col gap-1.5 min-w-0">
                   <!-- Bubble -->
                   <div class="group relative px-4 py-3 rounded-2xl wrap-break-word"
-                       [class.bg-indigo-600]="msg.role === 'User'"
+                       [class.bg-primary-600]="msg.role === 'User'"
                        [class.text-white]="msg.role === 'User'"
                        [class.rounded-br-sm]="msg.role === 'User'"
                        [class.bg-white]="msg.role === 'Assistant'"
@@ -148,7 +148,7 @@ import { marked } from 'marked';
                              [pTooltip]="cite.fileName" tooltipPosition="top">
                           <i class="pi pi-file-pdf text-slate-400 text-[0.7rem] flex-none"></i>
                           <span class="truncate">{{ cite.fileName }}</span>
-                          <span class="text-indigo-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
+                          <span class="text-primary-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
                         </div>
                       }
                     </div>
@@ -169,7 +169,7 @@ import { marked } from 'marked';
 
                 <!-- User Avatar -->
                 @if (msg.role === 'User') {
-                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full text-xs">
+                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-primary-100 text-primary-700 rounded-full text-xs">
                     <i class="pi pi-user"></i>
                   </div>
                 }
@@ -180,13 +180,13 @@ import { marked } from 'marked';
           <!-- Typing Indicator -->
           @if (isSending) {
             <div class="flex items-end gap-2.5 max-w-[85%] self-start msg-enter">
-              <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-indigo-50 to-purple-50 text-indigo-600 rounded-full text-xs shadow-sm">
+              <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-xs shadow-sm">
                 <i class="pi pi-sparkles"></i>
               </div>
               <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white border border-slate-200 rounded-2xl rounded-bl-sm shadow-sm">
-                <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce animate-delay-none"></span>
-                <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                <span class="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce animate-delay-none"></span>
+                <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
               </div>
             </div>
           }
@@ -210,7 +210,7 @@ import { marked } from 'marked';
 
         <!-- Input Bar -->
         <div class="p-3 md:p-4 bg-white border-t border-slate-200 flex-none">
-          <form class="flex items-end gap-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl transition-all focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100"
+          <form class="flex items-end gap-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl transition-all focus-within:border-primary-300 focus-within:ring-2 focus-within:ring-primary-100"
                 (ngSubmit)="onSubmit()">
             <textarea
               #textareaEl
@@ -227,7 +227,7 @@ import { marked } from 'marked';
             ></textarea>
             <button
               type="submit"
-              class="flex items-center justify-center flex-none w-9 h-9 bg-indigo-600 text-white border-none rounded-lg cursor-pointer transition-all hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+              class="flex items-center justify-center flex-none w-9 h-9 bg-primary-600 text-white border-none rounded-lg cursor-pointer transition-all hover:bg-primary-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
               [disabled]="!question.trim() || isSending"
               aria-label="Send message"
             >

@@ -25,7 +25,7 @@ import { UserGroup } from '@core/services/user-group.service';
             <tr class="hover:bg-slate-50/50 transition-colors group/row">
               <td class="px-5 py-3.5">
                 <div class="flex items-center gap-3 font-semibold text-slate-900">
-                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-linear-to-br from-indigo-500 to-purple-500 text-white font-bold text-xs uppercase">{{ group.name.charAt(0) }}</span>
+                  <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-linear-to-br from-primary-500 to-purple-500 text-white font-bold text-xs uppercase">{{ group.name.charAt(0) }}</span>
                   {{ group.name }}
                 </div>
               </td>

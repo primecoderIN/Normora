@@ -4,6 +4,10 @@
 
 @source "./app/**/*.{html,ts}";
 
+@theme {
+  --color-secondary: var(--brand-secondary, #10b981);
+}
+
 html,
 body {
   height: 100%;
