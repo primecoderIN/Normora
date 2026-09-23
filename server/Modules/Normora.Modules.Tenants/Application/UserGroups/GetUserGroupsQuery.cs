@@ -13,7 +13,15 @@ public record GetUserGroupsQuery : IRequest<List<UserGroupDto>>;
 /// <summary>
 /// Data transfer object representing a user group and its associated departments.
 /// </summary>
-public record UserGroupDto(Guid Id, string Name, List<Guid> DepartmentIds);
+public record UserGroupDto(
+    Guid Id,
+    string Name,
+    string? Description,
+    int MemberCount,
+    int DepartmentCount,
+    DateTime CreatedAt,
+    List<Guid> DepartmentIds
+);
 
 /// <summary>
 /// Handles the <see cref="GetUserGroupsQuery"/> by querying the database for the current tenant's user groups.
@@ -32,6 +40,10 @@ public class GetUserGroupsQueryHandler(TenantsDbContext dbContext, ITenantContex
             .Select(g => new UserGroupDto(
                 g.Id,
                 g.Name,
+                g.Description,
+                g.UserGroupMemberships.Count,
+                g.UserGroupDepartments.Count,
+                g.CreatedAt,
                 g.UserGroupDepartments.Select(d => d.DepartmentId).ToList()
             ))
             .ToListAsync(cancellationToken);

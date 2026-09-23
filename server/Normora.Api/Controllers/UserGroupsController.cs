@@ -31,6 +31,25 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
+    /// Retrieves a specific user group's details, including its assignments.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user group.</param>
+    /// <returns>Detailed user group information.</returns>
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<UserGroupDetailDto>))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> GetUserGroupById(Guid id)
+    {
+        var result = await mediator.Send(new GetUserGroupByIdQuery(id));
+        if (result == null)
+        {
+            return NotFound(ApiResponse.Failure("User group not found."));
+        }
+        return Ok(ApiResponse<UserGroupDetailDto>.Ok(result));
+    }
+
+    /// <summary>
     /// Creates a new user group and optionally assigns it to departments.
     /// </summary>
     /// <param name="request">The payload containing the user group name and department assignments.</param>
@@ -41,7 +60,7 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreateUserGroup([FromBody] CreateUserGroupRequest request)
     {
-        var command = new CreateUserGroupCommand(request.Name, request.DepartmentIds ?? new List<Guid>());
+        var command = new CreateUserGroupCommand(request.Name, request.Description, request.DepartmentIds ?? new List<Guid>());
         var id = await mediator.Send(command);
         return Ok(ApiResponse<Guid>.Ok(id, "User group created successfully."));
     }
@@ -59,7 +78,7 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> UpdateUserGroup(Guid id, [FromBody] UpdateUserGroupRequest request)
     {
-        var command = new UpdateUserGroupCommand(id, request.Name, request.DepartmentIds ?? new List<Guid>());
+        var command = new UpdateUserGroupCommand(id, request.Name, request.Description, request.DepartmentIds ?? new List<Guid>());
         var success = await mediator.Send(command);
 
         if (!success)
@@ -68,6 +87,30 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
         }
 
         return Ok(ApiResponse.Ok("User group updated successfully."));
+    }
+
+    /// <summary>
+    /// Updates the member users and department assignments for an existing user group.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user group to update.</param>
+    /// <param name="request">The payload containing the updated assignments.</param>
+    /// <returns>A success message if updated.</returns>
+    [HttpPut("{id}/assignments")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> UpdateUserGroupAssignments(Guid id, [FromBody] UpdateUserGroupAssignmentsRequest request)
+    {
+        var command = new UpdateUserGroupAssignmentsCommand(id, request.MemberUserIds ?? new List<Guid>(), request.DepartmentIds ?? new List<Guid>());
+        var success = await mediator.Send(command);
+
+        if (!success)
+        {
+            return NotFound(ApiResponse.Failure("User group not found."));
+        }
+
+        return Ok(ApiResponse.Ok("User group assignments updated successfully."));
     }
 
     /// <summary>
@@ -96,10 +139,14 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
 /// <summary>
 /// Request payload for creating a user group.
 /// </summary>
-public record CreateUserGroupRequest(string Name, List<Guid>? DepartmentIds);
+public record CreateUserGroupRequest(string Name, string? Description, List<Guid>? DepartmentIds);
 
 /// <summary>
 /// Request payload for updating a user group.
 /// </summary>
-public record UpdateUserGroupRequest(string Name, List<Guid>? DepartmentIds);
+public record UpdateUserGroupRequest(string Name, string? Description, List<Guid>? DepartmentIds);
 
+/// <summary>
+/// Request payload for updating a user group's assignments.
+/// </summary>
+public record UpdateUserGroupAssignmentsRequest(List<Guid>? MemberUserIds, List<Guid>? DepartmentIds);

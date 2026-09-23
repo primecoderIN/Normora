@@ -13,7 +13,7 @@ namespace Normora.Modules.Tenants.Application.UserGroups;
 /// <param name="Id">The unique identifier of the user group.</param>
 /// <param name="Name">The new name for the user group.</param>
 /// <param name="DepartmentIds">The updated list of assigned department IDs.</param>
-public record UpdateUserGroupCommand(Guid Id, string Name, List<Guid> DepartmentIds) : IRequest<bool>;
+public record UpdateUserGroupCommand(Guid Id, string Name, string? Description, List<Guid> DepartmentIds) : IRequest<bool>;
 
 /// <summary>
 /// Validates the <see cref="UpdateUserGroupCommand"/>.
@@ -24,6 +24,7 @@ public class UpdateUserGroupCommandValidator : AbstractValidator<UpdateUserGroup
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(500);
         RuleFor(x => x.DepartmentIds).NotNull();
     }
 }
@@ -58,6 +59,7 @@ public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
         }
 
         group.Name = request.Name;
+        group.Description = request.Description;
 
         // Sync departments
         group.UserGroupDepartments.Clear();

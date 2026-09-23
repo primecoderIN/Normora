@@ -12,7 +12,7 @@ namespace Normora.Modules.Tenants.Application.UserGroups;
 /// </summary>
 /// <param name="Name">The name of the user group.</param>
 /// <param name="DepartmentIds">A list of department IDs this group should have access to.</param>
-public record CreateUserGroupCommand(string Name, List<Guid> DepartmentIds) : IRequest<Guid>;
+public record CreateUserGroupCommand(string Name, string? Description, List<Guid> DepartmentIds) : IRequest<Guid>;
 
 /// <summary>
 /// Validates the <see cref="CreateUserGroupCommand"/>.
@@ -22,6 +22,7 @@ public class CreateUserGroupCommandValidator : AbstractValidator<CreateUserGroup
     public CreateUserGroupCommandValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(500);
         RuleFor(x => x.DepartmentIds).NotNull();
     }
 }
@@ -49,6 +50,7 @@ public class CreateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
             Id = Guid.NewGuid(),
             TenantId = tenantContext.TenantId.Value,
             Name = request.Name,
+            Description = request.Description,
             UserGroupDepartments = request.DepartmentIds.Select(depId => new UserGroupDepartment
             {
                 DepartmentId = depId
