@@ -253,15 +253,17 @@
             </div>
             <!-- Nav items -->
             @for (item of [
-              {icon: 'pi-th-large', label: 'Overview', active: true},
+              {icon: 'pi-home', label: 'Overview', active: true},
               {icon: 'pi-file', label: 'Documents', active: false},
               {icon: 'pi-comments', label: 'Conversations', active: false},
               {icon: 'pi-users', label: 'Employees', active: false}
             ]; track item.label) {
-              <div class="flex items-center gap-1.5 px-2 py-1.5 rounded-md mb-0.5 text-[10px] cursor-pointer"
+              <div class="flex items-center gap-1.5 px-2 py-1.5 rounded-md mb-0.5 text-[10px] cursor-pointer border-l-2 transition-colors"
                    [class.text-white]="item.active"
                    [class.font-semibold]="item.active"
                    [class.text-slate-400]="!item.active"
+                   [class.border-transparent]="!item.active"
+                   [style.border-left-color]="item.active ? primaryColor() : 'transparent'"
                    [style.background]="item.active ? primaryColor() + '33' : 'transparent'">
                 <i [class]="'pi ' + item.icon + ' text-[10px]'"></i>
                 <span>{{ item.label }}</span>

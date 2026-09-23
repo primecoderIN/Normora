@@ -26,6 +26,7 @@ export class EmployerLayout {
   public brandingService = inject(TenantBrandingService);
   
   isAccepting = signal(false);
+  isSidebarExpanded = signal(true);
 
   logout() {
     this.authService.logout();

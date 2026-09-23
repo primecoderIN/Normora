@@ -85,10 +85,9 @@ import { ConversationDto } from '@core/services/conversation.service';
             <button
               *cdkVirtualFor="let conv of filteredConversations(); trackBy: trackById"
               type="button"
-              class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm mb-1.5 overflow-hidden"
-              [class.!bg-white]="activeId === conv.id"
-              [class.!border-primary-200]="activeId === conv.id"
-              [class.shadow-[0_2px_4px_rgba(0,0,0,0.02)]]="activeId === conv.id"
+              class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-slate-100 mb-1.5 overflow-hidden"
+              [class.!bg-primary-50]="activeId === conv.id"
+              [class.!border-primary-100]="activeId === conv.id"
               (click)="onSelect.emit(conv.id)"
             >
               <!-- Active Indicator Strip -->

@@ -1,13 +1,19 @@
 <div class="flex flex-col md:flex-row h-screen bg-slate-50 text-slate-900 overflow-hidden">
-  <aside class="md:flex-none flex-col p-4 md:p-5 bg-slate-950 text-white w-full md:w-64 border-r border-white/10 hidden md:flex">
-    <div class="flex items-center gap-3 min-h-12">
+  <aside class="md:flex-none flex-col p-4 bg-slate-950 text-white transition-all duration-300 border-r border-white/10 hidden md:flex relative"
+         [class.md:w-64]="isSidebarExpanded()" [class.md:w-20]="!isSidebarExpanded()" [class.items-center]="!isSidebarExpanded()">
+    
+    <!-- Expand/Collapse Toggle -->
+    <button type="button" class="absolute -right-3 top-6 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full hidden md:flex items-center justify-center text-slate-400 hover:text-white cursor-pointer z-10" (click)="isSidebarExpanded.set(!isSidebarExpanded())">
+      <i class="pi text-[10px]" [class.pi-chevron-left]="isSidebarExpanded()" [class.pi-chevron-right]="!isSidebarExpanded()"></i>
+    </button>
+    <div class="flex items-center gap-3 min-h-12" [class.justify-center]="!isSidebarExpanded()">
       @if (themeService.isDarkMode() && brandingService.currentBranding()?.logoUrlDark) {
         <img [src]="brandingService.currentBranding()?.logoUrlDark" alt="Logo" class="h-8 max-w-full object-contain">
       } @else if (brandingService.currentBranding()?.logoUrl) {
         <img [src]="brandingService.currentBranding()?.logoUrl" alt="Logo" class="h-8 max-w-full object-contain">
       } @else {
         <div class="flex items-center justify-center w-8 h-8 bg-primary-600 rounded-lg font-extrabold text-white">N</div>
-        <div>
+        <div [class.hidden]="!isSidebarExpanded()">
           <div class="text-base font-extrabold leading-tight">Normora</div>
           <div class="text-xs text-slate-400">Employee workspace</div>
         </div>
@@ -15,11 +21,11 @@
     </div>
 
     @if (activeWorkspace) {
-      <div class="items-center gap-3 p-3 my-6 bg-white/5 border border-white/10 rounded-lg hidden md:flex">
+      <div class="items-center gap-3 p-3 my-6 bg-white/5 border border-white/10 rounded-lg hidden md:flex" [class.flex-col]="!isSidebarExpanded()" [class.p-2]="!isSidebarExpanded()">
         <div class="flex items-center justify-center w-8 h-8 bg-white/10 text-slate-300 rounded-md">
           <i [class]="activeWorkspace.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
         </div>
-        <div class="min-w-0 flex-1 relative">
+        <div class="min-w-0 flex-1 relative" [class.hidden]="!isSidebarExpanded()">
           <p-select 
             [options]="allWorkspaces" 
             [ngModel]="activeWorkspace.tenantId"
@@ -43,7 +49,7 @@
             </ng-template>
           </p-select>
         </div>
-        <a routerLink="/onboarding" class="flex items-center justify-center flex-none w-8 h-8 bg-white/10 text-slate-300 hover:text-white hover:bg-white/20 rounded-md transition-colors" title="Create new workspace">
+        <a routerLink="/onboarding" class="flex items-center justify-center flex-none w-8 h-8 bg-white/10 text-slate-300 hover:text-white hover:bg-white/20 rounded-md transition-colors" title="Create new workspace" [class.hidden]="!isSidebarExpanded()">
           <i class="pi pi-plus"></i>
         </a>
       </div>
@@ -51,40 +57,36 @@
 
     <nav class="grid gap-1 overflow-y-auto mt-4 md:mt-0 flex-row md:flex-col overflow-x-auto md:overflow-x-visible custom-scrollbar" aria-label="Employee navigation">
 
-      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'conversations']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
+      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'conversations']" routerLinkActive="!bg-primary-900/40 !text-white !border-l-primary-500" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
         <i class="pi pi-history text-base w-4"></i>
-        <span>Conversations</span>
+        <span [class.hidden]="!isSidebarExpanded()">Conversations</span>
       </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'saved-answers']" routerLinkActive="!bg-primary-600/20 !text-white" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-primary-600/20 hover:text-white no-underline flex-none md:flex-auto">
+      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'saved-answers']" routerLinkActive="!bg-primary-900/40 !text-white !border-l-primary-500" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
         <i class="pi pi-bookmark text-base w-4"></i>
-        <span>Saved answers</span>
+        <span [class.hidden]="!isSidebarExpanded()">Saved answers</span>
       </a>
     </nav>
 
-    <div class="hidden md:grid gap-3.5 mt-auto pt-4 border-t border-white/10">
+    <div class="hidden md:flex flex-col gap-3.5 mt-auto pt-4 border-t border-white/10" [class.items-center]="!isSidebarExpanded()">
       @if (userService.currentUser(); as user) {
         <div class="flex items-center gap-3 min-w-0">
-          <div class="flex items-center justify-center flex-none w-9 h-9 bg-primary-100 text-primary-800 font-extrabold rounded-full">
+          <div class="flex items-center justify-center flex-none w-10 h-10 bg-primary-100 text-primary-800 font-extrabold rounded-full text-lg">
             {{ user.displayName.charAt(0) || 'U' }}
           </div>
-          <div class="min-w-0">
-            <div class="text-[0.84rem] font-bold truncate">{{ user.displayName }}</div>
-            <div class="text-[0.72rem] text-slate-400 capitalize">{{ activeWorkspace?.role || 'Employee' }}</div>
+          <div class="min-w-0" [class.hidden]="!isSidebarExpanded()">
+            <div class="text-sm font-bold truncate text-white">{{ user.displayName }}</div>
+            <div class="text-xs text-slate-400 capitalize">{{ activeWorkspace?.role || 'Employee' }}</div>
           </div>
         </div>
       }
-      <div class="flex gap-2">
-        <p-button 
-          [icon]="themeService.isDarkMode() ? 'pi pi-moon' : 'pi pi-sun'" 
-          styleClass="!bg-transparent !border-white/10 !text-slate-300 hover:!bg-white/5 hover:!text-white hover:!border-white/20 transition-colors"
-          (onClick)="themeService.toggleTheme()">
-        </p-button>
-        <p-button 
-          label="Sign out" 
-          icon="pi pi-sign-out" 
-          styleClass="w-full !bg-transparent !border-white/10 !text-slate-300 hover:!bg-white/5 hover:!text-white hover:!border-white/20 transition-colors"
-          (onClick)="logout()">
-        </p-button>
+      <div class="flex gap-2 w-full" [class.flex-col]="!isSidebarExpanded()">
+        <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-lg bg-transparent border border-white/10 text-slate-300 hover:bg-white/5 hover:text-white hover:border-white/20 transition-colors" (click)="themeService.toggleTheme()" [title]="themeService.isDarkMode() ? 'Light mode' : 'Dark mode'">
+          <i [class]="themeService.isDarkMode() ? 'pi pi-moon text-sm' : 'pi pi-sun text-sm'"></i>
+        </button>
+        <button type="button" class="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg bg-transparent border border-white/10 text-slate-300 hover:bg-white/5 hover:text-white hover:border-white/20 transition-colors" (click)="logout()" title="Sign out" [class.w-10]="!isSidebarExpanded()">
+          <i class="pi pi-sign-out text-sm"></i>
+          <span [class.hidden]="!isSidebarExpanded()" class="text-sm font-medium">Sign out</span>
+        </button>
       </div>
     </div>
   </aside>

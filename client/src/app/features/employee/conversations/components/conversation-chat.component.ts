@@ -15,19 +15,39 @@ import { marked } from 'marked';
       
       @if (!conversation) {
         <!-- Empty State -->
-        <div class="flex flex-col flex-1 items-center justify-center gap-4 p-8 text-center bg-slate-50">
-          <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-primary-100 to-purple-100 text-primary-600 text-3xl rounded-2xl mb-2 shadow-sm">
-            <i class="pi pi-comments"></i>
+        <div class="flex flex-col flex-1 items-center justify-center gap-6 p-8 text-center bg-slate-50">
+          <div>
+            <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-primary-100 to-purple-100 text-primary-600 text-3xl rounded-2xl mx-auto mb-4 shadow-sm">
+              <i class="pi pi-comments"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 m-0 mb-1">How can I help you today?</h2>
+            <p class="text-sm text-slate-500 max-w-sm mx-auto m-0">Ask anything about company policies, benefits, or your specific context.</p>
           </div>
-          <h2 class="text-xl font-bold text-slate-900 m-0">Ask Normora anything</h2>
-          <p class="text-sm text-slate-500 max-w-sm m-0">Select a conversation on the left, or start a new one to get grounded answers from your company documents.</p>
-          <button
-            type="button"
-            class="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm rounded-lg border-none cursor-pointer transition-colors shadow-sm"
-            (click)="onNewConversation.emit()"
-          >
-            <i class="pi pi-plus text-xs"></i> New conversation
-          </button>
+          
+          <!-- Suggestion Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-4">
+            <!-- Card 1 -->
+            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I request time off?'">
+              <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="pi pi-file text-lg"></i>
+              </div>
+              <div class="font-semibold text-slate-800 text-sm">How do I request time off?</div>
+            </button>
+            <!-- Card 2 -->
+            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'What is our remote work policy?'">
+              <div class="w-10 h-10 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="pi pi-users text-lg"></i>
+              </div>
+              <div class="font-semibold text-slate-800 text-sm">What is our remote work policy?</div>
+            </button>
+            <!-- Card 3 -->
+            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I submit expenses?'">
+              <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="pi pi-wallet text-lg"></i>
+              </div>
+              <div class="font-semibold text-slate-800 text-sm">How do I submit expenses?</div>
+            </button>
+          </div>
         </div>
       } @else {
         <!-- Chat Header -->
@@ -209,17 +229,22 @@ import { marked } from 'marked';
         </div>
 
         <!-- Input Bar -->
-        <div class="p-3 md:p-4 bg-white border-t border-slate-200 flex-none">
-          <form class="flex items-end gap-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl transition-all focus-within:border-primary-300 focus-within:ring-2 focus-within:ring-primary-100"
+        <div class="p-4 md:p-6 bg-white border-t border-slate-200 flex-none">
+          <form class="flex items-end gap-3 p-2 bg-slate-50 border border-slate-200 rounded-2xl transition-all focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-100/50 shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
                 (ngSubmit)="onSubmit()">
+            
+            <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors" title="Attach file">
+              <i class="pi pi-paperclip"></i>
+            </button>
+
             <textarea
               #textareaEl
-              class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-1.5 text-[0.9rem] text-slate-900 placeholder:text-slate-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
+              class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-2.5 text-[0.95rem] text-slate-900 placeholder:text-slate-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
               [(ngModel)]="question"
               name="question"
               rows="1"
               maxlength="1000"
-              placeholder="Ask a question about company policies, benefits, or procedures…"
+              placeholder="Ask a question..."
               [disabled]="isSending"
               (keydown)="onKeydown($event)"
               (input)="autoResize()"
@@ -227,11 +252,11 @@ import { marked } from 'marked';
             ></textarea>
             <button
               type="submit"
-              class="flex items-center justify-center flex-none w-9 h-9 bg-primary-600 text-white border-none rounded-lg cursor-pointer transition-all hover:bg-primary-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+              class="flex items-center justify-center flex-none w-10 h-10 bg-primary-600 text-white border-none rounded-xl cursor-pointer transition-all hover:bg-primary-700 hover:shadow-md disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
               [disabled]="!question.trim() || isSending"
               aria-label="Send message"
             >
-              <i class="text-sm" [class.pi-spin]="isSending" [class.pi-spinner]="isSending" [class.pi-arrow-up]="!isSending"></i>
+              <i class="text-[0.9rem]" [class.pi-spin]="isSending" [class.pi-spinner]="isSending" [class.pi-send]="!isSending" [class.-ml-1]="!isSending" [class.mt-1]="!isSending"></i>
             </button>
           </form>
           <p class="text-center text-[0.7rem] text-slate-400 mt-2 mb-0">

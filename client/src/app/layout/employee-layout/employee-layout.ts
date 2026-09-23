@@ -27,6 +27,7 @@ export class EmployeeLayout {
   private invitationService = inject(InvitationService);
   
   isAccepting = signal(false);
+  isSidebarExpanded = signal(true);
 
   // Retrieve the currently active workspace, falling back to their first available workspace if none is explicitly selected
   get activeWorkspace() {
