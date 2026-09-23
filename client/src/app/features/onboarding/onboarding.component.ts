@@ -279,10 +279,10 @@ export class OnboardingComponent {
     const payload = this.onboardingForm.value;
 
     this.tenantService.createTenant(payload).subscribe({
-      next: () => {
-        // Need to reload to re-fetch the user profile with the new membership
-        // The rootGuard will then route them to the employer dashboard
-        window.location.href = '/employer/dashboard';
+      next: (res: any) => {
+        // Use the slug returned from API if available, otherwise the one from payload
+        const slug = res?.data?.slug || payload.slug;
+        window.location.href = `/app/workspaces/${slug}/employer/dashboard`;
       },
       error: (err: any) => {
         this.error.set(err.error?.message || 'Failed to create organization');

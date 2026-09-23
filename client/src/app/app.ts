@@ -46,11 +46,12 @@ export class App implements OnInit {
         // Connect to realtime notifications
         this.notificationService.connect();
 
+        const currentPath = window.location.pathname;
         const isAuthRoute =
-          this.router.url === '/' ||
-          this.router.url.startsWith('/auth/login') ||
-          this.router.url.startsWith('/auth/callback') ||
-          this.router.url.startsWith('/signin-oidc');
+          currentPath === '/' ||
+          currentPath.startsWith('/auth/login') ||
+          currentPath.startsWith('/auth/callback') ||
+          currentPath.startsWith('/signin-oidc');
 
         if (isAuthRoute || !this.userService.currentUser()) {
           this.authStatus.set('Loading your workspace...');
@@ -114,7 +115,7 @@ export class App implements OnInit {
         } else {
           this.authInitializing.set(false);
         }
-      } else if (this.router.url.startsWith('/auth/callback') || this.router.url.startsWith('/signin-oidc')) {
+      } else if (window.location.pathname.startsWith('/auth/callback') || window.location.pathname.startsWith('/signin-oidc')) {
         this.authStatus.set('Sign-in could not be completed. Returning to sign in...');
         this.authInitializing.set(false);
         this.router.navigate(['/auth/login']);

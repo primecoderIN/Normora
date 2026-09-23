@@ -1,13 +1,5 @@
 /* Styles replaced by Tailwind utility classes in saved-answers.ts */
 
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  max-width: 900px;
-  margin: 0 auto;
-  width: 100%;
-}
 
 /* ── Header ─────────────────────────────────────────────────── */
 .saved-answers-header {
@@ -129,6 +121,7 @@
   line-height: 1.65;
   color: var(--p-surface-700, #374151);
   display: -webkit-box;
+  line-clamp: 6;
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;

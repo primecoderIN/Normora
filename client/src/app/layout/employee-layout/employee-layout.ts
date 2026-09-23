@@ -55,7 +55,7 @@ export class EmployeeLayout {
     // Check if the new workspace is admin
     const newWorkspace = this.userService.currentUser()?.memberships.find(m => m.tenantId === tenantId);
     if (newWorkspace) {
-      if (newWorkspace.role === 'admin') {
+      if (newWorkspace.role?.toLowerCase() === 'admin') {
         window.location.href = `/app/workspaces/${newWorkspace.tenantSlug}/employer/dashboard`;
       } else {
         window.location.href = `/app/workspaces/${newWorkspace.tenantSlug}/employee/conversations`;

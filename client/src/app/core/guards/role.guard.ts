@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
+import { map } from 'rxjs/operators';
 
 export const roleGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
@@ -15,22 +16,25 @@ export const roleGuard: CanActivateFn = (route) => {
   // However, roleGuard is attached to children. To be safe, we can check the sync value.
   const currentUser = userService.currentUser();
 
-  if (!currentUser) {
+  const validateRole = (user: any) => {
+    if (!user) return router.createUrlTree(['/auth/login']);
+    
+    const hasRole = user.memberships.some((m: any) => {
+      const effectiveRole = m.role?.toLowerCase() === 'admin' ? 'employer' : 'employee';
+      return effectiveRole === requiredRole;
+    });
+
+    if (hasRole) return true;
+
+    console.warn(`Access denied. Missing role: ${requiredRole}`);
     return router.createUrlTree(['/auth/login']);
+  };
+
+  if (currentUser) {
+    return validateRole(currentUser);
+  } else {
+    return userService.getMe().pipe(
+      map(res => validateRole(res.success ? res.data : null))
+    );
   }
-
-  const hasRole = currentUser.memberships.some((m: any) => {
-    // Map admin -> employer, employee -> employee for routing backwards compatibility
-    // Our backend sends 'admin' or 'employee' as the role.
-    const effectiveRole = m.role === 'admin' ? 'employer' : 'employee';
-    return effectiveRole === requiredRole;
-  });
-
-  if (hasRole) {
-    return true;
-  }
-
-  // If they don't have the required role, bounce them to login
-  console.warn(`Access denied. Missing role: ${requiredRole}`);
-  return router.createUrlTree(['/auth/login']);
 };
