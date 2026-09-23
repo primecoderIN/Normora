@@ -26,11 +26,28 @@
             <script src="${script}" type="text/javascript"></script>
         </#list>
     </#if>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'normora-color': {
+                50: '#eef2ff',
+                100: '#e0e7ff',
+                500: '#6366f1',
+                600: '#4f46e5',
+                700: '#4338ca'
+              }
+            }
+          }
+        }
+      }
+    </script>
 </head>
 <body class="h-full flex flex-col justify-center relative overflow-x-hidden bg-[#fafcff]">
     <!-- Background Decorators -->
-    <div class="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-50 rounded-full blur-[100px] opacity-60 -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-    <div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-50 rounded-full blur-[100px] opacity-80 translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
+    <div class="absolute top-0 right-0 w-[800px] h-[800px] bg-normora-color-50 rounded-full blur-[100px] opacity-60 -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+    <div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-normora-color-50 rounded-full blur-[100px] opacity-80 translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
 
     <div class="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
         
@@ -41,7 +58,7 @@
                 <div class="mb-8 px-4 py-3 rounded-lg text-sm font-medium ${
                     (message.type = 'success')?string('bg-green-50 text-green-700 border border-green-100', 
                     (message.type = 'warning')?string('bg-yellow-50 text-yellow-700 border border-yellow-100', 
-                    (message.type = 'error')?string('bg-red-50 text-red-700 border border-red-100', 'bg-blue-50 text-blue-700 border border-blue-100')))}">
+                    (message.type = 'error')?string('bg-red-50 text-red-700 border border-red-100', 'bg-normora-color-50 text-normora-color-700 border border-normora-color-100')))}">
                     ${kcSanitize(message.summary)?no_esc}
                 </div>
             </#if>

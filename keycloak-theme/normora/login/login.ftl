@@ -3,7 +3,7 @@
     <#if section = "header">
         <div class="flex flex-col items-center mb-8">
             <div class="flex items-center space-x-2 mb-1">
-                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg">N</div>
+                <div class="w-8 h-8 bg-normora-color-600 rounded flex items-center justify-center text-white font-bold text-lg">N</div>
                 <div class="flex flex-col leading-none">
                     <span class="font-bold text-xl text-slate-900 tracking-tight">Normora</span>
                     <span class="text-[10px] text-slate-500 font-medium tracking-wide">Knowledge for a smarter tomorrow</span>
@@ -53,7 +53,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             </div>
-                            <input tabindex="1" id="username" class="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" name="username" value="${(login.username!'')}" type="text" autofocus autocomplete="off" placeholder="you@company.com" aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" />
+                            <input tabindex="1" id="username" class="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:border-normora-color-500 focus:ring-1 focus:ring-normora-color-500 transition" name="username" value="${(login.username!'')}" type="text" autofocus autocomplete="off" placeholder="you@company.com" aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" />
                         </div>
                     </div>
 
@@ -63,7 +63,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                             </div>
-                            <input tabindex="2" id="password" class="block w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" name="password" type="password" autocomplete="off" placeholder="Enter your password" aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" />
+                            <input tabindex="2" id="password" class="block w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:border-normora-color-500 focus:ring-1 focus:ring-normora-color-500 transition" name="password" type="password" autocomplete="off" placeholder="Enter your password" aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" />
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                 <button type="button" class="text-slate-400 hover:text-slate-600 focus:outline-none" onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password';">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
@@ -72,13 +72,13 @@
                         </div>
                         <#if realm.resetPasswordAllowed>
                             <div class="flex justify-end mt-2">
-                                <a tabindex="5" href="${url.loginResetCredentialsUrl}" class="text-sm font-semibold text-blue-600 hover:text-blue-500 transition">Forgot password?</a>
+                                <a tabindex="5" href="${url.loginResetCredentialsUrl}" class="text-sm font-semibold text-normora-color-600 hover:text-normora-color-500 transition">Forgot password?</a>
                             </div>
                         </#if>
                     </div>
 
                     <div class="pt-2">
-                        <button tabindex="4" class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition" name="login" id="kc-login" type="submit">
+                        <button tabindex="4" class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-normora-color-600 hover:bg-normora-color-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-normora-color-500 transition" name="login" id="kc-login" type="submit">
                             Sign in 
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                         </button>
@@ -89,7 +89,7 @@
     <#elseif section = "info" >
         <#if realm.password && realm.registrationAllowed && !registrationDisabled??>
             <div id="kc-registration" class="mt-8 text-center text-sm text-slate-500 font-medium">
-                New to Normora? <a tabindex="6" href="${url.registrationUrl}" class="font-semibold text-blue-600 hover:text-blue-500 transition">Create an account</a>
+                New to Normora? <a tabindex="6" href="${url.registrationUrl}" class="font-semibold text-normora-color-600 hover:text-normora-color-500 transition">Create an account</a>
             </div>
         </#if>
     </#if>

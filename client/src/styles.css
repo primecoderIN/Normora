@@ -6,6 +6,13 @@
 
 @theme {
   --color-secondary: var(--brand-secondary, #10b981);
+  
+  /* Centralized Static Brand Colors for Landing Page / Auth */
+  --color-normora-color-50: #eef2ff;
+  --color-normora-color-100: #e0e7ff;
+  --color-normora-color-500: #6366f1;
+  --color-normora-color-600: #4f46e5;
+  --color-normora-color-700: #4338ca;
 }
 
 html,
