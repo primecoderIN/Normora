@@ -16,6 +16,7 @@ import { Department } from '@core/services/department.service';
       [visible]="visible()"
       (visibleChange)="visibleChange.emit($event)"
       [modal]="true"
+      appendTo="body"
       [style]="{ width: '450px' }">
       
       <div class="flex flex-col gap-4">
@@ -31,6 +32,7 @@ import { Department } from '@core/services/department.service';
               placeholder="Company wide (Select departments to restrict access)"
               [filter]="true"
               display="chip"
+              appendTo="body"
               styleClass="w-full">
             </p-multiselect>
             <small class="text-xs text-slate-500">If no departments are selected, all employees can search this document.</small>

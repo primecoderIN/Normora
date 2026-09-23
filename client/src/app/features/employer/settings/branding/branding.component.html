@@ -61,6 +61,7 @@
                   <p-colorpicker
                     [ngModel]="primaryColor()"
                     (ngModelChange)="primaryColor.set($event)"
+                    appendTo="body"
                     format="hex">
                   </p-colorpicker>
                 </div>
@@ -84,6 +85,7 @@
                   <p-colorpicker
                     [ngModel]="secondaryColor()"
                     (ngModelChange)="secondaryColor.set($event)"
+                    appendTo="body"
                     format="hex">
                   </p-colorpicker>
                 </div>
@@ -373,4 +375,4 @@
   </div>
 </div>
 
-<p-toast position="bottom-right"></p-toast>
+<p-toast position="bottom-right" appendTo="body"></p-toast>

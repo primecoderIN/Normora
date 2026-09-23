@@ -22,6 +22,7 @@ body {
   font-family: Inter, "Segoe UI", sans-serif;
   background: #f6f7fb;
   color: #172033;
+  scrollbar-gutter: stable;
 }
 
 *,
