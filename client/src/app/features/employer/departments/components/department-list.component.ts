@@ -1,6 +1,7 @@
 import { Component, ViewChild, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
+import { TableModule } from 'primeng/table';
 import { MenuItem } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { Department } from '@core/services/department.service';
@@ -8,63 +9,68 @@ import { Department } from '@core/services/department.service';
 @Component({
   selector: 'app-department-list',
   standalone: true,
-  imports: [CommonModule, DatePipe, MenuModule],
+  imports: [CommonModule, DatePipe, MenuModule, TableModule],
   template: `
     <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="!text-sm !min-w-[150px]"></p-menu>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm">
-        <thead class="border-b border-slate-200">
-          <tr>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider">Department</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider">Description</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider">Employees</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider">Documents</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider">Created</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider w-16">Actions</th>
+      <p-table [value]="departments()" styleClass="w-full text-left text-sm">
+        <ng-template pTemplate="header">
+          <tr class="border-b border-slate-200">
+            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Department</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Description</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Employees</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Documents</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Created</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white w-16">Actions</th>
           </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          @for (dept of departments(); track dept.id) {
-            <tr class="hover:bg-slate-50 transition-colors group">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center gap-3">
-                  <div class="flex items-center justify-center flex-none w-9 h-9 rounded-lg font-bold text-base text-white"
-                       [style.background-color]="getAvatarColor(dept.name)">
-                    {{ dept.name.charAt(0).toUpperCase() }}
-                  </div>
-                  <span class="font-semibold text-slate-900">{{ dept.name }}</span>
+        </ng-template>
+        <ng-template pTemplate="body" let-dept>
+          <tr class="hover:bg-slate-50 transition-colors group border-b border-slate-100 last:border-0 bg-white">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center flex-none w-9 h-9 rounded-lg font-bold text-base text-white"
+                     [style.background-color]="getAvatarColor(dept.name)">
+                  {{ dept.name.charAt(0).toUpperCase() }}
                 </div>
-              </td>
-              <td class="px-6 py-4 text-slate-500">
-                <span class="truncate block max-w-[220px]">{{ dept.description || '—' }}</span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">
-                  0 employees
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-600">
-                  0 documents
-                </span>
-              </td>
-              <td class="px-6 py-4 text-slate-500 whitespace-nowrap text-sm">
-                {{ dept.createdAt | date:'MMM dd, yyyy' }}
-              </td>
-              <td class="px-6 py-4">
-                <button
-                  type="button"
-                  class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                  (click)="openMenu($event, dept)"
-                >
-                  <i class="pi pi-ellipsis-v text-sm"></i>
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+                <span class="font-semibold text-slate-900">{{ dept.name }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-slate-500">
+              <span class="truncate block max-w-[220px]">{{ dept.description || '—' }}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">
+                0 employees
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-600">
+                0 documents
+              </span>
+            </td>
+            <td class="px-6 py-4 text-slate-500 whitespace-nowrap text-sm">
+              {{ dept.createdAt | date:'MMM dd, yyyy' }}
+            </td>
+            <td class="px-6 py-4">
+              <button
+                type="button"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                (click)="openMenu($event, dept)"
+              >
+                <i class="pi pi-ellipsis-v text-sm"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="empty">
+          <tr>
+            <td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm bg-white border-t border-slate-100">
+              No departments found.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
   `
 })
