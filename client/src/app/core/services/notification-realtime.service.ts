@@ -23,7 +23,9 @@ export class NotificationRealtimeService {
     }
 
     this.connection = new HubConnectionBuilder()
-      .withUrl(`${environment.apiUrl}/hubs/notifications`)
+      .withUrl(`${environment.apiUrl}/hubs/notifications`, {
+        headers: { 'X-CSRF': '1' }
+      })
       .withAutomaticReconnect()
       .build();
 
