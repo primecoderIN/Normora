@@ -1,10 +1,11 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FileUpload } from 'primeng/fileupload';
 import { Dialog } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { Department } from '@core/services/department.service';
+import { UserService } from '@core/services/user.service';
 
 @Component({
   selector: 'app-document-upload-modal',
@@ -22,14 +23,14 @@ import { Department } from '@core/services/department.service';
       <div class="flex flex-col gap-4">
         @if (!isPersonal()) {
           <div class="flex flex-col gap-2">
-            <label class="text-sm font-semibold text-slate-700">Departments (Optional)</label>
+            <label class="text-sm font-semibold text-slate-700">Who has access</label>
             <p-multiselect
               [options]="departments()"
               [ngModel]="selectedDeptIds()"
               (ngModelChange)="selectedDeptIds.set($event)"
               optionLabel="name"
               optionValue="id"
-              placeholder="Company wide (Select departments to restrict access)"
+              [placeholder]="'Everyone in ' + tenantName() + ' (Select departments to restrict access)'"
               [filter]="true"
               display="chip"
               appendTo="body"
@@ -62,15 +63,28 @@ export class DocumentUploadModalComponent {
   departments = input.required<Department[]>();
   uploadUrl = input.required<string>();
   isPersonal = input<boolean>(false);
+  tenantName = input<string>('your organization');
   visibleChange = output<boolean>();
   uploadSuccess = output<any>();
   uploadError = output<any>();
 
   selectedDeptIds = signal<string[]>([]);
 
+  userService = inject(UserService);
+
   handleBeforeSend(event: any) {
     // Add CSRF header for BFF
     event.xhr.setRequestHeader('X-CSRF', '1');
+    event.xhr.withCredentials = true; // Essential for sending the BFF auth cookie!
+    
+    // Add Tenant ID header (since p-fileupload bypasses Angular Interceptors)
+    const activeTenantId = this.userService.activeTenantId();
+    const fallbackTenantId = this.userService.currentUser()?.memberships[0]?.tenantId;
+    const tenantId = activeTenantId || fallbackTenantId;
+    if (tenantId) {
+      event.xhr.setRequestHeader('X-Tenant-Id', tenantId);
+    }
+    
     const deptIds = this.selectedDeptIds();
     if (deptIds && deptIds.length > 0) {
       deptIds.forEach(id => event.formData.append('departmentIds', id));

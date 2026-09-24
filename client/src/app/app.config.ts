@@ -1,4 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {
   PreloadAllModules,
   provideRouter,
@@ -19,6 +20,7 @@ import { provideClientHydration } from '@angular/platform-browser';
 // It tells Angular what global services (providers) should be available everywhere in the app.
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideAnimationsAsync(),
     // Catches unhandled errors globally in the browser
     provideBrowserGlobalErrorListeners(),
 

@@ -1,7 +1,6 @@
 import { Component, ViewChild, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
-import { TableModule } from 'primeng/table';
 import { MenuItem } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { UserGroup } from '@core/services/user-group.service';
@@ -9,13 +8,13 @@ import { UserGroup } from '@core/services/user-group.service';
 @Component({
   selector: 'app-user-group-list',
   standalone: true,
-  imports: [CommonModule, DatePipe, MenuModule, TableModule],
+  imports: [CommonModule, DatePipe, MenuModule],
   template: `
     <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="!text-sm !min-w-[160px]"></p-menu>
 
     <div class="overflow-x-auto">
-      <p-table [value]="groups()" styleClass="w-full text-left text-sm">
-        <ng-template pTemplate="header">
+      <table class="w-full text-left text-sm border-collapse">
+        <thead>
           <tr class="border-b border-slate-200">
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Group</th>
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Description</th>
@@ -24,8 +23,9 @@ import { UserGroup } from '@core/services/user-group.service';
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Created</th>
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white w-16">Actions</th>
           </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-group>
+        </thead>
+        <tbody>
+          @for (group of groups(); track group.id) {
           <tr class="hover:bg-slate-50 transition-colors group/row border-b border-slate-100 last:border-0 bg-white">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-3">
@@ -68,15 +68,15 @@ import { UserGroup } from '@core/services/user-group.service';
               </button>
             </td>
           </tr>
-        </ng-template>
-        <ng-template pTemplate="empty">
-          <tr>
-            <td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm bg-white border-t border-slate-100">
-              No user groups found.
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+          } @empty {
+            <tr>
+              <td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm bg-white border-t border-slate-100">
+                No user groups found.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   `
 })

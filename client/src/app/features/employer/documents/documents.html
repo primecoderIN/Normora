@@ -70,6 +70,7 @@
       <app-document-list
         [documents]="filteredDocuments()"
         [departments]="departments()"
+        [tenantName]="activeTenantName()"
         (onDelete)="deleteDocument($event)">
       </app-document-list>
     } @else {
@@ -92,6 +93,7 @@
     [departments]="departments()"
     [uploadUrl]="uploadUrl"
     [isPersonal]="isPersonalWorkspace()"
+    [tenantName]="activeTenantName()"
     (uploadSuccess)="onUploadSuccess($event)"
     (uploadError)="onUploadError($event)">
   </app-document-upload-modal>

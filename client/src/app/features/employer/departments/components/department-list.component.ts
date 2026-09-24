@@ -1,7 +1,6 @@
 import { Component, ViewChild, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
-import { TableModule } from 'primeng/table';
 import { MenuItem } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { Department } from '@core/services/department.service';
@@ -9,13 +8,13 @@ import { Department } from '@core/services/department.service';
 @Component({
   selector: 'app-department-list',
   standalone: true,
-  imports: [CommonModule, DatePipe, MenuModule, TableModule],
+  imports: [CommonModule, DatePipe, MenuModule],
   template: `
     <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="!text-sm !min-w-[150px]"></p-menu>
 
     <div class="overflow-x-auto">
-      <p-table [value]="departments()" styleClass="w-full text-left text-sm">
-        <ng-template pTemplate="header">
+      <table class="w-full text-left text-sm border-collapse">
+        <thead>
           <tr class="border-b border-slate-200">
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Department</th>
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Description</th>
@@ -24,8 +23,9 @@ import { Department } from '@core/services/department.service';
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Created</th>
             <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white w-16">Actions</th>
           </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-dept>
+        </thead>
+        <tbody>
+          @for (dept of departments(); track dept.id) {
           <tr class="hover:bg-slate-50 transition-colors group border-b border-slate-100 last:border-0 bg-white">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-3">
@@ -37,7 +37,7 @@ import { Department } from '@core/services/department.service';
               </div>
             </td>
             <td class="px-6 py-4 text-slate-500">
-              <span class="truncate block max-w-[220px]">{{ dept.description || '—' }}</span>
+              <span class="truncate block max-w-55">{{ dept.description || '—' }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">
@@ -62,15 +62,15 @@ import { Department } from '@core/services/department.service';
               </button>
             </td>
           </tr>
-        </ng-template>
-        <ng-template pTemplate="empty">
-          <tr>
-            <td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm bg-white border-t border-slate-100">
-              No departments found.
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+          } @empty {
+            <tr>
+              <td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm bg-white border-t border-slate-100">
+                No departments found.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   `
 })

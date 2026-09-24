@@ -66,6 +66,14 @@ export class Documents implements OnInit, OnDestroy {
     return ws?.isPersonal ?? false;
   });
 
+  activeTenantName = computed(() => {
+    const user = this.userService.currentUser();
+    if (!user) return 'your organization';
+    const activeId = this.userService.activeTenantId();
+    const ws = user.memberships.find(m => m.tenantId === activeId) || user.memberships[0];
+    return ws?.tenantName || 'your organization';
+  });
+
   filteredDocuments = computed(() => {
     const status = this.selectedStatus();
     const query = this.searchTerm().trim().toLowerCase();
@@ -85,7 +93,8 @@ export class Documents implements OnInit, OnDestroy {
     this.loadDocuments();
     this.loadDepartments();
 
-    const tenantId = this.userService.currentUser()?.memberships[0]?.tenantId;
+    const activeId = this.userService.activeTenantId();
+    const tenantId = activeId || this.userService.currentUser()?.memberships[0]?.tenantId;
     if (tenantId) {
       void this.documentRealtimeService
         .connect(tenantId, event => this.onDocumentStatusChanged(event))

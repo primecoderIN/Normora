@@ -21,7 +21,9 @@ export class DocumentRealtimeService {
     // The BFF auth cookie authenticates the connection; JoinTenant then asks the server to validate
     // this tenant subscription rather than trusting the client-provided tenant ID.
     this.connection = new HubConnectionBuilder()
-      .withUrl(`${environment.apiUrl}/hubs/documents`)
+      .withUrl(`${environment.apiUrl}/hubs/documents`, {
+        headers: { 'X-CSRF': '1' }
+      })
       .withAutomaticReconnect()
       .build();
 
