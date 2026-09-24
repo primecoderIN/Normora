@@ -22,7 +22,8 @@ export class DocumentRealtimeService {
     // this tenant subscription rather than trusting the client-provided tenant ID.
     this.connection = new HubConnectionBuilder()
       .withUrl(`${environment.apiUrl}/hubs/documents`, {
-        headers: { 'X-CSRF': '1' }
+        headers: { 'X-CSRF': '1' },
+        withCredentials: true
       })
       .withAutomaticReconnect()
       .build();
