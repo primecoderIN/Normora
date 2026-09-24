@@ -19,4 +19,10 @@ export class TenantService {
   createTenant(payload: CreateTenantPayload): Observable<any> {
     return this.http.post<any>(this.apiUrl, payload);
   }
+
+  // Retrieve a list of employees for the current tenant
+  getEmployees(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/employees`);
+  }
 }
+

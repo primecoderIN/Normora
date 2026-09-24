@@ -164,6 +164,22 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
 
         return Ok(ApiResponse<Guid>.Ok(token, "Invitation sent successfully."));
     }
+    /// <summary>
+    /// Retrieves a list of employees for the current tenant.
+    /// </summary>
+    [HttpGet("employees")]
+    [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<List<Normora.Modules.Tenants.Application.Users.TenantUserDto>>))]
+    public async Task<IActionResult> GetEmployees()
+    {
+        if (!tenantContext.TenantId.HasValue)
+            return Forbid();
+
+        var query = new Normora.Modules.Tenants.Application.Users.GetTenantUsersQuery(tenantContext.TenantId.Value);
+        var employees = await mediator.Send(query);
+
+        return Ok(ApiResponse<List<Normora.Modules.Tenants.Application.Users.TenantUserDto>>.Ok(employees));
+    }
 }
 
 public record InviteEmployeeRequest(string Email);

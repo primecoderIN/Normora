@@ -1,12 +1,14 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe, CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InvitationService } from '@core/services/invitation.service';
+import { TenantService } from '@core/services/tenant.service';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-employees',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, ButtonModule, DatePipe],
   template: `
     <div class="grid gap-8 text-slate-900 page-enter">
       <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -26,7 +28,7 @@ import { ButtonModule } from 'primeng/button';
           </div>
           <div>
             <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Active employees</p>
-            <strong class="text-2xl font-bold text-slate-900">342</strong>
+            <strong class="text-2xl font-bold text-slate-900">{{ employees().length }}</strong>
           </div>
         </div>
         <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
@@ -91,10 +93,10 @@ import { ButtonModule } from 'primeng/button';
               />
             </div>
             <p-button
-              [label]="isLoading() ? 'Sending...' : 'Send invite'"
+              [label]="isInviting() ? 'Sending...' : 'Send invite'"
               type="submit"
-              [disabled]="inviteForm.invalid || isLoading()"
-              [icon]="isLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
+              [disabled]="inviteForm.invalid || isInviting()"
+              [icon]="isInviting() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
               styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 disabled:!bg-slate-200 disabled:!border-slate-200 disabled:!text-slate-400 font-bold !px-4 !h-10 transition-colors whitespace-nowrap">
             </p-button>
           </form>
@@ -110,50 +112,116 @@ import { ButtonModule } from 'primeng/button';
             <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-slate-900 placeholder:text-slate-400 p-0" />
           </label>
         </div>
-        <div class="divide-y divide-slate-100">
-          <!-- Skeleton rows while data loads -->
-          @for (row of skeletonRows; track row) {
-            <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
-              <div class="flex-none w-9 h-9 bg-slate-200 rounded-full"></div>
-              <div class="flex-1 space-y-2">
-                <div class="h-3 bg-slate-200 rounded-full w-1/4"></div>
-                <div class="h-2.5 bg-slate-100 rounded-full w-1/3"></div>
+        
+        @if (isLoadingEmployees()) {
+          <div class="divide-y divide-slate-100">
+            @for (row of skeletonRows; track row) {
+              <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
+                <div class="flex-none w-9 h-9 bg-slate-200 rounded-full"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-3 bg-slate-200 rounded-full w-1/4"></div>
+                  <div class="h-2.5 bg-slate-100 rounded-full w-1/3"></div>
+                </div>
+                <div class="h-6 w-16 bg-slate-100 rounded-full"></div>
+                <div class="h-6 w-14 bg-slate-100 rounded-full"></div>
               </div>
-              <div class="h-6 w-16 bg-slate-100 rounded-full"></div>
-              <div class="h-6 w-14 bg-slate-100 rounded-full"></div>
-            </div>
-          }
-        </div>
-        <!-- Empty state shown when no real data -->
-        <div class="flex flex-col items-center justify-center gap-3 py-12 text-center">
-          <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-50 text-primary-400">
-            <i class="pi pi-users text-2xl"></i>
+            }
           </div>
-          <p class="text-sm font-medium text-slate-500 m-0">No members yet — invite your first employee above.</p>
-        </div>
+        } @else if (employees().length > 0) {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50/50">
+                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">User</th>
+                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Joined</th>
+                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider w-16">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (emp of employees(); track emp.userId) {
+                  <tr class="hover:bg-slate-50/80 transition-colors group">
+                    <td class="px-6 py-3 whitespace-nowrap">
+                      <div class="flex items-center gap-3">
+                        <div class="flex-none w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm">
+                          {{ emp.displayName ? emp.displayName.charAt(0).toUpperCase() : (emp.email ? emp.email.charAt(0).toUpperCase() : '?') }}
+                        </div>
+                        <div>
+                          <p class="font-semibold text-slate-900 m-0">{{ emp.displayName || '—' }}</p>
+                          <p class="text-slate-500 text-xs m-0 mt-0.5">{{ emp.email }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium" 
+                        [ngClass]="emp.role === 'Admin' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-slate-100 text-slate-700 border border-slate-200'">
+                        {{ emp.role }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap text-slate-500">
+                      {{ emp.joinedAt | date:'mediumDate' }}
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap">
+                      <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <i class="pi pi-ellipsis-v text-sm"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="flex flex-col items-center justify-center gap-3 py-12 text-center">
+            <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-50 text-primary-400">
+              <i class="pi pi-users text-2xl"></i>
+            </div>
+            <p class="text-sm font-medium text-slate-500 m-0">No members yet — invite your first employee above.</p>
+          </div>
+        }
       </section>
     </div>
   `,
 })
-export class Employees {
+export class Employees implements OnInit {
   private fb = inject(FormBuilder);
   private invitationService = inject(InvitationService);
+  private tenantService = inject(TenantService);
 
   inviteForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
   });
 
-  isLoading = signal(false);
+  isInviting = signal(false);
+  isLoadingEmployees = signal(true);
+  employees = signal<any[]>([]);
   successMessage = signal('');
   errorMessage = signal('');
 
-  /** Placeholder skeleton rows shown while employee list loads */
   readonly skeletonRows = [1, 2, 3, 4, 5];
+
+  ngOnInit() {
+    this.loadEmployees();
+  }
+
+  loadEmployees() {
+    this.isLoadingEmployees.set(true);
+    this.tenantService.getEmployees().subscribe({
+      next: (res) => {
+        this.employees.set(res.data || []);
+        this.isLoadingEmployees.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load employees', err);
+        this.isLoadingEmployees.set(false);
+      }
+    });
+  }
 
   onSubmit() {
     if (this.inviteForm.invalid) return;
 
-    this.isLoading.set(true);
+    this.isInviting.set(true);
     this.successMessage.set('');
     this.errorMessage.set('');
 
@@ -161,16 +229,18 @@ export class Employees {
 
     this.invitationService.inviteEmployee(payload.email).subscribe({
       next: (res: any) => {
-        this.isLoading.set(false);
+        this.isInviting.set(false);
         if (res.success) {
           this.successMessage.set(res.message);
           this.inviteForm.reset();
+          // Optionally reload employees list
+          this.loadEmployees();
         } else {
           this.errorMessage.set(res.message);
         }
       },
       error: (err: any) => {
-        this.isLoading.set(false);
+        this.isInviting.set(false);
         this.errorMessage.set(err.error?.message || 'Failed to send invitation');
       },
     });
