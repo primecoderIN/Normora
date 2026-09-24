@@ -117,10 +117,11 @@
 
   @if (showAssignmentsModal() && assignmentTarget() !== null) {
     @defer (when showAssignmentsModal()) {
-      <app-user-group-assignments
+        <app-user-group-assignments
         [userGroup]="assignmentTarget()!"
         [detail]="assignmentDetail()"
         [allDepartments]="allDepartments()"
+        [allEmployees]="allEmployees()"
         [isLoadingDetail]="loadingDetail()"
         [isSaving]="isSaving()"
         [error]="formError()"

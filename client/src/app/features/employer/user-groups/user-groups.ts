@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserGroupService, UserGroup, UserGroupDetail } from '@core/services/user-group.service';
 import { DepartmentService, Department } from '@core/services/department.service';
+import { TenantService } from '@core/services/tenant.service';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { UserGroupListComponent } from './components/user-group-list.component';
@@ -18,9 +19,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 export class UserGroups implements OnInit {
   private groupService = inject(UserGroupService);
   private deptService = inject(DepartmentService);
+  private tenantService = inject(TenantService);
 
   groups = signal<UserGroup[]>([]);
   allDepartments = signal<Department[]>([]);
+  allEmployees = signal<any[]>([]);
   isLoading = signal(true);
   isSaving = signal(false);
   loadingDetail = signal(false);
@@ -47,6 +50,7 @@ export class UserGroups implements OnInit {
   ngOnInit() {
     this.loadGroups();
     this.deptService.getAll().subscribe({ next: data => this.allDepartments.set(data ?? []) });
+    this.tenantService.getEmployees().subscribe({ next: res => this.allEmployees.set(res.data ?? []) });
   }
 
   loadGroups() {
@@ -152,3 +156,4 @@ export class UserGroups implements OnInit {
     });
   }
 }
+
