@@ -81,20 +81,25 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] **Personal Workspace Uploads**: Modified the Document Upload modal to conditionally hide the "Departments" assignment dropdown when the active workspace is a Personal Workspace, reflecting the lack of departmental structure in that context.
 - [x] **Secrets Management**: Removed `realm-export-live.json` from git tracking to prevent leaking production secrets.
 
+## ✅ Bug Fixes & UI Stabilization
+- [x] **PrimeNG Rendering Bug**: Reverted `DocumentListComponent`, `DepartmentListComponent`, and `UserGroupListComponent` from `<p-table>` to native HTML `<table>` elements with Angular's `@for` block to resolve persistent `PrimeTemplate` module import and view rendering errors in Angular 18 standalone components.
+- [x] **Missing Animations**: Added `@angular/animations` and configured `provideAnimationsAsync()` in `app.config.ts` to satisfy PrimeNG dependencies.
+- [x] **Document Upload Interception**: Bypassed PrimeNG's `p-fileupload` inability to use Angular HttpInterceptors by explicitly setting `withCredentials: true` and the `X-Tenant-Id` header on the `onBeforeSend` event, fixing 401 Unauthorized errors during uploads.
+- [x] **SignalR Live Updates**: Added `withCredentials: true` to both `DocumentRealtimeService` and `NotificationRealtimeService` Hub connections, allowing the browser to attach the Duende BFF authentication cookie to SignalR negotiation requests, restoring live UI updates.
+
 ## ✅ Security Hardening
 - [x] **BOLA Fix (SuspendTenant)**: Injected `ITenantContext` into `TenantsController` and validated the `{id}` route parameter against `tenantContext.TenantId` to prevent cross-tenant object manipulation.
 - [x] **BFLA Defense**: `TenantResolutionMiddleware` validates tenant membership against the database on every request. The `[RequireTenant]` attribute enforces role-based access at the controller/action level.
 
-## ✅ White-Label Branding & Subdomain Routing
+## ✅ White-Label Branding & Workspace Routing
 - [x] Created `TenantBranding` domain entity (separate table, 1-to-1 with `Tenant`) with `PrimaryColor`, `SecondaryColor`, `LogoUrl`, `FaviconUrl`
 - [x] Added `Branding` navigation property to `Tenant.cs`
 - [x] Registered `TenantBranding` in `TenantsDbContext` with 1-to-1 EF Core configuration
 - [x] Created `GetTenantBrandingQuery` + handler (fetches by slug, anonymous)
 - [x] Added `[AllowAnonymous] GET /api/tenants/branding/{slug}` endpoint to `TenantsController`
-- [x] Updated CORS to allow wildcard subdomains (`*.localhost:4200`) via `SetIsOriginAllowed`
 - [x] Generated EF Core migration `AddTenantBranding`
-- [x] Created Angular `TenantBrandingService` — reads slug from subdomain, fetches branding, injects CSS variables, handles subdomain redirect
-- [x] Updated `app.ts` routing: users with tenants are redirected to `{slug}.localhost:4200`, users with no tenants stay on base `localhost:4200/onboarding`
+- [x] Created Angular `TenantBrandingService` — applies branding dynamically using CSS variables
+- [x] Updated `app.ts` and `app.routes.ts`: Migrated away from Subdomain Routing to **Path-based Workspace Routing** (`/app/workspaces/:slug`). Users are seamlessly redirected to their workspace URL after login, and the correct branding is applied based on the URL path.
 
 ## ✅ Completed Conversational RAG Architecture
 - [x] Phase 5: Created Conversations API (POST /api/conversations/{id}/messages) for handling RAG messaging.

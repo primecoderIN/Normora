@@ -17,7 +17,7 @@ Manages multi-tenancy, white-label branding, invitations, and hierarchical Role-
 |---|---|---|---|
 | `Id` | `uniqueidentifier` | ❌ | PK |
 | `Name` | `varchar(160)` | ❌ | |
-| `Slug` | `varchar(180)` | ❌ | **Unique** (`UX_Tenants_Slug`). Used for subdomain routing. |
+| `Slug` | `varchar(180)` | ❌ | **Unique** (`UX_Tenants_Slug`). Used for workspace path routing (URL). |
 | `Status` | `int` | ❌ | Enum: `Active`, `Suspended` |
 | `CreatedAt` | `datetime2` | ❌ | UTC timestamp |
 

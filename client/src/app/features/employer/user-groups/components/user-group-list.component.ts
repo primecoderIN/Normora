@@ -39,7 +39,7 @@ import { UserGroup } from '@core/services/user-group.service';
               </div>
             </td>
             <td class="px-6 py-4 text-slate-500">
-              <span class="truncate block max-w-[220px]">{{ group.description || '—' }}</span>
+              <span class="truncate block max-w-55">{{ group.description || '—' }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">

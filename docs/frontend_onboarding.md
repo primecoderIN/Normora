@@ -13,7 +13,7 @@ This guide is for developers working on the **Normora Angular SPA** (`client/`).
 | HTTP Client | `HttpClient` |
 | State Management | Signals + RxJS (for async streams) |
 | Identity & Auth | Keycloak + Duende.BFF |
-| Component Library | Material Design (Angular Material) |
+| Component Library | PrimeNG (Native HTML tables for complex views) |
 
 ---
 
@@ -34,19 +34,20 @@ client/src/app/
 
 ---
 
-## 2. Multi-Tenant Routing & Subdomains
+## 2. Multi-Tenant Routing & Workspaces
 
-Normora uses **Subdomain-based Routing** to visually isolate tenant workspaces.
+Normora uses **Path-based Workspace Routing** to visually isolate tenant workspaces.
 
 When a user logs in, the `AuthService` determines their memberships:
-- If they belong to `Acme Corp`, they are redirected to `https://acme.localhost:4200`.
-- The `TenantContextInterceptor` intercepts all outbound API requests to `/api/*` and automatically appends the `X-Tenant-Id` header based on the current active subdomain.
+- If they belong to `Acme Corp`, they are redirected to `/app/workspaces/acme/employer/dashboard`.
+- The `TenantContextInterceptor` intercepts all outbound API requests to `/api/*` and automatically appends the `X-Tenant-Id` header based on the current active workspace.
+- **Important**: To bypass `HttpInterceptors` (like `p-fileupload` component), always explicitly attach `withCredentials: true` and the `X-Tenant-Id` header to requests.
 - The `TenantBrandingService` automatically fetches the branding configuration for `acme` and applies CSS Custom Properties (`--brand-primary`, etc.) to the `document.documentElement` to reskin the application.
 
 ### Route Guards
-- `AuthGuard`: Ensures the user is authenticated via Keycloak.
-- `EmployerGuard`: Ensures the user holds the `Employer` role in the current tenant context.
-- `EmployeeGuard`: Ensures the user holds the `Employee` (or Employer) role.
+- `authGuard`: Ensures the user is authenticated via Keycloak.
+- `roleGuard`: Ensures the user holds the appropriate role in the current tenant context.
+- `workspaceGuard`: Synchronizes the active workspace tenant in the `UserService` based on the URL path.
 
 ---
 
@@ -79,8 +80,8 @@ export class DepartmentListComponent {
 
 Document processing states (`Uploaded`, `Processing`, `Ready`, `Failed`) are broadcasted in real-time to employers via SignalR.
 
-- The `DocumentHubService` in `core/services` manages the WebSocket connection.
-- It authenticates automatically using the secure `__Host-spa` cookie managed by the BFF.
+- The `DocumentRealtimeService` in `core/services` manages the WebSocket connection.
+- It authenticates automatically using the secure `__Host-spa` cookie managed by the BFF (ensure `withCredentials: true` is set in connection options).
 - Components subscribe to `documentStatusChanged$` streams to update their local signals without polling the server.
 
 ---

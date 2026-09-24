@@ -188,7 +188,7 @@ BOLA occurs when an application does not properly validate that the user is auth
 - **Context-Bound Operations**: Controllers enforce BOLA protection by strictly associating operations with the authorized `ITenantContext`. Even if a route provides an `{id}` (like `DELETE /api/Documents/{id}` or `POST /api/Tenants/{id}/suspend`), the backend explicitly verifies that the requested object belongs to the user's validated `tenantContext.TenantId`. 
 - **Example**: In the `SuspendTenant` endpoint, the `{id}` from the route is validated against `_tenantContext.TenantId`. This prevents a malicious tenant admin from suspending *another* tenant by injecting their own valid `X-Tenant-Id` header while manipulating the target `{id}` in the URL.
 
-## White-Label Branding & Subdomain Routing
+## White-Label Branding & Workspace Routing
 Normora supports per-tenant white-labeling without separate application builds. Each tenant can have its own brand identity applied dynamically at runtime.
 
 ### Data Model
@@ -208,7 +208,7 @@ TenantBranding
 `GET /api/tenants/branding/{slug}` is an `[AllowAnonymous]` endpoint so the Angular app can fetch and apply a tenant's brand *before* the user logs in.
 
 ### Frontend: Dynamic CSS Variables
-The `TenantBrandingService` (Angular) extracts the tenant slug from the subdomain on app startup and applies branding as CSS custom properties on the document root:
+The `TenantBrandingService` (Angular) extracts the tenant slug from the workspace path URL on app startup and applies branding as CSS custom properties on the document root:
 
 ```typescript
 document.documentElement.style.setProperty('--brand-primary', branding.primaryColor);
@@ -241,10 +241,9 @@ The employee `POST /api/ask` endpoint uses the same tenant-filtered retrieval, r
 
 Authenticated clients connect to `/hubs/documents` and explicitly join a tenant group. SignalR automatically forwards the secure `__Host-spa` cookie for authentication. The hub validates the current user's membership before adding the connection. Upload and processing transitions publish `DocumentStatusChanged` events to that tenant group, allowing the employer document list to update without polling.
 
-### Subdomain Routing
+### Path-Based Workspace Routing
 After a successful login:
-- **User with no tenants**: stays on `localhost:4200` and is routed to `/onboarding`.
-- **User with tenants (Phase 1)**: redirected to `{slug}.localhost:4200/{dashboard}` using their first membership's tenant slug.
-- The CORS policy uses `SetIsOriginAllowed` with a wildcard to allow all `*.localhost:4200` origins.
+- **User with no tenants**: stays on base `localhost:4200` and is routed to `/onboarding`.
+- **User with tenants**: redirected to `/app/workspaces/{slug}/{dashboard}` using their default (non-personal) membership's tenant slug.
 
 > **Future Enhancement**: Persist the user's last selected tenant and use it for login routing instead of always defaulting to the first membership.
