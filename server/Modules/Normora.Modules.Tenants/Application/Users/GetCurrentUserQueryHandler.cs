@@ -72,9 +72,13 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
 
             await context.SaveChangesAsync(cancellationToken);
 
-            // Re-fetch or manually construct the membership for the DTO
-            user.Memberships = new List<Normora.Modules.Tenants.Domain.TenantMembership> { membership };
-            membership.Tenant = personalTenant;
+            // BUG-5: Re-fetch user with memberships to avoid stale EF tracked collection.
+            // Manually reassigning user.Memberships after SaveChangesAsync is fragile
+            // because EF Core may have replaced the navigation collection with its own proxy.
+            user = await context.Users
+                .Include(u => u.Memberships)
+                .ThenInclude(m => m.Tenant)
+                .FirstAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
         }
 
         // Sync any profile changes from Keycloak (e.g. if they updated their display name or email) to keep our local database up-to-date
