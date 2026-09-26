@@ -6,54 +6,53 @@ import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
 import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
 import { UserService } from '@core/services/user.service';
+import { DashboardService, DashboardSummaryDto } from '@core/services/dashboard.service';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, DatePipe, InputText, ChartModule, StatCardComponent, ButtonModule],
-
+  imports: [CommonModule, DatePipe, InputText, ChartModule, StatCardComponent, ButtonModule, SkeletonModule],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
   public userService = inject(UserService);
+  private dashboardService = inject(DashboardService);
+  
+  summary = signal<DashboardSummaryDto | null>(null);
+  isLoading = signal(true);
+
   documentChartData: any;
   documentChartOptions: any;
 
   activityChartData: any;
   activityChartOptions: any;
 
-  recentDocuments = signal([
-    { name: 'Travel Policy v2.1', category: 'HR Policies', status: 'Published', type: 'PDF', date: new Date(2025, 4, 20) },
-    { name: 'Employee Handbook', category: 'HR Policies', status: 'Published', type: 'DOC', date: new Date(2025, 4, 18) },
-    { name: 'Code of Conduct', category: 'Compliance', status: 'Published', type: 'PDF', date: new Date(2025, 4, 15) },
-    { name: 'Leave Policy v1.2', category: 'HR Policies', status: 'Published', type: 'XLS', date: new Date(2025, 4, 12) },
-    { name: 'IT Security Guidelines', category: 'IT Policies', status: 'Draft', type: 'PPT', date: new Date(2025, 4, 10) },
-  ]);
-
-  topQuestions = signal([
-    { question: 'What is the policy for travel reimbursement?', count: 128 },
-    { question: 'How many leaves can I take in a year?', count: 98 },
-    { question: 'What is the process for expense approval?', count: 76 },
-    { question: 'How to claim medical reimbursement?', count: 64 },
-    { question: 'What is the work from home policy?', count: 52 },
-  ]);
-
   ngOnInit() {
-    this.initDocumentChart();
-    this.initActivityChart();
+    this.dashboardService.getSummary().subscribe({
+      next: (res) => {
+        this.summary.set(res.data);
+        this.initDocumentChart(res.data.documentCoverage);
+        this.initActivityChart(res.data.chatActivity);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    });
   }
 
-  initDocumentChart() {
+  initDocumentChart(coverage: DashboardSummaryDto['documentCoverage']) {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--p-text-color') || '#334155';
 
     this.documentChartData = {
-      labels: ['HR Policies', 'IT Policies', 'Finance', 'Compliance', 'Others'],
+      labels: coverage.map(c => c.label),
       datasets: [
         {
-          data: [45, 32, 24, 17, 10],
-          backgroundColor: ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#94a3b8'],
-          hoverBackgroundColor: ['#4f46e5', '#2563eb', '#059669', '#d97706', '#64748b'],
+          data: coverage.map(c => c.value),
+          backgroundColor: coverage.map(c => c.color),
+          hoverBackgroundColor: coverage.map(c => c.hoverColor),
           borderWidth: 0
         }
       ]
@@ -81,18 +80,18 @@ export class Dashboard implements OnInit {
     };
   }
 
-  initActivityChart() {
+  initActivityChart(activity: DashboardSummaryDto['chatActivity']) {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--p-text-color') || '#64748b';
     const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color') || '#94a3b8';
     const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color') || '#e2e8f0';
 
     this.activityChartData = {
-      labels: ['May 15', 'May 16', 'May 17', 'May 18', 'May 19', 'May 20', 'May 21'],
+      labels: activity.labels,
       datasets: [
         {
           label: 'Conversations',
-          data: [120, 210, 180, 290, 240, 310, 380],
+          data: activity.data,
           fill: true,
           borderColor: '#6366f1',
           tension: 0.4,

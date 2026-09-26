@@ -1,5 +1,6 @@
 using Normora.Shared.Constants;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Modules.Tenants.Application.CreateTenant;
@@ -179,6 +180,27 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
         var employees = await mediator.Send(query);
 
         return Ok(ApiResponse<List<Normora.Modules.Tenants.Application.Users.TenantUserDto>>.Ok(employees));
+    }
+
+    /// <summary>
+    /// Retrieves employee statistics for the current tenant.
+    /// </summary>
+    [HttpGet("employees/stats")]
+    [RequireTenant(TenantRoles.Admin)]
+    public async Task<IActionResult> GetEmployeeStats([FromServices] Normora.Modules.Tenants.Persistence.TenantsDbContext dbContext)
+    {
+        if (!tenantContext.TenantId.HasValue)
+            return Forbid();
+
+        var pendingInvites = await dbContext.TenantInvitations
+            .Where(i => i.TenantId == tenantContext.TenantId.Value && i.Status == Normora.Modules.Tenants.Domain.InvitationStatus.Pending)
+            .CountAsync();
+
+        var adminSeats = await dbContext.TenantMemberships
+            .Where(m => m.TenantId == tenantContext.TenantId.Value && m.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin)
+            .CountAsync();
+
+        return Ok(ApiResponse<object>.Ok(new { PendingInvites = pendingInvites, AdminSeats = adminSeats }));
     }
 }
 

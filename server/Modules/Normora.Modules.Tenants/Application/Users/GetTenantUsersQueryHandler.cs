@@ -13,8 +13,8 @@ public class GetTenantUsersQueryHandler(TenantsDbContext context) : IRequestHand
             .Where(m => m.TenantId == request.TenantId)
             .Select(m => new TenantUserDto(
                 m.UserId,
-                m.User.Email,
-                m.User.DisplayName,
+                m.User.Email ?? string.Empty,
+                m.User.DisplayName ?? string.Empty,
                 m.Role.ToString(),
                 m.CreatedAt
             ))

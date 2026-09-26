@@ -24,5 +24,9 @@ export class TenantService {
   getEmployees(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/employees`);
   }
+
+  getEmployeeStats(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/employees/stats`);
+  }
 }
 

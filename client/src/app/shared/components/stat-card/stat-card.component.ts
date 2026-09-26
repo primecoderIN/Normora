@@ -36,7 +36,7 @@ import { Component, input } from '@angular/core';
 })
 export class StatCardComponent {
   title = input.required<string>();
-  value = input.required<string | number>();
+  value = input.required<string | number | null>();
   icon = input.required<string>();
   colorClass = input<string>('bg-primary-50 text-primary-600');
 

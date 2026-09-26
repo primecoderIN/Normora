@@ -37,7 +37,7 @@ import { ButtonModule } from 'primeng/button';
           </div>
           <div>
             <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Pending invites</p>
-            <strong class="text-2xl font-bold text-slate-900">4</strong>
+            <strong class="text-2xl font-bold text-slate-900">{{ pendingInvites() }}</strong>
           </div>
         </div>
         <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
@@ -46,7 +46,7 @@ import { ButtonModule } from 'primeng/button';
           </div>
           <div>
             <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Admin seats</p>
-            <strong class="text-2xl font-bold text-slate-900">3</strong>
+            <strong class="text-2xl font-bold text-slate-900">{{ adminSeats() }}</strong>
           </div>
         </div>
       </div>
@@ -195,6 +195,8 @@ export class Employees implements OnInit {
   isInviting = signal(false);
   isLoadingEmployees = signal(true);
   employees = signal<any[]>([]);
+  pendingInvites = signal<number>(0);
+  adminSeats = signal<number>(0);
   successMessage = signal('');
   errorMessage = signal('');
 
@@ -215,6 +217,16 @@ export class Employees implements OnInit {
         console.error('Failed to load employees', err);
         this.isLoadingEmployees.set(false);
       }
+    });
+
+    this.tenantService.getEmployeeStats().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.pendingInvites.set(res.data.pendingInvites);
+          this.adminSeats.set(res.data.adminSeats);
+        }
+      },
+      error: (err) => console.error('Failed to load stats', err)
     });
   }
 

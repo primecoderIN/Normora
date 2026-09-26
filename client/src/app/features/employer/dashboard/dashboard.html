@@ -1,154 +1,168 @@
-<div class="grid gap-8">
-  <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
-      <p class="text-[0.72rem] font-extrabold uppercase text-primary-600 m-0 mb-1">Workspace overview</p>
-      <h1 class="text-[1.75rem] leading-[1.15] text-slate-900 m-0 font-bold">Overview</h1>
-      @if (userService.currentUser(); as user) {
-        <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Welcome back, {{ user.displayName }}. Here is the current state of your knowledge base.</p>
-      } @else {
-        <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Here is the current state of your knowledge base.</p>
-      }
+@if (isLoading()) {
+  <div class="grid gap-8">
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <p-skeleton width="10rem" height="1rem" styleClass="mb-2"></p-skeleton>
+        <p-skeleton width="15rem" height="2rem"></p-skeleton>
+      </div>
+    </header>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <p-skeleton height="6rem" *ngFor="let i of [1,2,3,4]"></p-skeleton>
     </div>
-
-    <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
-      <label class="flex items-center gap-2 h-10 px-3 bg-white border border-slate-200 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
-        <i class="pi pi-search text-slate-500"></i>
-        <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none shadow-none outline-none p-0 text-slate-900 placeholder:text-slate-400" />
-      </label>
-      <p-button icon="pi pi-bell" styleClass="!w-10 !h-10 !p-0 flex items-center justify-center !bg-white !border-slate-200 !text-slate-500 hover:!bg-slate-50 transition-colors" ariaLabel="Notifications"></p-button>
-    </div>
-  </header>
-
-  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Workspace metrics">
-    <app-stat-card
-      title="Documents"
-      value="128"
-      icon="pi-file"
-      colorClass="bg-primary-50 text-primary-600"
-      trend="up"
-      trendText="12 this month">
-    </app-stat-card>
-
-    <app-stat-card
-      title="Employees"
-      value="342"
-      icon="pi-users"
-      colorClass="bg-emerald-50 text-emerald-600"
-      trend="up"
-      trendText="18 this month">
-    </app-stat-card>
-
-    <app-stat-card
-      title="Questions"
-      value="1,248"
-      icon="pi-comments"
-      colorClass="bg-blue-50 text-blue-600"
-      trend="up"
-      trendText="23% this month">
-    </app-stat-card>
-
-    <app-stat-card
-      title="Answer quality"
-      value="96.4%"
-      icon="pi-bullseye"
-      colorClass="bg-amber-50 text-amber-600"
-      trend="up"
-      trendText="2.1% this month">
-    </app-stat-card>
-  </section>
-
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
-      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
-        <div>
-          <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Document coverage</h2>
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Categories indexed for employee search.</p>
-        </div>
-        <p-button label="View all" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+  </div>
+} @else if (summary(); as data) {
+  <div class="grid gap-8">
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <p class="text-[0.72rem] font-extrabold uppercase text-primary-600 m-0 mb-1">Workspace overview</p>
+        <h1 class="text-[1.75rem] leading-[1.15] text-slate-900 m-0 font-bold">Overview</h1>
+        @if (userService.currentUser(); as user) {
+          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Welcome back, {{ user.displayName }}. Here is the current state of your knowledge base.</p>
+        } @else {
+          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Here is the current state of your knowledge base.</p>
+        }
       </div>
-      <div class="relative h-[15.5rem]">
-        <p-chart
-          type="doughnut"
-          [data]="documentChartData"
-          [options]="documentChartOptions"
-          class="block w-full h-full">
-        </p-chart>
-        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
-          <strong class="text-2xl text-slate-900 font-bold">128</strong>
-          <span class="text-xs text-slate-500">Total</span>
-        </div>
-      </div>
-    </article>
 
-    <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
-      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
-        <div>
-          <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Recent documents</h2>
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Latest files added to the knowledge base.</p>
-        </div>
-        <p-button label="View all" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+      <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
+        <label class="flex items-center gap-2 h-10 px-3 bg-white border border-slate-200 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
+          <i class="pi pi-search text-slate-500"></i>
+          <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none shadow-none outline-none p-0 text-slate-900 placeholder:text-slate-400" />
+        </label>
+        <p-button icon="pi pi-bell" styleClass="!w-10 !h-10 !p-0 flex items-center justify-center !bg-white !border-slate-200 !text-slate-500 hover:!bg-slate-50 transition-colors" ariaLabel="Notifications"></p-button>
       </div>
-      <div class="grid gap-1.5 max-h-[15.5rem] overflow-y-auto custom-scrollbar">
-        @for (doc of recentDocuments(); track doc.name) {
-          <div class="flex items-center gap-3 min-h-[3.5rem] p-2.5 rounded-lg hover:bg-slate-50 transition-colors">
-            <div class="flex items-center justify-center flex-none w-9 h-9 bg-red-50 text-red-600 rounded-md text-[0.7rem] font-extrabold">{{ doc.type }}</div>
-            <div class="grid flex-1 min-w-0">
-              <strong class="text-[0.875rem] text-slate-900 truncate font-bold">{{ doc.name }}</strong>
-              <span class="text-[0.75rem] text-slate-500">{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
+    </header>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Workspace metrics">
+      <app-stat-card
+        title="Documents"
+        [value]="data.stats.totalDocuments | number"
+        icon="pi-file"
+        colorClass="bg-primary-50 text-primary-600"
+        trend="up"
+        trendText="{{ data.stats.documentsTrend | number }} this month">
+      </app-stat-card>
+
+      <app-stat-card
+        title="Employees"
+        [value]="data.stats.totalEmployees | number"
+        icon="pi-users"
+        colorClass="bg-emerald-50 text-emerald-600"
+        trend="up"
+        trendText="{{ data.stats.employeesTrend | number }} this month">
+      </app-stat-card>
+
+      <app-stat-card
+        title="Questions"
+        [value]="data.stats.totalQuestions | number"
+        icon="pi-comments"
+        colorClass="bg-blue-50 text-blue-600"
+        trend="up"
+        trendText="{{ data.stats.questionsTrend | number }} this month">
+      </app-stat-card>
+
+      <app-stat-card
+        title="Answer quality"
+        [value]="data.stats.answerQuality + '%'"
+        icon="pi-bullseye"
+        colorClass="bg-amber-50 text-amber-600"
+        trend="up"
+        [trendText]="data.stats.answerQualityTrend + '% this month'">
+      </app-stat-card>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+          <div>
+            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Document coverage</h2>
+            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Categories indexed for employee search.</p>
+          </div>
+          <p-button label="View all" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+        </div>
+        <div class="relative h-62">
+          <p-chart
+            type="doughnut"
+            [data]="documentChartData"
+            [options]="documentChartOptions"
+            class="block w-full h-full">
+          </p-chart>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
+            <strong class="text-2xl text-slate-900 font-bold">{{ data.stats.totalDocuments }}</strong>
+            <span class="text-xs text-slate-500">Total</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+          <div>
+            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Recent documents</h2>
+            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Latest files added to the knowledge base.</p>
+          </div>
+          <p-button label="View all" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+        </div>
+        <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
+          @for (doc of data.recentDocuments; track doc.name) {
+            <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 transition-colors">
+              <div class="flex items-center justify-center flex-none w-9 h-9 bg-red-50 text-red-600 rounded-md text-[0.7rem] font-extrabold">{{ doc.type }}</div>
+              <div class="grid flex-1 min-w-0">
+                <strong class="text-[0.875rem] text-slate-900 truncate font-bold">{{ doc.name }}</strong>
+                <span class="text-[0.75rem] text-slate-500">{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
+              </div>
+              <span class="px-2 py-0.5 text-[0.72rem] font-bold rounded-md" [ngClass]="doc.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 text-slate-500 border border-slate-200'">
+                {{ doc.status }}
+              </span>
             </div>
-            <span class="px-2 py-0.5 text-[0.72rem] font-bold rounded-md" [ngClass]="doc.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 text-slate-500 border border-slate-200'">
-              {{ doc.status }}
-            </span>
-          </div>
-        }
-      </div>
-    </article>
-  </section>
-
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
-      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
-        <div>
-          <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Top questions</h2>
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Common employee asks this month.</p>
+          }
         </div>
-        <p-button label="Review" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
-      </div>
-      <div class="grid gap-1.5 max-h-[15.5rem] overflow-y-auto custom-scrollbar">
-        @for (q of topQuestions(); track q.question) {
-          <div class="flex items-center gap-3 min-h-[3.5rem] p-2.5 rounded-lg hover:bg-slate-50 transition-colors">
-            <i class="pi pi-question-circle text-slate-400"></i>
-            <span class="flex-1 text-[0.875rem] text-slate-900 truncate">{{ q.question }}</span>
-            <strong class="px-2 py-0.5 bg-primary-50 text-primary-600 text-[0.72rem] font-bold rounded-md">{{ q.count }}</strong>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+          <div>
+            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Top questions</h2>
+            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Common employee asks this month.</p>
           </div>
-        }
-      </div>
-    </article>
-
-    <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-[20rem]">
-      <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
-        <div>
-          <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Chat activity</h2>
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Employee question volume over the last 7 days.</p>
+          <p-button label="Review" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
         </div>
-        <p-button label="Last 7 days" iconPos="right" icon="pi pi-chevron-down" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
-      </div>
-      <div class="relative h-[15.5rem]">
-        <p-chart
-          type="line"
-          [data]="activityChartData"
-          [options]="activityChartOptions"
-          class="block w-full h-full">
-        </p-chart>
-      </div>
-    </article>
-  </section>
+        <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
+          @for (q of data.topQuestions; track q.question) {
+            <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 transition-colors">
+              <i class="pi pi-question-circle text-slate-400"></i>
+              <span class="flex-1 text-[0.875rem] text-slate-900 truncate">{{ q.question }}</span>
+              <strong class="px-2 py-0.5 bg-primary-50 text-primary-600 text-[0.72rem] font-bold rounded-md">{{ q.count }}</strong>
+            </div>
+          }
+        </div>
+      </article>
 
-  <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-lg p-4">
-    <div>
-      <strong class="text-slate-900 font-bold">Knowledge base review</strong>
-      <p class="text-[0.9rem] text-slate-500 m-0 mt-1">8 similar documents can be merged and 3 outdated documents are ready for review.</p>
-    </div>
-    <p-button label="Review suggestions" styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 font-bold !px-3.5 !py-2 !min-h-10 whitespace-nowrap transition-colors"></p-button>
-  </section>
-</div>
+      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+          <div>
+            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Chat activity</h2>
+            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Employee question volume over the last 7 days.</p>
+          </div>
+          <p-button label="Last 7 days" iconPos="right" icon="pi pi-chevron-down" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+        </div>
+        <div class="relative h-62">
+          <p-chart
+            type="line"
+            [data]="activityChartData"
+            [options]="activityChartOptions"
+            class="block w-full h-full">
+          </p-chart>
+        </div>
+      </article>
+    </section>
+
+    <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-lg p-4">
+      <div>
+        <strong class="text-slate-900 font-bold">{{ data.kbReview.title }}</strong>
+        <p class="text-[0.9rem] text-slate-500 m-0 mt-1">{{ data.kbReview.description }}</p>
+      </div>
+      <p-button label="Review suggestions" styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 font-bold !px-3.5 !py-2 !min-h-10 whitespace-nowrap transition-colors"></p-button>
+    </section>
+  </div>
+}
