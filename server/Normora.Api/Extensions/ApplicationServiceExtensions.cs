@@ -48,6 +48,9 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Normora.Modules.Conversations.Application.Services.IContextResolver, Normora.Modules.Conversations.Application.Services.ContextResolver>();
         services.AddSingleton<Normora.Modules.Conversations.Application.Services.ITokenBudgetService, Normora.Modules.Conversations.Application.Services.TokenBudgetService>();
 
+        services.AddScoped<Normora.Api.Features.Ask.IRetrievalService, Normora.Api.Features.Ask.RetrievalService>();
+        services.AddSingleton<Normora.Api.Features.Ask.IAutoTitleService, Normora.Api.Features.Ask.AutoTitleService>();
+
         return services;
     }
 }
