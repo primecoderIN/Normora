@@ -22,8 +22,10 @@ export const workspaceGuard: CanActivateFn = (route) => {
     if (!user) return router.createUrlTree(['/auth/login']);
     const membership = user.memberships.find((m: any) => m.tenantSlug === slug);
     if (!membership) {
+      // SEC-12: User is authenticated but not a member of this workspace —
+      // redirect to access-denied instead of login to avoid a confusing loop.
       console.warn(`Access denied. User is not a member of workspace: ${slug}`);
-      return router.createUrlTree(['/auth/login']);
+      return router.createUrlTree(['/access-denied']);
     }
     userService.activeTenantId.set(membership.tenantId);
     brandingService.applyBrandingForSlug(slug).subscribe();

@@ -30,6 +30,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/accept-invite/accept-invite.component').then(m => m.AcceptInviteComponent)
   },
   {
+    // UX-2 / SEC-11 / SEC-12: Dedicated access-denied page for authenticated users
+    // who lack the required role or workspace membership. Redirected here by role.guard
+    // and workspace.guard instead of the confusing /auth/login redirect.
+    path: 'access-denied',
+    loadComponent: () => import('./features/access-denied/access-denied.component').then(m => m.AccessDeniedComponent)
+  },
+  {
     path: 'onboarding',
     canActivate: [authGuard],
     loadComponent: () => import('./features/onboarding/onboarding.component').then(m => m.OnboardingComponent)

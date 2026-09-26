@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEventType, HttpRequest } from '@angular/common/http';
 import { environment } from '@env/environment';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 
 export interface Document {
   id: string;
@@ -18,6 +18,14 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+/** Upload progress event emitted during document upload. */
+export interface UploadProgress {
+  /** Percentage complete (0–100), or null while response is being processed. */
+  percent: number | null;
+  /** Set when the upload is fully complete and the server has responded. */
+  document?: Document;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -30,12 +38,39 @@ export class DocumentService {
       .pipe(map(response => response.data));
   }
 
-  // Package the selected file as FormData to handle the binary upload to our backend (which forwards it to MinIO)
-  uploadDocument(file: File): Observable<Document> {
+  /**
+   * UX-13: Uploads a document with real-time progress reporting.
+   * Emits UploadProgress events with a `percent` field (0–100) while uploading,
+   * and a final event with `document` set when the server has processed the file.
+   */
+  uploadDocument(file: File): Observable<UploadProgress> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<ApiResponse<Document>>(`${this.apiUrl}/upload`, formData)
-      .pipe(map(response => response.data));
+
+    const req = new HttpRequest('POST', `${this.apiUrl}/upload`, formData, {
+      reportProgress: true
+    });
+
+    return this.http.request<ApiResponse<Document>>(req).pipe(
+      filter(event =>
+        event.type === HttpEventType.UploadProgress ||
+        event.type === HttpEventType.Response
+      ),
+      map(event => {
+        if (event.type === HttpEventType.UploadProgress) {
+          const percent = event.total
+            ? Math.round((100 * event.loaded) / event.total)
+            : null;
+          return { percent } as UploadProgress;
+        }
+        // Response received — upload complete
+        const response = event as any;
+        return {
+          percent: 100,
+          document: response.body?.data as Document
+        } as UploadProgress;
+      })
+    );
   }
 
   deleteDocument(id: string): Observable<void> {

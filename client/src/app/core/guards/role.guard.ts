@@ -26,8 +26,10 @@ export const roleGuard: CanActivateFn = (route) => {
 
     if (hasRole) return true;
 
+    // SEC-11: User is authenticated but lacks the required role — redirect to a
+    // meaningful access-denied page instead of the confusing login screen.
     console.warn(`Access denied. Missing role: ${requiredRole}`);
-    return router.createUrlTree(['/auth/login']);
+    return router.createUrlTree(['/access-denied']);
   };
 
   if (currentUser) {

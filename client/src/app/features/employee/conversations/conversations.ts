@@ -270,8 +270,16 @@ export class Conversations implements OnInit, AfterViewChecked {
         body: JSON.stringify({ question: text, limit: 5 })
       });
 
+      // UX-9: Surface HTTP errors from the stream endpoint with a specific message
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorBody = await response.text().catch(() => '');
+        throw new Error(
+          response.status === 429
+            ? 'You are sending messages too fast. Please wait a moment.'
+            : response.status === 403
+            ? 'You do not have permission to ask questions in this workspace.'
+            : `Server error (${response.status}). Please try again.`
+        );
       }
 
       const reader = response.body?.getReader();
