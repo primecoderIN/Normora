@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@env/environment';
 import { Observable, catchError, of, tap, shareReplay } from 'rxjs';
@@ -36,6 +36,16 @@ export class UserService {
   // Application state using Signals
   public currentUser = signal<CurrentUser | null>(null);
   public activeTenantId = signal<string | null>(null);
+
+  public activeTenant = computed(() => {
+    const user = this.currentUser();
+    if (!user) return null;
+    const activeId = this.activeTenantId();
+    return user.memberships.find(m => m.tenantId === activeId) || user.memberships[0] || null;
+  });
+
+  public isPersonalWorkspace = computed(() => this.activeTenant()?.isPersonal ?? false);
+  public activeTenantName = computed(() => this.activeTenant()?.tenantName || 'your organization');
 
   private meRequest$?: Observable<ApiResponse<CurrentUser>>;
 

@@ -194,20 +194,15 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// </summary>
     [HttpGet("employees/stats")]
     [RequireTenant(TenantRoles.Admin)]
-    public async Task<IActionResult> GetEmployeeStats([FromServices] Normora.Modules.Tenants.Persistence.TenantsDbContext dbContext)
+    public async Task<IActionResult> GetEmployeeStats()
     {
         if (!tenantContext.TenantId.HasValue)
             return Forbid();
 
-        var pendingInvites = await dbContext.TenantInvitations
-            .Where(i => i.TenantId == tenantContext.TenantId.Value && i.Status == Normora.Modules.Tenants.Domain.InvitationStatus.Pending)
-            .CountAsync();
+        var query = new Normora.Modules.Tenants.Application.Users.GetTenantStatsQuery(tenantContext.TenantId.Value);
+        var stats = await mediator.Send(query);
 
-        var adminSeats = await dbContext.TenantMemberships
-            .Where(m => m.TenantId == tenantContext.TenantId.Value && m.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin)
-            .CountAsync();
-
-        return Ok(ApiResponse<object>.Ok(new { PendingInvites = pendingInvites, AdminSeats = adminSeats }));
+        return Ok(ApiResponse<object>.Ok(stats));
     }
 }
 
