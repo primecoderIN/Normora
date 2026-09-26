@@ -11,6 +11,7 @@ using Normora.Api.Middleware;
 using Microsoft.AspNetCore.Http;
 using Normora.Shared;
 using Normora.Shared.Interfaces;
+using System.Text.RegularExpressions;
 namespace Normora.Api.Controllers;
 
 /// <summary>
@@ -20,7 +21,7 @@ namespace Normora.Api.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 [Produces("application/json")]
-public class TenantsController(IMediator mediator, ITenantContext tenantContext) : ControllerBase
+public class TenantsController(IMediator mediator, ITenantContext tenantContext, ILogger<TenantsController> logger) : ControllerBase
 {
     /// <summary>
     /// Creates a new Tenant. The authenticated user making the request will automatically
@@ -109,14 +110,20 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext)
         if (assetType != "logo" && assetType != "logo-dark" && assetType != "favicon")
             return BadRequest();
 
+        // SEC-6: Sanitize slug to prevent path traversal — only allow alphanumeric chars and hyphens
+        if (!Regex.IsMatch(slug, @"^[a-zA-Z0-9\-]+$"))
+            return BadRequest(ApiResponse.Failure("Invalid tenant slug."));
+
         try
         {
             var objectName = $"{slug}/{assetType}";
             var (stream, contentType) = await storageService.DownloadAssetAsync(objectName);
             return File(stream, contentType);
         }
-        catch
+        catch (Exception ex)
         {
+            // SEC-6: Log storage errors instead of swallowing them silently
+            logger.LogError(ex, "Failed to serve branding asset '{AssetType}' for slug '{Slug}'", assetType, slug);
             return NotFound();
         }
     }

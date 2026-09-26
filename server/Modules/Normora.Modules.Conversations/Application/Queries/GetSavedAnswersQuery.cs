@@ -20,12 +20,16 @@ public class GetSavedAnswersQueryHandler(
     public async Task<IReadOnlyList<SavedAnswerDto>> Handle(
         GetSavedAnswersQuery request, CancellationToken cancellationToken)
     {
+        // SEC-7: Clamp limit to a safe maximum to prevent resource exhaustion
+        var limit = Math.Clamp(request.Limit, 1, 100);
+        var offset = Math.Max(0, request.Offset);
+
         return await context.SavedAnswers
             .AsNoTracking()
             .Where(s => s.UserId == currentUser.KeycloakUserId)
             .OrderByDescending(s => s.CreatedAt)
-            .Skip(request.Offset)
-            .Take(request.Limit)
+            .Skip(offset)
+            .Take(limit)
             .Select(s => new SavedAnswerDto(
                 s.Id,
                 s.MessageId,

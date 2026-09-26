@@ -79,17 +79,21 @@ public static class IdentityServiceExtensions
             {
                 options.Authority = keycloakOptions.Authority;
                 options.MetadataAddress = keycloakOptions.MetadataAddress;
-                options.RequireHttpsMetadata = false;
+                // SEC-8: Only skip HTTPS metadata validation in development (not hardcoded false)
+                options.RequireHttpsMetadata = !environment.IsDevelopment();
 
                 // Extract hosts from options for Docker backchannel rewriting
                 var externalHost = new Uri(keycloakOptions.ExternalAuthority).Host;
                 var internalHost = new Uri(keycloakOptions.InternalAuthority).Host;
 
-                // Rewrite external host to internal host for Docker backchannel requests
-                options.BackchannelHttpHandler = new DockerOidcBackchannelHandler(new HttpClientHandler
-                {
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                }, externalHost, internalHost);
+                // SEC-9: Only bypass TLS validation in development (Docker environment)
+                // In production, use the default secure handler
+                options.BackchannelHttpHandler = environment.IsDevelopment()
+                    ? new DockerOidcBackchannelHandler(new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    }, externalHost, internalHost)
+                    : new DockerOidcBackchannelHandler(new HttpClientHandler(), externalHost, internalHost);
 
                 options.ClientId = AuthConstants.WebClientId;
                 // normora-web is a public client in our realm, so no secret is needed, but we MUST use PKCE

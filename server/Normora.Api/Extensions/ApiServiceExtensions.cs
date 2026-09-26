@@ -91,8 +91,9 @@ public static class ApiServiceExtensions
                         return allowedOrigins.Contains(origin) ||
                                (uri.Host.EndsWith(".localhost") && (uri.Port == 4200 || uri.Port == 80));
                     })
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
+                    // SEC-10: Enumerate allowed methods and headers explicitly instead of AllowAny*
+                    .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .WithHeaders("Content-Type", "X-Tenant-Id", "X-CSRF", "Authorization")
                     .AllowCredentials());
         });
 

@@ -14,12 +14,16 @@ public class GetConversationsQueryHandler(
 {
     public async Task<IReadOnlyList<ConversationDto>> Handle(GetConversationsQuery request, CancellationToken cancellationToken)
     {
+        // SEC-7: Clamp limit to a safe maximum to prevent resource exhaustion via huge DB scans
+        var limit = Math.Clamp(request.Limit, 1, 100);
+        var offset = Math.Max(0, request.Offset);
+
         return await context.Conversations
             .AsNoTracking()
             .Where(c => c.UserId == currentUser.KeycloakUserId)
             .OrderByDescending(c => c.LastMessageAt)
-            .Skip(request.Offset)
-            .Take(request.Limit)
+            .Skip(offset)
+            .Take(limit)
             .Select(c => new ConversationDto(
                 c.Id,
                 c.Title,
