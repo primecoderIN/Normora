@@ -2,16 +2,13 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Normora.Api.Features.Documents;
 using Normora.Modules.Conversations.Application.Services;
 using Normora.Modules.Conversations.Domain;
 using Normora.Modules.Conversations.Persistence;
-using Normora.Modules.Documents.Persistence;
 using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Constants;
 using Normora.Shared.Interfaces;
-using Pgvector;
-using Pgvector.EntityFrameworkCore;
 
 namespace Normora.Api.Features.Ask;
 
@@ -26,20 +23,18 @@ public sealed record AskConversationStreamCommand(
 
 public sealed class AskConversationStreamCommandHandler(
     ConversationsDbContext conversationsContext,
-    DocumentsDbContext documentsContext,
     TenantsDbContext tenantsContext,
     IContextResolver contextResolver,
     IQueryRewriterService queryRewriter,
     ITokenBudgetService tokenBudget,
-    ITextEmbeddingService embeddingService,
+    IRetrievalService retrievalService,
     ITextGenerationService generationService,
+    IAutoTitleService autoTitleService,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    IServiceScopeFactory scopeFactory,
     IMeterFactory meterFactory) : IStreamRequestHandler<AskConversationStreamCommand, AskConversationStreamEvent>
 {
     private const double MinimumSimilarity = 0.0;
-    private const double RrfK = 60.0;
     private const int HistoryTokenBudget = 2_000;
 
     private readonly Counter<long> _tokensConsumed = meterFactory.Create("Normora.Conversations").CreateCounter<long>("tokens.consumed", description: "Estimated LLM tokens consumed");
@@ -113,7 +108,7 @@ public sealed class AskConversationStreamCommandHandler(
         var personalTenantId = userMemberships.FirstOrDefault(m => m.Tenant.IsPersonal)?.TenantId;
 
         var (topCandidates, vectorSimOfFirst) =
-            await RunHybridRetrievalAsync(rewrittenQuestion, limit, personalTenantId, cancellationToken);
+            await retrievalService.RunHybridRetrievalAsync(rewrittenQuestion, limit, personalTenantId, cancellationToken);
 
         // ── 6. Build citations + emit immediately ─────────────────────────────
         var assistantMessageId = Guid.NewGuid();
@@ -149,7 +144,7 @@ public sealed class AskConversationStreamCommandHandler(
 
         if (topCandidates.Count == 0 || (vectorSimOfFirst > 0 && vectorSimOfFirst < MinimumSimilarity))
         {
-            var text = "I could not find that in the company documents.";
+            var text = RagConstants.FallbackAnswer;
             answerBuilder.Append(text);
             yield return new TextChunkEvent(text);
         }
@@ -159,7 +154,7 @@ public sealed class AskConversationStreamCommandHandler(
                 .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
                 .ToList();
 
-            var historyTurns = BuildConversationTurns(budgetedHistory);
+            var historyTurns = AskHelpers.BuildConversationTurns(budgetedHistory);
 
             await foreach (var chunk in generationService.StreamConversationalAnswerAsync(
                 rewrittenQuestion, sources, historyTurns, cancellationToken))
@@ -200,9 +195,9 @@ public sealed class AskConversationStreamCommandHandler(
         await conversationsContext.SaveChangesAsync(cancellationToken);
 
         // ── 9. Auto-title on first turn ───────────────────────────────────────
-        if (isFirstTurn && conversation.Title == "New conversation")
+        if (isFirstTurn && conversation.Title == ConversationConstants.DefaultTitle)
         {
-            AutoTitleConversationAsync(conversation.Id, request.Question);
+            autoTitleService.AutoTitleConversationAsync(conversation.Id, request.Question);
         }
 
         _tokensConsumed.Add((userMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
@@ -219,151 +214,4 @@ public sealed class AskConversationStreamCommandHandler(
 
     // ─── Hybrid Retrieval ────────────────────────────────────────────────────────
 
-    private async Task<(List<RetrievalCandidate> Candidates, double VectorSimOfFirst)>
-        RunHybridRetrievalAsync(string question, int limit, Guid? personalTenantId, CancellationToken ct)
-    {
-        var queryVector = new Vector(await embeddingService.CreateEmbeddingAsync(question, ct));
-        var effectiveDepartments = tenantContext.EffectiveDepartments;
-        var activeTenantId = tenantContext.TenantId;
-
-        var queryWords = question.Split([' ', '\t', '\n', '\r', '.', ',', '?', '!', '\''],
-            StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 2).ToArray();
-        var tsQueryText = queryWords.Length > 0 ? string.Join(" | ", queryWords) : null;
-
-        // Bypass the Global Query Filter to manually specify our cross-tenant OR logic
-        var baseQuery = documentsContext.DocumentChunks
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Join(
-                documentsContext.Documents.IgnoreQueryFilters().AsNoTracking().Where(d =>
-                    !d.DocumentDepartments.Any() ||
-                    d.DocumentDepartments.Any(dd => effectiveDepartments.Contains(dd.DepartmentId))),
-                chunk => chunk.DocumentId,
-                doc => doc.Id,
-                (chunk, doc) => new { chunk, doc })
-            .Where(x => x.chunk.TenantId == activeTenantId || (personalTenantId.HasValue && x.chunk.TenantId == personalTenantId.Value));
-
-        var vectorResults = await baseQuery
-            .Where(x => x.chunk.Embedding != null)
-            .Select(x => new RetrievalCandidate
-            {
-                ChunkId = x.chunk.Id,
-                DocumentId = x.doc.Id,
-                FileName = x.doc.FileName,
-                ChunkIndex = x.chunk.ChunkIndex,
-                Content = x.chunk.Content,
-                Score = 1 - x.chunk.Embedding!.CosineDistance(queryVector)
-            })
-            .OrderByDescending(x => x.Score)
-            .Take(20)
-            .ToListAsync(ct);
-
-        List<RetrievalCandidate> keywordResults = [];
-        if (!string.IsNullOrWhiteSpace(tsQueryText))
-        {
-            keywordResults = await baseQuery
-                .Where(x => x.chunk.SearchVector != null &&
-                            x.chunk.SearchVector.Matches(EF.Functions.ToTsQuery("english", tsQueryText)))
-                .Select(x => new RetrievalCandidate
-                {
-                    ChunkId = x.chunk.Id,
-                    DocumentId = x.doc.Id,
-                    FileName = x.doc.FileName,
-                    ChunkIndex = x.chunk.ChunkIndex,
-                    Content = x.chunk.Content,
-                    Score = x.chunk.SearchVector!.Rank(EF.Functions.ToTsQuery("english", tsQueryText))
-                })
-                .OrderByDescending(x => x.Score)
-                .Take(20)
-                .ToListAsync(ct);
-        }
-
-        var rrfMap = new Dictionary<string, RetrievalCandidate>();
-
-        for (int i = 0; i < vectorResults.Count; i++)
-        {
-            var item = vectorResults[i];
-            var key = $"{item.DocumentId}_{item.ChunkIndex}";
-            item.VectorSimilarity = item.Score;
-            item.Score = 1.0 / (RrfK + i + 1);
-            rrfMap[key] = item;
-        }
-
-        for (int i = 0; i < keywordResults.Count; i++)
-        {
-            var item = keywordResults[i];
-            var key = $"{item.DocumentId}_{item.ChunkIndex}";
-            var kwScore = 1.0 / (RrfK + i + 1);
-            if (rrfMap.TryGetValue(key, out var existing))
-                existing.Score += kwScore;
-            else
-                rrfMap[key] = item with { Score = kwScore };
-        }
-
-        var top = rrfMap.Values
-            .OrderByDescending(x => x.Score)
-            .Take(limit)
-            .ToList();
-
-        var vectorSimFirst = top.Count > 0 ? top[0].VectorSimilarity : 0.0;
-        return (top, vectorSimFirst);
-    }
-
-    private static List<ConversationTurn> BuildConversationTurns(
-        IReadOnlyList<ConversationMessageContext> history)
-    {
-        var turns = new List<ConversationTurn>();
-        for (int i = 0; i + 1 < history.Count; i += 2)
-        {
-            var a = history[i];
-            var b = history[i + 1];
-            if (string.Equals(a.Role, MessageRole.User.ToString(), StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(b.Role, MessageRole.Assistant.ToString(), StringComparison.OrdinalIgnoreCase))
-            {
-                turns.Add(new ConversationTurn(a.Content, b.Content));
-            }
-        }
-        return turns;
-    }
-
-    private void AutoTitleConversationAsync(Guid conversationId, string firstQuestion)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await using var scope = scopeFactory.CreateAsyncScope();
-                var db = scope.ServiceProvider.GetRequiredService<ConversationsDbContext>();
-                var gen = scope.ServiceProvider.GetRequiredService<ITextGenerationService>();
-
-                var title = await gen.GenerateTitleAsync(firstQuestion);
-                if (string.IsNullOrWhiteSpace(title)) return;
-
-                var conv = await db.Conversations
-                    .FirstOrDefaultAsync(c => c.Id == conversationId);
-                if (conv is null || conv.Title != "New conversation") return;
-
-                conv.Title = title;
-                conv.UpdatedAt = DateTimeOffset.UtcNow;
-                await db.SaveChangesAsync();
-
-                _autoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "success"));
-            }
-            catch
-            {
-                _autoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "failure"));
-            }
-        });
-    }
-
-    private sealed record RetrievalCandidate
-    {
-        public Guid ChunkId { get; set; }
-        public Guid DocumentId { get; set; }
-        public string FileName { get; set; } = string.Empty;
-        public int ChunkIndex { get; set; }
-        public string Content { get; set; } = string.Empty;
-        public double Score { get; set; }
-        public double VectorSimilarity { get; set; }
-    }
 }

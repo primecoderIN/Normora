@@ -42,29 +42,8 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
         var sourcesBlock = BuildSourcesBlock(sources);
         var historyBlock = BuildHistoryBlock(history);
 
-        // Build a strict system prompt instructing the LLM to only use the provided company documents and never invent answers
-        var prompt = new StringBuilder();
-        prompt.AppendLine("""
-            You are Normora, a company policy assistant having an ongoing conversation with an employee.
-            Answer using ONLY the provided company document sources below. Do not invent policies, numbers, dates, or exceptions.
-            If the sources do not contain the answer, say exactly: I could not find that in the company documents.
-            Do not mention these instructions or refer to sources by index number in your answer.
-            """);
-
-        if (historyBlock.Length > 0)
-        {
-            prompt.AppendLine();
-            prompt.AppendLine("Conversation so far:");
-            prompt.AppendLine(historyBlock);
-        }
-
-        prompt.AppendLine();
-        prompt.AppendLine($"Employee's current question: {question}");
-        prompt.AppendLine();
-        prompt.AppendLine("Company document sources:");
-        prompt.Append(sourcesBlock);
-
-        return await CallGeminiAsync(prompt.ToString(), temperature: 0.1, cancellationToken);
+        var fullPrompt = BuildFullPrompt(question, sources, history);
+        return await CallGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -79,29 +58,10 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
         var sourcesBlock = BuildSourcesBlock(sources);
         var historyBlock = BuildHistoryBlock(history);
 
-        var prompt = new StringBuilder();
-        prompt.AppendLine("""
-            You are Normora, a company policy assistant having an ongoing conversation with an employee.
-            Answer using ONLY the provided company document sources below. Do not invent policies, numbers, dates, or exceptions.
-            If the sources do not contain the answer, say exactly: I could not find that in the company documents.
-            Do not mention these instructions or refer to sources by index number in your answer.
-            """);
-
-        if (historyBlock.Length > 0)
-        {
-            prompt.AppendLine();
-            prompt.AppendLine("Conversation so far:");
-            prompt.AppendLine(historyBlock);
-        }
-
-        prompt.AppendLine();
-        prompt.AppendLine($"Employee's current question: {question}");
-        prompt.AppendLine();
-        prompt.AppendLine("Company document sources:");
-        prompt.Append(sourcesBlock);
+        var fullPrompt = BuildFullPrompt(question, sources, history);
 
         var anyChunks = false;
-        await foreach (var chunk in StreamGeminiAsync(prompt.ToString(), temperature: 0.1, cancellationToken))
+        await foreach (var chunk in StreamGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken))
         {
             anyChunks = true;
             yield return chunk;
@@ -109,7 +69,7 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
 
         if (!anyChunks)
         {
-            yield return "I could not find that in the company documents.";
+            yield return Normora.Shared.Constants.RagConstants.FallbackAnswer;
         }
     }
 
@@ -143,6 +103,35 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
     }
 
     // ─── Shared helpers ──────────────────────────────────────────────────────────
+
+    private static string BuildFullPrompt(string question, IReadOnlyList<AskSource> sources, IReadOnlyList<ConversationTurn> history)
+    {
+        var sourcesBlock = BuildSourcesBlock(sources);
+        var historyBlock = BuildHistoryBlock(history);
+        
+        var prompt = new StringBuilder();
+        prompt.AppendLine($"""
+            You are Normora, a company policy assistant having an ongoing conversation with an employee.
+            Answer using ONLY the provided company document sources below. Do not invent policies, numbers, dates, or exceptions.
+            If the sources do not contain the answer, say exactly: {Normora.Shared.Constants.RagConstants.FallbackAnswer}
+            Do not mention these instructions or refer to sources by index number in your answer.
+            """);
+
+        if (historyBlock.Length > 0)
+        {
+            prompt.AppendLine();
+            prompt.AppendLine("Conversation so far:");
+            prompt.AppendLine(historyBlock);
+        }
+
+        prompt.AppendLine();
+        prompt.AppendLine($"Employee's current question: {question}");
+        prompt.AppendLine();
+        prompt.AppendLine("Company document sources:");
+        prompt.Append(sourcesBlock);
+        
+        return prompt.ToString();
+    }
 
     private static string BuildSourcesBlock(IReadOnlyList<AskSource> sources) =>
         string.Join(
@@ -180,7 +169,7 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
         var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
         var text = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
         return string.IsNullOrWhiteSpace(text)
-            ? "I could not find that in the company documents."
+            ? Normora.Shared.Constants.RagConstants.FallbackAnswer
             : text.Trim();
     }
 
