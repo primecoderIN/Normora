@@ -54,16 +54,22 @@ public class UpdateUserGroupAssignmentsCommandHandler(TenantsDbContext dbContext
             .Select(tm => tm.Id)
             .ToListAsync(cancellationToken);
 
-        // Sync members
+        // Sync members (already validated via TenantMembership join above)
         group.UserGroupMemberships.Clear();
         foreach (var memId in membershipIds)
         {
             group.UserGroupMemberships.Add(new UserGroupMembership { TenantMembershipId = memId });
         }
 
-        // Sync departments
+        // SEC-17: Validate that all provided DepartmentIds belong to the current tenant
+        var validDepartmentIds = await dbContext.Departments
+            .Where(d => d.TenantId == tenantContext.TenantId.Value && request.DepartmentIds.Contains(d.Id))
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        // Sync departments (only tenant-owned ones)
         group.UserGroupDepartments.Clear();
-        foreach (var depId in request.DepartmentIds)
+        foreach (var depId in validDepartmentIds)
         {
             group.UserGroupDepartments.Add(new UserGroupDepartment { DepartmentId = depId });
         }

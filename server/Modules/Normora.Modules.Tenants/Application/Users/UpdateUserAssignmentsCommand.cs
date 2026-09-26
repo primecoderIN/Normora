@@ -48,16 +48,29 @@ public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITe
             return false;
         }
 
-        // Sync Departments
+        // SEC-16: Validate that all provided DepartmentIds belong to the current tenant
+        // to prevent an admin from injecting department references from other tenants.
+        var validDepartmentIds = await dbContext.Departments
+            .Where(d => d.TenantId == tenantContext.TenantId.Value && request.DepartmentIds.Contains(d.Id))
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        // SEC-16: Validate that all UserGroupIds belong to the current tenant
+        var validGroupIds = await dbContext.UserGroups
+            .Where(g => g.TenantId == tenantContext.TenantId.Value && request.UserGroupIds.Contains(g.Id))
+            .Select(g => g.Id)
+            .ToListAsync(cancellationToken);
+
+        // Sync Departments (only tenant-owned ones)
         membership.MembershipDepartments.Clear();
-        foreach (var depId in request.DepartmentIds)
+        foreach (var depId in validDepartmentIds)
         {
             membership.MembershipDepartments.Add(new MembershipDepartment { DepartmentId = depId });
         }
 
-        // Sync User Groups
+        // Sync User Groups (only tenant-owned ones)
         membership.UserGroupMemberships.Clear();
-        foreach (var groupId in request.UserGroupIds)
+        foreach (var groupId in validGroupIds)
         {
             membership.UserGroupMemberships.Add(new UserGroupMembership { UserGroupId = groupId });
         }

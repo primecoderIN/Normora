@@ -29,20 +29,27 @@ public class SaveAnswerCommandHandler(
         if (existing is not null)
             return existing.Id;
 
-        // Verify the message exists and belongs to this tenant/user
+        // Verify the message exists and belongs to the current user (BOLA protection)
         var message = await context.Messages
             .AsNoTracking()
             .Include(m => m.Conversation)
-            .FirstOrDefaultAsync(m => m.Id == request.MessageId, cancellationToken)
-            ?? throw new InvalidOperationException("Message not found.");
+            .FirstOrDefaultAsync(
+                m => m.Id == request.MessageId &&
+                     m.Conversation.UserId == currentUser.KeycloakUserId,
+                cancellationToken)
+            ?? throw new InvalidOperationException("Message not found or access denied.");
 
         if (message.Role != MessageRole.Assistant)
             throw new InvalidOperationException("Only assistant messages can be saved.");
 
+        // BUG-1: Guard against null TenantId before using the null-forgiveness operator
+        if (!tenantContext.TenantId.HasValue)
+            throw new InvalidOperationException("Tenant context is missing.");
+
         var savedAnswer = new SavedAnswer
         {
             Id = Guid.NewGuid(),
-            TenantId = tenantContext.TenantId!.Value,
+            TenantId = tenantContext.TenantId.Value,
             UserId = currentUser.KeycloakUserId,
             MessageId = request.MessageId,
             ConversationId = message.ConversationId,

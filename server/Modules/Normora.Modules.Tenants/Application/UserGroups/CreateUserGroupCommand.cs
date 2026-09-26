@@ -51,10 +51,12 @@ public class CreateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
             TenantId = tenantContext.TenantId.Value,
             Name = request.Name,
             Description = request.Description,
-            UserGroupDepartments = request.DepartmentIds.Select(depId => new UserGroupDepartment
-            {
-                DepartmentId = depId
-            }).ToList()
+            // SEC-17: Only link departments that actually belong to this tenant
+            UserGroupDepartments = request.DepartmentIds
+                .Where(depId => dbContext.Departments
+                    .Any(d => d.Id == depId && d.TenantId == tenantContext.TenantId.Value))
+                .Select(depId => new UserGroupDepartment { DepartmentId = depId })
+                .ToList()
         };
 
         dbContext.UserGroups.Add(group);

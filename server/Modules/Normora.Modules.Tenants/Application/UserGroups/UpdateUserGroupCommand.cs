@@ -61,9 +61,16 @@ public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
         group.Name = request.Name;
         group.Description = request.Description;
 
-        // Sync departments
+        // SEC-17: Validate that all provided DepartmentIds belong to the current tenant
+        // before syncing to prevent cross-tenant department injection.
+        var validDepartmentIds = await dbContext.Departments
+            .Where(d => d.TenantId == tenantContext.TenantId.Value && request.DepartmentIds.Contains(d.Id))
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        // Sync departments (only tenant-owned ones)
         group.UserGroupDepartments.Clear();
-        foreach (var depId in request.DepartmentIds)
+        foreach (var depId in validDepartmentIds)
         {
             group.UserGroupDepartments.Add(new UserGroupDepartment { DepartmentId = depId });
         }
