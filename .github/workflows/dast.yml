@@ -1,0 +1,86 @@
+name: "OWASP ZAP DAST"
+
+on:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 3 * * 0' # Run weekly on Sunday at 3:00 AM
+
+jobs:
+  zap_scan:
+    name: Run DAST Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Start Docker Compose Stack
+      run: |
+        # Generate the .env file with default credentials just like start.ps1 does locally
+        echo "POSTGRES_USER=postgres" > .env
+        echo "POSTGRES_PASSWORD=password" >> .env
+        echo "POSTGRES_DB=normoradb" >> .env
+        echo "KEYCLOAK_ADMIN=admin" >> .env
+        echo "KEYCLOAK_ADMIN_PASSWORD=admin" >> .env
+        echo "MINIO_ROOT_USER=admin" >> .env
+        echo "MINIO_ROOT_PASSWORD=password" >> .env
+        echo "DB_USER=postgres" >> .env
+        echo "DB_PASSWORD=password" >> .env
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+        
+        # Start the stack
+        docker compose up -d
+
+    - name: Wait for services to be healthy
+      run: |
+        echo "Waiting for services to initialize..."
+        sleep 30 # Give Keycloak, Postgres, and the .NET API time to fully boot up
+
+    - name: ZAP Baseline Scan (Frontend)
+      uses: zaproxy/action-baseline@v0.12.0
+      with:
+        target: 'http://localhost:4200'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'
+        fail_action: false # Prevent the build from failing on low/medium alerts initially
+      continue-on-error: true
+
+    - name: Fetch Keycloak Auth Token
+      id: get_token
+      run: |
+        # Wait a few more seconds to ensure Keycloak is fully accepting requests
+        sleep 10
+        
+        # Request a JWT for the test admin user via password grant
+        TOKEN=$(curl -s -X POST "http://localhost:8080/realms/normora/protocol/openid-connect/token" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "client_id=normora-web" \
+          -d "username=admin" \
+          -d "password=admin" \
+          -d "grant_type=password" | jq -r '.access_token')
+          
+        if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
+          echo "Failed to fetch token from Keycloak"
+          exit 1
+        fi
+        
+        # Mask the token in logs and save it to GITHUB_ENV
+        echo "::add-mask::$TOKEN"
+        echo "ZAP_AUTH_HEADER=Bearer $TOKEN" >> $GITHUB_ENV
+
+    - name: ZAP API Scan (Backend - Authenticated)
+      uses: zaproxy/action-api-scan@v0.8.0
+      with:
+        target: 'http://localhost:5000/openapi/v1.json'
+        format: openapi
+        fail_action: false
+        cmd_options: '-a -z "-config replacer.full_list(0).description=auth1 -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstring=Authorization -config replacer.full_list(0).replacement=\"${{ env.ZAP_AUTH_HEADER }}\""'
+      continue-on-error: true
+
+    - name: Tear down stack
+      if: always()
+      run: docker compose down -v
