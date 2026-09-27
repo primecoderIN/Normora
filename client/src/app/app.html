@@ -1,5 +1,5 @@
 @if (authInitializing()) {
-	<main class="min-h-screen bg-slate-50 flex flex-col items-center justify-center relative overflow-hidden" aria-live="polite" aria-busy="true">
+	<main class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden" aria-live="polite" aria-busy="true">
 		<!-- Subtle background decorators to match login theme -->
 		<div class="absolute -top-40 -right-40 w-200 h-200 bg-primary-500/10 rounded-full blur-[100px] mix-blend-multiply opacity-70 animate-pulse pointer-events-none"></div>
 		<div class="absolute -bottom-40 -left-40 w-150 h-150 bg-purple-500/10 rounded-full blur-[80px] mix-blend-multiply opacity-50 animate-pulse pointer-events-none" style="animation-delay: 2s;"></div>
@@ -16,8 +16,8 @@
 			</div>
 			
 			<div class="flex flex-col items-center gap-1">
-				<h1 class="text-xl font-bold text-slate-800 tracking-tight">Normora</h1>
-				<p class="text-sm font-medium text-slate-500">{{ authStatus() || 'Securing your workspace...' }}</p>
+				<h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Normora</h1>
+				<p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ authStatus() || 'Securing your workspace...' }}</p>
 			</div>
 
 			<!-- Bouncing dots loader -->

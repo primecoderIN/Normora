@@ -23,7 +23,7 @@ import { UserService } from '@core/services/user.service';
       <div class="flex flex-col gap-4">
         @if (!isPersonal()) {
           <div class="flex flex-col gap-2">
-            <label class="text-sm font-semibold text-slate-700">Who has access</label>
+            <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">Who has access</label>
             <p-multiselect
               [options]="departments()"
               [ngModel]="selectedDeptIds()"
@@ -36,7 +36,7 @@ import { UserService } from '@core/services/user.service';
               appendTo="body"
               styleClass="w-full">
             </p-multiselect>
-            <small class="text-xs text-slate-500">If no departments are selected, all employees can search this document.</small>
+            <small class="text-xs text-slate-500 dark:text-slate-400">If no departments are selected, all employees can search this document.</small>
           </div>
         }
 

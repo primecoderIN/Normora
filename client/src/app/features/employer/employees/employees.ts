@@ -10,52 +10,52 @@ import { ButtonModule } from 'primeng/button';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ButtonModule, DatePipe],
   template: `
-    <div class="grid gap-8 text-slate-900 page-enter">
+    <div class="grid gap-8 text-slate-900 dark:text-white page-enter">
       <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-primary-600 m-0 mb-1">Workspace access</p>
-          <h1 class="text-[1.75rem] font-bold text-slate-900 leading-[1.15] m-0">Employees</h1>
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
+          <h1 class="text-[1.75rem] font-bold text-slate-900 dark:text-white leading-[1.15] m-0">Employees</h1>
+          <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
         </div>
-        <p-button label="Export" icon="pi pi-download" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 font-bold !px-4 !py-2 !h-10 transition-colors"></p-button>
+        <p-button label="Export" icon="pi pi-download" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 font-bold !px-4 !py-2 !h-10 transition-colors"></p-button>
       </header>
 
       <!-- Stat cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex items-center gap-4">
           <div class="flex items-center justify-center flex-none w-11 h-11 bg-primary-50 text-primary-600 rounded-xl">
             <i class="pi pi-users text-lg"></i>
           </div>
           <div>
-            <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Active employees</p>
-            <strong class="text-2xl font-bold text-slate-900">{{ employees().length }}</strong>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Active employees</p>
+            <strong class="text-2xl font-bold text-slate-900 dark:text-white">{{ employees().length }}</strong>
           </div>
         </div>
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex items-center gap-4">
           <div class="flex items-center justify-center flex-none w-11 h-11 bg-amber-50 text-amber-600 rounded-xl">
             <i class="pi pi-envelope text-lg"></i>
           </div>
           <div>
-            <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Pending invites</p>
-            <strong class="text-2xl font-bold text-slate-900">{{ pendingInvites() }}</strong>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Pending invites</p>
+            <strong class="text-2xl font-bold text-slate-900 dark:text-white">{{ pendingInvites() }}</strong>
           </div>
         </div>
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center gap-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex items-center gap-4">
           <div class="flex items-center justify-center flex-none w-11 h-11 bg-purple-50 text-purple-600 rounded-xl">
             <i class="pi pi-shield text-lg"></i>
           </div>
           <div>
-            <p class="text-xs font-medium text-slate-500 m-0 mb-0.5">Admin seats</p>
-            <strong class="text-2xl font-bold text-slate-900">{{ adminSeats() }}</strong>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Admin seats</p>
+            <strong class="text-2xl font-bold text-slate-900 dark:text-white">{{ adminSeats() }}</strong>
           </div>
         </div>
       </div>
 
       <!-- Invite section -->
-      <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="border-b border-slate-100 px-6 py-5">
-          <h2 class="text-base font-bold text-slate-900 m-0">Invite employee</h2>
-          <p class="text-sm text-slate-500 m-0 mt-0.5">Send an invitation link to join this workspace.</p>
+      <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+        <div class="border-b border-slate-100 dark:border-slate-800 px-6 py-5">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Invite employee</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">Send an invitation link to join this workspace.</p>
         </div>
         <div class="px-6 py-5">
           @if (successMessage()) {
@@ -88,7 +88,7 @@ import { ButtonModule } from 'primeng/button';
               <input
                 type="email"
                 formControlName="email"
-                class="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder:text-slate-400"
+                class="w-full h-10 pl-9 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder:text-slate-400"
                 placeholder="employee@company.com"
               />
             </div>
@@ -97,19 +97,19 @@ import { ButtonModule } from 'primeng/button';
               type="submit"
               [disabled]="inviteForm.invalid || isInviting()"
               [icon]="isInviting() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
-              styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 disabled:!bg-slate-200 disabled:!border-slate-200 disabled:!text-slate-400 font-bold !px-4 !h-10 transition-colors whitespace-nowrap">
+              styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 disabled:!bg-slate-200 disabled:!border-slate-200 dark:border-slate-700 disabled:!text-slate-400 font-bold !px-4 !h-10 transition-colors whitespace-nowrap">
             </p-button>
           </form>
         </div>
       </section>
 
       <!-- Employees table -->
-      <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-6 py-4">
-          <h2 class="text-base font-bold text-slate-900 m-0">Members</h2>
-          <label class="flex items-center gap-2 h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg w-52 focus-within:border-primary-400 transition-colors">
+      <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Members</h2>
+          <label class="flex items-center gap-2 h-9 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg w-52 focus-within:border-primary-400 transition-colors">
             <i class="pi pi-search text-slate-400 text-xs"></i>
-            <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-slate-900 placeholder:text-slate-400 p-0" />
+            <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-slate-900 dark:text-white placeholder:text-slate-400 p-0" />
           </label>
         </div>
         
@@ -120,10 +120,10 @@ import { ButtonModule } from 'primeng/button';
                 <div class="flex-none w-9 h-9 bg-slate-200 rounded-full"></div>
                 <div class="flex-1 space-y-2">
                   <div class="h-3 bg-slate-200 rounded-full w-1/4"></div>
-                  <div class="h-2.5 bg-slate-100 rounded-full w-1/3"></div>
+                  <div class="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full w-1/3"></div>
                 </div>
-                <div class="h-6 w-16 bg-slate-100 rounded-full"></div>
-                <div class="h-6 w-14 bg-slate-100 rounded-full"></div>
+                <div class="h-6 w-16 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                <div class="h-6 w-14 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
               </div>
             }
           </div>
@@ -131,38 +131,38 @@ import { ButtonModule } from 'primeng/button';
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm border-collapse">
               <thead>
-                <tr class="border-b border-slate-200 bg-slate-50/50">
-                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">User</th>
-                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Role</th>
-                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Joined</th>
-                  <th class="px-6 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider w-16">Actions</th>
+                <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50">
+                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">User</th>
+                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">Joined</th>
+                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider w-16">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
                 @for (emp of employees(); track emp.userId) {
-                  <tr class="hover:bg-slate-50/80 transition-colors group">
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-950/80 transition-colors group">
                     <td class="px-6 py-3 whitespace-nowrap">
                       <div class="flex items-center gap-3">
                         <div class="flex-none w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm">
                           {{ emp.displayName ? emp.displayName.charAt(0).toUpperCase() : (emp.email ? emp.email.charAt(0).toUpperCase() : '?') }}
                         </div>
                         <div>
-                          <p class="font-semibold text-slate-900 m-0">{{ emp.displayName || '—' }}</p>
-                          <p class="text-slate-500 text-xs m-0 mt-0.5">{{ emp.email }}</p>
+                          <p class="font-semibold text-slate-900 dark:text-white m-0">{{ emp.displayName || '—' }}</p>
+                          <p class="text-slate-500 dark:text-slate-400 text-xs m-0 mt-0.5">{{ emp.email }}</p>
                         </div>
                       </div>
                     </td>
                     <td class="px-6 py-3 whitespace-nowrap">
                       <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium" 
-                        [ngClass]="emp.role === 'Admin' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-slate-100 text-slate-700 border border-slate-200'">
+                        [ngClass]="emp.role === 'Admin' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'">
                         {{ emp.role }}
                       </span>
                     </td>
-                    <td class="px-6 py-3 whitespace-nowrap text-slate-500">
+                    <td class="px-6 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400">
                       {{ emp.joinedAt | date:'mediumDate' }}
                     </td>
                     <td class="px-6 py-3 whitespace-nowrap">
-                      <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                      <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
                         <i class="pi pi-ellipsis-v text-sm"></i>
                       </button>
                     </td>
@@ -176,7 +176,7 @@ import { ButtonModule } from 'primeng/button';
             <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-50 text-primary-400">
               <i class="pi pi-users text-2xl"></i>
             </div>
-            <p class="text-sm font-medium text-slate-500 m-0">No members yet — invite your first employee above.</p>
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 m-0">No members yet — invite your first employee above.</p>
           </div>
         }
       </section>

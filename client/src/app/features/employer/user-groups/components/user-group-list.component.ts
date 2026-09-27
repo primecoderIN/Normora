@@ -15,18 +15,18 @@ import { UserGroup } from '@core/services/user-group.service';
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm border-collapse">
         <thead>
-          <tr class="border-b border-slate-200">
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Group</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Description</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Members</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Departments</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Created</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white w-16">Actions</th>
+          <tr class="border-b border-slate-200 dark:border-slate-700">
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Group</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Description</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Members</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Departments</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Created</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900 w-16">Actions</th>
           </tr>
         </thead>
         <tbody>
           @for (group of groups(); track group.id) {
-          <tr class="hover:bg-slate-50 transition-colors group/row border-b border-slate-100 last:border-0 bg-white">
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors group/row border-b border-slate-100 dark:border-slate-800 last:border-0 bg-white dark:bg-slate-900">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-3">
                 <div
@@ -35,10 +35,10 @@ import { UserGroup } from '@core/services/user-group.service';
                 >
                   {{ group.name.charAt(0).toUpperCase() }}
                 </div>
-                <span class="font-semibold text-slate-900">{{ group.name }}</span>
+                <span class="font-semibold text-slate-900 dark:text-white">{{ group.name }}</span>
               </div>
             </td>
-            <td class="px-6 py-4 text-slate-500">
+            <td class="px-6 py-4 text-slate-500 dark:text-slate-400">
               <span class="truncate block max-w-55">{{ group.description || '—' }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
@@ -55,13 +55,13 @@ import { UserGroup } from '@core/services/user-group.service';
                 <span class="text-slate-400 text-xs">—</span>
               }
             </td>
-            <td class="px-6 py-4 text-slate-500 whitespace-nowrap text-sm">
+            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 whitespace-nowrap text-sm">
               {{ group.createdAt | date:'MMM dd, yyyy' }}
             </td>
             <td class="px-6 py-4">
               <button
                 type="button"
-                class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors opacity-0 group-hover/row:opacity-100 focus:opacity-100"
                 (click)="openMenu($event, group)"
               >
                 <i class="pi pi-ellipsis-v text-sm"></i>
@@ -70,7 +70,7 @@ import { UserGroup } from '@core/services/user-group.service';
           </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm bg-white border-t border-slate-100">
+              <td colspan="6" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
                 No user groups found.
               </td>
             </tr>

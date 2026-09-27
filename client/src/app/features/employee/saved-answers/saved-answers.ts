@@ -16,8 +16,8 @@ import { marked } from 'marked';
       <header class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-primary-600 m-0 mb-1">Library</p>
-          <h1 class="text-[1.75rem] font-bold text-slate-900 leading-[1.15] m-0">Saved Answers</h1>
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">
+          <h1 class="text-[1.75rem] font-bold text-slate-900 dark:text-white leading-[1.15] m-0">Saved Answers</h1>
+          <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1.5">
             {{ isLoading() ? 'Loading…' : (savedAnswers().length + ' saved answer' + (savedAnswers().length === 1 ? '' : 's')) }}
           </p>
         </div>
@@ -27,11 +27,11 @@ import { marked } from 'marked';
       @if (isLoading()) {
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           @for (n of [1,2,3,4,5,6]; track n) {
-            <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm animate-pulse space-y-3">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm animate-pulse space-y-3">
               <div class="h-3 bg-slate-200 rounded-full w-1/3"></div>
-              <div class="h-3 bg-slate-100 rounded-full w-full"></div>
-              <div class="h-3 bg-slate-100 rounded-full w-5/6"></div>
-              <div class="h-3 bg-slate-100 rounded-full w-4/6"></div>
+              <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded-full w-full"></div>
+              <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded-full w-5/6"></div>
+              <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded-full w-4/6"></div>
             </div>
           }
         </div>
@@ -43,8 +43,8 @@ import { marked } from 'marked';
           <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 text-red-500">
             <i class="pi pi-exclamation-circle text-3xl"></i>
           </div>
-          <h2 class="text-lg font-bold text-slate-900 m-0">Could not load saved answers</h2>
-          <p class="text-sm text-slate-500 m-0 max-w-sm">{{ error() }}</p>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Could not load saved answers</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 m-0 max-w-sm">{{ error() }}</p>
           <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors" (click)="load()">
             <i class="pi pi-refresh text-xs"></i> Try again
           </button>
@@ -57,10 +57,10 @@ import { marked } from 'marked';
           <div class="flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50 text-amber-500 shadow-sm">
             <i class="pi pi-bookmark text-3xl"></i>
           </div>
-          <h2 class="text-lg font-bold text-slate-900 m-0">No saved answers yet</h2>
-          <p class="text-sm text-slate-500 m-0 max-w-xs leading-relaxed">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">No saved answers yet</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 m-0 max-w-xs leading-relaxed">
             When you get a helpful answer in a conversation, click the
-            <span class="inline-flex items-center justify-center w-5 h-5 bg-slate-100 rounded mx-0.5 align-middle"><i class="pi pi-bookmark text-[0.65rem]"></i></span>
+            <span class="inline-flex items-center justify-center w-5 h-5 bg-slate-100 dark:bg-slate-800 rounded mx-0.5 align-middle"><i class="pi pi-bookmark text-[0.65rem]"></i></span>
             icon to save it here.
           </p>
           <a routerLink="../conversations" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg no-underline transition-colors shadow-sm">
@@ -73,17 +73,17 @@ import { marked } from 'marked';
       @else {
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           @for (answer of savedAnswers(); track answer.id) {
-            <article class="group flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 transition-all overflow-hidden">
+            <article class="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 transition-all overflow-hidden">
               <!-- Card Header -->
-              <div class="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 bg-slate-50/60">
+              <div class="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
                 <div class="flex items-center gap-2">
                   <div class="flex items-center justify-center w-6 h-6 bg-primary-50 text-primary-500 rounded-md">
                     <i class="pi pi-sparkles text-[0.65rem]"></i>
                   </div>
-                  <span class="text-[0.72rem] text-slate-500 font-medium">{{ answer.savedAt | date:'MMM d, y · h:mm a' }}</span>
+                  <span class="text-[0.72rem] text-slate-500 dark:text-slate-400 font-medium">{{ answer.savedAt | date:'MMM d, y · h:mm a' }}</span>
                 </div>
                 <button
-                  class="flex items-center justify-center w-7 h-7 bg-white border border-slate-200 rounded-lg text-amber-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all cursor-pointer shadow-sm opacity-0 group-hover:opacity-100"
+                  class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-amber-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all cursor-pointer shadow-sm opacity-0 group-hover:opacity-100"
                   (click)="unsave(answer)"
                   pTooltip="Remove bookmark"
                   tooltipPosition="top"
@@ -94,7 +94,7 @@ import { marked } from 'marked';
               </div>
 
               <!-- Answer Content -->
-              <div class="flex-1 px-5 py-4 prose-normora text-[0.875rem] leading-relaxed text-slate-800 overflow-hidden max-h-48 relative">
+              <div class="flex-1 px-5 py-4 prose-normora text-[0.875rem] leading-relaxed text-slate-800 dark:text-slate-100 overflow-hidden max-h-48 relative">
                 <div [innerHTML]="renderMarkdown(answer.content)"></div>
                 <!-- Fade mask at bottom -->
                 <div class="absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-white to-transparent pointer-events-none"></div>
@@ -105,7 +105,7 @@ import { marked } from 'marked';
                 <div class="px-5 pb-3 flex flex-wrap gap-1.5">
                   <span class="text-[0.65rem] font-bold text-slate-400 tracking-widest uppercase mr-1 self-center">Sources</span>
                   @for (cite of answer.citations; track cite.documentId) {
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-full text-slate-600 text-[0.7rem] font-medium max-w-36"
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-[0.7rem] font-medium max-w-36"
                          [pTooltip]="cite.fileName" tooltipPosition="top">
                       <i class="pi pi-file-pdf text-slate-400 text-[0.65rem] flex-none"></i>
                       <span class="truncate">{{ cite.fileName }}</span>
@@ -116,7 +116,7 @@ import { marked } from 'marked';
               }
 
               <!-- Footer -->
-              <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/40">
+              <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
                 <a
                   [routerLink]="['../conversations']"
                   [queryParams]="{ conversationId: answer.conversationId }"
@@ -132,7 +132,7 @@ import { marked } from 'marked';
         <!-- Load more -->
         @if (hasMore()) {
           <div class="flex justify-center pt-2">
-            <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50" (click)="loadMore()" [disabled]="isLoadingMore()">
+            <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950 text-sm font-semibold rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50" (click)="loadMore()" [disabled]="isLoadingMore()">
               @if (isLoadingMore()) {
                 <i class="pi pi-spin pi-spinner text-xs"></i> Loading…
               } @else {

@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-8 text-slate-900">
+<div class="flex flex-col gap-8 text-slate-900 dark:text-white">
   <app-page-header
     eyebrow="Organisation"
     title="Departments"
@@ -11,50 +11,50 @@
   <!-- Stats -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <!-- Stat 1 -->
-    <div class="bg-white border border-slate-200 rounded-xl p-6 flex items-center gap-5">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 flex items-center gap-5">
       <div class="flex items-center justify-center flex-none w-14 h-14 bg-pink-50 rounded-xl">
         <i class="pi pi-building text-2xl text-pink-500"></i>
       </div>
       <div>
-        <p class="text-sm text-slate-500 m-0">Total departments</p>
-        <strong class="block text-3xl font-bold text-slate-900 mt-0.5 leading-none">{{ departments().length }}</strong>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Total departments</p>
+        <strong class="block text-3xl font-bold text-slate-900 dark:text-white mt-0.5 leading-none">{{ departments().length }}</strong>
       </div>
     </div>
     <!-- Stat 2 -->
-    <div class="bg-white border border-slate-200 rounded-xl p-6 flex items-center gap-5">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 flex items-center gap-5">
       <div class="flex items-center justify-center flex-none w-14 h-14 bg-blue-50 rounded-xl">
         <i class="pi pi-users text-2xl text-blue-500"></i>
       </div>
       <div>
-        <p class="text-sm text-slate-500 m-0">Employees assigned</p>
-        <strong class="block text-3xl font-bold text-slate-900 mt-0.5 leading-none">—</strong>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Employees assigned</p>
+        <strong class="block text-3xl font-bold text-slate-900 dark:text-white mt-0.5 leading-none">—</strong>
       </div>
     </div>
     <!-- Stat 3 -->
-    <div class="bg-white border border-slate-200 rounded-xl p-6 flex items-center gap-5">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 flex items-center gap-5">
       <div class="flex items-center justify-center flex-none w-14 h-14 bg-purple-50 rounded-xl">
         <i class="pi pi-file text-2xl text-purple-500"></i>
       </div>
       <div>
-        <p class="text-sm text-slate-500 m-0">Documents scoped</p>
-        <strong class="block text-3xl font-bold text-slate-900 mt-0.5 leading-none">—</strong>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Documents scoped</p>
+        <strong class="block text-3xl font-bold text-slate-900 dark:text-white mt-0.5 leading-none">—</strong>
       </div>
     </div>
   </div>
 
   <!-- List Container -->
-  <section class="bg-white border border-slate-200 rounded-xl overflow-hidden">
-    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-6 py-5 border-b border-slate-100">
+  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-6 py-5 border-b border-slate-100 dark:border-slate-800">
       <div>
-        <h2 class="text-xl font-bold text-slate-900 m-0">All departments</h2>
-        <p class="text-sm text-slate-500 m-0 mt-1">Manage department membership and document access.</p>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white m-0">All departments</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1">Manage department membership and document access.</p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <div class="relative">
           <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
           <input
             type="search"
-            class="w-52 h-9 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400 transition-all"
+            class="w-52 h-9 pl-8 pr-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400 transition-all"
             placeholder="Search departments…"
             [value]="searchTerm()"
             (input)="searchTerm.set($any($event.target).value)"
@@ -83,8 +83,8 @@
         <div class="flex items-center justify-center w-12 h-12 bg-primary-50 border border-primary-100 rounded-full mb-4">
           <i class="pi pi-sitemap text-xl text-primary-600"></i>
         </div>
-        <p class="text-lg font-bold text-slate-900 m-0 mb-1">No departments yet</p>
-        <p class="text-sm text-slate-500 m-0 mb-6 max-w-sm">Create your first department to start scoping document access.</p>
+        <p class="text-lg font-bold text-slate-900 dark:text-white m-0 mb-1">No departments yet</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mb-6 max-w-sm">Create your first department to start scoping document access.</p>
         <button type="button" class="flex items-center justify-center gap-2 h-9 px-4 bg-primary-600 text-white border border-primary-600 rounded-lg font-bold text-sm hover:bg-primary-700 transition-colors" (click)="openCreate()">
           <i class="pi pi-plus"></i> New department
         </button>
@@ -116,7 +116,7 @@
     [error]="formError()"
     (confirm)="onDelete()"
     (cancel)="deleteTarget.set(null)">
-    Are you sure you want to delete <strong class="text-slate-900">{{ deleteTarget()?.name }}</strong>?
+    Are you sure you want to delete <strong class="text-slate-900 dark:text-white">{{ deleteTarget()?.name }}</strong>?
     This will remove the department from all associated documents and users.
   </app-confirm-dialog>
 </div>

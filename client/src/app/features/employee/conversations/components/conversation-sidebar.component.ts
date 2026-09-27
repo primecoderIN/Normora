@@ -11,13 +11,13 @@ import { ConversationDto } from '@core/services/conversation.service';
   standalone: true,
   imports: [CommonModule, FormsModule, TooltipModule, ScrollingModule, ConfirmDialogComponent],
   template: `
-    <aside class="flex flex-col flex-none w-72 bg-slate-50 border-r border-slate-200 overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.02)]">
+    <aside class="flex flex-col flex-none w-72 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-700 overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.02)]">
       <!-- Header -->
-      <div class="flex flex-col p-4 pb-3 border-b border-slate-200 bg-white flex-none gap-3 z-10 shadow-sm relative">
+      <div class="flex flex-col p-4 pb-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex-none gap-3 z-10 shadow-sm relative">
         <div class="flex items-center justify-between gap-2">
           <div>
             <p class="text-[0.65rem] font-black tracking-[0.15em] text-primary-500 uppercase m-0 mb-1">Knowledge Assistant</p>
-            <h1 class="text-xl font-black text-slate-900 m-0 tracking-tight">Conversations</h1>
+            <h1 class="text-xl font-black text-slate-900 dark:text-white m-0 tracking-tight">Conversations</h1>
           </div>
           <button
             type="button"
@@ -39,7 +39,7 @@ import { ConversationDto } from '@core/services/conversation.service';
             [(ngModel)]="searchQuery" 
             (ngModelChange)="onSearchChange()"
             placeholder="Search history..." 
-            class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-[0.82rem] rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-400 block pl-8 p-2 transition-all outline-none"
+            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-[0.82rem] rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-400 block pl-8 p-2 transition-all outline-none"
           />
           @if (searchQuery()) {
             <button 
@@ -54,13 +54,13 @@ import { ConversationDto } from '@core/services/conversation.service';
       </div>
 
       <!-- List -->
-      <div class="flex-1 overflow-hidden p-2 flex flex-col gap-1 relative bg-slate-50">
+      <div class="flex-1 overflow-hidden p-2 flex flex-col gap-1 relative bg-slate-50 dark:bg-slate-950">
         @if (isLoading && conversations.length === 0) {
           <div class="flex flex-col gap-2 p-2">
             @for (n of [1,2,3,4,5]; track n) {
-              <div class="flex flex-col gap-2 p-3 bg-white border border-slate-100 rounded-xl animate-pulse">
+              <div class="flex flex-col gap-2 p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl animate-pulse">
                 <div class="h-3 bg-slate-200 rounded-full w-3/4"></div>
-                <div class="h-2 bg-slate-100 rounded-full w-1/3"></div>
+                <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full w-1/3"></div>
               </div>
             }
           </div>
@@ -73,7 +73,7 @@ import { ConversationDto } from '@core/services/conversation.service';
           </div>
         } @else if (filteredConversations().length === 0) {
           <div class="flex flex-col items-center justify-center h-full gap-3 p-6 text-center text-slate-400">
-            <div class="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+            <div class="w-14 h-14 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm">
               <i class="pi pi-comments text-2xl text-primary-300"></i>
             </div>
             <span class="text-[0.85rem] font-medium">
@@ -85,7 +85,7 @@ import { ConversationDto } from '@core/services/conversation.service';
             <button
               *cdkVirtualFor="let conv of filteredConversations(); trackBy: trackById"
               type="button"
-              class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-slate-100 mb-1.5 overflow-hidden"
+              class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-slate-100 dark:hover:bg-slate-800 mb-1.5 overflow-hidden"
               [class.!bg-primary-50]="activeId === conv.id"
               [class.!border-primary-100]="activeId === conv.id"
               (click)="onSelect.emit(conv.id)"
@@ -98,7 +98,7 @@ import { ConversationDto } from '@core/services/conversation.service';
               <div class="flex flex-col flex-1 min-w-0 gap-1 pl-1">
                 <span class="text-[0.85rem] font-semibold truncate transition-colors"
                       [class.text-primary-700]="activeId === conv.id"
-                      [class.text-slate-800]="activeId !== conv.id">
+                      [class.text-slate-800]="activeId !== conv.id" [class.dark:text-slate-100]="activeId !== conv.id">
                   {{ conv.title || 'New conversation' }}
                 </span>
                 <span class="text-[0.7rem] font-medium"
@@ -110,7 +110,7 @@ import { ConversationDto } from '@core/services/conversation.service';
               
               <button
                 type="button"
-                class="flex items-center justify-center flex-none w-7 h-7 bg-white border border-slate-200 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-sm z-10"
+                class="flex items-center justify-center flex-none w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-sm z-10"
                 (click)="confirmDelete(conv.id, $event)"
                 pTooltip="Delete"
                 tooltipPosition="left"

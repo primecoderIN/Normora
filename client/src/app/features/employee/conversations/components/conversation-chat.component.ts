@@ -11,51 +11,51 @@ import { marked } from 'marked';
   standalone: true,
   imports: [CommonModule, FormsModule, TooltipModule, DatePipe],
   template: `
-    <section class="flex flex-col flex-1 min-w-0 bg-white overflow-hidden">
+    <section class="flex flex-col flex-1 min-w-0 bg-white dark:bg-slate-900 overflow-hidden">
       
       @if (!conversation) {
         <!-- Empty State -->
-        <div class="flex flex-col flex-1 items-center justify-center gap-6 p-8 text-center bg-slate-50">
+        <div class="flex flex-col flex-1 items-center justify-center gap-6 p-8 text-center bg-slate-50 dark:bg-slate-950">
           <div>
             <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-primary-100 to-purple-100 text-primary-600 text-3xl rounded-2xl mx-auto mb-4 shadow-sm">
               <i class="pi pi-comments"></i>
             </div>
-            <h2 class="text-2xl font-bold text-slate-900 m-0 mb-1">How can I help you today?</h2>
-            <p class="text-sm text-slate-500 max-w-sm mx-auto m-0">Ask anything about company policies, benefits, or your specific context.</p>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white m-0 mb-1">How can I help you today?</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto m-0">Ask anything about company policies, benefits, or your specific context.</p>
           </div>
           
           <!-- Suggestion Cards -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-4">
             <!-- Card 1 -->
-            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I request time off?'">
+            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I request time off?'">
               <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="pi pi-file text-lg"></i>
               </div>
-              <div class="font-semibold text-slate-800 text-sm">How do I request time off?</div>
+              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">How do I request time off?</div>
             </button>
             <!-- Card 2 -->
-            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'What is our remote work policy?'">
+            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'What is our remote work policy?'">
               <div class="w-10 h-10 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="pi pi-users text-lg"></i>
               </div>
-              <div class="font-semibold text-slate-800 text-sm">What is our remote work policy?</div>
+              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">What is our remote work policy?</div>
             </button>
             <!-- Card 3 -->
-            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I submit expenses?'">
+            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I submit expenses?'">
               <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="pi pi-wallet text-lg"></i>
               </div>
-              <div class="font-semibold text-slate-800 text-sm">How do I submit expenses?</div>
+              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">How do I submit expenses?</div>
             </button>
           </div>
         </div>
       } @else {
         <!-- Chat Header -->
-        <header class="flex items-center justify-between p-4 px-5 bg-white border-b border-slate-200 flex-none gap-4">
+        <header class="flex items-center justify-between p-4 px-5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-none gap-4">
           <div class="flex items-center gap-3 min-w-0">
             <button
               type="button"
-              class="flex md:hidden items-center justify-center flex-none w-9 h-9 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-600 cursor-pointer transition-colors"
+              class="flex md:hidden items-center justify-center flex-none w-9 h-9 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 cursor-pointer transition-colors"
               (click)="onToggleSidebar.emit()"
               aria-label="Toggle sidebar"
             >
@@ -65,7 +65,7 @@ import { marked } from 'marked';
               <i class="pi pi-comments"></i>
             </div>
             <div class="min-w-0">
-              <div class="text-[0.95rem] font-bold text-slate-900 truncate">{{ conversation.title }}</div>
+              <div class="text-[0.95rem] font-bold text-slate-900 dark:text-white truncate">{{ conversation.title }}</div>
               <div class="text-[0.75rem] text-slate-400">
                 {{ conversation.messages.length > 0 ? (conversation.messages.length + ' messages') : 'No messages yet' }}
               </div>
@@ -83,7 +83,7 @@ import { marked } from 'marked';
             <div class="flex flex-col gap-4">
               @for (n of [1,2,3]; track n) {
                 <div class="flex" [class.justify-end]="n % 2 === 0">
-                  <div class="w-7/12 h-14 bg-slate-100 rounded-2xl animate-pulse"></div>
+                  <div class="w-7/12 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
                 </div>
               }
             </div>
@@ -114,10 +114,10 @@ import { marked } from 'marked';
                        [class.bg-primary-600]="msg.role === 'User'"
                        [class.text-white]="msg.role === 'User'"
                        [class.rounded-br-sm]="msg.role === 'User'"
-                       [class.bg-white]="msg.role === 'Assistant'"
-                       [class.text-slate-800]="msg.role === 'Assistant'"
+                       [class.bg-white]="msg.role === 'Assistant'" [class.dark:bg-slate-900]="msg.role === 'Assistant'"
+                       [class.text-slate-800]="msg.role === 'Assistant'" [class.dark:text-slate-100]="msg.role === 'Assistant'"
                        [class.border]="msg.role === 'Assistant'"
-                       [class.border-slate-200]="msg.role === 'Assistant'"
+                       [class.border-slate-200]="msg.role === 'Assistant'" [class.dark:border-slate-700]="msg.role === 'Assistant'"
                        [class.rounded-bl-sm]="msg.role === 'Assistant'"
                        [class.shadow-sm]="msg.role === 'Assistant'">
                     
@@ -133,7 +133,7 @@ import { marked } from 'marked';
                         <!-- Bookmark button -->
                         <button
                           type="button"
-                          class="flex items-center justify-center w-7 h-7 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-400 hover:text-amber-500 transition-all cursor-pointer"
+                          class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-amber-500 transition-all cursor-pointer"
                           (click)="toggleSave(msg.id)"
                           [pTooltip]="isSaved(msg.id) ? 'Unsave' : 'Save answer'"
                           tooltipPosition="top"
@@ -147,7 +147,7 @@ import { marked } from 'marked';
                         <!-- Copy button -->
                         <button
                           type="button"
-                          class="flex items-center justify-center w-7 h-7 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
+                          class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
                           (click)="copyToClipboard(msg.content)"
                           [pTooltip]="copiedId === msg.id ? 'Copied!' : 'Copy'"
                           tooltipPosition="top"
@@ -164,7 +164,7 @@ import { marked } from 'marked';
                     <div class="flex flex-wrap items-center gap-1.5 px-1">
                       <span class="text-[0.68rem] font-bold text-slate-400 tracking-widest uppercase mr-1">Sources</span>
                       @for (cite of msg.citations; track cite.documentId + cite.fileName) {
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-full text-slate-600 text-[0.72rem] font-medium max-w-40"
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-[0.72rem] font-medium max-w-40"
                              [pTooltip]="cite.fileName" tooltipPosition="top">
                           <i class="pi pi-file-pdf text-slate-400 text-[0.7rem] flex-none"></i>
                           <span class="truncate">{{ cite.fileName }}</span>
@@ -203,7 +203,7 @@ import { marked } from 'marked';
               <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-xs shadow-sm">
                 <i class="pi pi-sparkles"></i>
               </div>
-              <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white border border-slate-200 rounded-2xl rounded-bl-sm shadow-sm">
+              <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-sm shadow-sm">
                 <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce animate-delay-none"></span>
                 <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                 <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
@@ -229,17 +229,17 @@ import { marked } from 'marked';
         </div>
 
         <!-- Input Bar -->
-        <div class="p-4 md:p-6 bg-white border-t border-slate-200 flex-none">
-          <form class="flex items-end gap-3 p-2 bg-slate-50 border border-slate-200 rounded-2xl transition-all focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-100/50 shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
+        <div class="p-4 md:p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex-none">
+          <form class="flex items-end gap-3 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-2xl transition-all focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-100/50 shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
                 (ngSubmit)="onSubmit()">
             
-            <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors" title="Attach file">
+            <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Attach file">
               <i class="pi pi-paperclip"></i>
             </button>
 
             <textarea
               #textareaEl
-              class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-2.5 text-[0.95rem] text-slate-900 placeholder:text-slate-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
+              class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-2.5 text-[0.95rem] text-slate-900 dark:text-white placeholder:text-slate-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
               [(ngModel)]="question"
               name="question"
               rows="1"
@@ -260,8 +260,8 @@ import { marked } from 'marked';
             </button>
           </form>
           <p class="text-center text-[0.7rem] text-slate-400 mt-2 mb-0">
-            Press <kbd class="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[0.65rem] font-sans">Enter</kbd> to send · 
-            <kbd class="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[0.65rem] font-sans">Shift+Enter</kbd> for new line
+            Press <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[0.65rem] font-sans">Enter</kbd> to send · 
+            <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[0.65rem] font-sans">Shift+Enter</kbd> for new line
           </p>
         </div>
       }

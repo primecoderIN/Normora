@@ -86,10 +86,18 @@ public class GetDashboardSummaryQueryHandler(
             .Take(5)
             .ToListAsync(cancellationToken);
 
-        var docTypes = await documentsDb.Documents
-            .GroupBy(d => d.FileName.Substring(d.FileName.LastIndexOf(".") + 1))
-            .Select(g => new { Extension = g.Key, Count = g.Count() })
+        var fileNames = await documentsDb.Documents
+            .Select(d => d.FileName)
             .ToListAsync(cancellationToken);
+
+        var docTypes = fileNames
+            .GroupBy(f => 
+            {
+                var lastDot = f.LastIndexOf('.');
+                return lastDot >= 0 && lastDot < f.Length - 1 ? f.Substring(lastDot + 1) : "";
+            })
+            .Select(g => new { Extension = g.Key, Count = g.Count() })
+            .ToList();
 
         var colors = new[] { ("#6366f1", "#4f46e5"), ("#3b82f6", "#2563eb"), ("#10b981", "#059669"), ("#f59e0b", "#d97706"), ("#94a3b8", "#64748b") };
         var documentCoverage = docTypes.Select((d, index) => new DocumentCoverageDto

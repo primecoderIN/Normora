@@ -15,20 +15,20 @@
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <p class="text-[0.72rem] font-extrabold uppercase text-primary-600 m-0 mb-1">Workspace overview</p>
-        <h1 class="text-[1.75rem] leading-[1.15] text-slate-900 m-0 font-bold">Overview</h1>
+        <h1 class="text-[1.75rem] leading-[1.15] text-slate-900 dark:text-white m-0 font-bold">Overview</h1>
         @if (userService.currentUser(); as user) {
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Welcome back, {{ user.displayName }}. Here is the current state of your knowledge base.</p>
+          <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1.5">Welcome back, {{ user.displayName }}. Here is the current state of your knowledge base.</p>
         } @else {
-          <p class="text-[0.9rem] text-slate-500 m-0 mt-1.5">Here is the current state of your knowledge base.</p>
+          <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1.5">Here is the current state of your knowledge base.</p>
         }
       </div>
 
       <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
-        <label class="flex items-center gap-2 h-10 px-3 bg-white border border-slate-200 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
-          <i class="pi pi-search text-slate-500"></i>
-          <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none shadow-none outline-none p-0 text-slate-900 placeholder:text-slate-400" />
+        <label class="flex items-center gap-2 h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
+          <i class="pi pi-search text-slate-500 dark:text-slate-400"></i>
+          <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none shadow-none outline-none p-0 text-slate-900 dark:text-white placeholder:text-slate-400" />
         </label>
-        <p-button icon="pi pi-bell" styleClass="!w-10 !h-10 !p-0 flex items-center justify-center !bg-white !border-slate-200 !text-slate-500 hover:!bg-slate-50 transition-colors" ariaLabel="Notifications"></p-button>
+        <p-button icon="pi pi-bell" styleClass="!w-10 !h-10 !p-0 flex items-center justify-center !bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-500 dark:text-slate-400 hover:!bg-slate-50 dark:bg-slate-950 transition-colors" ariaLabel="Notifications"></p-button>
       </div>
     </header>
 
@@ -71,13 +71,13 @@
     </section>
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
-        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
-            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Document coverage</h2>
-            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Categories indexed for employee search.</p>
+            <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Document coverage</h2>
+            <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Categories indexed for employee search.</p>
           </div>
-          <p-button label="View all" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+          <p-button label="View all" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
         </div>
         <div class="relative h-62">
           <p-chart
@@ -87,29 +87,29 @@
             class="block w-full h-full">
           </p-chart>
           <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
-            <strong class="text-2xl text-slate-900 font-bold">{{ data.stats.totalDocuments }}</strong>
-            <span class="text-xs text-slate-500">Total</span>
+            <strong class="text-2xl text-slate-900 dark:text-white font-bold">{{ data.stats.totalDocuments }}</strong>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Total</span>
           </div>
         </div>
       </article>
 
-      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
-        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
-            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Recent documents</h2>
-            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Latest files added to the knowledge base.</p>
+            <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Recent documents</h2>
+            <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Latest files added to the knowledge base.</p>
           </div>
-          <p-button label="View all" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+          <p-button label="View all" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
         </div>
         <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
           @for (doc of data.recentDocuments; track doc.name) {
-            <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 transition-colors">
+            <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors">
               <div class="flex items-center justify-center flex-none w-9 h-9 bg-red-50 text-red-600 rounded-md text-[0.7rem] font-extrabold">{{ doc.type }}</div>
               <div class="grid flex-1 min-w-0">
-                <strong class="text-[0.875rem] text-slate-900 truncate font-bold">{{ doc.name }}</strong>
-                <span class="text-[0.75rem] text-slate-500">{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
+                <strong class="text-[0.875rem] text-slate-900 dark:text-white truncate font-bold">{{ doc.name }}</strong>
+                <span class="text-[0.75rem] text-slate-500 dark:text-slate-400">{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
               </div>
-              <span class="px-2 py-0.5 text-[0.72rem] font-bold rounded-md" [ngClass]="doc.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 text-slate-500 border border-slate-200'">
+              <span class="px-2 py-0.5 text-[0.72rem] font-bold rounded-md" [ngClass]="doc.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'">
                 {{ doc.status }}
               </span>
             </div>
@@ -119,32 +119,32 @@
     </section>
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
-        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
-            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Top questions</h2>
-            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Common employee asks this month.</p>
+            <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Top questions</h2>
+            <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Common employee asks this month.</p>
           </div>
-          <p-button label="Review" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+          <p-button label="Review" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
         </div>
         <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
           @for (q of data.topQuestions; track q.question) {
-            <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 transition-colors">
+            <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors">
               <i class="pi pi-question-circle text-slate-400"></i>
-              <span class="flex-1 text-[0.875rem] text-slate-900 truncate">{{ q.question }}</span>
+              <span class="flex-1 text-[0.875rem] text-slate-900 dark:text-white truncate">{{ q.question }}</span>
               <strong class="px-2 py-0.5 bg-primary-50 text-primary-600 text-[0.72rem] font-bold rounded-md">{{ q.count }}</strong>
             </div>
           }
         </div>
       </article>
 
-      <article class="bg-white border border-slate-200 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
-        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 -mx-4 px-4 -mt-4 pt-4">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+        <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
-            <h2 class="text-[0.95rem] text-slate-900 m-0 font-bold">Chat activity</h2>
-            <p class="text-[0.9rem] text-slate-500 m-0 mt-1">Employee question volume over the last 7 days.</p>
+            <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Chat activity</h2>
+            <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Employee question volume over the last 7 days.</p>
           </div>
-          <p-button label="Last 7 days" iconPos="right" icon="pi pi-chevron-down" styleClass="!bg-white !border-slate-200 !text-slate-700 hover:!bg-slate-50 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
+          <p-button label="Last 7 days" iconPos="right" icon="pi pi-chevron-down" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 !text-[0.78rem] font-bold !px-2.5 !py-1 !min-h-8 transition-colors"></p-button>
         </div>
         <div class="relative h-62">
           <p-chart
@@ -157,12 +157,19 @@
       </article>
     </section>
 
-    <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-lg p-4">
+    <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
       <div>
-        <strong class="text-slate-900 font-bold">{{ data.kbReview.title }}</strong>
-        <p class="text-[0.9rem] text-slate-500 m-0 mt-1">{{ data.kbReview.description }}</p>
+        <strong class="text-slate-900 dark:text-white font-bold">{{ data.kbReview.title }}</strong>
+        <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">{{ data.kbReview.description }}</p>
       </div>
       <p-button label="Review suggestions" styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 font-bold !px-3.5 !py-2 !min-h-10 whitespace-nowrap transition-colors"></p-button>
     </section>
+  </div>
+} @else {
+  <div class="flex flex-col items-center justify-center p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg min-h-[50vh]">
+    <i class="pi pi-exclamation-circle text-5xl text-slate-300 mb-4"></i>
+    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Failed to load dashboard</h2>
+    <p class="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">There was a problem retrieving your workspace overview data. This could be due to a network issue or a temporary server error.</p>
+    <p-button label="Try again" icon="pi pi-refresh" (onClick)="ngOnInit()" styleClass="!bg-white dark:bg-slate-900 !text-slate-700 dark:text-slate-200 !border-slate-300 hover:!bg-slate-50 dark:bg-slate-950"></p-button>
   </div>
 }

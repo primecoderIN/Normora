@@ -1,4 +1,4 @@
-<div class="flex flex-col md:flex-row h-screen bg-slate-50 text-slate-900 overflow-hidden">
+<div class="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden">
   <aside class="md:flex-none flex-col p-4 bg-slate-950 text-white transition-all duration-300 border-r border-white/10 hidden md:flex relative"
          [class.md:w-64]="isSidebarExpanded()" [class.md:w-20]="!isSidebarExpanded()" [class.items-center]="!isSidebarExpanded()">
     
@@ -137,7 +137,7 @@
           </div>
           <div class="flex gap-2">
             @for (invite of invites; track invite.token) {
-              <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-white text-primary-600 hover:bg-primary-50 text-xs font-bold rounded shadow-sm transition-colors disabled:opacity-50">
+              <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-white dark:bg-slate-900 text-primary-600 hover:bg-primary-50 text-xs font-bold rounded shadow-sm transition-colors disabled:opacity-50">
                 Join {{ invite.tenantName }}
               </button>
             }

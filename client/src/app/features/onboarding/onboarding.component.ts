@@ -60,7 +60,7 @@ import { InvitationService } from '@core/services/invitation.service';
         </div>
 
         <!-- Footer -->
-        <div class="relative z-10 text-xs text-slate-500">© 2026 Normora. All rights reserved.</div>
+        <div class="relative z-10 text-xs text-slate-500 dark:text-slate-400">© 2026 Normora. All rights reserved.</div>
       </div>
 
       <!-- Right content panel -->
@@ -69,33 +69,33 @@ import { InvitationService } from '@core/services/invitation.service';
         <!-- Mobile logo -->
         <div class="lg:hidden flex items-center gap-2 mb-8">
           <div class="flex items-center justify-center w-8 h-8 bg-primary-600 rounded-lg font-extrabold text-white">N</div>
-          <span class="font-extrabold text-slate-900">Normora</span>
+          <span class="font-extrabold text-slate-900 dark:text-white">Normora</span>
         </div>
 
         <div class="w-full max-w-md space-y-5 page-enter">
 
           <!-- Pending invitations card -->
           @if (pendingInvitations().length > 0) {
-            <div class="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 overflow-hidden">
               <div class="px-8 pt-8 pb-6">
                 <div class="flex items-center gap-3 mb-5">
                   <div class="flex items-center justify-center w-11 h-11 bg-primary-50 rounded-xl">
                     <i class="pi pi-envelope text-primary-600 text-lg"></i>
                   </div>
                   <div>
-                    <h2 class="text-lg font-bold text-slate-900 m-0">You've been invited!</h2>
-                    <p class="text-sm text-slate-500 m-0">Accept to join your team's workspace</p>
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">You've been invited!</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Accept to join your team's workspace</p>
                   </div>
                 </div>
 
                 <div class="space-y-2.5">
                   @for (invite of pendingInvitations(); track invite.token) {
-                    <div class="flex items-center justify-between gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl hover:border-primary-200 hover:bg-primary-50/30 transition-colors group">
+                    <div class="flex items-center justify-between gap-3 p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-200 hover:bg-primary-50/30 transition-colors group">
                       <div class="flex items-center gap-3 min-w-0">
-                        <div class="flex items-center justify-center flex-none w-9 h-9 bg-white border border-slate-200 rounded-lg shadow-sm">
-                          <i class="pi pi-building text-slate-500 text-sm"></i>
+                        <div class="flex items-center justify-center flex-none w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                          <i class="pi pi-building text-slate-500 dark:text-slate-400 text-sm"></i>
                         </div>
-                        <span class="font-semibold text-slate-900 text-sm truncate">{{ invite.tenantName }}</span>
+                        <span class="font-semibold text-slate-900 dark:text-white text-sm truncate">{{ invite.tenantName }}</span>
                       </div>
                       <button
                         type="button"
@@ -121,7 +121,7 @@ import { InvitationService } from '@core/services/invitation.service';
                 }
               </div>
 
-              <div class="px-8 py-4 bg-slate-50 border-t border-slate-100 text-center">
+              <div class="px-8 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center">
                 <button type="button" class="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors border-none bg-transparent cursor-pointer" (click)="showCreateForm.set(!showCreateForm())">
                   {{ showCreateForm() ? '← Hide workspace form' : 'Or create a new workspace →' }}
                 </button>
@@ -131,15 +131,15 @@ import { InvitationService } from '@core/services/invitation.service';
 
           <!-- Create workspace card -->
           @if (pendingInvitations().length === 0 || showCreateForm()) {
-            <div class="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 overflow-hidden">
               <div class="px-8 pt-8 pb-8">
                 <div class="flex items-center gap-3 mb-6">
                   <div class="flex items-center justify-center w-11 h-11 bg-primary-50 rounded-xl">
                     <i class="pi pi-building text-primary-600 text-lg"></i>
                   </div>
                   <div>
-                    <h2 class="text-lg font-bold text-slate-900 m-0">Create a workspace</h2>
-                    <p class="text-sm text-slate-500 m-0">Set up your organization in seconds</p>
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Create a workspace</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Set up your organization in seconds</p>
                   </div>
                 </div>
 
@@ -152,27 +152,27 @@ import { InvitationService } from '@core/services/invitation.service';
                   }
 
                   <div class="space-y-1.5">
-                    <label for="name" class="block text-sm font-semibold text-slate-700">Organization name</label>
+                    <label for="name" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Organization name</label>
                     <input
                       id="name"
                       type="text"
                       formControlName="name"
                       (input)="autoSlug()"
                       placeholder="Acme Corp"
-                      class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all"
+                      class="w-full h-11 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all"
                     />
                   </div>
 
                   <div class="space-y-1.5">
-                    <label for="slug" class="block text-sm font-semibold text-slate-700">Workspace URL</label>
-                    <div class="flex items-center h-11 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
-                      <span class="flex items-center h-full px-3 text-slate-400 text-sm border-r border-slate-200 bg-slate-100 whitespace-nowrap select-none">normora.com/</span>
+                    <label for="slug" class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Workspace URL</label>
+                    <div class="flex items-center h-11 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+                      <span class="flex items-center h-full px-3 text-slate-400 text-sm border-r border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 whitespace-nowrap select-none">normora.com/</span>
                       <input
                         id="slug"
                         type="text"
                         formControlName="slug"
                         placeholder="acme-corp"
-                        class="flex-1 h-full px-3 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 outline-none border-none"
+                        class="flex-1 h-full px-3 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none border-none"
                       />
                     </div>
                     <p class="text-xs text-slate-400">Use lowercase letters, numbers, and hyphens only.</p>
@@ -196,7 +196,7 @@ import { InvitationService } from '@core/services/invitation.service';
 
           <!-- Sign out -->
           <div class="text-center">
-            <button (click)="logout()" class="text-sm text-slate-400 hover:text-slate-700 transition-colors border-none bg-transparent cursor-pointer">
+            <button (click)="logout()" class="text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors border-none bg-transparent cursor-pointer">
               Sign out
             </button>
           </div>

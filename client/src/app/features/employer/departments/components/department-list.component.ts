@@ -15,28 +15,28 @@ import { Department } from '@core/services/department.service';
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm border-collapse">
         <thead>
-          <tr class="border-b border-slate-200">
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Department</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Description</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Employees</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Documents</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white">Created</th>
-            <th class="px-6 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wider bg-white w-16">Actions</th>
+          <tr class="border-b border-slate-200 dark:border-slate-700">
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Department</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Description</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Employees</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Documents</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900">Created</th>
+            <th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider bg-white dark:bg-slate-900 w-16">Actions</th>
           </tr>
         </thead>
         <tbody>
           @for (dept of departments(); track dept.id) {
-          <tr class="hover:bg-slate-50 transition-colors group border-b border-slate-100 last:border-0 bg-white">
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors group border-b border-slate-100 dark:border-slate-800 last:border-0 bg-white dark:bg-slate-900">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-3">
                 <div class="flex items-center justify-center flex-none w-9 h-9 rounded-lg font-bold text-base text-white"
                      [style.background-color]="getAvatarColor(dept.name)">
                   {{ dept.name.charAt(0).toUpperCase() }}
                 </div>
-                <span class="font-semibold text-slate-900">{{ dept.name }}</span>
+                <span class="font-semibold text-slate-900 dark:text-white">{{ dept.name }}</span>
               </div>
             </td>
-            <td class="px-6 py-4 text-slate-500">
+            <td class="px-6 py-4 text-slate-500 dark:text-slate-400">
               <span class="truncate block max-w-55">{{ dept.description || '—' }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
@@ -49,13 +49,13 @@ import { Department } from '@core/services/department.service';
                 0 documents
               </span>
             </td>
-            <td class="px-6 py-4 text-slate-500 whitespace-nowrap text-sm">
+            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 whitespace-nowrap text-sm">
               {{ dept.createdAt | date:'MMM dd, yyyy' }}
             </td>
             <td class="px-6 py-4">
               <button
                 type="button"
-                class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                 (click)="openMenu($event, dept)"
               >
                 <i class="pi pi-ellipsis-v text-sm"></i>
@@ -64,7 +64,7 @@ import { Department } from '@core/services/department.service';
           </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm bg-white border-t border-slate-100">
+              <td colspan="6" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
                 No departments found.
               </td>
             </tr>
