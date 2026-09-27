@@ -33,6 +33,10 @@ jobs:
         cp client/src/environments/environment.template.ts client/src/environments/environment.ts
         cp client/src/environments/environment.template.ts client/src/environments/environment.prod.ts
         
+        # Temporarily enable Direct Access Grants for Keycloak clients in CI so we can programmatically fetch a token via curl
+        sed -i 's/"directAccessGrantsEnabled":  false/"directAccessGrantsEnabled": true/g' infrastructure/keycloak/realm-export.json
+        sed -i 's/"directAccessGrantsEnabled": false/"directAccessGrantsEnabled": true/g' infrastructure/keycloak/realm-export.json
+        
         # Start the stack
         docker compose up -d
 
