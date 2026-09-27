@@ -3,14 +3,14 @@
     <#if section = "header">
         <div class="flex flex-col items-center mb-8">
             <div class="flex items-center space-x-2 mb-1">
-                <div class="w-8 h-8 bg-normora-color-600 rounded flex items-center justify-center text-white font-bold text-lg">N</div>
+                <div class="w-8 h-8 bg-normora-color-600 rounded flex items-center justify-center text-white font-bold text-lg">${(realm.displayName?substring(0,1))!'C'}</div>
                 <div class="flex flex-col leading-none">
-                    <span class="font-bold text-xl text-slate-900 tracking-tight">Normora</span>
+                    <span class="font-bold text-xl text-slate-900 tracking-tight">${realm.displayName!'Company'}</span>
                     <span class="text-[10px] text-slate-500 font-medium tracking-wide">Knowledge for a smarter tomorrow</span>
                 </div>
             </div>
         </div>
-        <h1 class="text-3xl font-bold text-slate-900 text-center mb-2">Welcome to Normora</h1>
+        <h1 class="text-3xl font-bold text-slate-900 text-center mb-2">Welcome to ${realm.displayName!'Company'}</h1>
         <p class="text-slate-500 text-center text-sm mb-8">Sign in to continue to your workspace.</p>
     <#elseif section = "form">
         <div id="kc-form" class="w-full">
@@ -89,7 +89,7 @@
     <#elseif section = "info" >
         <#if realm.password && realm.registrationAllowed && !registrationDisabled??>
             <div id="kc-registration" class="mt-8 text-center text-sm text-slate-500 font-medium">
-                New to Normora? <a tabindex="6" href="${url.registrationUrl}" class="font-semibold text-normora-color-600 hover:text-normora-color-500 transition">Create an account</a>
+                New to ${realm.displayName!'our company'}? <a tabindex="6" href="${url.registrationUrl}" class="font-semibold text-normora-color-600 hover:text-normora-color-500 transition">Create an account</a>
             </div>
         </#if>
     </#if>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${msg("loginTitle",(realm.displayName!''))}</title>
+    <title>${realm.displayName!'Login'}</title>
     
     <#if properties.meta?has_content>
         <#list properties.meta?split(' ') as meta>
@@ -78,7 +78,7 @@
                 <span>|</span>
                 <a href="#" class="hover:text-slate-800 transition">Help</a>
             </div>
-            <p>© 2026 Normora. All rights reserved.</p>
+            <p>© 2026 ${realm.displayName!'Company'}. All rights reserved.</p>
         </footer>
     </div>
 </body>
