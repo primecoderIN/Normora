@@ -32,6 +32,10 @@ jobs:
         echo "DB_PASSWORD=password" >> .env
         echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
         
+        # Generate missing Angular environments that are ignored in Git
+        cp client/src/environments/environment.template.ts client/src/environments/environment.ts
+        cp client/src/environments/environment.template.ts client/src/environments/environment.prod.ts
+        
         # Start the stack
         docker compose up -d
 

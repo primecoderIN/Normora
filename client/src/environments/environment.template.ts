@@ -4,4 +4,5 @@
 export const environment = {
   production: false, // set to true in environment.prod.ts
   primeNgLicense: '', // paste your PrimeNG license key here
+  apiUrl: '', // empty string when using BFF
 };
