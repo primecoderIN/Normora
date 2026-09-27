@@ -3,6 +3,7 @@ using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Interfaces;
 using Pgvector.EntityFrameworkCore;
 using Pgvector;
+using Normora.Api.Features.Documents;
 
 namespace Normora.Api.Features.Ask;
 
