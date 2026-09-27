@@ -7,6 +7,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { NotificationRealtimeService } from './core/services/notification-realtime.service';
 import { TenantRoles } from './core/constants/tenant-roles';
+import { AppRoutes } from '@core/constants/app-routes';
 
 // This is the Root Component of our Angular application. 
 // Think of it as the main container that holds everything else.
@@ -48,9 +49,8 @@ export class App implements OnInit {
 
         const currentPath = window.location.pathname;
         const isAuthRoute =
-          currentPath === '/' ||
-          currentPath.startsWith('/auth/login') ||
-          currentPath.startsWith('/auth/callback') ||
+          currentPath === AppRoutes.Login ||
+          currentPath.startsWith(AppRoutes.AuthCallback) ||
           currentPath.startsWith('/signin-oidc');
 
         if (isAuthRoute || !this.userService.currentUser()) {
@@ -75,13 +75,13 @@ export class App implements OnInit {
               const pendingToken = localStorage.getItem('pending_invitation');
               if (pendingToken) {
                 this.authInitializing.set(false);
-                this.router.navigate(['/accept-invite'], { queryParams: { token: pendingToken } });
+                this.router.navigate([AppRoutes.AcceptInvite], { queryParams: { token: pendingToken } });
                 return;
               }
 
               if (memberships.length === 0) {
                 this.authInitializing.set(false);
-                this.router.navigate(['/onboarding']);
+                this.router.navigate([AppRoutes.Onboarding]);
                 return;
               }
 
@@ -89,7 +89,7 @@ export class App implements OnInit {
               const defaultMembership = memberships.find(m => !m.isPersonal) || memberships[0];
               const tenantSlug = defaultMembership.tenantSlug;
               const isAdmin = defaultMembership.role === TenantRoles.Admin;
-              const targetPath = isAdmin ? '/employer/dashboard' : '/employee/conversations';
+              const targetPath = isAdmin ? AppRoutes.EmployerDashboard : AppRoutes.EmployeeConversations;
 
               // Route user to their workspace
               if (tenantSlug) {
@@ -97,7 +97,7 @@ export class App implements OnInit {
                 this.brandingService.applyBrandingForSlug(tenantSlug).subscribe();
                 
                 // Navigate to the workspace path
-                const fullPath = `/app/workspaces/${tenantSlug}${targetPath}`;
+                const fullPath = isAdmin ? AppRoutes.WorkspaceEmployerDashboard(tenantSlug) : AppRoutes.WorkspaceEmployeeConversations(tenantSlug);
                 this.authInitializing.set(false);
                 this.router.navigateByUrl(fullPath);
               } else {
@@ -115,10 +115,10 @@ export class App implements OnInit {
         } else {
           this.authInitializing.set(false);
         }
-      } else if (window.location.pathname.startsWith('/auth/callback') || window.location.pathname.startsWith('/signin-oidc')) {
+      } else if (window.location.pathname.startsWith(AppRoutes.AuthCallback) || window.location.pathname.startsWith('/signin-oidc')) {
         this.authStatus.set('Sign-in could not be completed. Returning to sign in...');
         this.authInitializing.set(false);
-        this.router.navigate(['/auth/login']);
+        this.router.navigate([AppRoutes.Login]);
       } else {
         this.authInitializing.set(false);
       }
@@ -126,7 +126,7 @@ export class App implements OnInit {
       error: () => {
         this.authStatus.set('Sign-in could not be completed. Returning to sign in...');
         this.authInitializing.set(false);
-        this.router.navigate(['/auth/login']);
+        this.router.navigate([AppRoutes.Login]);
       }
     });
 

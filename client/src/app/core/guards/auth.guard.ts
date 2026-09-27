@@ -1,3 +1,4 @@
+import { AppRoutes } from '@core/constants/app-routes';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -15,7 +16,7 @@ export const authGuard: CanActivateFn = () => {
       if (isAuthenticated) {
         return true;
       }
-      return router.createUrlTree(['/auth/login']);
+      return router.createUrlTree([AppRoutes.Login]);
     })
   );
 };

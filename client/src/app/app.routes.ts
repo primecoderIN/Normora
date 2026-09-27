@@ -7,16 +7,12 @@ export const routes: Routes = [
   // Public vs Protected routes: Login and callbacks are public, but all workspace views are strictly protected by our Auth and Role guards
   {
     path: '',
-    redirectTo: 'auth/login',
+    loadComponent: () => import('./features/auth/login/login').then(m => m.Login),
     pathMatch: 'full'
   },
   {
     path: 'auth',
     children: [
-      {
-        path: 'login',
-        loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
-      },
       {
         // Dedicated OAuth callback route where Keycloak redirects with the authorization code so we can exchange it for a session token
         // The AuthCallback component handles the token exchange and navigates to the dashboard.
@@ -123,6 +119,6 @@ export const routes: Routes = [
   // Wildcard — redirect unknown URLs to login instead of blank screen
   {
     path: '**',
-    redirectTo: 'auth/login'
+    redirectTo: ''
   }
 ];

@@ -1,3 +1,4 @@
+import { AppRoutes } from '@core/constants/app-routes';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -17,7 +18,7 @@ export const rootGuard: CanActivateFn = () => {
     take(1),
     switchMap((isAuthenticated) => {
       if (!isAuthenticated) {
-        return of(router.createUrlTree(['/auth/login']));
+        return of(router.createUrlTree([AppRoutes.Login]));
       }
 
       // Ensure the user's local database profile is created/synced on their very first login via the backend API
@@ -25,7 +26,7 @@ export const rootGuard: CanActivateFn = () => {
         map(response => {
           if (!response.success || !response.data) {
             // Backend issue or user not found at all
-            return router.createUrlTree(['/auth/login']);
+            return router.createUrlTree([AppRoutes.Login]);
           }
 
           const memberships = response.data.memberships;

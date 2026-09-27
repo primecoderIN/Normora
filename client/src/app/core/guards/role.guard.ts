@@ -1,3 +1,4 @@
+import { AppRoutes } from '@core/constants/app-routes';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -17,7 +18,7 @@ export const roleGuard: CanActivateFn = (route) => {
   const currentUser = userService.currentUser();
 
   const validateRole = (user: any) => {
-    if (!user) return router.createUrlTree(['/auth/login']);
+    if (!user) return router.createUrlTree([AppRoutes.Login]);
     
     const hasRole = user.memberships.some((m: any) => {
       const effectiveRole = m.role?.toLowerCase() === 'admin' ? 'employer' : 'employee';
@@ -29,7 +30,7 @@ export const roleGuard: CanActivateFn = (route) => {
     // SEC-11: User is authenticated but lacks the required role — redirect to a
     // meaningful access-denied page instead of the confusing login screen.
     console.warn(`Access denied. Missing role: ${requiredRole}`);
-    return router.createUrlTree(['/access-denied']);
+    return router.createUrlTree([AppRoutes.AccessDenied]);
   };
 
   if (currentUser) {

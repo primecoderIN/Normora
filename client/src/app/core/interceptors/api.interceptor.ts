@@ -1,3 +1,4 @@
+import { AppRoutes } from '@core/constants/app-routes';
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
@@ -27,7 +28,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
       switch (error.status) {
         case 401:
           // Session expired or unauthenticated — redirect to login
-          router.navigate(['/auth/login']);
+          router.navigate([AppRoutes.Login]);
           break;
 
         case 403:
