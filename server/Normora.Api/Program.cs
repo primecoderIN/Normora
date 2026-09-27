@@ -12,6 +12,12 @@ using Duende.Bff;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Prevent Kestrel from broadcasting "Server: Kestrel" in HTTP response headers
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.AddServerHeader = false;
+});
+
 // 1. Dependency Injection Configuration
 // Separated into extension methods by architectural layer to keep Program.cs clean.
 builder.Services.AddConfigurationServices(builder.Configuration); // Options pattern and typed configs
