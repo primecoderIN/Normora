@@ -57,6 +57,7 @@ jobs:
       with:
         target: 'http://localhost:5000/openapi/v1.json'
         format: openapi
+        rules_file_name: '.zap/rules.tsv'
         fail_action: false
         artifact_name: 'zap_scan_backend'
         create_issue: false

@@ -23,6 +23,13 @@ builder.Services.AddNormoraTelemetry(builder.Environment);   // OpenTelemetry Tr
 
 var app = builder.Build();
 
+// Add missing HTTP security headers for backend API responses (OWASP ZAP Remediations)
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    await next();
+});
+
 // 2. HTTP Request Pipeline Configuration
 
 if (app.Environment.IsDevelopment())
