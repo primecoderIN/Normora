@@ -116,9 +116,9 @@ export const routes: Routes = [
       }
     ]
   },
-  // Wildcard — redirect unknown URLs to login instead of blank screen
+  // Wildcard — render a premium 404 page for unknown URLs
   {
     path: '**',
-    redirectTo: ''
+    loadComponent: () => import('./features/not-found/not-found.component').then(m => m.NotFoundComponent)
   }
 ];
