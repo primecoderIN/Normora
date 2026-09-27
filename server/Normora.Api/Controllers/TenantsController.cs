@@ -122,8 +122,11 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         }
         catch (Exception ex)
         {
-            // SEC-6: Log storage errors instead of swallowing them silently
-            logger.LogError(ex, "Failed to serve branding asset '{AssetType}' for slug '{Slug}'", assetType, slug);
+            // SEC-6: Log storage errors instead of swallowing them silently.
+            // Sanitize inputs to prevent Log Forging (CRLF injection) flagged by SAST.
+            var safeSlug = slug.Replace("\r", "").Replace("\n", "");
+            var safeAssetType = assetType.Replace("\r", "").Replace("\n", "");
+            logger.LogError(ex, "Failed to serve branding asset '{AssetType}' for slug '{Slug}'", safeAssetType, safeSlug);
             return NotFound();
         }
     }
