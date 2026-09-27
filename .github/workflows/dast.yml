@@ -50,6 +50,7 @@ jobs:
         target: 'http://localhost:4200'
         rules_file_name: '.zap/rules.tsv'
         cmd_options: '-a'
+        artifact_name: 'zap_scan_frontend'
         fail_action: false # Prevent the build from failing on low/medium alerts initially
       continue-on-error: true
 
@@ -82,6 +83,7 @@ jobs:
         target: 'http://localhost:5000/openapi/v1.json'
         format: openapi
         fail_action: false
+        artifact_name: 'zap_scan_backend'
         cmd_options: '-a -z "-config replacer.full_list(0).description=auth1 -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstring=Authorization -config replacer.full_list(0).replacement=\"${{ env.ZAP_AUTH_HEADER }}\""'
       continue-on-error: true
 
