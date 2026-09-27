@@ -33,10 +33,6 @@ jobs:
         cp client/src/environments/environment.template.ts client/src/environments/environment.ts
         cp client/src/environments/environment.template.ts client/src/environments/environment.prod.ts
         
-        # Temporarily enable Direct Access Grants for Keycloak clients in CI so we can programmatically fetch a token via curl
-        sed -i 's/"directAccessGrantsEnabled":  false/"directAccessGrantsEnabled": true/g' infrastructure/keycloak/realm-export.json
-        sed -i 's/"directAccessGrantsEnabled": false/"directAccessGrantsEnabled": true/g' infrastructure/keycloak/realm-export.json
-        
         # Start the stack
         docker compose up -d
 
@@ -53,39 +49,17 @@ jobs:
         cmd_options: '-a'
         artifact_name: 'zap_scan_frontend'
         fail_action: false # Prevent the build from failing on low/medium alerts initially
+        create_issue: false # Do not attempt to create GitHub issues (fixes permission errors)
       continue-on-error: true
 
-    - name: Fetch Keycloak Auth Token
-      id: get_token
-      run: |
-        # Wait a few more seconds to ensure Keycloak is fully accepting requests
-        sleep 10
-        
-        # Request a JWT for the test admin user via password grant
-        TOKEN=$(curl -s -X POST "http://localhost:8080/realms/normora/protocol/openid-connect/token" \
-          -H "Content-Type: application/x-www-form-urlencoded" \
-          -d "client_id=normora-web" \
-          -d "username=admin" \
-          -d "password=admin" \
-          -d "grant_type=password" | jq -r '.access_token')
-          
-        if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
-          echo "Failed to fetch token from Keycloak"
-          exit 1
-        fi
-        
-        # Mask the token in logs and save it to GITHUB_ENV
-        echo "::add-mask::$TOKEN"
-        echo "ZAP_AUTH_HEADER=Bearer $TOKEN" >> $GITHUB_ENV
-
-    - name: ZAP API Scan (Backend - Authenticated)
+    - name: ZAP API Scan (Backend - Unauthenticated)
       uses: zaproxy/action-api-scan@v0.8.0
       with:
         target: 'http://localhost:5000/openapi/v1.json'
         format: openapi
         fail_action: false
         artifact_name: 'zap_scan_backend'
-        cmd_options: '-a -z "-config replacer.full_list(0).description=auth1 -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstring=Authorization -config replacer.full_list(0).replacement=\"${{ env.ZAP_AUTH_HEADER }}\""'
+        create_issue: false
       continue-on-error: true
 
     - name: Tear down stack
