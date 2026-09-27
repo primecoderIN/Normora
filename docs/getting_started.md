@@ -17,7 +17,8 @@ We have configured the entire stack to run locally using Docker Compose. This in
    .\start.ps1
    ```
    *This script will automatically generate a `.env` file with default credentials and start all containers in the background.*
-3. **Wait for builds**: The first time you run this, Docker will build the .NET API and the Angular client. This might take a few minutes.
+3. **Configure Gemini API Key**: To use the Conversational AI features, open the newly generated `.env` file and set your `GEMINI_API_KEY`. Then, restart the environment.
+4. **Wait for builds**: The first time you run this, Docker will build the .NET API and the Angular client. This might take a few minutes.
 
 ## Accessing the Application
 

@@ -58,6 +58,9 @@ Starting the whole stack locally is incredibly simple:
 ```
 *(This script will automatically generate a `.env` file with defaults, pull necessary images, and build the .NET API & Angular client).*
 
+> [!IMPORTANT]  
+> **LLM Features Requirement:** To use the Conversational AI and Retrieval-Augmented Generation (RAG) features, you must provide a Google Gemini API Key. After running the start script for the first time, open the generated `.env` file in the root directory and update the `GEMINI_API_KEY` value, then restart the application.
+
 To gracefully stop the environment without destroying your data volumes:
 ```powershell
 .\stop.ps1

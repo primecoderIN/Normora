@@ -82,6 +82,8 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] **Secrets Management**: Removed `realm-export-live.json` from git tracking to prevent leaking production secrets.
 
 ## ✅ Bug Fixes & UI Stabilization
+- [x] **Dark/Light Mode Contrast**: Configured PrimeNG to respond to the `.app-dark` selector. Injected Tailwind `dark:` variants across all HTML and inline templates. Fixed invalid dynamic class bindings in Angular components (`[class.x]`) that broke text visibility, and correctly structured pseudo-classes (`dark:hover:`) to prevent light-mode hover colors from overriding dark mode states.
+- [x] **Dashboard Summary Translation Error**: Refactored the `GetDashboardSummary` EF Core query to fetch filenames into memory, bypassing backend SQL translation limits (`Substring`/`LastIndexOf`) that caused 500 Server Errors.
 - [x] **PrimeNG Rendering Bug**: Reverted `DocumentListComponent`, `DepartmentListComponent`, and `UserGroupListComponent` from `<p-table>` to native HTML `<table>` elements with Angular's `@for` block to resolve persistent `PrimeTemplate` module import and view rendering errors in Angular 18 standalone components.
 - [x] **Missing Animations**: Added `@angular/animations` and configured `provideAnimationsAsync()` in `app.config.ts` to satisfy PrimeNG dependencies.
 - [x] **Document Upload Interception**: Bypassed PrimeNG's `p-fileupload` inability to use Angular HttpInterceptors by explicitly setting `withCredentials: true` and the `X-Tenant-Id` header on the `onBeforeSend` event, fixing 401 Unauthorized errors during uploads.

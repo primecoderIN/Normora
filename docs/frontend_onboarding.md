@@ -9,7 +9,7 @@ This guide is for developers working on the **Normora Angular SPA** (`client/`).
 | Concern | Technology |
 |---|---|
 | Framework | Angular 18 |
-| Styling | Tailwind CSS (v3) + CSS Custom Properties |
+| Styling | Tailwind CSS (v4) + PrimeNG Aura Theme (Hybrid Dark Mode) |
 | HTTP Client | `HttpClient` |
 | State Management | Signals + RxJS (for async streams) |
 | Identity & Auth | Keycloak + Duende.BFF |
@@ -17,7 +17,16 @@ This guide is for developers working on the **Normora Angular SPA** (`client/`).
 
 ---
 
-## 1. Application Structure
+## 1. Dark Mode & Theming
+
+Normora uses a synchronized hybrid approach for theming:
+- **PrimeNG Configuration**: The Aura theme is configured in `app.config.ts` with `darkModeSelector: '.app-dark'`.
+- **Tailwind v4**: Configured in `styles.css` using `@custom-variant dark (&:where(.app-dark, .app-dark *));`.
+- **Toggle Mechanism**: The `ThemeService` toggles the `.app-dark` class on the root `<html>` element. Both PrimeNG components and Tailwind `dark:` utility classes (e.g., `dark:bg-slate-900`) respond simultaneously to this single class, ensuring seamless layout and component transitions. When using dynamic class bindings, ensure you use `[class.dark:hover:bg-slate-800]="..."` correctly without spaces inside a single `[class.x]` binding.
+
+---
+
+## 2. Application Structure
 
 The application follows a strictly modular structure, separating core logic from features.
 
@@ -34,7 +43,7 @@ client/src/app/
 
 ---
 
-## 2. Multi-Tenant Routing & Workspaces
+## 3. Multi-Tenant Routing & Workspaces
 
 Normora uses **Path-based Workspace Routing** to visually isolate tenant workspaces.
 
@@ -51,7 +60,7 @@ When a user logs in, the `AuthService` determines their memberships:
 
 ---
 
-## 3. State Management (Signals & RxJS)
+## 4. State Management (Signals & RxJS)
 
 We use **Angular Signals** for synchronous UI state and **RxJS** for complex asynchronous data flows (like WebSocket connections and HTTP requests).
 
@@ -76,7 +85,7 @@ export class DepartmentListComponent {
 
 ---
 
-## 4. Realtime Events (SignalR)
+## 5. Realtime Events (SignalR)
 
 Document processing states (`Uploaded`, `Processing`, `Ready`, `Failed`) are broadcasted in real-time to employers via SignalR.
 
@@ -86,7 +95,7 @@ Document processing states (`Uploaded`, `Processing`, `Ready`, `Failed`) are bro
 
 ---
 
-## 5. Adding a New Feature
+## 6. Adding a New Feature
 
 1. **Create the Models**: Add your TypeScript interfaces in `shared/models/`.
 2. **Create the Service**: Add a service in `core/services/` that extends the base API logic.
