@@ -25,6 +25,7 @@ public interface ITextGenerationService
         string question,
         IReadOnlyList<AskSource> sources,
         IReadOnlyList<ConversationTurn> history,
+        string companyName,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -35,6 +36,7 @@ public interface ITextGenerationService
         string question,
         IReadOnlyList<AskSource> sources,
         IReadOnlyList<ConversationTurn> history,
+        string companyName,
         CancellationToken cancellationToken = default);
 
     /// <summary>

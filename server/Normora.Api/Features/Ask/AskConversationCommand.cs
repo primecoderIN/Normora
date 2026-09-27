@@ -135,6 +135,7 @@ public sealed class AskConversationCommandHandler(
             .ToListAsync(cancellationToken);
             
         var personalTenantId = userMemberships.FirstOrDefault(m => m.Tenant.IsPersonal)?.TenantId;
+        var activeTenantName = userMemberships.FirstOrDefault(m => m.TenantId == tenantContext.TenantId)?.Tenant.Name ?? "your organization";
 
         var (topCandidates, vectorSimOfFirst) =
             await retrievalService.RunHybridRetrievalAsync(rewrittenQuestion, limit, personalTenantId, cancellationToken);
@@ -158,7 +159,7 @@ public sealed class AskConversationCommandHandler(
             var historyTurns = AskHelpers.BuildConversationTurns(budgetedHistory);
 
             answerText = await generationService.GenerateConversationalAnswerAsync(
-                rewrittenQuestion, sources, historyTurns, cancellationToken);
+                rewrittenQuestion, sources, historyTurns, activeTenantName, cancellationToken);
 
             // ── 7a. Build citations ───────────────────────────────────────────
             citations = topCandidates.Select((c, idx) => new MessageCitation

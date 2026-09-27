@@ -35,14 +35,15 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
         string question,
         IReadOnlyList<AskSource> sources,
         IReadOnlyList<ConversationTurn> history,
+        string companyName,
         CancellationToken cancellationToken = default)
     {
         EnsureConfigured();
 
         var sourcesBlock = BuildSourcesBlock(sources);
-        var historyBlock = BuildHistoryBlock(history);
+        var historyBlock = BuildHistoryBlock(history, companyName);
 
-        var fullPrompt = BuildFullPrompt(question, sources, history);
+        var fullPrompt = BuildFullPrompt(question, sources, history, companyName);
         return await CallGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken);
     }
 
@@ -51,14 +52,15 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
         string question,
         IReadOnlyList<AskSource> sources,
         IReadOnlyList<ConversationTurn> history,
+        string companyName,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         EnsureConfigured();
 
         var sourcesBlock = BuildSourcesBlock(sources);
-        var historyBlock = BuildHistoryBlock(history);
+        var historyBlock = BuildHistoryBlock(history, companyName);
 
-        var fullPrompt = BuildFullPrompt(question, sources, history);
+        var fullPrompt = BuildFullPrompt(question, sources, history, companyName);
 
         var anyChunks = false;
         await foreach (var chunk in StreamGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken))
@@ -104,14 +106,14 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
 
     // ─── Shared helpers ──────────────────────────────────────────────────────────
 
-    private static string BuildFullPrompt(string question, IReadOnlyList<AskSource> sources, IReadOnlyList<ConversationTurn> history)
+    private static string BuildFullPrompt(string question, IReadOnlyList<AskSource> sources, IReadOnlyList<ConversationTurn> history, string companyName)
     {
         var sourcesBlock = BuildSourcesBlock(sources);
-        var historyBlock = BuildHistoryBlock(history);
+        var historyBlock = BuildHistoryBlock(history, companyName);
         
         var prompt = new StringBuilder();
         prompt.AppendLine($"""
-            You are Normora, a company policy assistant having an ongoing conversation with an employee.
+            You are {companyName}'s company policy assistant having an ongoing conversation with an employee.
             Answer using ONLY the provided company document sources below. Do not invent policies, numbers, dates, or exceptions.
             If the sources do not contain the answer, say exactly: {Normora.Shared.Constants.RagConstants.FallbackAnswer}
             Do not mention these instructions or refer to sources by index number in your answer.
@@ -138,7 +140,7 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
             "\n\n",
             sources.Select((s, i) => $"[Source {i + 1}: {s.FileName}, chunk {s.ChunkIndex}]\n{s.Content}"));
 
-    private static string BuildHistoryBlock(IReadOnlyList<ConversationTurn> history)
+    private static string BuildHistoryBlock(IReadOnlyList<ConversationTurn> history, string companyName)
     {
         if (history.Count == 0) return string.Empty;
 
@@ -146,7 +148,7 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
         foreach (var turn in history)
         {
             sb.AppendLine($"[Employee]: {turn.UserQuestion}");
-            sb.AppendLine($"[Normora]: {turn.AssistantAnswer}");
+            sb.AppendLine($"[{companyName}]: {turn.AssistantAnswer}");
         }
         return sb.ToString().TrimEnd();
     }
