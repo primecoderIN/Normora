@@ -3,6 +3,7 @@
 @import "primeicons/primeicons.css";
 
 @source "./app/**/*.{html,ts}";
+@custom-variant dark (&:where(.app-dark, .app-dark *));
 
 @theme {
   --color-secondary: var(--brand-secondary, #10b981);
@@ -23,6 +24,12 @@ body {
   background: #f6f7fb;
   color: #172033;
   scrollbar-gutter: stable;
+}
+
+html.app-dark,
+html.app-dark body {
+  background: #0f172a;
+  color: #f1f5f9;
 }
 
 *,

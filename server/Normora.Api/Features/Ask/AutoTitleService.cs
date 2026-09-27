@@ -29,6 +29,7 @@ public sealed class AutoTitleService(
                 if (string.IsNullOrWhiteSpace(title)) return;
 
                 var conv = await db.Conversations
+                    .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(c => c.Id == conversationId);
                 if (conv is null || conv.Title != ConversationConstants.DefaultTitle) return;
 
