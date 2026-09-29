@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, HostListener, ElementRef } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TooltipModule } from 'primeng/tooltip';
@@ -202,6 +202,14 @@ interface ExportOption {
                 </div>
               </div>
 
+              <!-- Export error inline callout -->
+              @if (exportError() === answer.id) {
+                <div class="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-950/40 border-b border-red-100 dark:border-red-900 text-red-600 dark:text-red-400 text-xs font-medium">
+                  <i class="pi pi-exclamation-circle text-xs flex-none"></i>
+                  <span>Export failed. Please try again.</span>
+                </div>
+              }
+
               <!-- Answer Content -->
               <div class="flex-1 px-5 py-4 prose-normora text-[0.875rem] leading-relaxed text-slate-800 dark:text-slate-100 overflow-hidden max-h-48 relative">
                 <div [innerHTML]="renderMarkdown(answer.content)"></div>
@@ -256,7 +264,6 @@ interface ExportOption {
 })
 export class SavedAnswers implements OnInit {
   private savedAnswerService = inject(SavedAnswerService);
-  private elementRef = inject(ElementRef);
 
   savedAnswers = signal<SavedAnswerDto[]>([]);
   isLoading = signal(false);
@@ -264,6 +271,8 @@ export class SavedAnswers implements OnInit {
   error = signal('');
   openExportMenuId = signal<string | null>(null);
   exportingId = signal<string | null>(null);
+  exportError = signal<string | null>(null);
+  private exportErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
   private limit = 20;
   private offset = 0;
@@ -344,10 +353,17 @@ export class SavedAnswers implements OnInit {
 
     this.openExportMenuId.set(null);
     this.exportingId.set(answer.id);
+    this.exportError.set(null);
 
     this.savedAnswerService.exportAnswer(answer.id, format).subscribe({
       next: () => this.exportingId.set(null),
-      error: () => this.exportingId.set(null),
+      error: () => {
+        this.exportingId.set(null);
+        this.exportError.set(answer.id);
+        // Auto-clear the error callout after 4 seconds.
+        if (this.exportErrorTimer) clearTimeout(this.exportErrorTimer);
+        this.exportErrorTimer = setTimeout(() => this.exportError.set(null), 4000);
+      },
     });
   }
 
