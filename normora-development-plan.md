@@ -1329,6 +1329,497 @@ These are extension points, not MVP requirements.
 
 Normora should remain a focused employer document-management experience plus a trustworthy employee knowledge-assistant experience, while the architecture provides enough depth to learn production-grade software engineering.
 
+## 38. Future Features Backlog
+
+This section documents identified feature gaps and future capabilities for Normora. Items here are beyond the current MVP but have been analysed for feasibility and architectural fit. They are organised by area and roughly prioritised within each group.
+
+> **Status legend:**
+> - 🔲 Not started — no code exists
+> - 📋 Partially planned — mentioned elsewhere in this document but not yet designed in detail
+> - ✅ Complete — tracked in `progress_tracker.md`
+
+---
+
+### 38.1 Employee Experience
+
+#### 38.1.1 Export Answers 📋
+**Status:** Architecture described in §24. Backend `Exports` module listed in §5. Not yet implemented.
+
+Export a saved answer (or any AI response) to a portable format so employees can file it, share it, or attach it to a ticket.
+
+**Formats to support:**
+```text
+MarkdownAnswerExporter   → .md file download
+PdfAnswerExporter        → .pdf via a server-side PDF library (e.g. QuestPDF)
+DocxAnswerExporter       → .docx via Open XML SDK
+```
+
+**Export payload must include:**
+- Original question
+- Full AI answer (markdown rendered)
+- All citations with document name, section, and relevance score
+- Export date and employee name
+- Tenant branding (logo, colors) where format supports it
+
+**Backend:** `IAnswerExporter` abstraction in the `Exports` module. Hangfire background job for heavy PDF/DOCX generation. Signed MinIO pre-signed URL returned to client on completion.
+
+**Frontend:** "Export" button on each answer card in the Saved Answers page. A dropdown: `Download as PDF`, `Download as Markdown`. Poll or SignalR notification when the export job is ready.
+
+**Security:** Never include internal system prompts, raw chunk text beyond the cited excerpt, or Gemini API keys in the export payload.
+
+---
+
+#### 38.1.2 Answer Feedback / Rating 🔲
+**Status:** Not documented or started.
+
+Allow employees to rate AI responses (👍 / 👎) directly from the chat interface. This data drives RAG quality visibility for employers and future re-training.
+
+**Domain entity:**
+```text
+MessageFeedback
+├── Id
+├── TenantId
+├── UserId
+├── MessageId          → FK → conversations.Messages.Id
+├── Rating             → Enum: Positive, Negative
+├── Comment            → nvarchar(500), nullable
+└── CreatedAt
+```
+
+**Constraints:**
+- One feedback record per `(UserId, MessageId)` — unique index.
+- Only assistant messages can receive feedback.
+- Feedback is immutable after 24 hours (or allow update — decide at implementation time).
+
+**Backend:** `SubmitFeedbackCommand` in the `Conversations` module. Expose via `POST /api/conversations/{id}/messages/{messageId}/feedback`.
+
+**Frontend:** Thumbs-up / thumbs-down icon pair below each assistant message bubble. Optimistic toggle, same UX pattern as the existing bookmark button.
+
+**Employer visibility:** Aggregate rating data can surface in the Analytics Dashboard (§38.2.3).
+
+---
+
+#### 38.1.3 Employee Profile Page 🔲
+**Status:** Not documented or started.
+
+A simple profile page where an employee can view their account details. Data is sourced from Keycloak via the existing JIT-provisioning mechanism.
+
+**Displays:**
+- Full name and email (from the `users.Users` table, synced from Keycloak)
+- Current workspace(s) the user belongs to
+- Avatar (initials-based or Keycloak profile picture URL)
+- Member since date
+
+**Actions:**
+- Link to Keycloak account management page (e.g. `/realms/normora/account`) for password and MFA changes.
+
+**Backend:** `GET /api/users/me` — already partially exists via `GetCurrentUserQuery`. May only need to extend the DTO.
+
+**Frontend:** Profile route `/app/workspaces/:slug/employee/profile`. Accessible from the user menu at the bottom of the employee sidebar.
+
+---
+
+#### 38.1.4 Suggested Questions 🔲
+**Status:** Mentioned as a future AI improvement. Not yet designed.
+
+When an employee opens the Ask Normora chat interface (empty state), surface a small set of AI-generated suggested questions based on documents available to them. This reduces the cold-start friction of an empty chat input.
+
+**Generation approach:**
+- On demand (or lazily cached per tenant): ask Gemini to generate 5–8 example questions given the document titles and sections available in the employee's effective departments.
+- Cache the result in Redis with a TTL (e.g. 6 hours) keyed by `tenantId + userId`.
+
+**Backend:** `GetSuggestedQuestionsQuery`. Simple Gemini call with document metadata as context. No retrieval pipeline involved.
+
+**Frontend:** Render as clickable pills in the empty state of the conversation view. Clicking a suggestion pre-populates the chat input.
+
+---
+
+#### 38.1.5 Document Preview 🔲
+**Status:** Not documented or started.
+
+When an employee clicks a citation in an AI answer, show a side-panel or modal with the original extracted text excerpt from the source document chunk — giving them evidence directly without leaving the chat.
+
+**Backend:** `GET /api/documents/chunks/{chunkId}` — returns the `Text` content of a specific `DocumentChunk`. Must validate tenant ownership and department authorization before returning.
+
+**Frontend:** Citation card becomes a clickable button. On click, open a right-side drawer showing the chunk text, document name, section, and page number (if available). Optionally include a "View Full Document" link to a pre-signed MinIO URL.
+
+---
+
+#### 38.1.6 Conversation Sharing 🔲
+**Status:** Not documented or started.
+
+Allow an employee to generate a shareable link to a conversation so a colleague within the same tenant can view (but not continue) it.
+
+**Domain entity:**
+```text
+ConversationShare
+├── Id
+├── TenantId
+├── ConversationId
+├── CreatedByUserId
+├── Token              → Unique random slug (e.g. 16-char base62)
+├── ExpiresAt          → nullable (no expiry = permanent link)
+└── CreatedAt
+```
+
+**Backend:** `ShareConversationCommand` creates the share token. A new public-ish endpoint `GET /api/shared-conversations/{token}` returns the conversation and messages — but still validates the tenant header to prevent cross-tenant access.
+
+**Frontend:** Share icon in the conversation header. Copy-to-clipboard a URL like `/app/workspaces/:slug/shared/:token`. A read-only conversation view component that does not show the chat input.
+
+---
+
+### 38.2 Employer Experience
+
+#### 38.2.1 Document Versioning 📋
+**Status:** Architecturally designed in §10. Domain entity `DocumentVersion` referenced in §15. Not yet implemented.
+
+Allow employers to upload a new version of an existing document without losing historical context. Only the active version's chunks are used for RAG retrieval.
+
+**Domain changes:**
+```text
+Document (parent record, permanent)
+└── DocumentVersions
+    ├── v1 → status: Superseded
+    ├── v2 → status: Superseded
+    └── v3 → status: Active      ← RAG queries only this
+```
+
+**Key rules:**
+- A `Document` now acts as a logical container.
+- Each `DocumentVersion` has its own `MinioObjectKey`, processing `Status`, and `DocumentChunks`.
+- Activating v3 supersedes v2 atomically (DB transaction).
+- Hybrid search filters MUST include `WHERE dv.Status = 'Active'`.
+- Old versions' chunks are retained for audit but excluded from retrieval.
+
+**Backend:** Extend `Documents` module — `CreateDocumentVersionCommand`, `ActivateDocumentVersionCommand`. New `DocumentVersions` table with EF migration.
+
+**Frontend:** Document detail page shows a version history timeline. "Upload New Version" button on the document row.
+
+---
+
+#### 38.2.2 Document Deletion 🔲
+**Status:** Not documented or started.
+
+Allow employers to soft-delete a document (and all its versions). Deleted documents are excluded from RAG retrieval and the document list, but retained in the database for audit purposes.
+
+**Soft-delete pattern:**
+```text
+Documents
+├── DeletedAt   → datetime2, nullable
+└── DeletedByUserId → uniqueidentifier, nullable
+```
+
+EF Core global query filter: `WHERE DeletedAt IS NULL` applied to all document queries.
+
+**Cascade behavior (soft):**
+- Marking a document deleted does NOT physically delete MinIO objects or `DocumentChunks` immediately.
+- A background Hangfire job (`PurgeDeletedDocumentsJob`) runs nightly, purging chunks and MinIO objects for documents deleted more than 30 days ago.
+
+**Backend:** `DeleteDocumentCommand` → sets `DeletedAt` + `DeletedByUserId`. Emits a SignalR event to remove the document from any connected employer sessions.
+
+**Frontend:** Delete icon/button in the document row with a confirmation dialog. Optimistic removal from the list on confirmation.
+
+---
+
+#### 38.2.3 Analytics / Usage Dashboard 🔲
+**Status:** Mentioned in §36 Future Evolution as "organisation analytics". Not yet designed.
+
+Give employers visibility into how their knowledge base is being used. This is a high-value feature for SaaS retention and upselling.
+
+**Metrics to track:**
+
+| Metric | Source |
+|---|---|
+| Total conversations started | `conversations.Conversations` table |
+| Total questions asked | `conversations.Messages` WHERE `Role = 'User'` |
+| Top 10 most-cited documents | `conversations.MessageCitations` JOIN `documents.Documents` |
+| Questions with no answer | Messages where Gemini returned the no-answer response |
+| Positive / negative answer feedback | `MessageFeedback` table (§38.1.2) |
+| Active users this week/month | `conversations.Conversations` GROUP BY `UserId` |
+| Document processing failures | `documents.Documents` WHERE `Status = 'Failed'` |
+
+**Backend:** A dedicated `Analytics` module (or read-side queries in the `Conversations` / `Documents` modules). `GetTenantAnalyticsQuery` aggregates data via efficient SQL. Do not compute analytics per-request in real time — use a Hangfire scheduled job to pre-aggregate daily snapshots into an `AnalyticsSnapshots` table.
+
+**Frontend:** New "Analytics" page in the Employer dashboard with chart components (use PrimeNG `p-chart` which wraps Chart.js). Bar charts, line charts, and KPI cards.
+
+---
+
+#### 38.2.4 Employee Management (Full) 🔲
+**Status:** Frontend stub exists (`features/employer/employees/`). Not designed or implemented.
+
+Allow employers to view all employees within their tenant, manage their department/group assignments, and remove them from the workspace.
+
+**Views:**
+- Employee list: Name, email, joined date, departments, user groups, last active.
+- Employee detail: Full profile, group memberships, conversation count.
+
+**Actions:**
+- Remove employee from tenant (soft-remove the `TenantMembership`).
+- Reassign departments / user groups directly from this view (currently only manageable from the Department/UserGroup settings pages).
+
+**Backend:** `GetTenantEmployeesQuery` — paginated, filterable by department or group. `RemoveEmployeeCommand` — soft-deletes the `TenantMembership` and revokes the Keycloak role via the Keycloak Admin REST API.
+
+**Frontend:** Full data table with filters, sorting, and an action menu per row.
+
+---
+
+#### 38.2.5 Audit Log 📋
+**Status:** Listed as a line item in Phase 15. Not designed or started.
+
+Track all sensitive mutations within a tenant to a tamper-evident `AuditLog` table. Required for enterprise compliance (SOC2, ISO 27001).
+
+**Events to audit:**
+
+| Event | Actor |
+|---|---|
+| Document uploaded | Employer |
+| Document deleted | Employer |
+| Document version activated | Employer |
+| Invitation sent | Employer |
+| Invitation accepted | Employee |
+| Employee removed from tenant | Employer |
+| Branding updated | Employer |
+| User group / department created or deleted | Employer |
+| Tenant suspended | Super-admin |
+
+**Domain entity:**
+```text
+AuditLog
+├── Id
+├── TenantId
+├── ActorUserId
+├── Action        → nvarchar(100)  e.g. "Document.Uploaded"
+├── TargetId      → uniqueidentifier, nullable (the affected entity)
+├── TargetType    → nvarchar(100)  e.g. "Document"
+├── Metadata      → jsonb, nullable (e.g. { "fileName": "policy.pdf" })
+└── OccurredAt    → datetime2
+```
+
+**Implementation pattern:** Use MediatR pipeline behavior (`AuditBehavior`) to intercept specific commands and write audit records automatically — keeping audit logic out of individual handlers.
+
+**Frontend:** Read-only "Audit Log" view in Employer Settings. Filterable by date range, actor, and action type.
+
+---
+
+### 38.3 Platform & Infrastructure
+
+#### 38.3.1 Email Notifications 🔲
+**Status:** Not documented or started.
+
+Send transactional emails for key lifecycle events. Use a provider abstraction to avoid hard-coupling to a specific vendor.
+
+**Abstraction:**
+```text
+IEmailSender
+    ↓
+SendGridEmailSender   (production)
+SmtpEmailSender       (local dev / fallback)
+NullEmailSender       (tests)
+```
+
+**Emails to send:**
+
+| Trigger | Recipient | Content |
+|---|---|---|
+| Invitation created | Invited user | Invitation link + tenant name |
+| Document processing failed | Employer | Document name + error summary |
+| New document ready | (Optional) Employees in affected departments | Document name + summary |
+| Weekly digest | Employer | Usage metrics summary |
+
+**Backend:** Hangfire background job `SendEmailJob` — never send email synchronously in a request handler. Emails are enqueued and dispatched by the job. Templates stored as embedded `.html` resources or Razor templates.
+
+**Configuration:** `SMTP_HOST`, `SMTP_PORT`, `SENDGRID_API_KEY`, `EMAIL_FROM_ADDRESS` as environment variables.
+
+---
+
+#### 38.3.2 Subscription / Plan Limits 🔲
+**Status:** Not documented or started. Essential before public launch.
+
+Enforce resource limits per tenant based on their subscription plan. Prevents abuse and enables monetisation.
+
+**Domain entities:**
+```text
+TenantPlan
+├── Id
+├── TenantId
+├── PlanTier        → Enum: Free, Pro, Enterprise
+├── MaxDocuments    → int
+├── MaxEmployees    → int
+├── MaxStorageBytes → bigint
+└── ValidUntil      → datetime2, nullable
+
+TenantUsage          ← pre-computed by background job
+├── TenantId
+├── DocumentCount
+├── EmployeeCount
+├── StorageUsedBytes
+└── ComputedAt
+```
+
+**Enforcement points:**
+- `UploadDocumentCommandHandler`: check `DocumentCount < MaxDocuments` before accepting upload.
+- `AcceptInvitationCommandHandler`: check `EmployeeCount < MaxEmployees` before creating membership.
+- Return `HTTP 402 Payment Required` with a structured error when a limit is exceeded.
+
+**Frontend:** Show current usage vs. limit in Employer Settings. A tasteful upgrade prompt when approaching limits.
+
+---
+
+#### 38.3.3 Admin Super-Panel 🔲
+**Status:** Not documented or started.
+
+A dedicated, separately secured admin interface for the Normora platform operator to manage all tenants. Must be unreachable to regular employer/employee users.
+
+**Access control:** A separate Keycloak realm role (e.g. `normora-admin`) that is never granted through the normal invitation flow.
+
+**Capabilities:**
+- View all tenants (name, slug, status, plan, member count, document count).
+- Suspend / reactivate a tenant.
+- View tenant-level audit logs.
+- Impersonate a tenant session for debugging (with full audit trail).
+- Trigger embedding reprocessing for a specific tenant.
+
+**Backend:** A separate ASP.NET Core controller area (`/admin/api/...`) with `[Authorize(Roles = "normora-admin")]`. Super-admin endpoints bypass `[RequireTenant]` and have their own `ITenantFilter`-free DB queries.
+
+**Frontend:** A completely separate Angular route tree (`/admin/...`) with its own layout, guards, and lazy-loaded feature module.
+
+---
+
+#### 38.3.4 Redis Caching 📋
+**Status:** Redis is in `docker-compose.yml` and §25 mentions it. Currently only used as Hangfire storage backend. No application-level caching is implemented.
+
+Add targeted caching for expensive or frequently-read data. Follow §25's principle: **do not cache everywhere without evidence of need.** Add caching only where load testing or profiling shows a concrete bottleneck.
+
+**Candidate cache entries:**
+
+| Data | Cache Key Pattern | TTL |
+|---|---|---|
+| Tenant branding | `branding:{slug}` | 5 minutes |
+| Dashboard summary stats | `dashboard:{tenantId}` | 5 minutes |
+| Suggested questions | `suggested-questions:{tenantId}:{userId}` | 6 hours |
+| Analytics snapshots | `analytics:{tenantId}:{date}` | 24 hours |
+
+**Implementation:** Use `IDistributedCache` (Microsoft abstraction) backed by `StackExchange.Redis`. Keep the Redis client behind an `ICacheService` abstraction so that the `NullDistributedCache` (in-memory) can be substituted in tests and development without Docker.
+
+**Cache invalidation:** Branding cache must be invalidated on `UpdateTenantBrandingCommand`. Dashboard cache on document status changes.
+
+---
+
+### 38.4 AI / RAG Improvements
+
+#### 38.4.1 Answer Re-ranking 📋
+**Status:** Mentioned in §36 Future Evolution as "advanced reranking". Not yet designed.
+
+After hybrid retrieval returns the top-N candidate chunks, apply a cross-encoder re-ranker to improve the quality and relevance ordering before passing context to Gemini.
+
+**Pipeline position:**
+```text
+Hybrid retrieval (vector + FTS)
+        ↓
+    Top-N chunks (e.g. 20)
+        ↓
+   Cross-encoder re-ranker
+        ↓
+    Top-K chunks (e.g. 5)
+        ↓
+   Context builder
+        ↓
+      Gemini
+```
+
+**Implementation options:**
+1. **Gemini-based re-ranker:** Call Gemini with a simple prompt: "Which of these passages best answers the question?" — simple but adds latency and cost.
+2. **Local cross-encoder model:** Run a small sentence-transformers cross-encoder (e.g. `ms-marco-MiniLM`) via a sidecar container. Lower latency, no API cost.
+
+**Decision:** Evaluate option (1) first since infrastructure is already in place. Move to option (2) if latency budgets require it.
+
+**Abstraction:** `IReranker` interface with `GeminiReranker` and `NullReranker` (pass-through) implementations.
+
+---
+
+#### 38.4.2 Document Processing — OCR Support 📋
+**Status:** Mentioned in §36 as "improved OCR". Not yet designed.
+
+Scanned PDFs (image-based) contain no extractable text. Apache Tika with a Tesseract OCR integration can handle these, but the pipeline must detect when OCR is needed.
+
+**Detection:** If Tika returns fewer than N characters for a document that is > X KB in size, assume it is image-based and re-run with OCR enabled.
+
+**Implementation:** Tika supports OCR when Tesseract is installed in its Docker image. Update the Tika Dockerfile to include `tesseract-ocr` and the desired language packs.
+
+**Quality:** OCR output quality degrades with poor scans. Log OCR confidence scores where available for employer visibility.
+
+---
+
+### 38.5 Development Phases (Updated)
+
+The following phases extend the Phase plan in §31 to cover the features described in this section.
+
+#### Phase 17 — Export Answers
+- `IAnswerExporter` abstraction and `MarkdownAnswerExporter` implementation
+- QuestPDF-based `PdfAnswerExporter`
+- Hangfire export job with MinIO pre-signed URL delivery
+- Angular export button and format dropdown on saved-answers page
+
+#### Phase 18 — Answer Feedback
+- `MessageFeedback` entity, EF migration, and unique index
+- `SubmitFeedbackCommand` + handler
+- `POST /api/conversations/{id}/messages/{messageId}/feedback` endpoint
+- Thumbs-up / thumbs-down UI in the chat bubble
+
+#### Phase 19 — Document Versioning
+- `DocumentVersions` table and EF migration
+- `CreateDocumentVersionCommand`, `ActivateDocumentVersionCommand`
+- Update hybrid search to filter on active version
+- Version history UI in the document detail view
+
+#### Phase 20 — Document Deletion
+- Soft-delete fields on `Documents` + EF global query filter
+- `DeleteDocumentCommand` + SignalR notification
+- `PurgeDeletedDocumentsJob` Hangfire scheduled job
+- Confirmation dialog in Angular document list
+
+#### Phase 21 — Full Employee Management
+- `GetTenantEmployeesQuery` with pagination and department/group filters
+- `RemoveEmployeeCommand` + Keycloak Admin API revocation
+- Full employer Employee Management page
+
+#### Phase 22 — Audit Log
+- `AuditLog` entity, EF migration
+- `AuditBehavior` MediatR pipeline behavior
+- Read-only Audit Log page in Employer Settings
+
+#### Phase 23 — Email Notifications
+- `IEmailSender` abstraction + SendGrid implementation
+- `SendEmailJob` Hangfire handler
+- Invitation email, document-failed email
+
+#### Phase 24 — Analytics Dashboard
+- `AnalyticsSnapshots` table + nightly aggregation Hangfire job
+- `GetTenantAnalyticsQuery`
+- Chart-based Analytics page in Employer dashboard
+
+#### Phase 25 — Subscription / Plan Limits
+- `TenantPlan` + `TenantUsage` entities
+- Limit enforcement in upload and invitation handlers
+- Usage display in Employer Settings
+
+#### Phase 26 — Redis Application Caching
+- `ICacheService` abstraction + Redis implementation
+- Branding, dashboard, and suggested-questions cache entries
+
+#### Phase 27 — Admin Super-Panel
+- `normora-admin` Keycloak role
+- Separate admin controller area with tenant list + suspend actions
+- Separate Angular admin route and layout
+
+#### Phase 28 — AI Improvements
+- Answer re-ranking (`IReranker` + `GeminiReranker`)
+- OCR-aware Tika pipeline with Tesseract sidecar
+- Suggested questions feature (§38.1.4)
+- Document Preview side-panel (§38.1.5)
+
+---
+
 ## 13. BFF (Backend-For-Frontend) Architecture Evaluation (Draft)
 
 As part of Phase 4 (Enterprise Readiness), we evaluated whether Normora should migrate from a **Public Client SPA** architecture to a **Backend-For-Frontend (BFF)** architecture.

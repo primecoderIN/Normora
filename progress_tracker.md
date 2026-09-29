@@ -130,3 +130,15 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Eliminated "magic strings" in the backend by extracting authorization scopes and global error responses into `TenantRoles` and `ApiMessages` constants.
 - [x] Eliminated "magic strings" in the Angular frontend by extracting role strings into a `tenant-roles.ts` constants file.
 - [x] Resolved static analyzer and compiler warnings (e.g. `CA2024` and `CS8603`) for a zero-warning build output.
+
+## ✅ Completed Export Answers (Phase 17)
+- [x] `IAnswerExporter` abstraction — defines `ExportResult`, `AnswerExportData`, `CitationExportData` records and the `IAnswerExporter` contract
+- [x] `MarkdownAnswerExporter` — pure string-building `.md` exporter; no external dependencies
+- [x] `PdfAnswerExporter` — QuestPDF-based PDF exporter with branded header, metadata, question/answer blocks, citations table, and page footer; QuestPDF 2025.5.0 added to Conversations module
+- [x] `DocxAnswerExporter` — Open XML SDK-based `.docx` exporter with proper heading styles, indented quote block, citations table, and footer; DocumentFormat.OpenXml 3.3.0 added
+- [x] `ExportSavedAnswerQuery` — MediatR query that resolves the preceding user question from the conversation, builds `AnswerExportData`, and delegates to the correct exporter
+- [x] `GET /api/saved-answers/{id}/export?format=Markdown|Pdf|Docx` endpoint added to `SavedAnswersController`; streams file as a download attachment with a dated filename
+- [x] Exporters registered as singletons in `ApplicationServiceExtensions`; QuestPDF community licence set in `PdfAnswerExporter` static constructor (lives in the module that owns the package)
+- [x] `ExportFormat` union type (`'Markdown' | 'Pdf' | 'Docx'`) and `exportAnswer()` method added to `SavedAnswerService` — uses `responseType: 'blob'` and a programmatic `<a>` click to trigger the browser save-as dialog
+- [x] Export dropdown UI added to each saved-answer card in `SavedAnswers` Angular component — download icon triggers an animated format picker (Markdown / PDF / Word); spinner shown during in-flight requests; `HostListener` on `document:click` closes the menu when clicking outside
+

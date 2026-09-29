@@ -11,7 +11,7 @@ using Normora.Shared;
 namespace Normora.Api.Controllers;
 
 /// <summary>
-/// Provides endpoints for employees to save, unsave, and list bookmarked AI answers.
+/// Provides endpoints for employees to save, unsave, list, and export bookmarked AI answers.
 /// </summary>
 [ApiController]
 [Route("api/saved-answers")]
@@ -59,6 +59,27 @@ public class SavedAnswersController(IMediator mediator) : ControllerBase
     {
         await mediator.Send(new UnsaveAnswerCommand(messageId));
         return NoContent();
+    }
+
+    /// <summary>
+    /// Exports a saved answer as a downloadable file in the requested format.
+    /// </summary>
+    /// <param name="id">The saved answer ID.</param>
+    /// <param name="format">The export format: Markdown, Pdf, or Docx.</param>
+    [HttpGet("{id:guid}/export")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> ExportSavedAnswer(
+        Guid id,
+        [FromQuery] ExportFormat format = ExportFormat.Markdown)
+    {
+        var result = await mediator.Send(new ExportSavedAnswerQuery(id, format));
+
+        // Derive a safe, human-friendly filename.
+        var timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd");
+        var fileName = $"normora-answer-{timestamp}{result.FileExtension}";
+
+        return File(result.Bytes, result.ContentType, fileName);
     }
 }
 

@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Normora.Shared;
 using Normora.Shared.Constants;
+using Normora.Shared.Exceptions;
 
 namespace Normora.Api.Middleware;
 
@@ -45,7 +46,17 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             return true;
         }
 
-        // 3. Handle authentication/authorization failures thrown from command handlers.
+        // 3. Handle resource-not-found errors thrown from command/query handlers.
+        // Maps to 404 Not Found.
+        if (exception is NotFoundException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            var message = env.IsProduction() ? ApiMessages.NotFound : exception.Message;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
+            return true;
+        }
+
+        // 4. Handle authentication/authorization failures thrown from command handlers.
         // Maps to 401 Unauthorized.
         if (exception is UnauthorizedAccessException)
         {
@@ -54,7 +65,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             return true;
         }
 
-        // 4. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
+        // 5. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
         logger.LogError(exception, "An unhandled exception occurred.");
         
         var serverErrorMessage = env.IsProduction() ? ApiMessages.InternalServerError : exception.Message;

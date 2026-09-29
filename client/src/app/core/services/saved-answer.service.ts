@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '@env/environment';
 
 // ─── Domain models ─────────────────────────────────────────────────────────────
@@ -19,6 +19,8 @@ export interface SavedAnswerDto {
   citations: CitationDto[];
   savedAt: string;
 }
+
+export type ExportFormat = 'Markdown' | 'Pdf' | 'Docx';
 
 // ─── API wrapper ───────────────────────────────────────────────────────────────
 
@@ -50,5 +52,37 @@ export class SavedAnswerService {
   /** Removes a saved answer by the original message ID. Idempotent. */
   unsaveAnswer(messageId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${messageId}`);
+  }
+
+  /**
+   * Exports a saved answer as a file download in the requested format.
+   * Fetches the binary payload from the server and triggers a browser save-as dialog.
+   */
+  exportAnswer(savedAnswerId: string, format: ExportFormat): Observable<void> {
+    const extensionMap: Record<ExportFormat, string> = {
+      Markdown: '.md',
+      Pdf: '.pdf',
+      Docx: '.docx',
+    };
+
+    return this.http
+      .get(`${this.baseUrl}/${savedAnswerId}/export`, {
+        params: { format },
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        tap(response => {
+          const blob = response.body!;
+          const url = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+          const today = new Date().toISOString().slice(0, 10);
+          anchor.href = url;
+          anchor.download = `normora-answer-${today}${extensionMap[format]}`;
+          anchor.click();
+          URL.revokeObjectURL(url);
+        }),
+        map(() => void 0),
+      );
   }
 }

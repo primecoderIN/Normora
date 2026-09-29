@@ -14,6 +14,9 @@ public static class ApiMessages
     public const string ValidationFailed = "One or more validation errors occurred.";
     public const string BadRequest = "The request could not be processed.";
 
+    // Resource
+    public const string NotFound = "The requested resource was not found.";
+
     // Server Errors
     public const string InternalServerError = "An unexpected error occurred. Please try again later.";
 }

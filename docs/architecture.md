@@ -247,3 +247,104 @@ After a successful login:
 - **User with tenants**: redirected to `/app/workspaces/{slug}/{dashboard}` using their default (non-personal) membership's tenant slug.
 
 > **Future Enhancement**: Persist the user's last selected tenant and use it for login routing instead of always defaulting to the first membership.
+
+## Export Answers
+
+Employees can export any saved answer to a portable file format directly from the **Saved Answers** page. Exports are generated synchronously in the API process — no Hangfire job or polling is required for the current document sizes.
+
+### Abstraction Design
+
+The export system follows the **Strategy Pattern** via the `IAnswerExporter` interface, keeping the MediatR query handler completely decoupled from any specific library:
+
+```
+IAnswerExporter
+    ├── MarkdownAnswerExporter   → .md  (pure string-building, no dependencies)
+    ├── PdfAnswerExporter        → .pdf (QuestPDF 2025.5.0)
+    └── DocxAnswerExporter       → .docx (DocumentFormat.OpenXml 3.3.0)
+```
+
+All three exporters receive an `AnswerExportData` record containing:
+
+| Field | Source |
+|---|---|
+| `Question` | The most recent preceding `User` message in the same conversation |
+| `Answer` | The saved assistant message content |
+| `Citations` | All `MessageCitation` records attached to the message, ordered by rank |
+| `SavedAt` | `SavedAnswer.CreatedAt` |
+| `EmployeeName` | `ICurrentUser.DisplayName` or `Email` |
+| `TenantName` | The conversation `Title` (used as contextual label) |
+
+The exporters are registered as **singletons** in `ApplicationServiceExtensions` — they are stateless and safe to share across requests.
+
+### QuestPDF License
+
+The community licence is set once in `PdfAnswerExporter`'s static constructor, which runs the first time the singleton is resolved. This keeps the licence setting inside the module (`Normora.Modules.Conversations`) that owns the QuestPDF package reference, avoiding a transitive package dependency on `Normora.Api`.
+
+```csharp
+static PdfAnswerExporter() => QuestPDF.Settings.License = LicenseType.Community;
+```
+
+### PDF Layout
+
+The QuestPDF document is structured as:
+
+```
+┌──────────────────────────────────────────┐
+│  Normora                  Saved Answer   │  ← Page header
+│  ──────────────────────────────────────  │
+│  Employee: …   Saved: …                  │  ← Metadata
+│                                          │
+│  Question                                │  ← H2 heading
+│  ┌──────────────────────────────────┐    │
+│  │  > Question text (shaded block)  │    │
+│  └──────────────────────────────────┘    │
+│                                          │
+│  Answer                                  │  ← H2 heading
+│  Plain-text body (Markdown stripped)     │
+│                                          │
+│  Sources                                 │  ← H3 heading
+│  ┌──────────────────┬─────────────┐      │
+│  │ Document         │ Relevance   │      │  ← Citation table
+│  ├──────────────────┼─────────────┤      │
+│  │ Policy.pdf       │ 92%         │      │
+│  └──────────────────┴─────────────┘      │
+│                                          │
+│  Page 1 of 1                             │  ← Page footer
+└──────────────────────────────────────────┘
+```
+
+### DOCX Layout
+
+The Open XML SDK document uses proper paragraph styles with no external Word installation required:
+
+- **Title**: Bold, large, indigo `#6366f1`
+- **Metadata**: Semi-bold label + plain value pairs
+- **Question**: Left-bordered paragraph (indigo accent) with italic text
+- **Answer**: Paragraphs split by double-newline, Markdown symbols stripped
+- **Citations**: Native `Table` with header row shading
+- **Footer**: Small italic attribution line
+
+### API Endpoint
+
+```
+GET /api/saved-answers/{id}/export?format=Markdown|Pdf|Docx
+```
+
+- The `ExportSavedAnswerQuery` MediatR handler enforces tenant isolation via EF Core global query filters and validates `UserId` ownership before fetching the document.
+- The controller streams the `byte[]` result using `File(bytes, contentType, fileName)`, which sets `Content-Disposition: attachment` automatically.
+- The filename is derived deterministically: `normora-answer-{yyyy-MM-dd}{ext}`.
+
+### Frontend Download Pattern
+
+The Angular `SavedAnswerService.exportAnswer()` method uses `responseType: 'blob'` to receive the binary response, then creates a temporary `<a>` element with `URL.createObjectURL()` to trigger the browser's native save-as dialog — no third-party download library required:
+
+```typescript
+const anchor = document.createElement('a');
+anchor.href = URL.createObjectURL(blob);
+anchor.download = `normora-answer-${today}.pdf`;
+anchor.click();
+URL.revokeObjectURL(anchor.href);
+```
+
+The export dropdown on each saved-answer card shows a spinner during the in-flight request and uses a `HostListener` on `document:click` to close the menu when the user clicks outside.
+

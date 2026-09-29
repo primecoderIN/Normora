@@ -7,6 +7,7 @@ using Normora.Shared.Interfaces;
 using Normora.Api.Services;
 using Normora.Shared;
 using Normora.Shared.Validation;
+using Normora.Modules.Conversations.Application.Exports;
 using System.Reflection;
 
 namespace Normora.Api.Extensions;
@@ -50,6 +51,13 @@ public static class ApplicationServiceExtensions
 
         services.AddScoped<Normora.Api.Features.Ask.IRetrievalService, Normora.Api.Features.Ask.RetrievalService>();
         services.AddSingleton<Normora.Api.Features.Ask.IAutoTitleService, Normora.Api.Features.Ask.AutoTitleService>();
+
+        // Answer exporters — stateless singletons registered against IAnswerExporter.
+        // ExportSavedAnswerQueryHandler resolves the correct implementation via IEnumerable<IAnswerExporter>.
+        // QuestPDF community licence is set in PdfAnswerExporter's static constructor.
+        services.AddSingleton<IAnswerExporter, MarkdownAnswerExporter>();
+        services.AddSingleton<IAnswerExporter, PdfAnswerExporter>();
+        services.AddSingleton<IAnswerExporter, DocxAnswerExporter>();
 
         return services;
     }

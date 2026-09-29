@@ -1,14 +1,77 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TooltipModule } from 'primeng/tooltip';
-import { SavedAnswerService, SavedAnswerDto } from '@core/services/saved-answer.service';
+import { SavedAnswerService, SavedAnswerDto, ExportFormat } from '@core/services/saved-answer.service';
 import { marked } from 'marked';
+
+interface ExportOption {
+  format: ExportFormat;
+  label: string;
+  icon: string;
+  description: string;
+}
 
 @Component({
   selector: 'app-saved-answers',
   standalone: true,
   imports: [CommonModule, DatePipe, RouterModule, TooltipModule],
+  styles: [`
+    .export-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 50;
+      min-width: 188px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+      overflow: hidden;
+      animation: dropdown-in 120ms ease-out;
+    }
+    :host-context(.dark) .export-dropdown {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    @keyframes dropdown-in {
+      from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+    .export-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 14px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: background 120ms;
+    }
+    .export-dropdown-item:hover {
+      background: #f8fafc;
+    }
+    :host-context(.dark) .export-dropdown-item:hover {
+      background: #0f172a;
+    }
+    .export-dropdown-item:not(:last-child) {
+      border-bottom: 1px solid #f1f5f9;
+    }
+    :host-context(.dark) .export-dropdown-item:not(:last-child) {
+      border-bottom-color: #1e293b;
+    }
+    .export-spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #cbd5e1;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  `],
   template: `
     <div class="flex flex-col gap-8 page-enter">
 
@@ -74,6 +137,7 @@ import { marked } from 'marked';
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           @for (answer of savedAnswers(); track answer.id) {
             <article class="group flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md hover:border-slate-300 transition-all overflow-hidden">
+
               <!-- Card Header -->
               <div class="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
                 <div class="flex items-center gap-2">
@@ -82,15 +146,60 @@ import { marked } from 'marked';
                   </div>
                   <span class="text-[0.72rem] text-slate-500 dark:text-slate-400 font-medium">{{ answer.savedAt | date:'MMM d, y · h:mm a' }}</span>
                 </div>
-                <button
-                  class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-amber-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all cursor-pointer shadow-sm opacity-0 group-hover:opacity-100"
-                  (click)="unsave(answer)"
-                  pTooltip="Remove bookmark"
-                  tooltipPosition="top"
-                  aria-label="Remove saved answer"
-                >
-                  <i class="pi pi-bookmark-fill text-xs"></i>
-                </button>
+
+                <!-- Action buttons — visible on hover -->
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                  <!-- Export dropdown trigger -->
+                  <div class="relative">
+                    <button
+                      id="export-btn-{{ answer.id }}"
+                      class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 transition-all cursor-pointer shadow-sm"
+                      (click)="toggleExportMenu($event, answer.id)"
+                      pTooltip="Export answer"
+                      tooltipPosition="top"
+                      aria-label="Export answer"
+                      [attr.aria-expanded]="openExportMenuId() === answer.id"
+                    >
+                      @if (exportingId() === answer.id) {
+                        <span class="export-spinner"></span>
+                      } @else {
+                        <i class="pi pi-download text-xs"></i>
+                      }
+                    </button>
+
+                    <!-- Export format dropdown -->
+                    @if (openExportMenuId() === answer.id) {
+                      <div class="export-dropdown" role="menu">
+                        <p class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-400 px-3.5 pt-2.5 pb-1 m-0">Export as</p>
+                        @for (opt of exportOptions; track opt.format) {
+                          <button
+                            class="export-dropdown-item"
+                            role="menuitem"
+                            (click)="exportAnswer(answer, opt.format)"
+                          >
+                            <i class="{{ opt.icon }} text-sm text-slate-500"></i>
+                            <div class="flex flex-col">
+                              <span class="text-[0.8rem] font-semibold text-slate-800 dark:text-slate-100">{{ opt.label }}</span>
+                              <span class="text-[0.68rem] text-slate-400">{{ opt.description }}</span>
+                            </div>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Unsave button -->
+                  <button
+                    class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-amber-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all cursor-pointer shadow-sm"
+                    (click)="unsave(answer)"
+                    pTooltip="Remove bookmark"
+                    tooltipPosition="top"
+                    aria-label="Remove saved answer"
+                  >
+                    <i class="pi pi-bookmark-fill text-xs"></i>
+                  </button>
+                </div>
               </div>
 
               <!-- Answer Content -->
@@ -147,11 +256,14 @@ import { marked } from 'marked';
 })
 export class SavedAnswers implements OnInit {
   private savedAnswerService = inject(SavedAnswerService);
+  private elementRef = inject(ElementRef);
 
   savedAnswers = signal<SavedAnswerDto[]>([]);
   isLoading = signal(false);
   isLoadingMore = signal(false);
   error = signal('');
+  openExportMenuId = signal<string | null>(null);
+  exportingId = signal<string | null>(null);
 
   private limit = 20;
   private offset = 0;
@@ -159,8 +271,25 @@ export class SavedAnswers implements OnInit {
 
   private markdownCache = new Map<string, string>();
 
+  readonly exportOptions: ExportOption[] = [
+    { format: 'Markdown', label: 'Markdown', icon: 'pi pi-file', description: '.md — plain text with formatting' },
+    { format: 'Pdf',      label: 'PDF',      icon: 'pi pi-file-pdf', description: '.pdf — print-ready document' },
+    { format: 'Docx',     label: 'Word',     icon: 'pi pi-file-word', description: '.docx — editable Word document' },
+  ];
+
   ngOnInit() {
     this.load();
+  }
+
+  /** Close the export dropdown when clicking outside any card. */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    if (this.openExportMenuId() !== null) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.export-dropdown') && !target.closest('[id^="export-btn-"]')) {
+        this.openExportMenuId.set(null);
+      }
+    }
   }
 
   load() {
@@ -202,6 +331,23 @@ export class SavedAnswers implements OnInit {
     this.savedAnswers.update(list => list.filter(a => a.id !== answer.id));
     this.savedAnswerService.unsaveAnswer(answer.messageId).subscribe({
       error: () => this.savedAnswers.update(list => [answer, ...list])
+    });
+  }
+
+  toggleExportMenu(event: Event, answerId: string) {
+    event.stopPropagation();
+    this.openExportMenuId.update(current => current === answerId ? null : answerId);
+  }
+
+  exportAnswer(answer: SavedAnswerDto, format: ExportFormat) {
+    if (this.exportingId()) return;
+
+    this.openExportMenuId.set(null);
+    this.exportingId.set(answer.id);
+
+    this.savedAnswerService.exportAnswer(answer.id, format).subscribe({
+      next: () => this.exportingId.set(null),
+      error: () => this.exportingId.set(null),
     });
   }
 
