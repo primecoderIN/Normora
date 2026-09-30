@@ -10,6 +10,8 @@ jobs:
   zap_scan:
     name: Run DAST Scan
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
 
     steps:
     - name: Checkout repository
@@ -49,7 +51,8 @@ jobs:
         cmd_options: '-a'
         artifact_name: 'zap_scan_frontend'
         fail_action: false # Prevent the build from failing on low/medium alerts initially
-        create_issue: false # Do not attempt to create GitHub issues (fixes permission errors)
+        create_issue: true
+        token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
 
     - name: ZAP API Scan (Backend - Unauthenticated)
@@ -60,7 +63,8 @@ jobs:
         rules_file_name: '.zap/rules.tsv'
         fail_action: false
         artifact_name: 'zap_scan_backend'
-        create_issue: false
+        create_issue: true
+        token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
 
     - name: Tear down stack
