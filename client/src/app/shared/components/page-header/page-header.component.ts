@@ -7,15 +7,19 @@ import { Component, input, output } from '@angular/core';
     <header class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
       <div>
         @if (eyebrow()) {
-          <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-primary-600 m-0 mb-1">{{ eyebrow() }}</p>
+          <p class="text-[0.7rem] font-extrabold uppercase tracking-widest text-primary-600 m-0 mb-1.5">{{ eyebrow() }}</p>
         }
         <h1 class="text-[1.75rem] font-bold text-slate-900 dark:text-white leading-[1.15] m-0">{{ title() }}</h1>
         @if (subtitle()) {
-          <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1.5">{{ subtitle() }}</p>
+          <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1.5 max-w-xl leading-relaxed">{{ subtitle() }}</p>
         }
       </div>
       @if (actionLabel()) {
-        <button type="button" class="flex items-center justify-center gap-2 h-10 px-4 bg-primary-600 text-white border border-primary-600 rounded-lg font-bold text-sm hover:bg-primary-700 transition-colors whitespace-nowrap" (click)="action.emit()">
+        <button
+          type="button"
+          class="flex-none flex items-center justify-center gap-2 h-10 px-5 bg-primary-600 text-white border border-primary-600 rounded-lg font-semibold text-sm hover:bg-primary-700 active:scale-95 transition-all whitespace-nowrap shadow-sm shadow-primary-500/20"
+          (click)="action.emit()"
+        >
           @if (actionIcon()) {
             <i [class]="'pi ' + actionIcon()"></i>
           }

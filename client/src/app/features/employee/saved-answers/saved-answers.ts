@@ -108,8 +108,8 @@ interface ExportOption {
           </div>
           <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Could not load saved answers</h2>
           <p class="text-sm text-slate-500 dark:text-slate-400 m-0 max-w-sm">{{ error() }}</p>
-          <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors" (click)="load()">
-            <i class="pi pi-refresh text-xs"></i> Try again
+          <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-base font-semibold rounded-lg border-none cursor-pointer transition-colors" (click)="load()">
+            <i class="pi pi-refresh text-base"></i> Try again
           </button>
         </div>
       }
@@ -123,11 +123,11 @@ interface ExportOption {
           <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">No saved answers yet</h2>
           <p class="text-sm text-slate-500 dark:text-slate-400 m-0 max-w-xs leading-relaxed">
             When you get a helpful answer in a conversation, click the
-            <span class="inline-flex items-center justify-center w-5 h-5 bg-slate-100 dark:bg-slate-800 rounded mx-0.5 align-middle"><i class="pi pi-bookmark text-[0.65rem]"></i></span>
+            <span class="inline-flex items-center justify-center w-5 h-5 bg-slate-100 dark:bg-slate-800 rounded mx-0.5 align-middle"><i class="pi pi-bookmark text-base"></i></span>
             icon to save it here.
           </p>
           <a routerLink="../conversations" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg no-underline transition-colors shadow-sm">
-            <i class="pi pi-comments text-xs"></i> Start a conversation
+            <i class="pi pi-comments text-base"></i> Start a conversation
           </a>
         </div>
       }
@@ -142,7 +142,7 @@ interface ExportOption {
               <div class="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
                 <div class="flex items-center gap-2">
                   <div class="flex items-center justify-center w-6 h-6 bg-primary-50 text-primary-500 rounded-md">
-                    <i class="pi pi-sparkles text-[0.65rem]"></i>
+                    <i class="pi pi-sparkles text-base"></i>
                   </div>
                   <span class="text-[0.72rem] text-slate-500 dark:text-slate-400 font-medium">{{ answer.savedAt | date:'MMM d, y · h:mm a' }}</span>
                 </div>
@@ -164,7 +164,7 @@ interface ExportOption {
                       @if (exportingId() === answer.id) {
                         <span class="export-spinner"></span>
                       } @else {
-                        <i class="pi pi-download text-xs"></i>
+                        <i class="pi pi-download text-base"></i>
                       }
                     </button>
 
@@ -178,7 +178,7 @@ interface ExportOption {
                             role="menuitem"
                             (click)="exportAnswer(answer, opt.format)"
                           >
-                            <i class="{{ opt.icon }} text-sm text-slate-500"></i>
+                            <i class="{{ opt.icon }} text-base text-slate-500"></i>
                             <div class="flex flex-col">
                               <span class="text-[0.8rem] font-semibold text-slate-800 dark:text-slate-100">{{ opt.label }}</span>
                               <span class="text-[0.68rem] text-slate-400">{{ opt.description }}</span>
@@ -197,7 +197,7 @@ interface ExportOption {
                     tooltipPosition="top"
                     aria-label="Remove saved answer"
                   >
-                    <i class="pi pi-bookmark-fill text-xs"></i>
+                    <i class="pi pi-bookmark-fill text-base"></i>
                   </button>
                 </div>
               </div>
@@ -205,7 +205,7 @@ interface ExportOption {
               <!-- Export error inline callout -->
               @if (exportError() === answer.id) {
                 <div class="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-950/40 border-b border-red-100 dark:border-red-900 text-red-600 dark:text-red-400 text-xs font-medium">
-                  <i class="pi pi-exclamation-circle text-xs flex-none"></i>
+                  <i class="pi pi-exclamation-circle text-base flex-none"></i>
                   <span>Export failed. Please try again.</span>
                 </div>
               }
@@ -224,7 +224,7 @@ interface ExportOption {
                   @for (cite of answer.citations; track cite.documentId) {
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-[0.7rem] font-medium max-w-36"
                          [pTooltip]="cite.fileName" tooltipPosition="top">
-                      <i class="pi pi-file-pdf text-slate-400 text-[0.65rem] flex-none"></i>
+                      <i class="pi pi-file-pdf text-slate-400 text-base flex-none"></i>
                       <span class="truncate">{{ cite.fileName }}</span>
                       <span class="text-primary-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
                     </div>
@@ -239,7 +239,7 @@ interface ExportOption {
                   [queryParams]="{ conversationId: answer.conversationId }"
                   class="inline-flex items-center gap-1.5 text-[0.8rem] font-semibold text-primary-600 hover:text-primary-700 no-underline transition-colors"
                 >
-                  <i class="pi pi-arrow-right text-[0.7rem]"></i> View conversation
+                  <i class="pi pi-arrow-right text-base"></i> View conversation
                 </a>
               </div>
             </article>
@@ -249,9 +249,9 @@ interface ExportOption {
         <!-- Load more -->
         @if (hasMore()) {
           <div class="flex justify-center pt-2">
-            <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950 text-sm font-semibold rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50" (click)="loadMore()" [disabled]="isLoadingMore()">
+            <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-950 text-base font-semibold rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50" (click)="loadMore()" [disabled]="isLoadingMore()">
               @if (isLoadingMore()) {
-                <i class="pi pi-spin pi-spinner text-xs"></i> Loading…
+                <i class="pi pi-spin pi-spinner text-base"></i> Loading…
               } @else {
                 Load more
               }

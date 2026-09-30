@@ -59,7 +59,7 @@ import { marked } from 'marked';
               (click)="onToggleSidebar.emit()"
               aria-label="Toggle sidebar"
             >
-              <i class="pi pi-bars text-sm"></i>
+              <i class="pi pi-bars text-base"></i>
             </button>
             <div class="flex items-center justify-center flex-none w-9 h-9 bg-primary-50 text-primary-600 rounded-lg text-sm">
               <i class="pi pi-comments"></i>
@@ -103,7 +103,7 @@ import { marked } from 'marked';
                 
                 <!-- Avatar -->
                 @if (msg.role === 'Assistant') {
-                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-xs shadow-sm">
+                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-base shadow-sm">
                     <i class="pi pi-sparkles"></i>
                   </div>
                 }
@@ -139,7 +139,7 @@ import { marked } from 'marked';
                           tooltipPosition="top"
                           [attr.aria-label]="isSaved(msg.id) ? 'Unsave answer' : 'Save answer'"
                         >
-                          <i class="text-xs pi"
+                          <i class="text-base pi"
                              [class.pi-bookmark-fill]="isSaved(msg.id)"
                              [class.text-amber-500]="isSaved(msg.id)"
                              [class.pi-bookmark]="!isSaved(msg.id)"></i>
@@ -153,7 +153,7 @@ import { marked } from 'marked';
                           tooltipPosition="top"
                           [attr.aria-label]="'Copy message'"
                         >
-                          <i class="text-xs" [class.pi-check]="copiedId === msg.id" [class.text-green-600]="copiedId === msg.id" [class.pi-copy]="copiedId !== msg.id"></i>
+                          <i class="pi text-base" [class.pi-check]="copiedId === msg.id" [class.text-green-600]="copiedId === msg.id" [class.pi-copy]="copiedId !== msg.id"></i>
                         </button>
                       </div>
                     }
@@ -166,7 +166,7 @@ import { marked } from 'marked';
                       @for (cite of msg.citations; track cite.documentId + cite.fileName) {
                         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-[0.72rem] font-medium max-w-40"
                              [pTooltip]="cite.fileName" tooltipPosition="top">
-                          <i class="pi pi-file-pdf text-slate-400 text-[0.7rem] flex-none"></i>
+                          <i class="pi pi-file-pdf text-slate-400 text-base flex-none"></i>
                           <span class="truncate">{{ cite.fileName }}</span>
                           <span class="text-primary-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
                         </div>
@@ -177,7 +177,7 @@ import { marked } from 'marked';
                   <!-- Rewritten indicator -->
                   @if (msg.role === 'Assistant' && msg.rewritten) {
                     <div class="inline-flex items-center gap-1 text-[0.7rem] text-purple-600 px-1">
-                      <i class="pi pi-refresh text-[0.7rem]"></i> Query rewritten for better retrieval
+                      <i class="pi pi-refresh text-base"></i> Query rewritten for better retrieval
                     </div>
                   }
 
@@ -189,7 +189,7 @@ import { marked } from 'marked';
 
                 <!-- User Avatar -->
                 @if (msg.role === 'User') {
-                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-primary-100 text-primary-700 rounded-full text-xs">
+                  <div class="flex items-center justify-center flex-none w-8 h-8 bg-primary-100 text-primary-700 rounded-full text-base">
                     <i class="pi pi-user"></i>
                   </div>
                 }
@@ -200,7 +200,7 @@ import { marked } from 'marked';
           <!-- Typing Indicator -->
           @if (isSending) {
             <div class="flex items-end gap-2.5 max-w-[85%] self-start msg-enter">
-              <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-xs shadow-sm">
+              <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-base shadow-sm">
                 <i class="pi pi-sparkles"></i>
               </div>
               <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-sm shadow-sm">
@@ -217,10 +217,10 @@ import { marked } from 'marked';
               <span class="flex-1">{{ error }}</span>
               <button
                 type="button"
-                class="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-[0.78rem] font-semibold rounded-md border-none cursor-pointer transition-colors"
+                class="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-base font-semibold rounded-md border-none cursor-pointer transition-colors"
                 (click)="onRetry.emit()"
               >
-                <i class="pi pi-refresh text-[0.7rem]"></i> Retry
+                <i class="pi pi-refresh text-base"></i> Retry
               </button>
             </div>
           }
@@ -234,12 +234,12 @@ import { marked } from 'marked';
                 (ngSubmit)="onSubmit()">
             
             <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Attach file">
-              <i class="pi pi-paperclip"></i>
+              <i class="pi pi-paperclip text-xl"></i>
             </button>
 
             <textarea
               #textareaEl
-              class="flex-1 bg-transparent border-none outline-none resize-none px-2 py-2.5 text-[0.95rem] text-slate-900 dark:text-white placeholder:text-slate-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
+              class="flex-1 bg-transparent border-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! resize-none px-2 py-2.5 text-[0.95rem] text-slate-900 dark:text-white placeholder:text-slate-400 font-sans leading-relaxed max-h-32 custom-scrollbar disabled:opacity-50"
               [(ngModel)]="question"
               name="question"
               rows="1"
@@ -256,7 +256,7 @@ import { marked } from 'marked';
               [disabled]="!question.trim() || isSending"
               aria-label="Send message"
             >
-              <i class="text-[0.9rem]" [class.pi-spin]="isSending" [class.pi-spinner]="isSending" [class.pi-send]="!isSending" [class.-ml-1]="!isSending" [class.mt-1]="!isSending"></i>
+              <i class="pi text-xl" [class.pi-spin]="isSending" [class.pi-spinner]="isSending" [class.pi-send]="!isSending" [class.-ml-1]="!isSending" [class.mt-1]="!isSending"></i>
             </button>
           </form>
           <p class="text-center text-[0.7rem] text-slate-400 mt-2 mb-0">

@@ -10,9 +10,9 @@
   <div class="flex items-start justify-between gap-4 mb-6">
     <div>
       <div class="text-xs text-slate-400 mb-1 flex items-center gap-1.5">
-        <i class="pi pi-chevron-left text-[10px]"></i>
+        <i class="pi pi-chevron-left text-base"></i>
         <span>Settings</span>
-        <i class="pi pi-chevron-right text-[10px]"></i>
+        <i class="pi pi-chevron-right text-base"></i>
         <span class="text-slate-600 dark:text-slate-300 font-medium">Branding &amp; Theme</span>
       </div>
       <h1 class="text-2xl font-bold text-slate-900 dark:text-white leading-tight">White-Label Branding</h1>
@@ -54,7 +54,7 @@
                    [style.background]="primaryColor()"></div>
               <div class="flex-1 flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 focus-within:ring-2 focus-within:ring-primary-300 focus-within:border-primary-400">
                 <input type="text"
-                       class="flex-1 px-3 py-2 text-sm font-mono text-slate-700 dark:text-slate-200 outline-none bg-transparent"
+                       class="flex-1 px-3 py-2 text-base font-mono text-slate-700 dark:text-slate-200 outline-none! border-none! focus:outline-none! focus:border-transparent! focus:ring-0! bg-transparent"
                        [value]="primaryColor()"
                        (input)="primaryColor.set(($any($event.target)).value)">
                 <div class="px-2 border-l border-slate-200 dark:border-slate-700">
@@ -78,7 +78,7 @@
                    [style.background]="secondaryColor()"></div>
               <div class="flex-1 flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 focus-within:ring-2 focus-within:ring-primary-300 focus-within:border-primary-400">
                 <input type="text"
-                       class="flex-1 px-3 py-2 text-sm font-mono text-slate-700 dark:text-slate-200 outline-none bg-transparent"
+                       class="flex-1 px-3 py-2 text-base font-mono text-slate-700 dark:text-slate-200 outline-none! border-none! focus:outline-none! focus:border-transparent! focus:ring-0! bg-transparent"
                        [value]="secondaryColor()"
                        (input)="secondaryColor.set(($any($event.target)).value)">
                 <div class="px-2 border-l border-slate-200 dark:border-slate-700">
@@ -211,7 +211,7 @@
                   [class.bg-slate-50]="previewMode() !== 'light'" [class.dark:bg-slate-950]="previewMode() !== 'light'"
                   [class.text-slate-400]="previewMode() !== 'light'"
                   (click)="previewMode.set('light')">
-            <i class="pi pi-sun text-[11px]"></i> Light mode
+            <i class="pi pi-sun text-base"></i> Light mode
           </button>
           <button type="button" class="px-3 py-1.5 flex items-center gap-1.5 transition-colors"
                   [class.bg-slate-900]="previewMode() === 'dark'"
@@ -219,7 +219,7 @@
                   [class.bg-slate-50]="previewMode() !== 'dark'" [class.dark:bg-slate-950]="previewMode() !== 'dark'"
                   [class.text-slate-400]="previewMode() !== 'dark'"
                   (click)="previewMode.set('dark')">
-            <i class="pi pi-moon text-[11px]"></i> Dark mode
+            <i class="pi pi-moon text-base"></i> Dark mode
           </button>
         </div>
       </div>
@@ -267,7 +267,7 @@
                    [class.border-transparent]="!item.active"
                    [style.border-left-color]="item.active ? primaryColor() : 'transparent'"
                    [style.background]="item.active ? primaryColor() + '33' : 'transparent'">
-                <i [class]="'pi ' + item.icon + ' text-[10px]'"></i>
+                <i [class]="'pi ' + item.icon + ' text-base'"></i>
                 <span>{{ item.label }}</span>
               </div>
             }
@@ -293,7 +293,7 @@
                 <div class="w-5 h-5 rounded-full flex items-center justify-center"
                      [class.bg-slate-100]="previewMode() === 'light'" [class.dark:bg-slate-800]="previewMode() === 'light'"
                      [class.bg-slate-800]="previewMode() === 'dark'">
-                  <i class="pi pi-bell text-[8px]"
+                  <i class="pi pi-bell text-base"
                      [class.text-slate-500]="previewMode() === 'light'" [class.dark:text-slate-400]="previewMode() === 'light'"
                      [class.text-slate-400]="previewMode() === 'dark'"></i>
                 </div>
@@ -343,7 +343,7 @@
                    [class.border-slate-800]="previewMode() === 'dark'">
                 <div class="w-5 h-5 rounded-md flex items-center justify-center flex-none"
                      [style.background]="primaryColor() + '22'">
-                  <i [class]="'pi ' + act.icon + ' text-[9px]'"
+                  <i [class]="'pi ' + act.icon + ' text-base'"
                      [style.color]="primaryColor()"></i>
                 </div>
                 <div class="min-w-0">
@@ -364,7 +364,7 @@
              [class.border-slate-800]="previewMode() === 'dark'"
              [class.bg-slate-50]="previewMode() === 'light'" [class.dark:bg-slate-950]="previewMode() === 'light'"
              [class.bg-slate-900]="previewMode() === 'dark'">
-          <i class="pi pi-info-circle text-[10px]" [style.color]="primaryColor()"></i>
+          <i class="pi pi-info-circle text-base" [style.color]="primaryColor()"></i>
           <span class="text-[9px]"
                 [class.text-slate-400]="true">Changes are applied instantly for all users in your organization.</span>
         </div>

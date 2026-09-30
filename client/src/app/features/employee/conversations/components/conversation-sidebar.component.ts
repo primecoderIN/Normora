@@ -27,19 +27,19 @@ import { ConversationDto } from '@core/services/conversation.service';
             (click)="onNewConversation.emit()"
             aria-label="Start new conversation"
           >
-            <i class="pi pi-pen-to-square text-sm"></i>
+            <i class="pi pi-pen-to-square text-base"></i>
           </button>
         </div>
 
         <!-- Search Bar -->
         <div class="relative group">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-primary-500 transition-colors"></i>
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base group-focus-within:text-primary-500 transition-colors"></i>
           <input 
             type="text" 
             [(ngModel)]="searchQuery" 
             (ngModelChange)="onSearchChange()"
             placeholder="Search history..." 
-            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-[0.82rem] rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-400 block pl-8 p-2 transition-all outline-none"
+            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-base rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-400 block pl-8 p-2 transition-all outline-none"
           />
           @if (searchQuery()) {
             <button 
@@ -47,7 +47,7 @@ import { ConversationDto } from '@core/services/conversation.service';
               class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full hover:bg-slate-200 text-slate-400 border-none cursor-pointer transition-colors"
               (click)="clearSearch()"
             >
-              <i class="pi pi-times text-[0.6rem]"></i>
+              <i class="pi pi-times text-base"></i>
             </button>
           }
         </div>
@@ -116,7 +116,7 @@ import { ConversationDto } from '@core/services/conversation.service';
                 tooltipPosition="left"
                 aria-label="Delete conversation"
               >
-                <i class="text-xs" [class.pi-spin]="deletingId === conv.id" [class.pi-spinner]="deletingId === conv.id" [class.pi-trash]="deletingId !== conv.id"></i>
+                <i class="pi text-base" [class.pi-spin]="deletingId === conv.id" [class.pi-spinner]="deletingId === conv.id" [class.pi-trash]="deletingId !== conv.id"></i>
               </button>
             </button>
             

@@ -26,13 +26,13 @@
       <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
         <label class="flex items-center gap-2 h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
           <i class="pi pi-search text-slate-500 dark:text-slate-400"></i>
-          <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none shadow-none outline-none p-0 text-slate-900 dark:text-white placeholder:text-slate-400" />
+          <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none! shadow-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! p-0 text-slate-900 dark:text-white placeholder:text-slate-400" />
         </label>
         <p-button icon="pi pi-bell" styleClass="!w-10 !h-10 !p-0 flex items-center justify-center !bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-500 dark:text-slate-400 hover:!bg-slate-50 dark:bg-slate-950 transition-colors" ariaLabel="Notifications"></p-button>
       </div>
     </header>
 
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Workspace metrics">
+    <section class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label="Workspace metrics">
       <app-stat-card
         title="Documents"
         [value]="data.stats.totalDocuments | number"
@@ -71,7 +71,7 @@
     </section>
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden p-4 min-h-72">
         <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Document coverage</h2>
@@ -93,7 +93,7 @@
         </div>
       </article>
 
-      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden p-4 min-h-72">
         <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Recent documents</h2>
@@ -119,7 +119,7 @@
     </section>
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden p-4 min-h-72">
         <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Top questions</h2>
@@ -138,7 +138,7 @@
         </div>
       </article>
 
-      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden p-4 min-h-80">
+      <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden p-4 min-h-72">
         <div class="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 -mx-4 px-4 -mt-4 pt-4">
           <div>
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Chat activity</h2>

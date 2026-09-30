@@ -58,7 +58,7 @@ import { Department } from '@core/services/department.service';
                 class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                 (click)="openMenu($event, dept)"
               >
-                <i class="pi pi-ellipsis-v text-sm"></i>
+                <i class="pi pi-ellipsis-v text-base"></i>
               </button>
             </td>
           </tr>

@@ -4,7 +4,7 @@
     
     <!-- Expand/Collapse Toggle -->
     <button type="button" class="absolute -right-3 top-6 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full hidden md:flex items-center justify-center text-slate-400 hover:text-white cursor-pointer z-10" (click)="isSidebarExpanded.set(!isSidebarExpanded())">
-      <i class="pi text-[10px]" [class.pi-chevron-left]="isSidebarExpanded()" [class.pi-chevron-right]="!isSidebarExpanded()"></i>
+      <i class="pi text-xs" [class.pi-chevron-left]="isSidebarExpanded()" [class.pi-chevron-right]="!isSidebarExpanded()"></i>
     </button>
     <div class="flex items-center gap-3 min-h-12" [class.justify-center]="!isSidebarExpanded()">
       @if (themeService.isDarkMode() && brandingService.currentBranding()?.logoUrlDark) {
@@ -114,16 +114,16 @@
           </div>
           <div class="min-w-0" [class.hidden]="!isSidebarExpanded()">
             <div class="text-sm font-bold truncate text-white">{{ user.displayName }}</div>
-            <div class="text-xs text-slate-400 capitalize">{{ activeWorkspace?.role || 'Admin' }}</div>
+            <div class="text-xs text-slate-400 capitalize font-medium">{{ activeWorkspace?.role || 'Admin' }}</div>
           </div>
         </div>
       }
       <div class="flex gap-2 w-full" [class.flex-col]="!isSidebarExpanded()">
         <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-lg bg-transparent border border-white/10 text-slate-300 hover:bg-white/5 hover:text-white hover:border-white/20 transition-colors" (click)="themeService.toggleTheme()" [title]="themeService.isDarkMode() ? 'Light mode' : 'Dark mode'">
-          <i [class]="themeService.isDarkMode() ? 'pi pi-moon text-sm' : 'pi pi-sun text-sm'"></i>
+          <i [class]="themeService.isDarkMode() ? 'pi pi-moon text-base' : 'pi pi-sun text-base'"></i>
         </button>
         <button type="button" class="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg bg-transparent border border-white/10 text-slate-300 hover:bg-white/5 hover:text-white hover:border-white/20 transition-colors" (click)="logout()" title="Sign out" [class.w-10]="!isSidebarExpanded()">
-          <i class="pi pi-sign-out text-sm"></i>
+          <i class="pi pi-sign-out text-base"></i>
           <span [class.hidden]="!isSidebarExpanded()" class="text-sm font-medium">Sign out</span>
         </button>
       </div>
@@ -145,7 +145,7 @@
     
     <!-- Mobile Nav trigger could go here -->
     <button type="button" class="w-8 h-8 flex items-center justify-center rounded bg-white/10 text-white" (click)="logout()">
-      <i class="pi pi-sign-out text-sm"></i>
+      <i class="pi pi-sign-out text-base"></i>
     </button>
   </div>
   
@@ -164,7 +164,7 @@
     </nav>
   </div>
 
-  <main class="flex-1 min-w-0 overflow-y-auto p-4 custom-scrollbar page-enter">
+  <main class="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 custom-scrollbar page-enter">
     @if (userService.currentUser()?.pendingInvitations; as invites) {
       @if (invites.length > 0) {
         <div class="bg-primary-600 rounded-lg p-3 mb-4 text-white flex items-center justify-between shadow-sm">
@@ -177,7 +177,7 @@
           </div>
           <div class="flex gap-2">
             @for (invite of invites; track invite.token) {
-              <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-white dark:bg-slate-900 text-primary-600 hover:bg-primary-50 text-xs font-bold rounded shadow-sm transition-colors disabled:opacity-50">
+              <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-white dark:bg-slate-900 text-primary-600 hover:bg-primary-50 text-base font-bold rounded shadow-sm transition-colors disabled:opacity-50">
                 Join {{ invite.tenantName }}
               </button>
             }

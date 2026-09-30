@@ -56,16 +56,18 @@ input:focus-visible,
 textarea:focus-visible {
   outline: 2px solid #4f46e5;
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 .custom-scrollbar {
   scrollbar-color: #cbd5e1 transparent;
   scrollbar-width: thin;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
+  height: 6px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -79,18 +81,22 @@ textarea:focus-visible {
 
 /* ─── Page entrance animation ──────────────────────────────────────────────── */
 @keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .page-enter {
-  animation: page-enter 0.25s ease-out both;
+  animation: page-enter 0.22s ease-out both;
+}
+
+/* ─── Chat message entrance animation ─────────────────────────────────────── */
+@keyframes msg-enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.msg-enter {
+  animation: msg-enter 0.18s ease-out both;
 }
 
 /* ─── Prose styles for AI markdown output ───────────────────────────────────── */
@@ -140,4 +146,20 @@ textarea:focus-visible {
 .prose-normora a {
   color: #4f46e5;
   text-decoration: underline;
+}
+
+/* ─── Dark mode prose overrides ────────────────────────────────────────────── */
+.app-dark .prose-normora strong,
+.app-dark .prose-normora h1,
+.app-dark .prose-normora h2,
+.app-dark .prose-normora h3 {
+  color: #f1f5f9;
+}
+.app-dark .prose-normora code {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+.app-dark .prose-normora blockquote {
+  color: #94a3b8;
 }

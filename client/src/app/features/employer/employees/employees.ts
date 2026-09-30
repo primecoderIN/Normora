@@ -11,13 +11,13 @@ import { ButtonModule } from 'primeng/button';
   imports: [CommonModule, ReactiveFormsModule, ButtonModule, DatePipe],
   template: `
     <div class="grid gap-8 text-slate-900 dark:text-white page-enter">
-      <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <p class="text-[0.72rem] font-extrabold uppercase tracking-wider text-primary-600 m-0 mb-1">Workspace access</p>
-          <h1 class="text-[1.75rem] font-bold text-slate-900 dark:text-white leading-[1.15] m-0">Employees</h1>
-          <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
+          <p class="text-[0.7rem] font-extrabold uppercase tracking-widest text-primary-600 m-0 mb-1.5">Workspace access</p>
+          <h1 class="text-2xl sm:text-[1.75rem] font-bold text-slate-900 dark:text-white leading-[1.15] m-0">Employees</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
         </div>
-        <p-button label="Export" icon="pi pi-download" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 font-bold !px-4 !py-2 !h-10 transition-colors"></p-button>
+        <p-button label="Export" icon="pi pi-download" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 !font-semibold !px-4 !py-2 !h-10 !text-sm transition-colors self-start"></p-button>
       </header>
 
       <!-- Stat cards -->
@@ -59,21 +59,21 @@ import { ButtonModule } from 'primeng/button';
         </div>
         <div class="px-6 py-5">
           @if (successMessage()) {
-            <div class="flex items-center gap-3 p-4 mb-5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800">
-              <div class="flex items-center justify-center flex-none w-9 h-9 bg-emerald-100 rounded-lg">
-                <i class="pi pi-check-circle text-emerald-600"></i>
+            <div class="flex items-center gap-2 p-4 mb-5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300">
+              <div class="flex items-center justify-center flex-none w-8 h-8 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
+                <i class="pi pi-check-circle text-emerald-600 dark:text-emerald-400"></i>
               </div>
-              <div>
+              <div class="min-w-0 flex-1">
                 <p class="text-sm font-bold m-0">Invitation sent!</p>
-                <p class="text-xs text-emerald-700 m-0 mt-0.5">{{ successMessage() }}</p>
+                <p class="text-xs text-emerald-700 dark:text-emerald-400 m-0 mt-0.5 truncate">{{ successMessage() }}</p>
               </div>
-              <button type="button" class="ml-auto flex items-center justify-center w-6 h-6 rounded-md hover:bg-emerald-100 text-emerald-500 border-none cursor-pointer transition-colors" (click)="successMessage.set('')">
-                <i class="pi pi-times text-xs"></i>
+              <button type="button" class="flex-none ml-auto flex items-center justify-center w-6 h-6 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-500 border-none cursor-pointer transition-colors" (click)="successMessage.set('')">
+                <i class="pi pi-times text-base"></i>
               </button>
             </div>
           }
           @if (errorMessage()) {
-            <div class="flex items-start gap-2 p-3 mb-5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+            <div class="flex items-start gap-2.5 p-3 mb-5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm" role="alert">
               <i class="pi pi-exclamation-circle mt-0.5 flex-none"></i>
               <span>{{ errorMessage() }}</span>
             </div>
@@ -81,14 +81,14 @@ import { ButtonModule } from 'primeng/button';
           <form
             [formGroup]="inviteForm"
             (ngSubmit)="onSubmit()"
-            class="flex flex-col sm:flex-row gap-3 max-w-xl"
+            class="flex flex-col sm:flex-row gap-3 w-full"
           >
             <div class="flex-1 relative">
-              <i class="pi pi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+              <i class="pi pi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none"></i>
               <input
                 type="email"
                 formControlName="email"
-                class="w-full h-10 pl-9 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder:text-slate-400"
+                class="w-full h-10 pl-9 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder:text-slate-400"
                 placeholder="employee@company.com"
               />
             </div>
@@ -108,8 +108,8 @@ import { ButtonModule } from 'primeng/button';
         <div class="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
           <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Members</h2>
           <label class="flex items-center gap-2 h-9 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg w-52 focus-within:border-primary-400 transition-colors">
-            <i class="pi pi-search text-slate-400 text-xs"></i>
-            <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-slate-900 dark:text-white placeholder:text-slate-400 p-0" />
+            <i class="pi pi-search text-slate-400 text-base"></i>
+            <input type="text" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! text-base text-slate-900 dark:text-white placeholder:text-slate-400 p-0" />
           </label>
         </div>
         
@@ -132,10 +132,10 @@ import { ButtonModule } from 'primeng/button';
             <table class="w-full text-left text-sm border-collapse">
               <thead>
                 <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/50">
-                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">User</th>
-                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">Role</th>
-                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">Joined</th>
-                  <th class="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider w-16">Actions</th>
+                  <th class="px-4 sm:px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">User</th>
+                  <th class="px-4 sm:px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider">Role</th>
+                  <th class="px-4 sm:px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider hidden sm:table-cell">Joined</th>
+                  <th class="px-4 sm:px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider w-16">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
@@ -153,17 +153,17 @@ import { ButtonModule } from 'primeng/button';
                       </div>
                     </td>
                     <td class="px-6 py-3 whitespace-nowrap">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium" 
-                        [ngClass]="emp.role === 'Admin' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" 
+                        [ngClass]="emp.role === 'Admin' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'">
                         {{ emp.role }}
                       </span>
                     </td>
-                    <td class="px-6 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400">
+                    <td class="px-4 sm:px-6 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400 hidden sm:table-cell">
                       {{ emp.joinedAt | date:'mediumDate' }}
                     </td>
                     <td class="px-6 py-3 whitespace-nowrap">
                       <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                        <i class="pi pi-ellipsis-v text-sm"></i>
+                        <i class="pi pi-ellipsis-v text-base"></i>
                       </button>
                     </td>
                   </tr>

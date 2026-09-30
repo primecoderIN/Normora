@@ -22,7 +22,7 @@ import { FormErrorComponent } from '@shared/components/form-error/form-error.com
             <input
               type="text"
               formControlName="name"
-              class="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-300 rounded-md text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+              class="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-slate-300 rounded-md text-base outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
               placeholder="e.g. Engineering"
               id="dept-name"
             />

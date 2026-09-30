@@ -48,7 +48,7 @@ import { InvitationService } from '@core/services/invitation.service';
             @for (feature of features; track feature.label) {
               <li class="flex items-start gap-3">
                 <div class="flex items-center justify-center flex-none w-7 h-7 bg-primary-600/20 border border-primary-500/30 rounded-lg mt-0.5">
-                  <i [class]="'pi ' + feature.icon + ' text-primary-400 text-xs'"></i>
+                  <i [class]="'pi ' + feature.icon + ' text-primary-400 text-base'"></i>
                 </div>
                 <div>
                   <div class="text-sm font-semibold text-white">{{ feature.label }}</div>
@@ -93,7 +93,7 @@ import { InvitationService } from '@core/services/invitation.service';
                     <div class="flex items-center justify-between gap-3 p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-200 hover:bg-primary-50/30 transition-colors group">
                       <div class="flex items-center gap-3 min-w-0">
                         <div class="flex items-center justify-center flex-none w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                          <i class="pi pi-building text-slate-500 dark:text-slate-400 text-sm"></i>
+                          <i class="pi pi-building text-slate-500 dark:text-slate-400 text-base"></i>
                         </div>
                         <span class="font-semibold text-slate-900 dark:text-white text-sm truncate">{{ invite.tenantName }}</span>
                       </div>
@@ -101,10 +101,10 @@ import { InvitationService } from '@core/services/invitation.service';
                         type="button"
                         (click)="acceptInvite(invite.token)"
                         [disabled]="isAccepting()"
-                        class="flex-none inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors shadow-sm shadow-primary-500/20 border-none cursor-pointer whitespace-nowrap"
+                        class="flex-none inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-base font-bold rounded-lg transition-colors shadow-sm shadow-primary-500/20 border-none cursor-pointer whitespace-nowrap"
                       >
                         @if (isAccepting() && acceptingToken() === invite.token) {
-                          <i class="pi pi-spin pi-spinner text-[0.65rem]"></i> Joining...
+                          <i class="pi pi-spin pi-spinner text-base"></i> Joining...
                         } @else {
                           Accept & Join
                         }
@@ -122,7 +122,7 @@ import { InvitationService } from '@core/services/invitation.service';
               </div>
 
               <div class="px-8 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center">
-                <button type="button" class="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors border-none bg-transparent cursor-pointer" (click)="showCreateForm.set(!showCreateForm())">
+                <button type="button" class="text-base font-semibold text-primary-600 hover:text-primary-700 transition-colors border-none bg-transparent cursor-pointer" (click)="showCreateForm.set(!showCreateForm())">
                   {{ showCreateForm() ? '← Hide workspace form' : 'Or create a new workspace →' }}
                 </button>
               </div>
@@ -159,7 +159,7 @@ import { InvitationService } from '@core/services/invitation.service';
                       formControlName="name"
                       (input)="autoSlug()"
                       placeholder="Acme Corp"
-                      class="w-full h-11 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all"
+                      class="w-full h-11 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-base text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all"
                     />
                   </div>
 
@@ -172,7 +172,7 @@ import { InvitationService } from '@core/services/invitation.service';
                         type="text"
                         formControlName="slug"
                         placeholder="acme-corp"
-                        class="flex-1 h-full px-3 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none border-none"
+                        class="flex-1 h-full px-3 bg-transparent text-base text-slate-900 dark:text-white placeholder:text-slate-400 outline-none! border-none! focus:outline-none! focus:border-transparent! focus:ring-0!"
                       />
                     </div>
                     <p class="text-xs text-slate-400">Use lowercase letters, numbers, and hyphens only.</p>
@@ -181,12 +181,12 @@ import { InvitationService } from '@core/services/invitation.service';
                   <button
                     type="submit"
                     [disabled]="onboardingForm.invalid || isLoading()"
-                    class="w-full flex items-center justify-center gap-2 h-11 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-sm rounded-xl border-none cursor-pointer transition-colors shadow-sm shadow-primary-500/20 disabled:cursor-not-allowed"
+                    class="w-full flex items-center justify-center gap-2 h-11 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-base rounded-xl border-none cursor-pointer transition-colors shadow-sm shadow-primary-500/20 disabled:cursor-not-allowed"
                   >
                     @if (isLoading()) {
-                      <i class="pi pi-spin pi-spinner text-sm"></i> Creating workspace…
+                      <i class="pi pi-spin pi-spinner text-base"></i> Creating workspace…
                     } @else {
-                      <i class="pi pi-arrow-right text-sm"></i> Create workspace
+                      <i class="pi pi-arrow-right text-base"></i> Create workspace
                     }
                   </button>
                 </form>
@@ -196,7 +196,7 @@ import { InvitationService } from '@core/services/invitation.service';
 
           <!-- Sign out -->
           <div class="text-center">
-            <button (click)="logout()" class="text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors border-none bg-transparent cursor-pointer">
+            <button (click)="logout()" class="text-base text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors border-none bg-transparent cursor-pointer">
               Sign out
             </button>
           </div>

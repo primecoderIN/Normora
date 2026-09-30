@@ -9,83 +9,93 @@ import { Department } from '@core/services/department.service';
   standalone: true,
   imports: [CommonModule, DatePipe],
   template: `
-    <div class="block bg-white dark:bg-slate-900 rounded-lg shadow-[0_1px_2px_rgba(15,23,42,0.04)] border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
       <div class="overflow-x-auto custom-scrollbar">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full text-left border-collapse" aria-label="Documents">
           <thead>
-            <tr class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-              <th class="px-5 py-3 bg-slate-50 dark:bg-slate-950">Document</th>
-              <th class="px-5 py-3 bg-slate-50 dark:bg-slate-950">Uploaded</th>
-              <th class="px-5 py-3 bg-slate-50 dark:bg-slate-950">Status</th>
-              <th class="px-5 py-3 text-right bg-slate-50 dark:bg-slate-950">Actions</th>
+            <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950">
+              <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Document</th>
+              <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Uploaded</th>
+              <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</th>
+              <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             @for (doc of documents(); track doc.id) {
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-950/50 transition-colors group bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                <td class="px-5 py-3">
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-950/60 transition-colors group bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <td class="px-5 py-3.5">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 shrink-0">
-                      <i class="pi pi-file text-sm"></i>
+                    <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
+                      <i class="pi pi-file text-base"></i>
                     </div>
                     <div class="min-w-0">
-                      <div class="font-medium text-slate-900 dark:text-white text-sm truncate max-w-90">{{ doc.fileName }}</div>
-                      <div class="mt-1">
+                      <div class="font-medium text-slate-900 dark:text-white text-sm truncate max-w-xs">{{ doc.fileName }}</div>
+                      <div class="mt-0.5 flex flex-wrap gap-1">
                         @if (!doc.departmentIds || doc.departmentIds.length === 0) {
                           <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Everyone in {{ tenantName() }}</span>
                         } @else {
-                          <div class="flex gap-1 flex-wrap">
-                            @for (deptId of doc.departmentIds; track deptId) {
-                              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-50 text-primary-700 border border-primary-100">
-                                {{ getDepartmentName(deptId) }}
-                              </span>
-                            }
-                          </div>
+                          @for (deptId of doc.departmentIds; track deptId) {
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-100 dark:border-primary-800">
+                              {{ getDepartmentName(deptId) }}
+                            </span>
+                          }
                         }
                       </div>
                     </div>
                   </div>
                 </td>
-                <td class="px-5 py-3">
+                <td class="px-5 py-3.5">
                   <span class="text-sm text-slate-500 dark:text-slate-400">{{ doc.uploadedAt | date:'MMM d, y' }}</span>
                 </td>
-                <td class="px-5 py-3">
+                <td class="px-5 py-3.5">
                   @if (doc.status === 'Ready') {
-                    <span class="inline-flex items-center gap-1.5 min-w-24 justify-center px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-medium border border-emerald-200 dark:border-emerald-800">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-none"></span>
                       Ready
                     </span>
                   } @else if (doc.status === 'Failed') {
-                    <span class="inline-flex items-center gap-1.5 min-w-24 justify-center px-2.5 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium border border-red-100">
-                      <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs font-medium border border-red-200 dark:border-red-800">
+                      <span class="w-1.5 h-1.5 rounded-full bg-red-500 flex-none"></span>
                       Failed
                     </span>
                   } @else if (doc.status === 'Processing') {
-                    <span class="inline-flex items-center gap-1.5 min-w-24 justify-center px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
-                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 text-xs font-medium border border-blue-200 dark:border-blue-800">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse flex-none"></span>
                       Processing
                     </span>
                   } @else {
-                    <span class="inline-flex items-center gap-1.5 min-w-24 justify-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium border border-slate-200 dark:border-slate-700">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-200 dark:border-slate-700">
                       Uploaded
                     </span>
                   }
                 </td>
-                <td class="px-5 py-3 text-right">
-                  <div class="flex items-center justify-end gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <button type="button" class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors flex items-center justify-center" aria-label="Download document">
-                      <i class="pi pi-download"></i>
+                <td class="px-5 py-3.5 text-right">
+                  <div class="flex items-center justify-end gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors flex items-center justify-center"
+                      aria-label="Download document"
+                    >
+                      <i class="pi pi-download text-base"></i>
                     </button>
-                    <button type="button" class="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center" (click)="onDelete.emit(doc.id)" aria-label="Delete document">
-                      <i class="pi pi-trash"></i>
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex items-center justify-center"
+                      (click)="onDelete.emit(doc.id)"
+                      aria-label="Delete document"
+                    >
+                      <i class="pi pi-trash text-base"></i>
                     </button>
                   </div>
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="4" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-                  No documents found.
+                <td colspan="4" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
+                  <div class="flex flex-col items-center gap-2">
+                    <i class="pi pi-file text-3xl opacity-40"></i>
+                    <span>No documents found.</span>
+                  </div>
                 </td>
               </tr>
             }
@@ -103,6 +113,6 @@ export class DocumentListComponent {
 
   getDepartmentName(id: string): string {
     const dept = this.departments().find(d => d.id === id);
-    return dept ? dept.name : 'Unknown Department';
+    return dept ? dept.name : 'Unknown';
   }
 }

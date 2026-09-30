@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-8 text-slate-900 dark:text-white">
+<div class="flex flex-col gap-6 sm:gap-8 text-slate-900 dark:text-white">
   <app-page-header
     eyebrow="Organisation"
     title="Departments"
@@ -9,83 +9,80 @@
   </app-page-header>
 
   <!-- Stats -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <!-- Stat 1 -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 flex items-center gap-5">
-      <div class="flex items-center justify-center flex-none w-14 h-14 bg-pink-50 rounded-xl">
-        <i class="pi pi-building text-2xl text-pink-500"></i>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5 flex items-center gap-4 shadow-sm">
+      <div class="flex items-center justify-center flex-none w-11 h-11 bg-pink-50 dark:bg-pink-900/20 rounded-xl">
+        <i class="pi pi-building text-xl text-pink-500"></i>
       </div>
       <div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Total departments</p>
-        <strong class="block text-3xl font-bold text-slate-900 dark:text-white mt-0.5 leading-none">{{ departments().length }}</strong>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Total departments</p>
+        <strong class="block text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-none tabular-nums">{{ departments().length }}</strong>
       </div>
     </div>
-    <!-- Stat 2 -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 flex items-center gap-5">
-      <div class="flex items-center justify-center flex-none w-14 h-14 bg-blue-50 rounded-xl">
-        <i class="pi pi-users text-2xl text-blue-500"></i>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5 flex items-center gap-4 shadow-sm">
+      <div class="flex items-center justify-center flex-none w-11 h-11 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+        <i class="pi pi-users text-xl text-blue-500"></i>
       </div>
       <div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Employees assigned</p>
-        <strong class="block text-3xl font-bold text-slate-900 dark:text-white mt-0.5 leading-none">—</strong>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Employees assigned</p>
+        <strong class="block text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-none">—</strong>
       </div>
     </div>
-    <!-- Stat 3 -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 flex items-center gap-5">
-      <div class="flex items-center justify-center flex-none w-14 h-14 bg-purple-50 rounded-xl">
-        <i class="pi pi-file text-2xl text-purple-500"></i>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5 flex items-center gap-4 shadow-sm">
+      <div class="flex items-center justify-center flex-none w-11 h-11 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+        <i class="pi pi-file text-xl text-purple-500"></i>
       </div>
       <div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 m-0">Documents scoped</p>
-        <strong class="block text-3xl font-bold text-slate-900 dark:text-white mt-0.5 leading-none">—</strong>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Documents scoped</p>
+        <strong class="block text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-none">—</strong>
       </div>
     </div>
   </div>
 
   <!-- List Container -->
-  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800">
       <div>
-        <h2 class="text-xl font-bold text-slate-900 dark:text-white m-0">All departments</h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1">Manage department membership and document access.</p>
+        <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white m-0">All departments</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">Manage membership and document access.</p>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <div class="relative">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-          <input
-            type="search"
-            class="w-52 h-9 pl-8 pr-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400 transition-all"
-            placeholder="Search departments…"
-            [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
-          />
-        </div>
-      </div>
+      <label class="flex items-center gap-2 h-9 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg w-full sm:w-52 focus-within:border-primary-400 transition-colors shrink-0">
+        <i class="pi pi-search text-slate-400 text-base flex-none"></i>
+        <input
+          type="search"
+          class="flex-1 min-w-0 bg-transparent border-none! outline-none! focus:outline-none! focus:ring-0! text-sm text-slate-900 dark:text-white placeholder:text-slate-400 p-0"
+          placeholder="Search departments…"
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </label>
     </div>
 
     @if (isLoading()) {
-      <div class="divide-y divide-slate-100">
+      <div class="divide-y divide-slate-100 dark:divide-slate-800">
         @for (_ of [1,2,3,4,5]; track $index) {
-          <div class="flex items-center justify-between gap-4 px-5 py-4">
+          <div class="flex items-center justify-between gap-4 px-4 sm:px-5 py-4">
             <div class="flex flex-col gap-2 flex-1">
               <p-skeleton width="40%" height="1rem" borderRadius="6px" />
               <p-skeleton width="65%" height="0.75rem" borderRadius="6px" />
             </div>
             <div class="flex items-center gap-2">
-              <p-skeleton width="4rem" height="2rem" borderRadius="6px" />
-              <p-skeleton width="2rem" height="2rem" borderRadius="6px" />
+              <p-skeleton width="4rem" height="2rem" borderRadius="8px" />
+              <p-skeleton width="2rem" height="2rem" borderRadius="8px" />
             </div>
           </div>
         }
       </div>
     } @else if (filtered().length === 0) {
-      <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
-        <div class="flex items-center justify-center w-12 h-12 bg-primary-50 border border-primary-100 rounded-full mb-4">
-          <i class="pi pi-sitemap text-xl text-primary-600"></i>
+      <div class="flex flex-col items-center justify-center py-14 px-6 text-center">
+        <div class="flex items-center justify-center w-14 h-14 bg-primary-50 dark:bg-primary-900/20 rounded-2xl mb-4">
+          <i class="pi pi-sitemap text-2xl text-primary-600"></i>
         </div>
-        <p class="text-lg font-bold text-slate-900 dark:text-white m-0 mb-1">No departments yet</p>
-        <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mb-6 max-w-sm">Create your first department to start scoping document access.</p>
-        <button type="button" class="flex items-center justify-center gap-2 h-9 px-4 bg-primary-600 text-white border border-primary-600 rounded-lg font-bold text-sm hover:bg-primary-700 transition-colors" (click)="openCreate()">
+        <p class="text-base font-bold text-slate-900 dark:text-white m-0 mb-1">No departments yet</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mb-6 max-w-xs leading-relaxed">Create your first department to start scoping document access.</p>
+        <button type="button"
+          class="flex items-center justify-center gap-2 h-10 px-5 bg-primary-600 text-white rounded-lg font-semibold text-sm hover:bg-primary-700 active:scale-95 transition-all shadow-sm shadow-primary-500/20"
+          (click)="openCreate()">
           <i class="pi pi-plus"></i> New department
         </button>
       </div>
