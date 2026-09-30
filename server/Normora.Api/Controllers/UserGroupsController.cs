@@ -44,7 +44,7 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(new GetUserGroupByIdQuery(id));
         if (result == null)
         {
-            return NotFound(ApiResponse.Failure("User group not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
         return Ok(ApiResponse<UserGroupDetailDto>.Ok(result));
     }
@@ -83,7 +83,7 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
 
         if (!success)
         {
-            return NotFound(ApiResponse.Failure("User group not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
 
         return Ok(ApiResponse.Ok("User group updated successfully."));
@@ -107,7 +107,7 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
 
         if (!success)
         {
-            return NotFound(ApiResponse.Failure("User group not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
 
         return Ok(ApiResponse.Ok("User group assignments updated successfully."));
@@ -129,7 +129,7 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
 
         if (!success)
         {
-            return NotFound(ApiResponse.Failure("User group not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
 
         return Ok(ApiResponse.Ok("User group deleted successfully."));

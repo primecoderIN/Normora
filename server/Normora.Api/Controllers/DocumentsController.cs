@@ -73,7 +73,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> UploadDocument([FromForm] IFormFile file, [FromForm] Guid[]? departmentIds = null)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         // 1. Validation (file empty, size, extension) is handled automatically
         // by FluentValidation through the MediatR Pipeline Behavior.
@@ -97,12 +97,12 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> DeleteDocument(Guid id)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         var command = new DeleteDocumentCommand(id, tenantContext.TenantId.Value);
         var deleted = await mediator.Send(command);
 
-        if (!deleted) return NotFound(ApiResponse.Failure("Document not found."));
+        if (!deleted) return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
 
         return Ok(ApiResponse.Ok("Document deleted successfully."));
     }

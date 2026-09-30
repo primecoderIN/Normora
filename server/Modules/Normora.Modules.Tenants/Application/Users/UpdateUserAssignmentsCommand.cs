@@ -36,7 +36,7 @@ public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITe
 {
     public async Task<bool> Handle(UpdateUserAssignmentsCommand request, CancellationToken cancellationToken)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         var membership = await dbContext.TenantMemberships
             .Include(m => m.MembershipDepartments)

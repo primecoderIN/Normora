@@ -58,7 +58,7 @@ public sealed class AskConversationStreamCommandHandler(
                 c.Id == request.ConversationId &&
                 c.UserId == currentUser.KeycloakUserId,
                 cancellationToken)
-            ?? throw new InvalidOperationException("Conversation not found or access denied.");
+            ?? throw new Normora.Shared.Exceptions.BolaException();
 
         var isFirstTurn = !await conversationsContext.Messages
             .AnyAsync(m => m.ConversationId == request.ConversationId, cancellationToken);

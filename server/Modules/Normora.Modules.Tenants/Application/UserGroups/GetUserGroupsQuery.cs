@@ -31,7 +31,7 @@ public class GetUserGroupsQueryHandler(TenantsDbContext dbContext, ITenantContex
 {
     public async Task<List<UserGroupDto>> Handle(GetUserGroupsQuery request, CancellationToken cancellationToken)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         return await dbContext.UserGroups
             .AsNoTracking()

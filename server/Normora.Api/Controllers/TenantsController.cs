@@ -55,7 +55,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         var result = await mediator.Send(query);
 
         if (result == null)
-            return NotFound(ApiResponse.Failure("Tenant branding not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
 
         return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
     }
@@ -76,7 +76,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         [FromForm] IFormFile? faviconFile)
     {
         if (!tenantContext.TenantId.HasValue)
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
 
         var command = new UpdateTenantBrandingCommand(
             tenantContext.TenantId.Value,
@@ -90,7 +90,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         var result = await mediator.Send(command);
 
         if (result == null)
-            return NotFound(ApiResponse.Failure("Tenant not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
 
         return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
     }
@@ -146,13 +146,13 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     {
         if (id != tenantContext.TenantId)
         {
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
         }
 
         var command = new SuspendTenantCommand(id);
         var success = await mediator.Send(command);
         
-        if (!success) return NotFound(new { Message = "Tenant not found." });
+        if (!success) return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
 
         return Ok(new { Message = "Tenant suspended successfully." });
     }
@@ -184,7 +184,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     public async Task<IActionResult> GetEmployees()
     {
         if (!tenantContext.TenantId.HasValue)
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
 
         var query = new Normora.Modules.Tenants.Application.Users.GetTenantUsersQuery(tenantContext.TenantId.Value);
         var employees = await mediator.Send(query);
@@ -200,7 +200,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     public async Task<IActionResult> GetEmployeeStats()
     {
         if (!tenantContext.TenantId.HasValue)
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
 
         var query = new Normora.Modules.Tenants.Application.Users.GetTenantStatsQuery(tenantContext.TenantId.Value);
         var stats = await mediator.Send(query);

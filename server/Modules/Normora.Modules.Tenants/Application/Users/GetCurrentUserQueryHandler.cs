@@ -14,7 +14,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
     {
         if (!currentUser.IsAuthenticated)
         {
-            throw new UnauthorizedAccessException("User is not authenticated.");
+            throw new UnauthorizedAccessException(Normora.Shared.Constants.ApiMessages.Unauthorized);
         }
 
         // Find the user and their existing memberships so we can determine their access levels across tenants

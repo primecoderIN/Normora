@@ -32,7 +32,7 @@ public class CreateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
 {
     public async Task<Guid> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         // Enforce unique name per tenant
         var exists = await dbContext.Departments

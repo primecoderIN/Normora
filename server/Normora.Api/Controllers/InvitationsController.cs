@@ -30,7 +30,7 @@ public class InvitationsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(query);
 
         if (result == null)
-            return NotFound(ApiResponse.Failure("Invitation not found or invalid."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
 
         return Ok(ApiResponse<InvitationDto>.Ok(result));
     }

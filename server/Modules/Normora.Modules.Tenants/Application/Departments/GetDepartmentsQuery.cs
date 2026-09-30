@@ -26,7 +26,7 @@ public class GetDepartmentsQueryHandler(TenantsDbContext dbContext, ITenantConte
     {
         if (!tenantContext.TenantId.HasValue)
         {
-            throw new InvalidOperationException("Tenant Context missing.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
         }
 
         return await dbContext.Departments

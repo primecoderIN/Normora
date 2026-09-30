@@ -10,7 +10,7 @@ import { Department } from '@core/services/department.service';
   standalone: true,
   imports: [CommonModule, DatePipe, MenuModule],
   template: `
-    <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="!text-sm !min-w-[150px]"></p-menu>
+    <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="text-sm! min-w-[150px]!"></p-menu>
 
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm border-collapse">
@@ -106,7 +106,7 @@ export class DepartmentListComponent {
       {
         label: 'Delete',
         icon: 'pi pi-trash',
-        styleClass: '!text-red-600',
+        styleClass: 'text-red-600!',
         command: () => this.delete.emit(dept)
       }
     ];

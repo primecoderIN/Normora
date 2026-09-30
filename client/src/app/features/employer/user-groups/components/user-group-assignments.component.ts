@@ -14,7 +14,7 @@ import { Department } from '@core/services/department.service';
       <div class="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
           <h3 class="text-lg font-bold text-slate-900 dark:text-white m-0">Manage assignments — {{ userGroup()?.name }}</h3>
-          <p-button icon="pi pi-times" (onClick)="onCancel()" styleClass="!w-8 !h-8 !p-0 flex items-center justify-center !bg-transparent !border-transparent !text-slate-400 hover:!bg-slate-100 dark:bg-slate-800 hover:!text-slate-700 dark:text-slate-200 rounded-full transition-colors"></p-button>
+          <p-button icon="pi pi-times" (onClick)="onCancel()" styleClass="w-8! h-8! p-0! flex items-center justify-center bg-transparent! border-transparent! text-slate-400! hover:bg-slate-100! dark:bg-slate-800 hover:text-slate-700! dark:text-slate-200 rounded-full transition-colors"></p-button>
         </div>
         <div class="p-5 overflow-y-auto max-h-[70vh] custom-scrollbar">
           @if (isLoadingDetail()) {
@@ -90,8 +90,8 @@ import { Department } from '@core/services/department.service';
         </div>
         
         <div class="flex items-center justify-end gap-3 p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
-          <p-button label="Cancel" (onClick)="onCancel()" styleClass="!bg-white dark:bg-slate-900 !border-slate-300 !text-slate-700 dark:text-slate-200 hover:!bg-slate-100 dark:bg-slate-800 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
-          <p-button label="Save assignments" (onClick)="onSave()" [disabled]="isSaving() || isLoadingDetail()" [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''" styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 disabled:!bg-slate-300 disabled:!border-slate-300 disabled:!text-slate-500 dark:text-slate-400 font-bold !px-4 !py-2 !h-9 !text-sm transition-colors"></p-button>
+          <p-button label="Cancel" (onClick)="onCancel()" styleClass="bg-white! dark:bg-slate-900 border-slate-300! text-slate-700! dark:text-slate-200 hover:bg-slate-100! dark:bg-slate-800 font-bold px-4! py-2! h-9! text-sm! transition-colors"></p-button>
+          <p-button label="Save assignments" (onClick)="onSave()" [disabled]="isSaving() || isLoadingDetail()" [icon]="isSaving() ? 'pi pi-spin pi-spinner' : ''" styleClass="bg-primary-600! border-primary-600! text-white! hover:bg-primary-700! disabled:bg-slate-300! disabled:border-slate-300! disabled:text-slate-500! dark:text-slate-400 font-bold px-4! py-2! h-9! text-sm! transition-colors"></p-button>
         </div>
       </div>
     </div>

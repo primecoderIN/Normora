@@ -38,7 +38,7 @@ public class InviteEmployeeCommandHandler : IRequestHandler<InviteEmployeeComman
         // Ensure the inviter is acting within the context of a specific tenant before they can invite anyone
         if (!tenantContext.IsTenantResolved || !tenantContext.TenantId.HasValue)
         {
-            throw new UnauthorizedAccessException("Tenant context is missing.");
+            throw new UnauthorizedAccessException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
         }
 
         var tenantId = tenantContext.TenantId.Value;

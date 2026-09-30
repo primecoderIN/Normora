@@ -19,7 +19,7 @@ public class DeleteUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
 {
     public async Task<bool> Handle(DeleteUserGroupCommand request, CancellationToken cancellationToken)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         var group = await dbContext.UserGroups
             .FirstOrDefaultAsync(g => g.Id == request.Id && g.TenantId == tenantContext.TenantId.Value, cancellationToken);

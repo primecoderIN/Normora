@@ -44,7 +44,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetUserAssignments(Guid userId)
     {
         var result = await mediator.Send(new GetUserAssignmentsQuery(userId));
-        if (result == null) return NotFound(ApiResponse.Failure("User not found in this tenant."));
+        if (result == null) return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         return Ok(ApiResponse<UserAssignmentsDto>.Ok(result));
     }
 
@@ -67,7 +67,7 @@ public class UsersController(IMediator mediator) : ControllerBase
 
         if (!success)
         {
-            return NotFound(ApiResponse.Failure("User not found in this tenant."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
 
         return Ok(ApiResponse.Ok("User assignments updated successfully."));

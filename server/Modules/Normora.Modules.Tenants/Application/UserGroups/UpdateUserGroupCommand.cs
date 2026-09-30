@@ -37,7 +37,7 @@ public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
 {
     public async Task<bool> Handle(UpdateUserGroupCommand request, CancellationToken cancellationToken)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         var group = await dbContext.UserGroups
             .Include(g => g.UserGroupDepartments)

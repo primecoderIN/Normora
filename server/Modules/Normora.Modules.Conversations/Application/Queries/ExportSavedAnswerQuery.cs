@@ -49,7 +49,7 @@ public class ExportSavedAnswerQueryHandler(
                 s => s.Id == request.SavedAnswerId &&
                      s.UserId == currentUser.KeycloakUserId,
                 cancellationToken)
-            ?? throw new NotFoundException("Saved answer not found or access denied.");
+            ?? throw new Normora.Shared.Exceptions.BolaException();
 
         // Resolve the preceding user question from the same conversation.
         var question = await context.Messages

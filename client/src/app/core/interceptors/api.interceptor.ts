@@ -1,4 +1,5 @@
 import { AppRoutes } from '@core/constants/app-routes';
+import { ApiMessages } from '@core/constants/api-messages';
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
@@ -32,11 +33,11 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         case 403:
-          // Authenticated but not authorized — show toast and redirect to access-denied
+          // Authenticated but not authorized (BFLA) — show toast
           messageService?.add({
             severity: 'warn',
-            summary: 'Access Denied',
-            detail: 'You do not have permission to perform this action.',
+            summary: ApiMessages.Forbidden.summary,
+            detail: error.error?.message || ApiMessages.Forbidden.detail,
             life: 5000
           });
           break;
@@ -45,19 +46,19 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           // UX-7: Rate limit hit — show a user-friendly message
           messageService?.add({
             severity: 'warn',
-            summary: 'Slow Down',
-            detail: 'You are sending requests too fast. Please wait a moment and try again.',
+            summary: ApiMessages.RateLimit.summary,
+            detail: ApiMessages.RateLimit.detail,
             life: 6000
           });
           break;
 
         case 404:
-          // Only show 404 toasts for non-GET requests (e.g., delete a resource that no longer exists)
+          // For BOLA or missing resources, show toast unless it's a routine GET that shouldn't alert
           if (req.method !== 'GET' && messageService) {
             messageService.add({
               severity: 'warn',
-              summary: 'Not Found',
-              detail: 'The requested resource was not found.',
+              summary: ApiMessages.NotFound.summary,
+              detail: error.error?.message || ApiMessages.NotFound.detail,
               life: 4000
             });
           }
@@ -68,8 +69,8 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           if (error.status >= 500 && messageService) {
             messageService.add({
               severity: 'error',
-              summary: 'Server Error',
-              detail: 'An unexpected error occurred. Please try again later.',
+              summary: ApiMessages.ServerError.summary,
+              detail: ApiMessages.ServerError.detail,
               life: 6000
             });
           }

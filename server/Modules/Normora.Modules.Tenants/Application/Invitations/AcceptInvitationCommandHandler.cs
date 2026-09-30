@@ -17,7 +17,7 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
         // Verify the user is authenticated since invitations can only be accepted by logged-in users
         if (!currentUser.IsAuthenticated)
         {
-            throw new UnauthorizedAccessException("You must be authenticated to accept an invitation.");
+            throw new UnauthorizedAccessException(Normora.Shared.Constants.ApiMessages.Unauthorized);
         }
 
         var invitation = await context.TenantInvitations

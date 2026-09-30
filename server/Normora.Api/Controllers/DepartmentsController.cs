@@ -64,7 +64,7 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
 
         if (!success)
         {
-            return NotFound(ApiResponse.Failure("Department not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
 
         return Ok(ApiResponse.Ok("Department updated successfully."));
@@ -86,7 +86,7 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
 
         if (!success)
         {
-            return NotFound(ApiResponse.Failure("Department not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
 
         return Ok(ApiResponse.Ok("Department deleted successfully."));

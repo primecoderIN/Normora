@@ -20,7 +20,7 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
         // Ensure the user is fully authenticated before allowing them to spin up a new organization
         if (!currentUser.IsAuthenticated)
         {
-            throw new UnauthorizedAccessException("You must be logged in to create a tenant.");
+            throw new UnauthorizedAccessException(Normora.Shared.Constants.ApiMessages.Unauthorized);
         }
 
         var keycloakId = currentUser.KeycloakUserId;

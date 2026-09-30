@@ -17,7 +17,7 @@ import { ButtonModule } from 'primeng/button';
           <h1 class="text-2xl sm:text-[1.75rem] font-bold text-slate-900 dark:text-white leading-[1.15] m-0">Employees</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
         </div>
-        <p-button label="Export" icon="pi pi-download" styleClass="!bg-white dark:bg-slate-900 !border-slate-200 dark:border-slate-700 !text-slate-700 dark:text-slate-200 hover:!bg-slate-50 dark:bg-slate-950 !font-semibold !px-4 !py-2 !h-10 !text-sm transition-colors self-start"></p-button>
+        <p-button label="Export" icon="pi pi-download" styleClass="bg-white! dark:bg-slate-900 border-slate-200! dark:border-slate-700 text-slate-700! dark:text-slate-200 hover:bg-slate-50! dark:bg-slate-950 font-semibold! px-4! py-2! h-10! text-sm! transition-colors self-start"></p-button>
       </header>
 
       <!-- Stat cards -->
@@ -97,7 +97,7 @@ import { ButtonModule } from 'primeng/button';
               type="submit"
               [disabled]="inviteForm.invalid || isInviting()"
               [icon]="isInviting() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
-              styleClass="!bg-primary-600 !border-primary-600 !text-white hover:!bg-primary-700 disabled:!bg-slate-200 disabled:!border-slate-200 dark:border-slate-700 disabled:!text-slate-400 font-bold !px-4 !h-10 transition-colors whitespace-nowrap">
+              styleClass="bg-primary-600! border-primary-600! text-white! hover:bg-primary-700! disabled:bg-slate-200! disabled:border-slate-200! dark:border-slate-700 disabled:text-slate-400! font-bold px-4! h-10! transition-colors whitespace-nowrap">
             </p-button>
           </form>
         </div>

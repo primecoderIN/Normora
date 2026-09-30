@@ -58,7 +58,7 @@ public class ConversationsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(new GetConversationQuery(id));
         if (result is null)
         {
-            return NotFound(ApiResponse.Failure("Conversation not found."));
+            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
         }
         return Ok(ApiResponse<ConversationDetailDto>.Ok(result));
     }

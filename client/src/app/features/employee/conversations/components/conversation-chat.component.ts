@@ -5,6 +5,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConversationDetailDto, MessageDto } from '@core/services/conversation.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 @Component({
   selector: 'app-conversation-chat',
@@ -344,7 +345,8 @@ export class ConversationChatComponent {
     const cached = this.markdownCache.get(content);
     if (cached) return cached;
     
-    const html = marked.parse(content, { async: false, breaks: true }) as string;
+    let html = marked.parse(content, { async: false, breaks: true }) as string;
+    html = DOMPurify.sanitize(html);
     
     // Only cache completed (non-streaming) messages to avoid stale cache entries
     if (content.length > 50) {

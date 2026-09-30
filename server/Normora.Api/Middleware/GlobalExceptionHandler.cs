@@ -47,8 +47,8 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         }
 
         // 3. Handle resource-not-found errors thrown from command/query handlers.
-        // Maps to 404 Not Found.
-        if (exception is NotFoundException)
+        // Maps to 404 Not Found. Also handles BOLA (Broken Object Level Authorization) by returning 404 to prevent enumeration.
+        if (exception is NotFoundException || exception is BolaException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
             var message = env.IsProduction() ? ApiMessages.NotFound : exception.Message;
@@ -56,12 +56,22 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             return true;
         }
 
-        // 4. Handle authentication/authorization failures thrown from command handlers.
+        // 4. Handle authentication failures thrown from command handlers.
         // Maps to 401 Unauthorized.
         if (exception is UnauthorizedAccessException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(exception.Message), cancellationToken);
+            return true;
+        }
+
+        // 5. Handle authorization failures (BFLA).
+        // Maps to 403 Forbidden.
+        if (exception is BflaException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+            var message = env.IsProduction() ? ApiMessages.Forbidden : exception.Message;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
 

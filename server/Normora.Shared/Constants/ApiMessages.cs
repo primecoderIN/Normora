@@ -9,6 +9,7 @@ public static class ApiMessages
     public const string TenantContextMissing = "Tenant context is missing or invalid.";
     public const string RoleForbid = "You do not have the required role in this workspace.";
     public const string Unauthorized = "User is not authenticated or authorized.";
+    public const string Forbidden = "You do not have permission to perform this action.";
 
     // Validation & Bad Requests
     public const string ValidationFailed = "One or more validation errors occurred.";

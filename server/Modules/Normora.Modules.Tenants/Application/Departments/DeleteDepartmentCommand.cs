@@ -19,7 +19,7 @@ public class DeleteDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
 {
     public async Task<bool> Handle(DeleteDepartmentCommand request, CancellationToken cancellationToken)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         var department = await dbContext.Departments
             .FirstOrDefaultAsync(d => d.Id == request.Id && d.TenantId == tenantContext.TenantId.Value, cancellationToken);

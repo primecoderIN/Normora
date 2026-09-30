@@ -37,14 +37,14 @@ public class SaveAnswerCommandHandler(
                 m => m.Id == request.MessageId &&
                      m.Conversation.UserId == currentUser.KeycloakUserId,
                 cancellationToken)
-            ?? throw new InvalidOperationException("Message not found or access denied.");
+            ?? throw new Normora.Shared.Exceptions.BolaException();
 
         if (message.Role != MessageRole.Assistant)
             throw new InvalidOperationException("Only assistant messages can be saved.");
 
         // BUG-1: Guard against null TenantId before using the null-forgiveness operator
         if (!tenantContext.TenantId.HasValue)
-            throw new InvalidOperationException("Tenant context is missing.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         var savedAnswer = new SavedAnswer
         {

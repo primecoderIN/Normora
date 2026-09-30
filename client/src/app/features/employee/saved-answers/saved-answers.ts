@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { TooltipModule } from 'primeng/tooltip';
 import { SavedAnswerService, SavedAnswerDto, ExportFormat } from '@core/services/saved-answer.service';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 interface ExportOption {
   format: ExportFormat;
@@ -371,7 +372,8 @@ export class SavedAnswers implements OnInit {
     if (!content) return '';
     const cached = this.markdownCache.get(content);
     if (cached) return cached;
-    const html = marked.parse(content, { async: false, breaks: true }) as string;
+    let html = marked.parse(content, { async: false, breaks: true }) as string;
+    html = DOMPurify.sanitize(html);
     this.markdownCache.set(content, html);
     return html;
   }

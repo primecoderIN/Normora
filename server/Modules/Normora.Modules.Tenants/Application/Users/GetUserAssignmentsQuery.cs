@@ -24,7 +24,7 @@ public class GetUserAssignmentsQueryHandler(TenantsDbContext dbContext, ITenantC
 {
     public async Task<UserAssignmentsDto?> Handle(GetUserAssignmentsQuery request, CancellationToken cancellationToken)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException("Tenant Context missing.");
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         var membership = await dbContext.TenantMemberships
             .AsNoTracking()

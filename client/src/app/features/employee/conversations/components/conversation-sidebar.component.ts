@@ -86,8 +86,8 @@ import { ConversationDto } from '@core/services/conversation.service';
               *cdkVirtualFor="let conv of filteredConversations(); trackBy: trackById"
               type="button"
               class="group relative flex items-center w-full bg-transparent border border-transparent rounded-xl cursor-pointer gap-3 px-3 py-3 text-left transition-all hover:bg-slate-100 dark:hover:bg-slate-800 mb-1.5 overflow-hidden"
-              [class.!bg-primary-50]="activeId === conv.id"
-              [class.!border-primary-100]="activeId === conv.id"
+              [class.bg-primary-50]!="activeId === conv.id"
+              [class.border-primary-100]!="activeId === conv.id"
               (click)="onSelect.emit(conv.id)"
             >
               <!-- Active Indicator Strip -->
