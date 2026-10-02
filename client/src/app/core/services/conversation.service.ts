@@ -28,6 +28,7 @@ export interface MessageDto {
   createdAt: string;
   rewritten: boolean;
   citations: MessageCitationDto[];
+  feedback?: 1 | 2;
 }
 
 export interface ConversationDetailDto extends ConversationDto {
@@ -87,5 +88,10 @@ export class ConversationService {
   /** Permanently delete a conversation and all its messages. */
   deleteConversation(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  /** Submit positive (1) or negative (2) feedback for an assistant message. */
+  submitFeedback(conversationId: string, messageId: string, rating: 1 | 2, comment?: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${conversationId}/messages/${messageId}/feedback`, { rating, comment });
   }
 }

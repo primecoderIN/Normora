@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, 
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
-import { ConversationDetailDto, MessageDto } from '@core/services/conversation.service';
+import { ConversationDetailDto, MessageDto, ConversationService } from '@core/services/conversation.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -145,6 +145,33 @@ import DOMPurify from 'dompurify';
                              [class.text-amber-500]="isSaved(msg.id)"
                              [class.pi-bookmark]="!isSaved(msg.id)"></i>
                         </button>
+                        <!-- Feedback buttons -->
+                        <button
+                          type="button"
+                          class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-green-500 transition-all cursor-pointer"
+                          (click)="toggleFeedback(msg, 1)"
+                          pTooltip="Helpful"
+                          tooltipPosition="top"
+                          aria-label="Mark helpful"
+                        >
+                          <i class="text-base pi"
+                             [class.pi-thumbs-up-fill]="msg.feedback === 1"
+                             [class.text-green-500]="msg.feedback === 1"
+                             [class.pi-thumbs-up]="msg.feedback !== 1"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-red-500 transition-all cursor-pointer"
+                          (click)="toggleFeedback(msg, 2)"
+                          pTooltip="Not helpful"
+                          tooltipPosition="top"
+                          aria-label="Mark not helpful"
+                        >
+                          <i class="text-base pi"
+                             [class.pi-thumbs-down-fill]="msg.feedback === 2"
+                             [class.text-red-500]="msg.feedback === 2"
+                             [class.pi-thumbs-down]="msg.feedback !== 2"></i>
+                        </button>
                         <!-- Copy button -->
                         <button
                           type="button"
@@ -271,6 +298,7 @@ import DOMPurify from 'dompurify';
 })
 export class ConversationChatComponent {
   private savedAnswerService = inject(SavedAnswerService);
+  private conversationService = inject(ConversationService);
 
   @Input({ required: true }) conversation: ConversationDetailDto | null = null;
   @Input({ required: true }) isLoading = false;
@@ -307,6 +335,21 @@ export class ConversationChatComponent {
       this.savedMessageIds.update(s => new Set(s).add(messageId));
       this.savedAnswerService.saveAnswer(messageId).subscribe({
         error: () => this.savedMessageIds.update(s => { const n = new Set(s); n.delete(messageId); return n; })
+      });
+    }
+  }
+
+  toggleFeedback(msg: MessageDto, rating: 1 | 2) {
+    // If they click the same rating again, we could potentially un-rate it if the backend supports it, 
+    // but the plan just says "submit feedback". Let's assume clicking it updates it to that rating.
+    const prevRating = msg.feedback;
+    msg.feedback = rating; // Optimistic update
+    
+    if (this.conversation?.id) {
+      this.conversationService.submitFeedback(this.conversation.id, msg.id, rating, undefined).subscribe({
+        error: () => {
+          msg.feedback = prevRating; // Revert on error
+        }
       });
     }
   }
