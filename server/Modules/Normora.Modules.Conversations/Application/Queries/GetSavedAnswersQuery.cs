@@ -43,12 +43,12 @@ public class GetSavedAnswersQueryHandler(
         {
             var idsStr = string.Join(",", chunkIds.Select(id => $"'{id}'"));
             
-            // Raw SQL query to maintain module independence while joining the 'documents' schema.
+            // Raw SQL query to maintain module independence without EF navigation properties.
             // Checks if any of the document chunks belong to a DocumentVersion where IsActive = false.
             var sql = $@"
                 SELECT c.""Id"" 
-                FROM documents.""DocumentChunks"" c
-                JOIN documents.""DocumentVersions"" v ON c.""DocumentVersionId"" = v.""Id""
+                FROM ""DocumentChunks"" c
+                JOIN ""DocumentVersions"" v ON c.""DocumentVersionId"" = v.""Id""
                 WHERE v.""IsActive"" = false AND c.""Id"" IN ({idsStr})";
                 
             var results = await context.Database.SqlQueryRaw<Guid>(sql).ToListAsync(cancellationToken);
