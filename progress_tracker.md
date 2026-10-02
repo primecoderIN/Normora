@@ -153,3 +153,16 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] `MessageDto` updated with `Feedback` rating mapping inside `GetConversationQueryHandler`
 - [x] Angular `MessageDto` updated with `feedback` property and `submitFeedback` method in `ConversationService`
 - [x] Thumb Up/Down feedback buttons added to `ConversationChatComponent` next to bookmarks, with optimistic state toggling
+
+## ✅ Completed Document Versioning (Phase 19)
+- [x] Extracted version-specific fields (`MinioObjectName`, `Status`, `ExtractedText`) from `Document` into a new `DocumentVersion` entity.
+- [x] Updated `Document` with a `Versions` collection; modified `DocumentChunk` to point to `DocumentVersionId`.
+- [x] Applied `AddDocumentVersioning` EF Core migration and re-synced `DocumentsDbContext`.
+- [x] Refactored `UploadDocumentCommand` to either create a new document + v1, or fetch an existing document by `DocumentId` and append a new, active version while deactivating older versions.
+- [x] Refactored `SearchDocumentsQuery` and `RetrievalService` RAG pipelines to strictly join `DocumentVersions` filtered by `IsActive = true`.
+- [x] Updated `DocumentsController.cs` to accept an optional `[FromForm] Guid? documentId` for the `UploadDocument` POST endpoint.
+- [x] Updated Angular `DocumentService` with the `DocumentVersion` interface and included `versions` array inside `DocumentDto`.
+- [x] Added "Version History" expansion table to the Angular `DocumentListComponent`, showing historical records and timestamps.
+- [x] Added "Upload new version" action button on the Angular Employer Document List to upload new files retaining the same parent document identifier.
+- [x] Added `isOutdated` flag to citations in `GetConversationQuery` and `GetSavedAnswersQuery` by cross-checking `documents."DocumentVersions"` for `IsActive = false`.
+- [x] Added a warning banner in `ConversationChatComponent` and `SavedAnswers` UI to alert users when an AI answer relies on outdated source documents.
