@@ -31,7 +31,8 @@ public record MessageCitationDto(
     Guid DocumentId,
     Guid DocumentChunkId,
     string FileName,
-    double Score);
+    double Score,
+    bool IsOutdated);
 
 public class GetConversationQueryHandler(
     ConversationsDbContext context,
@@ -53,6 +54,28 @@ public class GetConversationQueryHandler(
             return null;
         }
 
+        // Document Versioning (Phase 19): Identify citations that belong to inactive document versions.
+        var chunkIds = conversation.Messages.SelectMany(m => m.Citations.Select(c => c.DocumentChunkId)).Distinct().ToList();
+        var outdatedChunkIds = new HashSet<Guid>();
+        
+        if (chunkIds.Any())
+        {
+            var idsStr = string.Join(",", chunkIds.Select(id => $"'{id}'"));
+            
+            // Raw SQL query to maintain module independence while joining the 'documents' schema.
+            var sql = $@"
+                SELECT c.""Id"" 
+                FROM documents.""DocumentChunks"" c
+                JOIN documents.""DocumentVersions"" v ON c.""DocumentVersionId"" = v.""Id""
+                WHERE v.""IsActive"" = false AND c.""Id"" IN ({idsStr})";
+                
+            var results = await context.Database.SqlQueryRaw<Guid>(sql).ToListAsync(cancellationToken);
+            foreach (var id in results)
+            {
+                outdatedChunkIds.Add(id);
+            }
+        }
+
         return new ConversationDetailDto(
             conversation.Id,
             conversation.Title,
@@ -72,7 +95,8 @@ public class GetConversationQueryHandler(
                         c.DocumentId,
                         c.DocumentChunkId,
                         c.FileName,
-                        c.Score)).ToList(),
+                        c.Score,
+                        outdatedChunkIds.Contains(c.DocumentChunkId))).ToList(),
                     m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.KeycloakUserId) != null 
                         ? m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.KeycloakUserId)!.Rating 
                         : null

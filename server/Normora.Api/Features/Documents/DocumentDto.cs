@@ -15,6 +15,7 @@ public record DocumentDto(
     string Status,
     DateTime UploadedAt,
     IReadOnlyCollection<Guid> DepartmentIds,
+    // Document Versioning (Phase 19): Includes all historical file versions.
     IReadOnlyCollection<DocumentVersionDto> Versions);
 
 public record DocumentVersionDto(

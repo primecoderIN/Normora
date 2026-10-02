@@ -3,6 +3,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Normora.Api.Hubs;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared;
@@ -10,10 +11,9 @@ using Normora.Shared;
 namespace Normora.Api.Features.Documents;
 
 /// <summary>
-/// Command to upload a new document. Includes the physical file, the active TenantId,
-/// and optionally a list of department IDs to scope the document to.
+/// Command to upload a new document or a new version of an existing document.
 /// </summary>
-public record UploadDocumentCommand(IFormFile File, Guid TenantId, IReadOnlyCollection<Guid>? DepartmentIds = null) : IRequest<DocumentDto>;
+public record UploadDocumentCommand(IFormFile File, Guid TenantId, IReadOnlyCollection<Guid>? DepartmentIds = null, Guid? DocumentId = null) : IRequest<DocumentDto>;
 
 public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDocumentCommand>
 {
@@ -82,39 +82,68 @@ public sealed class UploadDocumentCommandHandler(
         // that was not successfully stored. The tenant ID becomes part of the object key.
         var objectName = await storageService.UploadDocumentAsync(request.File, request.TenantId.ToString());
 
-        // 2. Create EF Core Record
-        var document = new Document
-        {
-            Id = Guid.NewGuid(),
-            FileName = request.File.FileName,
-            ContentType = request.File.ContentType,
-            Size = request.File.Length,
-            UploadedAt = DateTime.UtcNow,
-            TenantId = request.TenantId,
-            DocumentDepartments = request.DepartmentIds?.Select(depId => new DocumentDepartment
-            {
-                DepartmentId = depId
-            }).ToList() ?? new List<DocumentDepartment>()
-        };
+        // 2. Create EF Core Record (or fetch existing)
+        Document document;
+        int nextVersionNumber = 1;
 
+        if (request.DocumentId.HasValue)
+        {
+            // NEW VERSION UPLOAD (Phase 19): 
+            // If the request contains a DocumentId, we are appending a new version to an existing document.
+            document = await context.Documents
+                .Include(d => d.Versions)
+                .SingleOrDefaultAsync(d => d.Id == request.DocumentId.Value && d.TenantId == request.TenantId, cancellationToken);
+
+            if (document == null) throw new InvalidOperationException("Document not found.");
+
+            if (document.Versions.Any())
+            {
+                // Assign sequential version number based on the previous max version.
+                nextVersionNumber = document.Versions.Max(v => v.VersionNumber) + 1;
+                
+                // (Phase 19): Deactivate all older versions of this document.
+                // The new version being uploaded will be marked as IsActive = true below.
+                // This guarantees only one active version is used by the retrieval/RAG pipeline.
+                foreach (var v in document.Versions)
+                {
+                    v.IsActive = false;
+                }
+            }
+        }
+        else
+        {
+            document = new Document
+            {
+                Id = Guid.NewGuid(),
+                FileName = request.File.FileName,
+                ContentType = request.File.ContentType,
+                Size = request.File.Length,
+                UploadedAt = DateTime.UtcNow,
+                TenantId = request.TenantId,
+                DocumentDepartments = request.DepartmentIds?.Select(depId => new DocumentDepartment
+                {
+                    DepartmentId = depId
+                }).ToList() ?? new List<DocumentDepartment>()
+            };
+            context.Documents.Add(document);
+        }
+
+        // NEW VERSION UPLOAD (Phase 19):
+        // Create the new DocumentVersion entry.
+        // It carries the minio object name and the Active flag.
         var version = new DocumentVersion
         {
             Id = Guid.NewGuid(),
             DocumentId = document.Id,
             TenantId = request.TenantId,
-            VersionNumber = 1,
+            VersionNumber = nextVersionNumber,
             MinioObjectName = objectName,
             Status = DocumentStatus.Uploaded,
-            IsActive = true, // v1 is active by default
+            IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
         
         document.Versions.Add(version);
-
-        // 3. Save the document metadata to the PostgreSQL database.
-        // NOTE: The DocumentsDbContext is configured with a Global Query Filter and an Interceptor
-        // that will automatically bind this Document to the current active TenantId upon SaveChanges.
-        context.Documents.Add(document);
         context.DocumentVersions.Add(version);
         await context.SaveChangesAsync(cancellationToken);
 

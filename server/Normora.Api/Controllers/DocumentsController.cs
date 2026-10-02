@@ -71,13 +71,15 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<DocumentDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> UploadDocument([FromForm] IFormFile file, [FromForm] Guid[]? departmentIds = null)
+    // Document Versioning (Phase 19): Added optional documentId parameter.
+    // If provided, the system appends a new file version to the existing document record.
+    public async Task<IActionResult> UploadDocument([FromForm] IFormFile file, [FromForm] Guid[]? departmentIds = null, [FromForm] Guid? documentId = null)
     {
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
         // 1. Validation (file empty, size, extension) is handled automatically
         // by FluentValidation through the MediatR Pipeline Behavior.
-        var command = new UploadDocumentCommand(file, tenantContext.TenantId.Value, departmentIds);
+        var command = new UploadDocumentCommand(file, tenantContext.TenantId.Value, departmentIds, documentId);
         
         // 3. Dispatch the command to the MediatR handler.
         var document = await mediator.Send(command);

@@ -15,4 +15,5 @@ public record SavedAnswerDto(
 public record CitationDto(
     Guid DocumentId,
     string FileName,
-    double Score);
+    double Score,
+    bool IsOutdated);
