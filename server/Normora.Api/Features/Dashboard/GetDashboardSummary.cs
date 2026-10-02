@@ -51,6 +51,7 @@ public class GetDashboardSummaryQueryHandler(
         {
             Name = d.FileName,
             Category = d.DocumentDepartments.Any() ? string.Join(", ", d.DocumentDepartments.Select(dd => departments.GetValueOrDefault(dd.DepartmentId, "Unknown"))) : "Company Wide",
+            // Document Versioning (Phase 19): Derive document status from the active version.
             Status = d.Versions.FirstOrDefault(v => v.IsActive)?.Status.ToString() ?? "Unknown",
             Type = System.IO.Path.GetExtension(d.FileName).TrimStart('.').ToUpperInvariant(),
             Date = d.UploadedAt
@@ -117,6 +118,7 @@ public class GetDashboardSummaryQueryHandler(
         var totalSavedAnswers = await conversationsDb.SavedAnswers.CountAsync(cancellationToken);
         double answerQuality = totalQuestions > 0 ? Math.Round(((double)totalSavedAnswers / totalQuestions) * 100, 1) : 100.0;
         
+        // Document Versioning (Phase 19): Query DocumentVersions for KB health instead of Documents directly.
         var failedDocs = await documentsDb.DocumentVersions.CountAsync(v => v.Status == DocumentStatus.Failed && v.IsActive, cancellationToken);
         var processingDocs = await documentsDb.DocumentVersions.CountAsync(v => v.Status == DocumentStatus.Processing && v.IsActive, cancellationToken);
 

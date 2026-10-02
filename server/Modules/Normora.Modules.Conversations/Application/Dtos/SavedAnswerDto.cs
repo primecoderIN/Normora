@@ -16,4 +16,5 @@ public record CitationDto(
     Guid DocumentId,
     string FileName,
     double Score,
+    // Document Versioning (Phase 19): True when the cited chunk's DocumentVersion.IsActive = false.
     bool IsOutdated);

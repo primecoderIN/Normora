@@ -48,6 +48,8 @@ public sealed class SearchDocumentsQueryHandler(
         return await context.DocumentChunks
             .AsNoTracking()
             .Where(chunk => chunk.Embedding != null)
+            // Document Versioning (Phase 19): Only retrieve chunks from the active document version.
+            // Inactive versions (superseded by newer uploads) are excluded from search results.
             .Join(
                 context.DocumentVersions.AsNoTracking().Where(v => v.IsActive),
                 chunk => chunk.DocumentVersionId,

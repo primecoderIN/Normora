@@ -379,14 +379,32 @@ Do not store large document binaries directly in PostgreSQL.
 
 ### Document versioning
 
+Document updates use an immutable versioning approach to preserve historical citations.
+
 ```text
-Travel Policy
-├── v1 → inactive
-├── v2 → inactive
-└── v3 → active
+Document (Container)
+├── Id
+├── FileName
+└── DepartmentIds (Scoping)
+      │
+      ├── DocumentVersion (v1, Inactive)
+      │     ├── Id
+      │     ├── MinioObjectName
+      │     ├── Status (Ready)
+      │     └── Chunks...
+      │
+      └── DocumentVersion (v2, Active)
+            ├── Id
+            ├── MinioObjectName
+            ├── Status (Ready)
+            └── Chunks...
 ```
 
-RAG must retrieve from the correct active version.
+**Architectural principles:**
+- **Immutability**: New file uploads for an existing document create a new `DocumentVersion`. The old version is marked `IsActive = false` but never deleted.
+- **Retrieval isolation**: The RAG pipeline (`RetrievalService` and `SearchDocumentsQuery`) explicitly joins against `DocumentVersions` where `IsActive == true`. This prevents superseded chunks from polluting new answers.
+- **Citation stability**: Old answers generated using v1 chunks retain their foreign keys. If an employee views an old saved answer, the UI flags it as "outdated" by checking if the cited `DocumentChunk` belongs to an inactive `DocumentVersion`.
+- **Department continuity**: Department scoping is applied at the `Document` level, ensuring all versions inherit the same audience restrictions.
 
 ---
 
@@ -1766,11 +1784,13 @@ The following phases extend the Phase plan in §31 to cover the features describ
 - `POST /api/conversations/{id}/messages/{messageId}/feedback` endpoint
 - Thumbs-up / thumbs-down UI in the chat bubble
 
-#### Phase 19 — Document Versioning
-- `DocumentVersions` table and EF migration
-- `CreateDocumentVersionCommand`, `ActivateDocumentVersionCommand`
-- Update hybrid search to filter on active version
-- Version history UI in the document detail view
+#### Phase 19 — Document Versioning (Completed)
+- ✅ `DocumentVersions` table and EF migration
+- ✅ `UploadNewVersionCommand`, `DocumentProcessingJob` adaptation
+- ✅ Hybrid search updated to filter on active version
+- ✅ Version history UI in the document detail view with "Upload new version" action
+- ✅ Outdated citation warnings on old saved answers
+- ✅ Handled existing FK constraint issues during migration via custom sequence
 
 #### Phase 20 — Document Deletion
 - Soft-delete fields on `Documents` + EF global query filter

@@ -19,6 +19,7 @@ public class DocumentsDbContext : DbContext
     }
 
     public DbSet<Document> Documents { get; set; } = null!;
+    // Document Versioning (Phase 19): Tracks immutable file versions within a Document container.
     public DbSet<DocumentVersion> DocumentVersions { get; set; } = null!;
     public DbSet<DocumentChunk> DocumentChunks { get; set; } = null!;
     public DbSet<DocumentDepartment> DocumentDepartments { get; set; } = null!;
@@ -56,6 +57,8 @@ public class DocumentsDbContext : DbContext
                   .HasForeignKey(v => v.DocumentId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            // Document Versioning (Phase 19): The same tenant filter applies to versions so
+            // a different tenant cannot read version metadata via IgnoreQueryFilters bypass.
             entity.HasQueryFilter(v => v.TenantId == _tenantContext.TenantId);
         });
 
@@ -126,6 +129,7 @@ public class DocumentsDbContext : DbContext
             }
         }
 
+        // Document Versioning (Phase 19): Propagate TenantId to DocumentVersion rows.
         foreach (var entry in ChangeTracker.Entries<DocumentVersion>().Where(e => e.State == EntityState.Added))
         {
             if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)

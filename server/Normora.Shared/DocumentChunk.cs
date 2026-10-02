@@ -8,6 +8,8 @@ using Pgvector;
 public class DocumentChunk
 {
     public Guid Id { get; set; }
+    /// Document Versioning (Phase 19): FK now points to DocumentVersion instead of Document.
+    /// This allows chunks to be tied to a specific immutable file version.
     public Guid DocumentVersionId { get; set; }
     public Guid TenantId { get; set; }
     public int ChunkIndex { get; set; }

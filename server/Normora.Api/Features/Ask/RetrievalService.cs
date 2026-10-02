@@ -28,6 +28,8 @@ public sealed class RetrievalService(
         var baseQuery = documentsContext.DocumentChunks
             .IgnoreQueryFilters()
             .AsNoTracking()
+            // Document Versioning (Phase 19): Only retrieve chunks from the active document version.
+            // This ensures RAG never pulls content from superseded document uploads.
             .Join(
                 documentsContext.DocumentVersions.IgnoreQueryFilters().AsNoTracking().Where(v => v.IsActive),
                 chunk => chunk.DocumentVersionId,

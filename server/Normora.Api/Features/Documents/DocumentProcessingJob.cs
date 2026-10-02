@@ -19,6 +19,8 @@ public sealed class DocumentProcessingJob(
     ILogger<DocumentProcessingJob> logger)
 {
     [AutomaticRetry(Attempts = 3)]
+    // Document Versioning (Phase 19): Processes a specific DocumentVersion, not a Document.
+    // Each version carries its own MinIO object, extracted text, and chunk set.
     public async Task ProcessAsync(Guid documentVersionId, Guid tenantId)
     {
         // Hangfire has no HTTP tenant context, so bypass the request-scoped filter and
