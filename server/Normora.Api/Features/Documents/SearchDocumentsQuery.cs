@@ -49,14 +49,21 @@ public sealed class SearchDocumentsQueryHandler(
             .AsNoTracking()
             .Where(chunk => chunk.Embedding != null)
             .Join(
+                context.DocumentVersions.AsNoTracking().Where(v => v.IsActive),
+                chunk => chunk.DocumentVersionId,
+                version => version.Id,
+                (chunk, version) => new { chunk, version }
+            )
+            .Join(
                 context.Documents.AsNoTracking(),
-                chunk => chunk.DocumentId,
+                cv => cv.version.DocumentId,
                 document => document.Id,
-                (chunk, document) => new
+                (cv, document) => new
                 {
-                    Chunk = chunk,
+                    Chunk = cv.chunk,
+                    Version = cv.version,
                     Document = document,
-                    Distance = chunk.Embedding!.CosineDistance(queryVector)
+                    Distance = cv.chunk.Embedding!.CosineDistance(queryVector)
                 })
             .OrderBy(result => result.Distance)
             .Take(limit)

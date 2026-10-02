@@ -87,22 +87,35 @@ public sealed class UploadDocumentCommandHandler(
         {
             Id = Guid.NewGuid(),
             FileName = request.File.FileName,
-            MinioObjectName = objectName,
-            Status = DocumentStatus.Uploaded,
+            ContentType = request.File.ContentType,
+            Size = request.File.Length,
             UploadedAt = DateTime.UtcNow,
             TenantId = request.TenantId,
             DocumentDepartments = request.DepartmentIds?.Select(depId => new DocumentDepartment
             {
                 DepartmentId = depId
-                // TenantId and DocumentId are populated automatically by EF Core conventions
-                // and the DbContext SaveChanges interception.
             }).ToList() ?? new List<DocumentDepartment>()
         };
+
+        var version = new DocumentVersion
+        {
+            Id = Guid.NewGuid(),
+            DocumentId = document.Id,
+            TenantId = request.TenantId,
+            VersionNumber = 1,
+            MinioObjectName = objectName,
+            Status = DocumentStatus.Uploaded,
+            IsActive = true, // v1 is active by default
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        document.Versions.Add(version);
 
         // 3. Save the document metadata to the PostgreSQL database.
         // NOTE: The DocumentsDbContext is configured with a Global Query Filter and an Interceptor
         // that will automatically bind this Document to the current active TenantId upon SaveChanges.
         context.Documents.Add(document);
+        context.DocumentVersions.Add(version);
         await context.SaveChangesAsync(cancellationToken);
 
         // Notify connected tenant members before queueing background work so clients observe
@@ -112,10 +125,10 @@ public sealed class UploadDocumentCommandHandler(
                 document.Id,
                 document.TenantId,
                 document.FileName,
-                document.Status.ToString()), cancellationToken);
+                version.Status.ToString()), cancellationToken);
 
         backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
-            job.ProcessAsync(document.Id, document.TenantId));
+            job.ProcessAsync(version.Id, document.TenantId));
 
         return document.ToDto();
     }

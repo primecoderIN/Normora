@@ -19,19 +19,14 @@ public class Document
     public string FileName { get; set; } = string.Empty;
 
     /// <summary>
-    /// The unique object key used to store and retrieve the physical file from the MinIO S3 bucket.
+    /// Content-Type of the file (e.g., application/pdf)
     /// </summary>
-    public string MinioObjectName { get; set; } = string.Empty;
+    public string ContentType { get; set; } = string.Empty;
 
     /// <summary>
-    /// Text extracted from the original file by the ingestion pipeline.
+    /// Size of the document in bytes.
     /// </summary>
-    public string? ExtractedText { get; set; }
-
-    /// <summary>
-    /// The current processing status of the document.
-    /// </summary>
-    public DocumentStatus Status { get; set; }
+    public long Size { get; set; }
 
     /// <summary>
     /// The UTC timestamp when the document was uploaded.
@@ -51,4 +46,9 @@ public class Document
     /// is "Company Wide" and accessible to every employee in the tenant.
     /// </summary>
     public ICollection<DocumentDepartment> DocumentDepartments { get; set; } = new List<DocumentDepartment>();
+
+    /// <summary>
+    /// The versions of this document.
+    /// </summary>
+    public ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
 }

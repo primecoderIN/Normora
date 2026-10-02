@@ -22,6 +22,7 @@ public sealed class GetEmployerDocumentsQueryHandler(DocumentsDbContext context)
     {
         var documents = await context.Documents
             .Include(d => d.DocumentDepartments)
+            .Include(d => d.Versions)
             .AsNoTracking()
             .OrderByDescending(d => d.UploadedAt)
             .ToListAsync(cancellationToken);

@@ -101,11 +101,28 @@ Handles the document processing lifecycle, chunking, and vector embeddings.
 | `FileName` | `nvarchar(255)` | ❌ | |
 | `ContentType` | `varchar(100)` | ❌ | |
 | `Size` | `bigint` | ❌ | File size in bytes |
+| `UploadedAt` | `datetime2` | ❌ | |
+
+**Indexes:** `IX_Documents_TenantId`
+
+---
+
+### `DocumentVersions`
+A single document can have multiple versions. RAG uses the one with `IsActive = true`.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uniqueidentifier` | ❌ | PK |
+| `DocumentId` | `uniqueidentifier` | ❌ | FK → `Documents.Id` (`Cascade`) |
+| `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
+| `VersionNumber` | `int` | ❌ | Sequential version number |
+| `MinioObjectName` | `varchar(500)` | ❌ | S3 Object reference |
+| `ExtractedText` | `text` | ✅ | |
 | `Status` | `int` | ❌ | Enum: `Uploaded`, `Processing`, `Ready`, `Failed` |
-| `MinioObjectKey` | `varchar(500)` | ❌ | S3 Object reference |
+| `IsActive` | `boolean` | ❌ | Only active version is queried by RAG |
 | `CreatedAt` | `datetime2` | ❌ | |
 
-**Indexes:** `IX_Documents_TenantId_Status`
+**Indexes:** `IX_DocumentVersions_TenantId`
 
 ---
 
@@ -115,7 +132,7 @@ Extracted text and 768-dimensional Gemini embeddings for RAG retrieval.
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `Id` | `uniqueidentifier` | ❌ | PK |
-| `DocumentId` | `uniqueidentifier` | ❌ | FK → `Documents.Id` (`Cascade`) |
+| `DocumentVersionId` | `uniqueidentifier` | ❌ | FK → `DocumentVersions.Id` (`Cascade`) |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
 | `ChunkIndex` | `int` | ❌ | Ordering within the document |
 | `Text` | `nvarchar(max)` | ❌ | Extracted chunk content (~4k chars) |

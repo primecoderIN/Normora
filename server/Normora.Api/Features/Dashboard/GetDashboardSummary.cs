@@ -37,6 +37,7 @@ public class GetDashboardSummaryQueryHandler(
 
         var recentDocs = await documentsDb.Documents
             .Include(d => d.DocumentDepartments)
+            .Include(d => d.Versions)
             .OrderByDescending(d => d.UploadedAt)
             .Take(5)
             .ToListAsync(cancellationToken);
@@ -50,7 +51,7 @@ public class GetDashboardSummaryQueryHandler(
         {
             Name = d.FileName,
             Category = d.DocumentDepartments.Any() ? string.Join(", ", d.DocumentDepartments.Select(dd => departments.GetValueOrDefault(dd.DepartmentId, "Unknown"))) : "Company Wide",
-            Status = d.Status.ToString(),
+            Status = d.Versions.FirstOrDefault(v => v.IsActive)?.Status.ToString() ?? "Unknown",
             Type = System.IO.Path.GetExtension(d.FileName).TrimStart('.').ToUpperInvariant(),
             Date = d.UploadedAt
         }).ToList();
@@ -116,8 +117,8 @@ public class GetDashboardSummaryQueryHandler(
         var totalSavedAnswers = await conversationsDb.SavedAnswers.CountAsync(cancellationToken);
         double answerQuality = totalQuestions > 0 ? Math.Round(((double)totalSavedAnswers / totalQuestions) * 100, 1) : 100.0;
         
-        var failedDocs = await documentsDb.Documents.CountAsync(d => d.Status == DocumentStatus.Failed, cancellationToken);
-        var processingDocs = await documentsDb.Documents.CountAsync(d => d.Status == DocumentStatus.Processing, cancellationToken);
+        var failedDocs = await documentsDb.DocumentVersions.CountAsync(v => v.Status == DocumentStatus.Failed && v.IsActive, cancellationToken);
+        var processingDocs = await documentsDb.DocumentVersions.CountAsync(v => v.Status == DocumentStatus.Processing && v.IsActive, cancellationToken);
 
         var kbDescription = failedDocs > 0 ? $"{failedDocs} documents require attention due to processing errors." : 
                             processingDocs > 0 ? $"{processingDocs} documents are currently being processed." : 

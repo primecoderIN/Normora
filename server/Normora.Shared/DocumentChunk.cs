@@ -8,7 +8,7 @@ using Pgvector;
 public class DocumentChunk
 {
     public Guid Id { get; set; }
-    public Guid DocumentId { get; set; }
+    public Guid DocumentVersionId { get; set; }
     public Guid TenantId { get; set; }
     public int ChunkIndex { get; set; }
     public string Content { get; set; } = string.Empty;

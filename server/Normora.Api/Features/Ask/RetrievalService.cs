@@ -29,12 +29,17 @@ public sealed class RetrievalService(
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Join(
+                documentsContext.DocumentVersions.IgnoreQueryFilters().AsNoTracking().Where(v => v.IsActive),
+                chunk => chunk.DocumentVersionId,
+                version => version.Id,
+                (chunk, version) => new { chunk, version })
+            .Join(
                 documentsContext.Documents.IgnoreQueryFilters().AsNoTracking().Where(d =>
                     !d.DocumentDepartments.Any() ||
                     d.DocumentDepartments.Any(dd => effectiveDepartments.Contains(dd.DepartmentId))),
-                chunk => chunk.DocumentId,
+                cv => cv.version.DocumentId,
                 doc => doc.Id,
-                (chunk, doc) => new { chunk, doc })
+                (cv, doc) => new { cv.chunk, cv.version, doc })
             .Where(x => x.chunk.TenantId == activeTenantId || (personalTenantId.HasValue && x.chunk.TenantId == personalTenantId.Value));
 
         // Vector search — top 20

@@ -19,43 +19,44 @@ public sealed class DocumentProcessingJob(
     ILogger<DocumentProcessingJob> logger)
 {
     [AutomaticRetry(Attempts = 3)]
-    public async Task ProcessAsync(Guid documentId, Guid tenantId)
+    public async Task ProcessAsync(Guid documentVersionId, Guid tenantId)
     {
         // Hangfire has no HTTP tenant context, so bypass the request-scoped filter and
         // enforce ownership explicitly with both identifiers before touching the record.
-        var document = await context.Documents
+        var version = await context.DocumentVersions
+            .Include(v => v.Document)
             .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(document =>
-                document.Id == documentId && document.TenantId == tenantId);
+            .SingleOrDefaultAsync(v =>
+                v.Id == documentVersionId && v.TenantId == tenantId);
 
-        if (document is null)
+        if (version is null || version.Document is null)
         {
             logger.LogWarning(
-                "Document processing job skipped because document {DocumentId} was not found for tenant {TenantId}.",
-                documentId,
+                "Document processing job skipped because document version {DocumentVersionId} was not found for tenant {TenantId}.",
+                documentVersionId,
                 tenantId);
             return;
         }
 
         // Reprocessing only these states makes retries idempotent and prevents a late job
         // from overwriting a document that has already reached a later lifecycle state.
-        if (document.Status is not (DocumentStatus.Uploaded or DocumentStatus.Failed))
+        if (version.Status is not (DocumentStatus.Uploaded or DocumentStatus.Failed))
         {
             logger.LogInformation(
-                "Document processing job skipped because document {DocumentId} is already {Status}.",
-                documentId,
-                document.Status);
+                "Document processing job skipped because document version {DocumentVersionId} is already {Status}.",
+                documentVersionId,
+                version.Status);
             return;
         }
 
         try
         {
-            document.Status = DocumentStatus.Processing;
+            version.Status = DocumentStatus.Processing;
             await context.SaveChangesAsync();
-            await PublishStatusAsync(document);
+            await PublishStatusAsync(version.Document, version.Status);
 
-            await using var documentStream = await storageService.DownloadDocumentAsync(document.MinioObjectName);
-            document.ExtractedText = await textExtractor.ExtractAsync(documentStream, document.FileName);
+            await using var documentStream = await storageService.DownloadDocumentAsync(version.MinioObjectName);
+            version.ExtractedText = await textExtractor.ExtractAsync(documentStream, version.Document.FileName);
 
             await using var transaction = await context.Database.BeginTransactionAsync();
             try
@@ -63,15 +64,15 @@ public sealed class DocumentProcessingJob(
                 await context.DocumentChunks
                     // A retry replaces the complete chunk set so partial previous work cannot duplicate results.
                     .IgnoreQueryFilters()
-                    .Where(chunk => chunk.DocumentId == document.Id && chunk.TenantId == document.TenantId)
+                    .Where(chunk => chunk.DocumentVersionId == version.Id && chunk.TenantId == version.TenantId)
                     .ExecuteDeleteAsync();
 
-            var chunks = DocumentChunker.Split(document.ExtractedText);
+            var chunks = DocumentChunker.Split(version.ExtractedText);
             var documentChunks = chunks.Select((content, index) => new DocumentChunk
             {
                 Id = Guid.NewGuid(),
-                DocumentId = document.Id,
-                TenantId = document.TenantId,
+                DocumentVersionId = version.Id,
+                TenantId = version.TenantId,
                 ChunkIndex = index,
                 Content = content
             }).ToList();
@@ -90,7 +91,7 @@ public sealed class DocumentProcessingJob(
                 context.DocumentChunks.AddRange(documentChunks);
 
                 // Ready is published only after all configured ingestion stages have completed.
-                document.Status = DocumentStatus.Ready;
+                version.Status = DocumentStatus.Ready;
                 await context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -101,30 +102,30 @@ public sealed class DocumentProcessingJob(
                 throw;
             }
 
-            await PublishStatusAsync(document);
+            await PublishStatusAsync(version.Document, version.Status);
 
             logger.LogInformation(
-                "Document {DocumentId} was extracted successfully for tenant {TenantId}.",
-                documentId,
+                "Document version {DocumentVersionId} was extracted successfully for tenant {TenantId}.",
+                documentVersionId,
                 tenantId);
         }
         catch (Exception exception)
         {
-            document.Status = DocumentStatus.Failed;
+            version.Status = DocumentStatus.Failed;
             await context.SaveChangesAsync();
-            await PublishStatusAsync(document);
-            logger.LogError(exception, "Document {DocumentId} failed processing for tenant {TenantId}.", documentId, tenantId);
+            await PublishStatusAsync(version.Document, version.Status);
+            logger.LogError(exception, "Document version {DocumentVersionId} failed processing for tenant {TenantId}.", documentVersionId, tenantId);
             throw;
         }
     }
 
-    private Task PublishStatusAsync(Document document)
+    private Task PublishStatusAsync(Document document, DocumentStatus status)
     {
         return hubContext.Clients.Group(DocumentHub.GroupName(document.TenantId))
             .SendAsync("DocumentStatusChanged", new DocumentStatusChanged(
                 document.Id,
                 document.TenantId,
                 document.FileName,
-                document.Status.ToString()));
+                status.ToString()));
     }
 }

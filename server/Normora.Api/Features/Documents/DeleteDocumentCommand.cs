@@ -29,6 +29,7 @@ public sealed class DeleteDocumentCommandHandler(DocumentsDbContext context, IDo
     {
         // 1. Fetch the document, explicitly ensuring it belongs to the current tenant.
         var document = await context.Documents
+            .Include(d => d.Versions)
             .FirstOrDefaultAsync(d => d.Id == request.Id && d.TenantId == request.TenantId, cancellationToken);
 
         if (document == null)
@@ -37,7 +38,10 @@ public sealed class DeleteDocumentCommandHandler(DocumentsDbContext context, IDo
         }
 
         // 2. Remove from S3 / MinIO storage.
-        await storageService.DeleteDocumentAsync(document.MinioObjectName);
+        foreach (var version in document.Versions)
+        {
+            await storageService.DeleteDocumentAsync(version.MinioObjectName);
+        }
             
         // 3. Remove metadata from the database.
         context.Documents.Remove(document);

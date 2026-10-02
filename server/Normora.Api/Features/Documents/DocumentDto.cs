@@ -26,10 +26,13 @@ public static class DocumentExtensions
     /// </summary>
     public static DocumentDto ToDto(this Document document)
     {
+        var activeVersion = document.Versions.FirstOrDefault(v => v.IsActive) 
+                            ?? document.Versions.OrderByDescending(v => v.VersionNumber).FirstOrDefault();
+                            
         return new DocumentDto(
             document.Id,
             document.FileName,
-            document.Status.ToString(),
+            activeVersion?.Status.ToString() ?? "Unknown",
             document.UploadedAt,
             document.DocumentDepartments?.Select(d => d.DepartmentId).ToList() ?? new List<Guid>()
         );

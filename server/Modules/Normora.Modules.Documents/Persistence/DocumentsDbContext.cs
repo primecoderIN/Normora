@@ -19,6 +19,7 @@ public class DocumentsDbContext : DbContext
     }
 
     public DbSet<Document> Documents { get; set; } = null!;
+    public DbSet<DocumentVersion> DocumentVersions { get; set; } = null!;
     public DbSet<DocumentChunk> DocumentChunks { get; set; } = null!;
     public DbSet<DocumentDepartment> DocumentDepartments { get; set; } = null!;
 
@@ -37,14 +38,25 @@ public class DocumentsDbContext : DbContext
         // Enforce database constraints previously handled by Data Annotations
         modelBuilder.Entity<Document>(entity => 
         {
+            entity.HasKey(d => d.Id);
             entity.Property(d => d.FileName).IsRequired().HasMaxLength(255);
-            entity.Property(d => d.MinioObjectName).IsRequired().HasMaxLength(500);
-            entity.Property(d => d.ExtractedText).HasColumnType("text");
             
             // TENANT-14: Global Query Filter for Tenant Data Isolation
-            // This ensures that EVERY LINQ query executed against Documents will transparently have
-            // `WHERE TenantId = @currentTenantId` appended to it, preventing cross-tenant data leakage.
             entity.HasQueryFilter(d => d.TenantId == _tenantContext.TenantId);
+        });
+
+        modelBuilder.Entity<DocumentVersion>(entity => 
+        {
+            entity.HasKey(v => v.Id);
+            entity.Property(v => v.MinioObjectName).IsRequired().HasMaxLength(500);
+            entity.Property(v => v.ExtractedText).HasColumnType("text");
+            
+            entity.HasOne(v => v.Document)
+                  .WithMany(d => d.Versions)
+                  .HasForeignKey(v => v.DocumentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(v => v.TenantId == _tenantContext.TenantId);
         });
 
         modelBuilder.Entity<DocumentChunk>(entity =>
@@ -61,10 +73,10 @@ public class DocumentsDbContext : DbContext
             .HasIndex(chunk => chunk.SearchVector)
             .HasMethod("GIN");
 
-            entity.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentId, chunk.ChunkIndex }).IsUnique();
-            entity.HasOne<Document>()
-                .WithMany()
-                .HasForeignKey(chunk => chunk.DocumentId)
+            entity.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentVersionId, chunk.ChunkIndex }).IsUnique();
+            entity.HasOne<DocumentVersion>()
+                .WithMany(v => v.Chunks)
+                .HasForeignKey(chunk => chunk.DocumentVersionId)
                 .OnDelete(DeleteBehavior.Cascade);
             // Chunks inherit the same tenant boundary as their parent document; background
             // jobs may bypass this filter only after checking both tenant and document IDs.
@@ -107,6 +119,14 @@ public class DocumentsDbContext : DbContext
 
         // Propagate TenantId to DocumentDepartment rows to keep the query filter aligned.
         foreach (var entry in ChangeTracker.Entries<DocumentDepartment>().Where(e => e.State == EntityState.Added))
+        {
+            if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
+            {
+                entry.Entity.TenantId = _tenantContext.TenantId.Value;
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries<DocumentVersion>().Where(e => e.State == EntityState.Added))
         {
             if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
             {
