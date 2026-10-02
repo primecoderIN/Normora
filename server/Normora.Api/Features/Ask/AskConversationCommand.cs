@@ -53,13 +53,10 @@ public sealed class AskConversationCommandHandler(
     IAutoTitleService autoTitleService,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    IMeterFactory meterFactory) : IRequestHandler<AskConversationCommand, AskConversationResult>
+    ConversationMetrics metrics) : IRequestHandler<AskConversationCommand, AskConversationResult>
 {
     private const double MinimumSimilarity = 0.35;
 
-    private readonly Counter<long> _tokensConsumed = meterFactory.Create("Normora.Conversations").CreateCounter<long>("tokens.consumed", description: "Estimated LLM tokens consumed");
-    private readonly Histogram<double> _ragDuration = meterFactory.Create("Normora.Conversations").CreateHistogram<double>("rag.duration", unit: "ms", description: "RAG pipeline execution latency");
-    private readonly Counter<long> _autoTitleOperations = meterFactory.Create("Normora.Conversations").CreateCounter<long>("auto_title.operations", description: "Auto-title generation attempts (success or failure)");
 
     /// <summary>
     /// Maximum tokens allocated to conversation history injected into the generation prompt.
@@ -211,7 +208,7 @@ public sealed class AskConversationCommandHandler(
             autoTitleService.AutoTitleConversationAsync(conversation.Id, request.Question);
         }
 
-        _tokensConsumed.Add((userMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
+        metrics.TokensConsumed.Add((userMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
 
         return new AskConversationResult(
             request.ConversationId,
@@ -227,7 +224,7 @@ public sealed class AskConversationCommandHandler(
         finally
         {
             stopwatch.Stop();
-            _ragDuration.Record(stopwatch.ElapsedMilliseconds, new KeyValuePair<string, object?>("operation", "ask"));
+            metrics.RagDuration.Record(stopwatch.ElapsedMilliseconds, new KeyValuePair<string, object?>("operation", "ask"));
         }
     }
 

@@ -32,14 +32,11 @@ public sealed class AskConversationStreamCommandHandler(
     IAutoTitleService autoTitleService,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    IMeterFactory meterFactory) : IStreamRequestHandler<AskConversationStreamCommand, AskConversationStreamEvent>
+    ConversationMetrics metrics) : IStreamRequestHandler<AskConversationStreamCommand, AskConversationStreamEvent>
 {
-    private const double MinimumSimilarity = 0.0;
+    private const double MinimumSimilarity = 0.35;
     private const int HistoryTokenBudget = 2_000;
 
-    private readonly Counter<long> _tokensConsumed = meterFactory.Create("Normora.Conversations").CreateCounter<long>("tokens.consumed", description: "Estimated LLM tokens consumed");
-    private readonly Histogram<double> _ragDuration = meterFactory.Create("Normora.Conversations").CreateHistogram<double>("rag.duration", unit: "ms", description: "RAG pipeline execution latency");
-    private readonly Counter<long> _autoTitleOperations = meterFactory.Create("Normora.Conversations").CreateCounter<long>("auto_title.operations", description: "Auto-title generation attempts (success or failure)");
 
     public async IAsyncEnumerable<AskConversationStreamEvent> Handle(
         AskConversationStreamCommand request,
@@ -201,7 +198,7 @@ public sealed class AskConversationStreamCommandHandler(
             autoTitleService.AutoTitleConversationAsync(conversation.Id, request.Question);
         }
 
-        _tokensConsumed.Add((userMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
+        metrics.TokensConsumed.Add((userMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
 
         yield return new StreamFinishedEvent();
         
@@ -209,7 +206,7 @@ public sealed class AskConversationStreamCommandHandler(
         finally
         {
             stopwatch.Stop();
-            _ragDuration.Record(stopwatch.ElapsedMilliseconds, new KeyValuePair<string, object?>("operation", "ask"));
+            metrics.RagDuration.Record(stopwatch.ElapsedMilliseconds, new KeyValuePair<string, object?>("operation", "ask"));
         }
     }
 

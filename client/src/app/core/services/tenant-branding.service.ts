@@ -131,7 +131,7 @@ export class TenantBrandingService {
     for (const [shade, mix] of Object.entries(shades)) {
       const num = Number(shade);
       const target = num <= 500 ? white : black;
-      const factor = num <= 500 ? mix : mix;
+      const factor = mix;
       const r = Math.round(base.r + (target.r - base.r) * factor);
       const g = Math.round(base.g + (target.g - base.g) * factor);
       const b = Math.round(base.b + (target.b - base.b) * factor);

@@ -57,11 +57,14 @@ public sealed class DocumentProcessingJob(
             await using var documentStream = await storageService.DownloadDocumentAsync(document.MinioObjectName);
             document.ExtractedText = await textExtractor.ExtractAsync(documentStream, document.FileName);
 
-            await context.DocumentChunks
-                // A retry replaces the complete chunk set so partial previous work cannot duplicate results.
-                .IgnoreQueryFilters()
-                .Where(chunk => chunk.DocumentId == document.Id && chunk.TenantId == document.TenantId)
-                .ExecuteDeleteAsync();
+            await using var transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                await context.DocumentChunks
+                    // A retry replaces the complete chunk set so partial previous work cannot duplicate results.
+                    .IgnoreQueryFilters()
+                    .Where(chunk => chunk.DocumentId == document.Id && chunk.TenantId == document.TenantId)
+                    .ExecuteDeleteAsync();
 
             var chunks = DocumentChunker.Split(document.ExtractedText);
             var documentChunks = chunks.Select((content, index) => new DocumentChunk
@@ -84,12 +87,20 @@ public sealed class DocumentProcessingJob(
                 }
             }
 
-            context.DocumentChunks.AddRange(documentChunks);
-            await context.SaveChangesAsync();
+                context.DocumentChunks.AddRange(documentChunks);
 
-            // Ready is published only after all configured ingestion stages have completed.
-            document.Status = DocumentStatus.Ready;
-            await context.SaveChangesAsync();
+                // Ready is published only after all configured ingestion stages have completed.
+                document.Status = DocumentStatus.Ready;
+                await context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+
             await PublishStatusAsync(document);
 
             logger.LogInformation(

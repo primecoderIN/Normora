@@ -36,7 +36,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     {
         var command = new CreateTenantCommand(request.Name, request.Slug);
         var tenant = await mediator.Send(command);
-        return Ok(tenant);
+        return Ok(ApiResponse<Normora.Modules.Tenants.Application.CreateTenant.TenantDto>.Ok(tenant, "Tenant created successfully."));
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
 
         // SEC-6: Sanitize slug to prevent path traversal — only allow alphanumeric chars and hyphens
         if (!Regex.IsMatch(slug, @"^[a-zA-Z0-9\-]+$"))
-            return BadRequest(ApiResponse.Failure("Invalid tenant slug."));
+            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.InvalidSlug));
 
         try
         {
@@ -154,7 +154,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         
         if (!success) return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
 
-        return Ok(new { Message = "Tenant suspended successfully." });
+        return Ok(ApiResponse<object>.Ok(new { }, "Tenant suspended successfully."));
     }
 
     /// <summary>

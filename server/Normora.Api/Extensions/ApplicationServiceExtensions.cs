@@ -51,6 +51,7 @@ public static class ApplicationServiceExtensions
 
         services.AddScoped<Normora.Api.Features.Ask.IRetrievalService, Normora.Api.Features.Ask.RetrievalService>();
         services.AddSingleton<Normora.Api.Features.Ask.IAutoTitleService, Normora.Api.Features.Ask.AutoTitleService>();
+        services.AddSingleton<Normora.Api.Features.Ask.ConversationMetrics>();
 
         // Answer exporters — stateless singletons registered against IAnswerExporter.
         // ExportSavedAnswerQueryHandler resolves the correct implementation via IEnumerable<IAnswerExporter>.

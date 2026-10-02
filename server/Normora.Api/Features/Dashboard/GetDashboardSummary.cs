@@ -8,14 +8,14 @@ using Normora.Shared;
 
 namespace Normora.Api.Features.Dashboard;
 
-public record GetDashboardSummaryQuery() : IRequest<ApiResponse<DashboardSummaryDto>>;
+public record GetDashboardSummaryQuery() : IRequest<DashboardSummaryDto>;
 
 public class GetDashboardSummaryQueryHandler(
     TenantsDbContext tenantsDb,
     DocumentsDbContext documentsDb,
-    ConversationsDbContext conversationsDb) : IRequestHandler<GetDashboardSummaryQuery, ApiResponse<DashboardSummaryDto>>
+    ConversationsDbContext conversationsDb) : IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>
 {
-    public async Task<ApiResponse<DashboardSummaryDto>> Handle(GetDashboardSummaryQuery request, CancellationToken cancellationToken)
+    public async Task<DashboardSummaryDto> Handle(GetDashboardSummaryQuery request, CancellationToken cancellationToken)
     {
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
         var thirtyDaysAgoOffset = DateTimeOffset.UtcNow.AddDays(-30);
@@ -147,7 +147,7 @@ public class GetDashboardSummaryQueryHandler(
             }
         };
 
-        return ApiResponse<DashboardSummaryDto>.Ok(summary);
+        return summary;
     }
 }
 

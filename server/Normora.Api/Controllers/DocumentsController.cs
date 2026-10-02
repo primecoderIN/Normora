@@ -51,7 +51,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     {
         if (string.IsNullOrWhiteSpace(query))
         {
-            return BadRequest(ApiResponse.Failure("A search query is required."));
+            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.SearchQueryRequired));
         }
 
         var result = await mediator.Send(new SearchDocumentsQuery(query.Trim(), limit));

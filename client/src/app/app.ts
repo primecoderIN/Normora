@@ -20,7 +20,7 @@ import { AppRoutes } from '@core/constants/app-routes';
 
   templateUrl: './app.html',
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   // A 'signal' is a new Angular feature for managing state reactively.
   protected readonly title = signal('client');
   
@@ -44,8 +44,7 @@ export class App implements OnInit {
     this.authService.checkAuth().subscribe({
       next: (isAuthenticated) => {
       if (isAuthenticated) {
-        // Connect to realtime notifications
-        this.notificationService.connect();
+
 
         const currentPath = window.location.pathname;
         const isAuthRoute =
@@ -68,18 +67,21 @@ export class App implements OnInit {
               const memberships = response.data.memberships;
 
               if (!isAuthRoute) {
+                this.notificationService.connect();
                 this.authInitializing.set(false);
                 return;
               }
 
               const pendingToken = localStorage.getItem('pending_invitation');
               if (pendingToken) {
+                this.notificationService.connect();
                 this.authInitializing.set(false);
                 this.router.navigate([AppRoutes.AcceptInvite], { queryParams: { token: pendingToken } });
                 return;
               }
 
               if (memberships.length === 0) {
+                this.notificationService.connect();
                 this.authInitializing.set(false);
                 this.router.navigate([AppRoutes.Onboarding]);
                 return;
@@ -98,10 +100,12 @@ export class App implements OnInit {
                 
                 // Navigate to the workspace path
                 const fullPath = isAdmin ? AppRoutes.WorkspaceEmployerDashboard(tenantSlug) : AppRoutes.WorkspaceEmployeeConversations(tenantSlug);
+                this.notificationService.connect();
                 this.authInitializing.set(false);
                 this.router.navigateByUrl(fullPath);
               } else {
                 // Fallback if no memberships (should rarely happen if backend creates personal workspace)
+                this.notificationService.connect();
                 this.authInitializing.set(false);
                 this.router.navigate([targetPath]);
               }
@@ -113,6 +117,7 @@ export class App implements OnInit {
             }
           });
         } else {
+          this.notificationService.connect();
           this.authInitializing.set(false);
         }
       } else if (window.location.pathname.startsWith(AppRoutes.AuthCallback) || window.location.pathname.startsWith('/signin-oidc')) {

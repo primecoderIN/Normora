@@ -23,6 +23,6 @@ public class DashboardController(IMediator mediator, ITenantContext tenantContex
         if (!tenantContext.TenantId.HasValue) return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
 
         var response = await mediator.Send(new GetDashboardSummaryQuery(), cancellationToken);
-        return Ok(response);
+        return Ok(ApiResponse<DashboardSummaryDto>.Ok(response));
     }
 }

@@ -34,7 +34,11 @@ export class NotificationRealtimeService {
       this.invitationReceivedSource.next(event);
     });
 
-    await this.connection.start();
+    try {
+      await this.connection.start();
+    } catch (err) {
+      console.error('Failed to connect to notification hub', err);
+    }
   }
 
   async disconnect(): Promise<void> {

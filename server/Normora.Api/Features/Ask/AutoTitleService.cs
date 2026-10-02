@@ -8,11 +8,8 @@ namespace Normora.Api.Features.Ask;
 
 public sealed class AutoTitleService(
     IServiceScopeFactory scopeFactory,
-    IMeterFactory meterFactory) : IAutoTitleService
+    ConversationMetrics metrics) : IAutoTitleService
 {
-    private readonly Counter<long> _autoTitleOperations = meterFactory
-        .Create("Normora.Conversations")
-        .CreateCounter<long>("auto_title.operations", description: "Auto-title generation attempts (success or failure)");
 
     public void AutoTitleConversationAsync(Guid conversationId, string firstQuestion)
     {
@@ -37,12 +34,12 @@ public sealed class AutoTitleService(
                 conv.UpdatedAt = DateTimeOffset.UtcNow;
                 await db.SaveChangesAsync();
 
-                _autoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "success"));
+                metrics.AutoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "success"));
             }
             catch
             {
                 // Titles are best-effort — never surface auto-title failures to the caller
-                _autoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "failure"));
+                metrics.AutoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "failure"));
             }
         });
     }

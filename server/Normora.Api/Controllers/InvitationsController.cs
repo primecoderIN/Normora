@@ -51,7 +51,7 @@ public class InvitationsController(IMediator mediator) : ControllerBase
         var success = await mediator.Send(command);
 
         if (!success)
-            return BadRequest(ApiResponse.Failure("Failed to accept invitation. It may be expired or invalid."));
+            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.InvalidInvitation));
 
         return Ok(ApiResponse.Ok("Invitation accepted successfully."));
     }

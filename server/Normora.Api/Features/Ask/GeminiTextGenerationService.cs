@@ -40,8 +40,7 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
     {
         EnsureConfigured();
 
-        var sourcesBlock = BuildSourcesBlock(sources);
-        var historyBlock = BuildHistoryBlock(history, companyName);
+
 
         var fullPrompt = BuildFullPrompt(question, sources, history, companyName);
         return await CallGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken);
@@ -57,8 +56,7 @@ public sealed class GeminiTextGenerationService : ITextGenerationService
     {
         EnsureConfigured();
 
-        var sourcesBlock = BuildSourcesBlock(sources);
-        var historyBlock = BuildHistoryBlock(history, companyName);
+
 
         var fullPrompt = BuildFullPrompt(question, sources, history, companyName);
 

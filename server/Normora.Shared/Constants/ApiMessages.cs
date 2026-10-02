@@ -14,6 +14,9 @@ public static class ApiMessages
     // Validation & Bad Requests
     public const string ValidationFailed = "One or more validation errors occurred.";
     public const string BadRequest = "The request could not be processed.";
+    public const string InvalidSlug = "Invalid tenant slug.";
+    public const string InvalidInvitation = "Failed to accept invitation. It may be expired or invalid.";
+    public const string SearchQueryRequired = "A search query is required.";
 
     // Resource
     public const string NotFound = "The requested resource was not found.";
