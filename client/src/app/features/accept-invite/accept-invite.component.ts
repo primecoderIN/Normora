@@ -36,18 +36,27 @@ import { take } from 'rxjs';
                 >!
               </p>
               @if (isAuthenticated()) {
-                <button
-                  (click)="acceptInvite()"
-                  [disabled]="isAccepting()"
-                  class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  @if (!isAccepting()) {
-                    <span>Accept Invitation</span>
-                  }
-                  @if (isAccepting()) {
-                    <span>Accepting...</span>
-                  }
-                </button>
+                <div class="space-y-3">
+                  <button
+                    (click)="acceptInvite()"
+                    [disabled]="isAccepting()"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    @if (!isAccepting()) {
+                      <span>Accept Invitation</span>
+                    }
+                    @if (isAccepting()) {
+                      <span>Accepting...</span>
+                    }
+                  </button>
+                  <button
+                    (click)="rejectInvite()"
+                    [disabled]="isAccepting()"
+                    class="w-full flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    Decline Invitation
+                  </button>
+                </div>
               }
               @if (!isAuthenticated()) {
                 <button
@@ -163,6 +172,28 @@ export class AcceptInviteComponent implements OnInit {
       error: (err: any) => {
         this.isAccepting.set(false);
         this.error.set(err.error?.message || 'Failed to accept invitation.');
+      },
+    });
+  }
+
+  rejectInvite() {
+    if (!this.token) return;
+
+    this.isAccepting.set(true);
+    this.error.set('');
+
+    this.invitationService.rejectInvitation(this.token).subscribe({
+      next: (res: any) => {
+        this.isAccepting.set(false);
+        if (res.success) {
+          this.router.navigate(['/']);
+        } else {
+          this.error.set(res.message);
+        }
+      },
+      error: (err: any) => {
+        this.isAccepting.set(false);
+        this.error.set(err.error?.message || 'Failed to reject invitation.');
       },
     });
   }

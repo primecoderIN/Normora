@@ -29,7 +29,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
         {
             var invites = await context.TenantInvitations
                 .Include(i => i.Tenant)
-                .Where(i => i.Email == currentUser.Email 
+                .Where(i => EF.Functions.ILike(i.Email, currentUser.Email) 
                          && i.Status == Normora.Modules.Tenants.Domain.InvitationStatus.Pending 
                          && i.ExpiresAt > DateTime.UtcNow)
                 .ToListAsync(cancellationToken);

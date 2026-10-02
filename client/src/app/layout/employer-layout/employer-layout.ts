@@ -80,4 +80,16 @@ export class EmployerLayout {
       }
     });
   }
+
+  rejectInvite(token: string) {
+    if (this.isAccepting()) return;
+    this.isAccepting.set(true);
+    this.invitationService.rejectInvitation(token).subscribe({
+      next: () => window.location.reload(),
+      error: (err: any) => {
+        alert(err.error?.message || 'Failed to reject invitation');
+        this.isAccepting.set(false);
+      }
+    });
+  }
 }

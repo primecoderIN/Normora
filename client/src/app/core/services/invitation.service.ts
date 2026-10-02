@@ -28,6 +28,10 @@ export class InvitationService {
     return this.http.post<ApiResponse<void>>(`${this.apiUrl}/invitations/${token}/accept`, {});
   }
 
+  rejectInvitation(token: string): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/invitations/${token}/reject`, {});
+  }
+
   inviteEmployee(email: string): Observable<ApiResponse<string>> {
     return this.http.post<ApiResponse<string>>(`${this.apiUrl}/tenants/invitations`, { email });
   }

@@ -97,18 +97,28 @@ import { InvitationService } from '@core/services/invitation.service';
                         </div>
                         <span class="font-semibold text-slate-900 dark:text-white text-sm truncate">{{ invite.tenantName }}</span>
                       </div>
-                      <button
-                        type="button"
-                        (click)="acceptInvite(invite.token)"
-                        [disabled]="isAccepting()"
-                        class="flex-none inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-base font-bold rounded-lg transition-colors shadow-sm shadow-primary-500/20 border-none cursor-pointer whitespace-nowrap"
-                      >
-                        @if (isAccepting() && acceptingToken() === invite.token) {
-                          <i class="pi pi-spin pi-spinner text-base"></i> Joining...
-                        } @else {
-                          Accept & Join
-                        }
-                      </button>
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          (click)="acceptInvite(invite.token)"
+                          [disabled]="isAccepting()"
+                          class="flex-none inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-base font-bold rounded-lg transition-colors shadow-sm shadow-primary-500/20 border-none cursor-pointer whitespace-nowrap"
+                        >
+                          @if (isAccepting() && acceptingToken() === invite.token) {
+                            <i class="pi pi-spin pi-spinner text-base"></i> Joining...
+                          } @else {
+                            Accept & Join
+                          }
+                        </button>
+                        <button
+                          type="button"
+                          (click)="rejectInvite(invite.token)"
+                          [disabled]="isAccepting()"
+                          class="flex-none inline-flex items-center gap-1.5 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-700 dark:text-slate-300 text-base font-bold rounded-lg transition-colors border-none cursor-pointer whitespace-nowrap"
+                        >
+                          Decline
+                        </button>
+                      </div>
                     </div>
                   }
                 </div>
@@ -263,6 +273,23 @@ export class OnboardingComponent {
       },
       error: (err: any) => {
         this.acceptError.set(err.error?.message || 'Failed to accept invitation');
+        this.isAccepting.set(false);
+        this.acceptingToken.set(null);
+      }
+    });
+  }
+
+  rejectInvite(token: string) {
+    this.isAccepting.set(true);
+    this.acceptingToken.set(token);
+    this.acceptError.set('');
+
+    this.invitationService.rejectInvitation(token).subscribe({
+      next: () => {
+        window.location.reload();
+      },
+      error: (err: any) => {
+        this.acceptError.set(err.error?.message || 'Failed to reject invitation');
         this.isAccepting.set(false);
         this.acceptingToken.set(null);
       }

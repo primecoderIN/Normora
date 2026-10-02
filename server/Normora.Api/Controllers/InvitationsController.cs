@@ -55,4 +55,25 @@ public class InvitationsController(IMediator mediator) : ControllerBase
 
         return Ok(ApiResponse.Ok("Invitation accepted successfully."));
     }
+
+    /// <summary>
+    /// Rejects the invitation and marks it as Rejected.
+    /// </summary>
+    /// <param name="token">The unique invitation token to reject.</param>
+    /// <returns>A success message if the invitation was rejected.</returns>
+    [HttpPost("{token}/reject")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> RejectInvitation(Guid token)
+    {
+        var command = new RejectInvitationCommand(token);
+        var success = await mediator.Send(command);
+
+        if (!success)
+            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.InvalidInvitation));
+
+        return Ok(ApiResponse.Ok("Invitation rejected."));
+    }
 }
