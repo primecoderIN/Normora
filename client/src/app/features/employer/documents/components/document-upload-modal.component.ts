@@ -13,7 +13,7 @@ import { UserService } from '@core/services/user.service';
   imports: [CommonModule, FormsModule, FileUpload, Dialog, MultiSelectModule],
   template: `
     <p-dialog
-      header="Upload document"
+      [header]="documentId() ? 'Upload new version' : 'Upload document'"
       [visible]="visible()"
       (visibleChange)="visibleChange.emit($event)"
       [modal]="true"
@@ -21,7 +21,7 @@ import { UserService } from '@core/services/user.service';
       [style]="{ width: '450px' }">
       
       <div class="flex flex-col gap-4">
-        @if (!isPersonal()) {
+        @if (!isPersonal() && !documentId()) {
           <div class="flex flex-col gap-2">
             <label class="text-sm font-semibold text-slate-700 dark:text-slate-200">Who has access</label>
             <p-multiselect
@@ -64,6 +64,7 @@ export class DocumentUploadModalComponent {
   uploadUrl = input.required<string>();
   isPersonal = input<boolean>(false);
   tenantName = input<string>('your organization');
+  documentId = input<string | null>(null);
   visibleChange = output<boolean>();
   uploadSuccess = output<any>();
   uploadError = output<any>();
@@ -86,8 +87,16 @@ export class DocumentUploadModalComponent {
     }
     
     const deptIds = this.selectedDeptIds();
-    if (deptIds && deptIds.length > 0) {
+    // Document Versioning (Phase 19): Department scoping only applies to new documents.
+    // If uploading a new version (documentId exists), we skip attaching departments.
+    if (deptIds && deptIds.length > 0 && !this.documentId()) {
       deptIds.forEach(id => event.formData.append('departmentIds', id));
+    }
+    
+    // Document Versioning (Phase 19): If present, append the existing document ID 
+    // to signal the API to create a new DocumentVersion instead of a new Document.
+    if (this.documentId()) {
+      event.formData.append('documentId', this.documentId());
     }
   }
 

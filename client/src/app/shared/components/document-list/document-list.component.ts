@@ -79,6 +79,17 @@ import { Department } from '@core/services/department.service';
                     >
                       <i class="pi pi-download text-base"></i>
                     </button>
+                    <!-- Document Versioning (Phase 19): Action button to upload a new file for the existing Document.
+                         This bypasses department assignment and inherits the document's original permissions. -->
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-center"
+                      (click)="onUploadNewVersion.emit(doc.id)"
+                      aria-label="Upload new version"
+                      [title]="'Upload new version'"
+                    >
+                      <i class="pi pi-upload text-base"></i>
+                    </button>
                     <button
                       type="button"
                       class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center justify-center"
@@ -100,7 +111,8 @@ import { Department } from '@core/services/department.service';
                   </div>
                 </td>
               </tr>
-              <!-- Expanded Version History Row -->
+              <!-- Document Versioning (Phase 19): Expanded Version History Row -->
+              <!-- Shows chronological list of file updates when the history button is clicked -->
               @if (isExpanded(doc.id) && doc.versions) {
                 <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 last:border-0">
                   <td colspan="4" class="p-0">
@@ -159,6 +171,7 @@ export class DocumentListComponent {
   departments = input<Department[]>([]);
   tenantName = input.required<string>();
   onDelete = output<string>();
+  onUploadNewVersion = output<string>();
 
   expandedRowId = signal<string | null>(null);
 
@@ -177,8 +190,5 @@ export class DocumentListComponent {
     } else {
       this.expandedRowId.set(docId);
     }
-  }
-    const dept = this.departments().find(d => d.id === id);
-    return dept ? dept.name : 'Unknown';
   }
 }

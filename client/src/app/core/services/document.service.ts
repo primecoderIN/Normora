@@ -4,6 +4,7 @@ import { environment } from '@env/environment';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 
+// Document Versioning (Phase 19): Added interface to map backend versions to frontend.
 export interface DocumentVersion {
   id: string;
   versionNumber: number;

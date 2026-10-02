@@ -220,14 +220,26 @@ interface ExportOption {
 
               <!-- Citations -->
               @if (answer.citations.length > 0) {
-                <div class="px-5 pb-3 flex flex-wrap gap-1.5">
-                  <span class="text-[0.65rem] font-bold text-slate-400 tracking-widest uppercase mr-1 self-center">Sources</span>
-                  @for (cite of answer.citations; track cite.documentId) {
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-[0.7rem] font-medium max-w-36"
-                         [pTooltip]="cite.fileName" tooltipPosition="top">
-                      <i class="pi pi-file-pdf text-slate-400 text-base flex-none"></i>
-                      <span class="truncate">{{ cite.fileName }}</span>
-                      <span class="text-primary-600 font-bold flex-none">{{ formatScore(cite.score) }}</span>
+                <div class="flex flex-col gap-2 px-5 pb-3">
+                  <div class="flex flex-wrap gap-1.5">
+                    <span class="text-[0.65rem] font-bold text-slate-400 tracking-widest uppercase mr-1 self-center">Sources</span>
+                    @for (cite of answer.citations; track cite.documentId) {
+                      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-full text-[0.7rem] font-medium max-w-36"
+                           [class.bg-slate-50]="!cite.isOutdated" [class.dark:bg-slate-950]="!cite.isOutdated" [class.border-slate-200]="!cite.isOutdated" [class.dark:border-slate-700]="!cite.isOutdated" [class.text-slate-600]="!cite.isOutdated" [class.dark:text-slate-300]="!cite.isOutdated"
+                           [class.bg-amber-50]="cite.isOutdated" [class.dark:bg-amber-950/50]="cite.isOutdated" [class.border-amber-200]="cite.isOutdated" [class.dark:border-amber-900]="cite.isOutdated" [class.text-amber-700]="cite.isOutdated" [class.dark:text-amber-500]="cite.isOutdated"
+                           [pTooltip]="cite.fileName" tooltipPosition="top">
+                        <i class="pi pi-file-pdf text-base flex-none" [class.text-slate-400]="!cite.isOutdated" [class.text-amber-500]="cite.isOutdated"></i>
+                        <span class="truncate">{{ cite.fileName }}</span>
+                        <span class="font-bold flex-none" [class.text-primary-600]="!cite.isOutdated" [class.text-amber-600]="cite.isOutdated">{{ formatScore(cite.score) }}</span>
+                      </div>
+                    }
+                  </div>
+                  
+                  <!-- Document Versioning (Phase 19): Show a warning if any of the citations are outdated. -->
+                  @if (hasOutdatedCitations(answer)) {
+                    <div class="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg text-[0.75rem] text-amber-700 dark:text-amber-500 mt-1">
+                      <i class="pi pi-exclamation-triangle flex-none"></i>
+                      <span>One or more source documents have been updated. This answer may be outdated.</span>
                     </div>
                   }
                 </div>
@@ -380,5 +392,9 @@ export class SavedAnswers implements OnInit {
 
   formatScore(score: number): string {
     return `${Math.round(score * 100)}%`;
+  }
+
+  hasOutdatedCitations(answer: SavedAnswerDto): boolean {
+    return answer.citations.some(c => c.isOutdated);
   }
 }

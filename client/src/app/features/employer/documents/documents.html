@@ -26,7 +26,7 @@
         <button
           type="button"
           class="flex items-center justify-center gap-2 h-10 px-4 bg-primary-600 text-white rounded-lg font-semibold text-sm hover:bg-primary-700 active:scale-95 transition-all whitespace-nowrap shadow-sm shadow-primary-500/20 flex-none"
-          (click)="showUploadDialog.set(true)"
+          (click)="openUploadDialog()"
         >
           <i class="pi pi-cloud-upload"></i>
           <span class="hidden xs:inline sm:inline">Upload</span>
@@ -97,7 +97,8 @@
         [documents]="filteredDocuments()"
         [departments]="departments()"
         [tenantName]="activeTenantName()"
-        (onDelete)="deleteDocument($event)">
+        (onDelete)="deleteDocument($event)"
+        (onUploadNewVersion)="openUploadNewVersion($event)">
       </app-document-list>
     } @else {
       <app-empty-state
@@ -108,7 +109,7 @@
         actionIcon="pi-cloud-upload"
         iconBgClass="bg-primary-50"
         iconColorClass="text-primary-600"
-        (action)="showUploadDialog.set(true)">
+        (action)="openUploadDialog()">
       </app-empty-state>
     }
   </section>
@@ -120,6 +121,7 @@
     [uploadUrl]="uploadUrl"
     [isPersonal]="isPersonalWorkspace()"
     [tenantName]="activeTenantName()"
+    [documentId]="uploadingDocumentId()"
     (uploadSuccess)="onUploadSuccess($event)"
     (uploadError)="onUploadError($event)">
   </app-document-upload-modal>

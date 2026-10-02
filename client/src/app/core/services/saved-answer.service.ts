@@ -9,6 +9,8 @@ export interface CitationDto {
   documentId: string;
   fileName: string;
   score: number;
+  // Document Versioning (Phase 19): True if the cited document chunk belongs to an inactive (older) DocumentVersion.
+  isOutdated: boolean;
 }
 
 export interface SavedAnswerDto {

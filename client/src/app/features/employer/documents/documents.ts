@@ -54,6 +54,7 @@ export class Documents implements OnInit, OnDestroy {
   uploadUrl = `${environment.apiUrl}/api/documents/upload`;
 
   showUploadDialog = signal(false);
+  uploadingDocumentId = signal<string | null>(null);
   isLoading = signal(true);
   selectedStatus = signal<'All' | Document['status']>('All');
   searchTerm = signal('');
@@ -110,6 +111,7 @@ export class Documents implements OnInit, OnDestroy {
   onUploadSuccess(event: any) {
     this.messageService.add({ severity: 'info', summary: 'Success', detail: 'Document uploaded successfully' });
     this.showUploadDialog.set(false);
+    this.uploadingDocumentId.set(null);
     this.loadDocuments();
   }
 
@@ -150,6 +152,18 @@ export class Documents implements OnInit, OnDestroy {
       },
       error: (err) => { console.error('Failed to delete', err); }
     });
+  }
+
+  openUploadDialog() {
+    this.uploadingDocumentId.set(null);
+    this.showUploadDialog.set(true);
+  }
+
+  // Document Versioning (Phase 19): Triggered from the document list to upload a new file version.
+  // It passes the documentId to the DocumentUploadModalComponent.
+  openUploadNewVersion(documentId: string) {
+    this.uploadingDocumentId.set(documentId);
+    this.showUploadDialog.set(true);
   }
 
   selectStatus(status: 'All' | Document['status']) {
