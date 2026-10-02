@@ -1,7 +1,7 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 
-import { Document } from '@core/services/document.service';
+import { Document, DocumentVersion } from '@core/services/document.service';
 import { Department } from '@core/services/department.service';
 
 @Component({
@@ -22,7 +22,8 @@ import { Department } from '@core/services/department.service';
           </thead>
           <tbody>
             @for (doc of documents(); track doc.id) {
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-950/60 transition-colors group bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 last:border-0">
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-950/60 transition-colors group bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800"
+                  [class.last:border-0]="!isExpanded(doc.id)">
                 <td class="px-5 py-3.5">
                   <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
@@ -80,6 +81,16 @@ import { Department } from '@core/services/department.service';
                     </button>
                     <button
                       type="button"
+                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center justify-center"
+                      (click)="toggleExpand(doc.id)"
+                      [attr.aria-expanded]="isExpanded(doc.id)"
+                      aria-label="View history"
+                      [title]="'View history'"
+                    >
+                      <i class="pi pi-history text-base"></i>
+                    </button>
+                    <button
+                      type="button"
                       class="w-8 h-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex items-center justify-center"
                       (click)="onDelete.emit(doc.id)"
                       aria-label="Delete document"
@@ -89,6 +100,44 @@ import { Department } from '@core/services/department.service';
                   </div>
                 </td>
               </tr>
+              <!-- Expanded Version History Row -->
+              @if (isExpanded(doc.id) && doc.versions) {
+                <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 last:border-0">
+                  <td colspan="4" class="p-0">
+                    <div class="px-5 py-4 pl-16">
+                      <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Version History</h4>
+                      <div class="flex flex-col gap-2">
+                        @for (version of doc.versions; track version.id) {
+                          <div class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center gap-3">
+                              <div class="w-7 h-7 rounded bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-500 font-medium text-xs">
+                                v{{ version.versionNumber }}
+                              </div>
+                              <div class="flex flex-col">
+                                <span class="text-sm font-medium text-slate-900 dark:text-white">
+                                  {{ version.createdAt | date:'MMM d, y, h:mm a' }}
+                                </span>
+                                <span class="text-xs text-slate-500">
+                                  @if (version.isActive) {
+                                    <span class="text-emerald-600 dark:text-emerald-400 font-medium">Active Version</span>
+                                  } @else {
+                                    <span>Superseded</span>
+                                  }
+                                </span>
+                              </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                              <span class="text-xs font-medium px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                {{ version.status }}
+                              </span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
             } @empty {
               <tr>
                 <td colspan="4" class="px-6 py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
@@ -111,7 +160,24 @@ export class DocumentListComponent {
   tenantName = input.required<string>();
   onDelete = output<string>();
 
+  expandedRowId = signal<string | null>(null);
+
   getDepartmentName(id: string): string {
+    const dept = this.departments().find(d => d.id === id);
+    return dept ? dept.name : 'Unknown';
+  }
+
+  isExpanded(docId: string): boolean {
+    return this.expandedRowId() === docId;
+  }
+
+  toggleExpand(docId: string): void {
+    if (this.expandedRowId() === docId) {
+      this.expandedRowId.set(null);
+    } else {
+      this.expandedRowId.set(docId);
+    }
+  }
     const dept = this.departments().find(d => d.id === id);
     return dept ? dept.name : 'Unknown';
   }

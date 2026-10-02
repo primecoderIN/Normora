@@ -4,12 +4,21 @@ import { environment } from '@env/environment';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 
+export interface DocumentVersion {
+  id: string;
+  versionNumber: number;
+  status: 'Uploaded' | 'Processing' | 'Ready' | 'Failed';
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Document {
   id: string;
   fileName: string;
   status: 'Uploaded' | 'Processing' | 'Ready' | 'Failed';
   uploadedAt: string;
   departmentIds: string[];
+  versions?: DocumentVersion[];
 }
 
 export interface ApiResponse<T> {

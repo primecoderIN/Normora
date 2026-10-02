@@ -14,7 +14,15 @@ public record DocumentDto(
     string FileName,
     string Status,
     DateTime UploadedAt,
-    IReadOnlyCollection<Guid> DepartmentIds);
+    IReadOnlyCollection<Guid> DepartmentIds,
+    IReadOnlyCollection<DocumentVersionDto> Versions);
+
+public record DocumentVersionDto(
+    Guid Id,
+    int VersionNumber,
+    string Status,
+    bool IsActive,
+    DateTime CreatedAt);
 
 /// <summary>
 /// Extension methods for mapping Document entities to DTOs.
@@ -34,7 +42,13 @@ public static class DocumentExtensions
             document.FileName,
             activeVersion?.Status.ToString() ?? "Unknown",
             document.UploadedAt,
-            document.DocumentDepartments?.Select(d => d.DepartmentId).ToList() ?? new List<Guid>()
+            document.DocumentDepartments?.Select(d => d.DepartmentId).ToList() ?? new List<Guid>(),
+            document.Versions?.Select(v => new DocumentVersionDto(
+                v.Id,
+                v.VersionNumber,
+                v.Status.ToString(),
+                v.IsActive,
+                v.CreatedAt)).ToList() ?? new List<DocumentVersionDto>()
         );
     }
 }
