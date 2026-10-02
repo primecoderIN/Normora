@@ -17,6 +17,7 @@ public class ConversationsDbContext : DbContext
     public DbSet<Message> Messages { get; set; } = null!;
     public DbSet<MessageCitation> MessageCitations { get; set; } = null!;
     public DbSet<SavedAnswer> SavedAnswers { get; set; } = null!;
+    public DbSet<MessageFeedback> MessageFeedbacks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -79,6 +80,23 @@ public class ConversationsDbContext : DbContext
 
             // Global Query Filter for Tenant Data Isolation
             entity.HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
+        });
+
+        modelBuilder.Entity<MessageFeedback>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.Comment).HasMaxLength(500);
+
+            // One feedback per user per message
+            entity.HasIndex(f => new { f.UserId, f.MessageId }).IsUnique();
+
+            entity.HasOne(f => f.Message)
+                .WithMany(m => m.Feedbacks)
+                .HasForeignKey(f => f.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Global Query Filter for Tenant Data Isolation
+            entity.HasQueryFilter(f => f.TenantId == _tenantContext.TenantId);
         });
     }
 

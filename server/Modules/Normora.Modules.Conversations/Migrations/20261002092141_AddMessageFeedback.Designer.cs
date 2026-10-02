@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Normora.Modules.Conversations.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Normora.Modules.Conversations.Migrations
 {
     [DbContext(typeof(ConversationsDbContext))]
-    partial class ConversationsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261002092141_AddMessageFeedback")]
+    partial class AddMessageFeedback
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,9 +175,8 @@ namespace Normora.Modules.Conversations.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -247,7 +249,7 @@ namespace Normora.Modules.Conversations.Migrations
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.MessageFeedback", b =>
                 {
                     b.HasOne("Normora.Modules.Conversations.Domain.Message", "Message")
-                        .WithMany("Feedbacks")
+                        .WithMany()
                         .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -274,8 +276,6 @@ namespace Normora.Modules.Conversations.Migrations
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.Message", b =>
                 {
                     b.Navigation("Citations");
-
-                    b.Navigation("Feedbacks");
                 });
 #pragma warning restore 612, 618
         }

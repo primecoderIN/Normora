@@ -76,6 +76,7 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 | `GET` | `/conversations/{id}` | RequireTenant(Employee) | Get full message history for a specific conversation. |
 | `POST` | `/conversations` | RequireTenant(Employee) | Start a new conversation with an initial prompt. Returns grounded answer and citations. |
 | `POST` | `/conversations/{id}/messages` | RequireTenant(Employee) | Send a follow-up message in an existing conversation (Multi-turn RAG). |
+| `POST` | `/conversations/{id}/messages/{messageId}/feedback` | RequireTenant(Employee) | Submit a Positive (1) or Negative (2) rating for an AI message. |
 | `DELETE` | `/conversations/{id}` | RequireTenant(Employee) | Delete a conversation history. |
 
 ---

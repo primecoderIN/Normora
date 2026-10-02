@@ -7,6 +7,7 @@ using Normora.Api.Middleware;
 using Normora.Modules.Conversations.Application.Commands;
 using Normora.Modules.Conversations.Application.Dtos;
 using Normora.Modules.Conversations.Application.Queries;
+using Normora.Modules.Conversations.Application.Feedback;
 using Microsoft.AspNetCore.Http;
 using Normora.Shared;
 
@@ -117,7 +118,21 @@ public class ConversationsController(IMediator mediator) : ControllerBase
             await Response.Body.FlushAsync();
         }
     }
+    /// <summary>
+    /// Submits user feedback (positive or negative) for an AI-generated message.
+    /// </summary>
+    [HttpPost("{id:guid}/messages/{messageId:guid}/feedback")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> SubmitFeedback(Guid id, Guid messageId, [FromBody] SubmitFeedbackRequest body)
+    {
+        await mediator.Send(new SubmitFeedbackCommand(id, messageId, body.Rating, body.Comment));
+        return NoContent();
+    }
 }
 
 public sealed record AskConversationRequest(string Question, int Limit = 5);
+
+public sealed record SubmitFeedbackRequest(Normora.Modules.Conversations.Domain.MessageFeedbackRating Rating, string? Comment);
 

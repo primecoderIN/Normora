@@ -19,6 +19,7 @@ public class Message : ITenantEntity
 
     public Conversation Conversation { get; set; } = null!;
     public ICollection<MessageCitation> Citations { get; set; } = new List<MessageCitation>();
+    public ICollection<MessageFeedback> Feedbacks { get; set; } = new List<MessageFeedback>();
 }
 
 public enum MessageRole

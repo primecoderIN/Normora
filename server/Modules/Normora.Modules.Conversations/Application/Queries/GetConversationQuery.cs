@@ -24,7 +24,8 @@ public record MessageDto(
     string Content,
     DateTimeOffset CreatedAt,
     bool Rewritten,
-    IReadOnlyList<MessageCitationDto> Citations);
+    IReadOnlyList<MessageCitationDto> Citations,
+    MessageFeedbackRating? Feedback);
 
 public record MessageCitationDto(
     Guid DocumentId,
@@ -42,6 +43,8 @@ public class GetConversationQueryHandler(
             .AsNoTracking()
             .Include(c => c.Messages)
             .ThenInclude(m => m.Citations)
+            .Include(c => c.Messages)
+            .ThenInclude(m => m.Feedbacks)
             .Where(c => c.Id == request.Id && c.UserId == currentUser.KeycloakUserId)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -69,7 +72,10 @@ public class GetConversationQueryHandler(
                         c.DocumentId,
                         c.DocumentChunkId,
                         c.FileName,
-                        c.Score)).ToList()
+                        c.Score)).ToList(),
+                    m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.KeycloakUserId) != null 
+                        ? m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.KeycloakUserId)!.Rating 
+                        : null
                 )).ToList()
         );
     }

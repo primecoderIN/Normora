@@ -166,3 +166,34 @@ Links AI Assistant messages to the `DocumentChunks` used to generate the answer.
 | `MessageId` | `uniqueidentifier` | ❌ | FK → `Messages.Id` (`Cascade`) |
 | `DocumentChunkId` | `uniqueidentifier` | ❌ | FK → `documents.DocumentChunks.Id` |
 | `RelevanceScore` | `float` | ❌ | Cosine similarity score |
+
+---
+
+### `SavedAnswers`
+Allows users to bookmark/save assistant messages for later retrieval.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uniqueidentifier` | ❌ | PK |
+| `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
+| `UserId` | `nvarchar(max)` | ❌ | Keycloak Subject ID |
+| `MessageId` | `uniqueidentifier` | ❌ | FK → `Messages.Id` (`Cascade`) |
+| `ConversationId` | `uniqueidentifier` | ❌ | FK → `Conversations.Id` |
+
+**Indexes:** `UX_SavedAnswers_UserId_MessageId` (Unique)
+
+---
+
+### `MessageFeedbacks`
+Stores thumbs-up/thumbs-down ratings from users on assistant messages.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uniqueidentifier` | ❌ | PK |
+| `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
+| `UserId` | `nvarchar(max)` | ❌ | Keycloak Subject ID |
+| `MessageId` | `uniqueidentifier` | ❌ | FK → `Messages.Id` (`Cascade`) |
+| `Rating` | `int` | ❌ | Enum: `Positive=1`, `Negative=2` |
+| `Comment` | `nvarchar(500)` | ✅ | Optional feedback text |
+
+**Indexes:** `UX_MessageFeedbacks_UserId_MessageId` (Unique)

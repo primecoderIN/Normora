@@ -143,3 +143,13 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] `ExportFormat` union type (`'Markdown' | 'Pdf' | 'Docx'`) and `exportAnswer()` method added to `SavedAnswerService` — uses `responseType: 'blob'` and a programmatic `<a>` click to trigger the browser save-as dialog
 - [x] Export dropdown UI added to each saved-answer card in `SavedAnswers` Angular component — download icon triggers an animated format picker (Markdown / PDF / Word); spinner shown during in-flight requests; `HostListener` on `document:click` closes the menu when clicking outside
 
+## ✅ Completed Answer Feedback (Phase 18)
+- [x] `MessageFeedback` domain entity with `TenantId`, `UserId`, `MessageId`, `Rating` (enum), and `Comment`
+- [x] `MessageFeedbacks` `DbSet` and unique constraint on `(UserId, MessageId)` in `ConversationsDbContext`
+- [x] Added `Feedbacks` navigation property to `Message`
+- [x] EF Core migration `AddMessageFeedbacksEntity` created and applied automatically on API startup
+- [x] `SubmitFeedbackCommand` + handler (validates Assistant role and user identity)
+- [x] `POST /api/conversations/{id}/messages/{messageId}/feedback` endpoint
+- [x] `MessageDto` updated with `Feedback` rating mapping inside `GetConversationQueryHandler`
+- [x] Angular `MessageDto` updated with `feedback` property and `submitFeedback` method in `ConversationService`
+- [x] Thumb Up/Down feedback buttons added to `ConversationChatComponent` next to bookmarks, with optimistic state toggling
