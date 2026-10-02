@@ -92,6 +92,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 ## ✅ Security Hardening
 - [x] **BOLA Fix (SuspendTenant)**: Injected `ITenantContext` into `TenantsController` and validated the `{id}` route parameter against `tenantContext.TenantId` to prevent cross-tenant object manipulation.
 - [x] **BFLA Defense**: `TenantResolutionMiddleware` validates tenant membership against the database on every request. The `[RequireTenant]` attribute enforces role-based access at the controller/action level.
+- [x] **OWASP ZAP Remediations**: Configured Nginx to correctly emit strict security headers (`Permissions-Policy`, `X-Content-Type-Options`, `Content-Security-Policy`, etc.) across all cached static asset routes (`.js`, `.css`, `.html`), fixing a bug where `Cache-Control` overrides were silently stripping security policies.
 
 ## ✅ White-Label Branding & Workspace Routing
 - [x] Created `TenantBranding` domain entity (separate table, 1-to-1 with `Tenant`) with `PrimaryColor`, `SecondaryColor`, `LogoUrl`, `FaviconUrl`
