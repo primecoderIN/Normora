@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,51 +11,13 @@ namespace Normora.Modules.Documents.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Step 1: Drop the old FK from DocumentChunks -> Documents.
             migrationBuilder.DropForeignKey(
                 name: "FK_DocumentChunks_Documents_DocumentId",
                 table: "DocumentChunks");
 
-            migrationBuilder.DropColumn(
-                name: "ExtractedText",
-                table: "Documents");
-
-            migrationBuilder.DropColumn(
-                name: "MinioObjectName",
-                table: "Documents");
-
-            migrationBuilder.DropColumn(
-                name: "Status",
-                table: "Documents");
-
-            migrationBuilder.RenameColumn(
-                name: "DocumentId",
-                table: "DocumentChunks",
-                newName: "DocumentVersionId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_DocumentChunks_TenantId_DocumentId_ChunkIndex",
-                table: "DocumentChunks",
-                newName: "IX_DocumentChunks_TenantId_DocumentVersionId_ChunkIndex");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_DocumentChunks_DocumentId",
-                table: "DocumentChunks",
-                newName: "IX_DocumentChunks_DocumentVersionId");
-
-            migrationBuilder.AddColumn<string>(
-                name: "ContentType",
-                table: "Documents",
-                type: "text",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<long>(
-                name: "Size",
-                table: "Documents",
-                type: "bigint",
-                nullable: false,
-                defaultValue: 0L);
-
+            // Step 2: Create the DocumentVersions table BEFORE removing columns from Documents,
+            // so we can copy the existing MinioObjectName, ExtractedText, and Status into it.
             migrationBuilder.CreateTable(
                 name: "DocumentVersions",
                 columns: table => new
@@ -86,6 +48,41 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                 table: "DocumentVersions",
                 column: "DocumentId");
 
+            // Document Versioning (Phase 19): DATA MIGRATION
+            // Step 3: Insert a "Version 1" row into DocumentVersions for each existing Document,
+            // copying over the MinioObjectName, ExtractedText, and Status that are about to be dropped.
+            migrationBuilder.Sql(@"
+                INSERT INTO ""DocumentVersions"" (""Id"", ""DocumentId"", ""TenantId"", ""VersionNumber"", ""MinioObjectName"", ""ExtractedText"", ""Status"", ""IsActive"", ""CreatedAt"")
+                SELECT gen_random_uuid(), d.""Id"", d.""TenantId"", 1, d.""MinioObjectName"", d.""ExtractedText"", d.""Status"", true, d.""UploadedAt""
+                FROM ""Documents"" d;
+            ");
+
+            // Step 4: Rename DocumentChunks.DocumentId -> DocumentVersionId and update its indexes.
+            migrationBuilder.RenameColumn(
+                name: "DocumentId",
+                table: "DocumentChunks",
+                newName: "DocumentVersionId");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_DocumentChunks_TenantId_DocumentId_ChunkIndex",
+                table: "DocumentChunks",
+                newName: "IX_DocumentChunks_TenantId_DocumentVersionId_ChunkIndex");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_DocumentChunks_DocumentId",
+                table: "DocumentChunks",
+                newName: "IX_DocumentChunks_DocumentVersionId");
+
+            // Step 5: Remap DocumentChunks.DocumentVersionId from the old Document.Id
+            // to the new DocumentVersion.Id we just created in Step 3.
+            migrationBuilder.Sql(@"
+                UPDATE ""DocumentChunks"" c
+                SET ""DocumentVersionId"" = v.""Id""
+                FROM ""DocumentVersions"" v
+                WHERE c.""DocumentVersionId"" = v.""DocumentId"";
+            ");
+
+            // Step 6: Add the new FK from DocumentChunks -> DocumentVersions.
             migrationBuilder.AddForeignKey(
                 name: "FK_DocumentChunks_DocumentVersions_DocumentVersionId",
                 table: "DocumentChunks",
@@ -93,6 +90,34 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                 principalTable: "DocumentVersions",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
+
+            // Step 7: Now safe to drop the old columns from Documents (data was migrated in Step 3).
+            migrationBuilder.DropColumn(
+                name: "ExtractedText",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "MinioObjectName",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "Status",
+                table: "Documents");
+
+            // Step 8: Add new columns to Documents.
+            migrationBuilder.AddColumn<string>(
+                name: "ContentType",
+                table: "Documents",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<long>(
+                name: "Size",
+                table: "Documents",
+                type: "bigint",
+                nullable: false,
+                defaultValue: 0L);
         }
 
         /// <inheritdoc />
