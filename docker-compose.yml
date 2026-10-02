@@ -120,6 +120,8 @@ services:
         condition: service_healthy
       tika:
         condition: service_started
+    volumes:
+      - data_protection_keys:/root/.aspnet/DataProtection-Keys
 
   client:
     build:
@@ -134,3 +136,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  data_protection_keys:
