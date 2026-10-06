@@ -166,3 +166,21 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Added "Upload new version" action button on the Angular Employer Document List to upload new files retaining the same parent document identifier.
 - [x] Added `isOutdated` flag to citations in `GetConversationQuery` and `GetSavedAnswersQuery` by cross-checking `documents."DocumentVersions"` for `IsActive = false`.
 - [x] Added a warning banner in `ConversationChatComponent` and `SavedAnswers` UI to alert users when an AI answer relies on outdated source documents.
+
+## ✅ Completed Document Soft Deletion (Phase 20)
+- [x] Added `DeletedAt` and `DeletedByUserId` audit fields to the `Document` entity.
+- [x] Configured a Global Query Filter in `DocumentsDbContext` (`d.DeletedAt == null`) so soft-deleted documents vanish from RAG lookups, searches, and UI lists without altering individual MediatR queries.
+- [x] Refactored `DeleteDocumentCommand` to perform a soft delete and broadcast a `DocumentDeleted` SignalR event instead of a hard delete.
+- [x] Updated `DocumentsController` to resolve the Keycloak `sub` claim for the `DeletedByUserId` audit field.
+- [x] Added `PurgeDeletedDocumentsJob` scheduled via Hangfire to run nightly at 3:00 AM UTC, leveraging `IgnoreQueryFilters()` to physically purge MinIO files and database rows older than the 30-day grace period.
+- [x] Updated Angular `DocumentRealtimeService` with a `DocumentDeleted` listener.
+- [x] Extracted inline soft-delete confirmation strip into `document-list.component.ts` and integrated optimistic UI updates in `documents.ts`.
+
+## ✅ Completed Employee Management & Directory (Phase 21)
+- [x] Added `RemovedAt` and `RemovedByUserId` to `TenantMembership` entity.
+- [x] Extended `TenantsDbContext` with a Global Query Filter to automatically exclude removed employees from `TenantResolutionMiddleware` and downstream queries.
+- [x] Upgraded `GetTenantUsersQuery` to `GetTenantEmployeesQuery`, implementing `.Skip().Take()` pagination, dynamic search filters, and including navigational properties to attach `Departments` and `UserGroups`.
+- [x] Implemented `RemoveEmployeeCommand` with local-first soft-deletion and a safeguard protecting the last Workspace Admin from being removed (`CannotRemoveLastAdmin`).
+- [x] Added a best-effort API sync via `IHttpClientFactory` to Keycloak that gracefully logs errors without breaking the local database transaction.
+- [x] Extracted the `Employees` view template into `employees.html` and rebuilt the table with a PrimeNG `p-paginator`, search input, and a department filter dropdown.
+- [x] Replaced the static ellipsis button with a fully functional `p-menu` triggering an inline optimistic confirmation strip for removing an employee with a single click.

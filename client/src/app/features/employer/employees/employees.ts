@@ -7,7 +7,7 @@ import { DepartmentService, Department } from '@core/services/department.service
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { PaginatorModule } from 'primeng/paginator';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { MenuItem } from 'primeng/api';
 
 @Component({
@@ -21,7 +21,7 @@ import { MenuItem } from 'primeng/api';
     DatePipe,
     MenuModule,
     PaginatorModule,
-    DropdownModule
+    SelectModule
   ],
   templateUrl: './employees.html',
 })

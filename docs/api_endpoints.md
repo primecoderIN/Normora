@@ -30,8 +30,8 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 | `POST` | `/invitations` | RequireTenant(Employer) | Invite a user to the current tenant by email. |
 | `GET` | `/invitations/my` | Authenticated | List all pending invitations for the current user. |
 | `POST` | `/invitations/{id}/accept` | Authenticated | Accept an invitation to join a tenant. |
-| `GET` | `/tenants/members` | RequireTenant(Employer) | List all active members in the current tenant. |
-| `DELETE` | `/tenants/members/{userId}` | RequireTenant(Employer) | Remove a user from the current tenant. |
+| `GET` | `/tenants/employees` | RequireTenant(Admin, Employee) | List employees with pagination, search, and department/group filters. (Phase 21) |
+| `DELETE` | `/tenants/employees/{membershipId}` | RequireTenant(Admin) | Remove an employee's membership from the current workspace (Soft delete). (Phase 21) |
 
 ---
 
@@ -63,7 +63,7 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 |---|---|---|---|
 | `GET` | `/documents` | RequireTenant(Employer) | List all uploaded documents and their processing status (`Uploaded`, `Processing`, `Ready`, `Failed`). |
 | `POST` | `/documents/upload` | RequireTenant(Employer) | Upload a document (PDF, TXT) and assign it to departments or Company Wide. |
-| `DELETE` | `/documents/{id}` | RequireTenant(Employer) | Delete a document and its associated vector chunks. |
+| `DELETE` | `/documents/{id}` | RequireTenant(Employer) | Soft-delete a document and broadcast a real-time event. Physical deletion is handled by a Hangfire job after 30 days. (Phase 20) |
 | `GET` | `/documents/search` | RequireTenant(Employee) | Perform a hybrid vector/keyword search across tenant documents. Filtered by the user's assigned departments. |
 
 ---

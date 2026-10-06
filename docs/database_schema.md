@@ -35,6 +35,8 @@ The junction table linking physical `Users` to `Tenants` with a context-specific
 | `UserId` | `uniqueidentifier` | ❌ | FK → `users.Users.Id` (By convention) |
 | `Role` | `int` | ❌ | Enum: `Employer`, `Employee` |
 | `CreatedAt` | `datetime2` | ❌ | |
+| `RemovedAt` | `datetime2` | ✅ | Soft-delete timestamp (Phase 21) |
+| `RemovedByUserId` | `uniqueidentifier` | ✅ | Audit trail for the admin who performed the removal |
 
 **Indexes:** 
 | Name | Columns | Unique |
@@ -102,8 +104,12 @@ Handles the document processing lifecycle, chunking, and vector embeddings.
 | `ContentType` | `varchar(100)` | ❌ | |
 | `Size` | `bigint` | ❌ | File size in bytes |
 | `UploadedAt` | `datetime2` | ❌ | |
+| `DeletedAt` | `datetime2` | ✅ | Soft-delete timestamp (Phase 20) |
+| `DeletedByUserId` | `uniqueidentifier` | ✅ | Audit trail for the admin who performed the deletion |
 
-**Indexes:** `IX_Documents_TenantId`
+**Indexes:** 
+- `IX_Documents_TenantId`
+- `IX_Documents_TenantId_DeletedAt` (Filtered index where `DeletedAt IS NOT NULL` for fast purge jobs)
 
 ---
 
