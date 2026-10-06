@@ -40,7 +40,7 @@ public class SaveAnswerCommandHandler(
             ?? throw new Normora.Shared.Exceptions.BolaException();
 
         if (message.Role != MessageRole.Assistant)
-            throw new InvalidOperationException("Only assistant messages can be saved.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.SaveOnlyAssistant);
 
         // BUG-1: Guard against null TenantId before using the null-forgiveness operator
         if (!tenantContext.TenantId.HasValue)

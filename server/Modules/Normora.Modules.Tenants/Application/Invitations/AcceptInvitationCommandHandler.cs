@@ -25,23 +25,23 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
 
         if (invitation == null)
         {
-            throw new InvalidOperationException("This invitation is invalid or does not exist.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.InvitationInvalidOrMissing);
         }
 
         if (invitation.Status != InvitationStatus.Pending)
         {
-            throw new InvalidOperationException("This invitation has already been accepted or is no longer valid.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.InvitationAlreadyAccepted);
         }
 
         if (invitation.ExpiresAt < DateTime.UtcNow)
         {
-            throw new InvalidOperationException("This invitation link has expired.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.InvitationExpired);
         }
 
         // Prevent invitation hijacking by ensuring the logged-in user's email matches the email the invite was sent to
         if (!string.Equals(invitation.Email, currentUser.Email, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("This invitation was sent to a different email address.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.InvitationEmailMismatch);
         }
 
         // Get or create the local user profile for the invitee if this is their first time logging in

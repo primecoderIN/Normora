@@ -22,7 +22,7 @@ public class UnsaveAnswerCommandHandler(
                 s => s.UserId == currentUser.KeycloakUserId && s.MessageId == request.MessageId,
                 cancellationToken);
 
-        if (saved is null) return;
+        if (saved is null) throw new Normora.Shared.Exceptions.BolaException();
 
         context.SavedAnswers.Remove(saved);
         await context.SaveChangesAsync(cancellationToken);

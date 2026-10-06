@@ -19,9 +19,7 @@ public class DeleteConversationCommandHandler(
 
         if (conversation is null)
         {
-            // We ignore not found for delete, or throw an exception depending on the project's standards.
-            // Let's just return to make it idempotent.
-            return;
+            throw new Normora.Shared.Exceptions.BolaException();
         }
 
         context.Conversations.Remove(conversation);

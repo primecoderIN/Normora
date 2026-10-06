@@ -49,7 +49,7 @@ public class InviteEmployeeCommandHandler : IRequestHandler<InviteEmployeeComman
 
         if (existingInvite != null)
         {
-            throw new InvalidOperationException("A pending invitation already exists for this email.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.PendingInvitationExists);
         }
 
         // Create the new invitation token which the employee will use to accept the invite

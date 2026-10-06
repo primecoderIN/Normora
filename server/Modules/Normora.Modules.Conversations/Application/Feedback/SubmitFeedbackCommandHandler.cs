@@ -22,7 +22,7 @@ internal sealed class SubmitFeedbackCommandHandler(
 
         if (message.Role != MessageRole.Assistant)
         {
-            throw new InvalidOperationException("Feedback can only be submitted for assistant messages.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.FeedbackOnlyForAssistant);
         }
 
         var feedback = await dbContext.MessageFeedbacks

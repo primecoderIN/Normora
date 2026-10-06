@@ -51,7 +51,7 @@ public class UpdateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
 
         if (exists)
         {
-            throw new InvalidOperationException("A department with this name already exists.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.DepartmentExists);
         }
 
         department.Name = request.Name;

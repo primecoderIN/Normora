@@ -42,7 +42,7 @@ public class CreateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
 
         if (exists)
         {
-            throw new InvalidOperationException("A User Group with this name already exists.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.UserGroupExists);
         }
 
         var group = new UserGroup

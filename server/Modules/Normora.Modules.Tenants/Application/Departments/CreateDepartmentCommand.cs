@@ -40,7 +40,7 @@ public class CreateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
 
         if (exists)
         {
-            throw new InvalidOperationException("A department with this name already exists.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.DepartmentExists);
         }
 
         var department = new Department

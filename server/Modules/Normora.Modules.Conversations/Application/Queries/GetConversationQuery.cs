@@ -51,7 +51,7 @@ public class GetConversationQueryHandler(
 
         if (conversation is null)
         {
-            return null;
+            throw new Normora.Shared.Exceptions.BolaException();
         }
 
         // Document Versioning (Phase 19): Identify citations that belong to inactive document versions.
@@ -60,16 +60,14 @@ public class GetConversationQueryHandler(
         
         if (chunkIds.Any())
         {
-            var idsStr = string.Join(",", chunkIds.Select(id => $"'{id}'"));
-            
-            // Raw SQL query to maintain module independence without EF navigation properties.
             var sql = $@"
                 SELECT c.""Id"" 
                 FROM ""DocumentChunks"" c
                 JOIN ""DocumentVersions"" v ON c.""DocumentVersionId"" = v.""Id""
-                WHERE v.""IsActive"" = false AND c.""Id"" IN ({idsStr})";
-                
-            var results = await context.Database.SqlQueryRaw<Guid>(sql).ToListAsync(cancellationToken);
+                WHERE v.""IsActive"" = false AND c.""Id"" = ANY(@chunkIds)";
+
+            var param = new Npgsql.NpgsqlParameter("chunkIds", chunkIds.ToArray());
+            var results = await context.Database.SqlQueryRaw<Guid>(sql, param).ToListAsync(cancellationToken);
             foreach (var id in results)
             {
                 outdatedChunkIds.Add(id);
