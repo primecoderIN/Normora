@@ -103,14 +103,51 @@ import { Department } from '@core/services/department.service';
                     <button
                       type="button"
                       class="w-8 h-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex items-center justify-center"
-                      (click)="onDelete.emit(doc.id)"
+                      (click)="onConfirmDelete.emit(doc.id)"
                       aria-label="Delete document"
+                      [title]="'Delete document'"
                     >
                       <i class="pi pi-trash text-base"></i>
                     </button>
                   </div>
                 </td>
               </tr>
+              <!-- Inline Delete Confirmation -->
+              @if (documentToDeleteId() === doc.id) {
+                <tr class="bg-red-50/50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/30 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <td colspan="4" class="px-5 py-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2 text-red-700 dark:text-red-400">
+                        <i class="pi pi-exclamation-triangle"></i>
+                        <span class="text-sm font-medium">Are you sure you want to delete this document?</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors disabled:opacity-50"
+                          (click)="onCancelDelete.emit()"
+                          [disabled]="isDeleting()"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md shadow-sm transition-colors disabled:opacity-50"
+                          (click)="onExecuteDelete.emit()"
+                          [disabled]="isDeleting()"
+                        >
+                          @if (isDeleting()) {
+                            <i class="pi pi-spinner pi-spin"></i>
+                            <span>Deleting...</span>
+                          } @else {
+                            <span>Delete document</span>
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
               <!-- Document Versioning (Phase 19): Expanded Version History Row -->
               <!-- Shows chronological list of file updates when the history button is clicked -->
               @if (isExpanded(doc.id) && doc.versions) {
@@ -170,8 +207,16 @@ export class DocumentListComponent {
   documents = input.required<Document[]>();
   departments = input<Department[]>([]);
   tenantName = input.required<string>();
-  onDelete = output<string>();
+  
+  // Action events
+  onConfirmDelete = output<string>();
+  onCancelDelete = output<void>();
+  onExecuteDelete = output<void>();
   onUploadNewVersion = output<string>();
+
+  // State inputs
+  documentToDeleteId = input<string | null>(null);
+  isDeleting = input<boolean>(false);
 
   expandedRowId = signal<string | null>(null);
 

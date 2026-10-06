@@ -59,6 +59,10 @@ export class Documents implements OnInit, OnDestroy {
   selectedStatus = signal<'All' | Document['status']>('All');
   searchTerm = signal('');
 
+  // Phase 20: Inline delete confirmation state
+  documentToDelete = signal<string | null>(null);
+  isDeleting = signal(false);
+
   isPersonalWorkspace = this.userService.isPersonalWorkspace;
   activeTenantName = this.userService.activeTenantName;
 
@@ -85,7 +89,11 @@ export class Documents implements OnInit, OnDestroy {
     const tenantId = activeId || this.userService.currentUser()?.memberships[0]?.tenantId;
     if (tenantId) {
       void this.documentRealtimeService
-        .connect(tenantId, event => this.onDocumentStatusChanged(event))
+        .connect(
+          tenantId, 
+          event => this.onDocumentStatusChanged(event),
+          documentId => this.onDocumentDeleted(documentId)
+        )
         .catch(error => console.error('Failed to connect to document realtime events:', error));
     }
   }
@@ -144,13 +152,43 @@ export class Documents implements OnInit, OnDestroy {
     }
   }
 
-  deleteDocument(id: string) {
+  private onDocumentDeleted(documentId: string) {
+    this.documents.set(this.documents().filter(d => d.id !== documentId));
+  }
+
+  confirmDelete(id: string) {
+    this.documentToDelete.set(id);
+  }
+
+  cancelDelete() {
+    this.documentToDelete.set(null);
+  }
+
+  executeDelete() {
+    const id = this.documentToDelete();
+    if (!id) return;
+    
+    this.isDeleting.set(true);
+    const documentToRemove = this.documents().find(d => d.id === id);
+    
+    // Optimistic UI removal
+    this.documents.set(this.documents().filter(d => d.id !== id));
+    this.documentToDelete.set(null);
+
     this.documentService.deleteDocument(id).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Document deleted' });
-        this.loadDocuments();
+        this.isDeleting.set(false);
       },
-      error: (err) => { console.error('Failed to delete', err); }
+      error: (err) => {
+        console.error('Failed to delete', err);
+        // Revert optimistic removal
+        if (documentToRemove) {
+          this.documents.set([...this.documents(), documentToRemove]);
+        }
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete document' });
+        this.isDeleting.set(false);
+      }
     });
   }
 

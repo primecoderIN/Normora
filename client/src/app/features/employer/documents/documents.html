@@ -97,7 +97,11 @@
         [documents]="filteredDocuments()"
         [departments]="departments()"
         [tenantName]="activeTenantName()"
-        (onDelete)="deleteDocument($event)"
+        [documentToDeleteId]="documentToDelete()"
+        [isDeleting]="isDeleting()"
+        (onConfirmDelete)="confirmDelete($event)"
+        (onCancelDelete)="cancelDelete()"
+        (onExecuteDelete)="executeDelete()"
         (onUploadNewVersion)="openUploadNewVersion($event)">
       </app-document-list>
     } @else {

@@ -13,7 +13,11 @@ export interface DocumentStatusChanged {
 export class DocumentRealtimeService {
   private connection?: HubConnection;
 
-  async connect(tenantId: string, onStatusChanged: (event: DocumentStatusChanged) => void): Promise<void> {
+  async connect(
+    tenantId: string, 
+    onStatusChanged: (event: DocumentStatusChanged) => void,
+    onDocumentDeleted?: (documentId: string) => void
+  ): Promise<void> {
     if (this.connection?.state === HubConnectionState.Connected) {
       return;
     }
@@ -29,6 +33,9 @@ export class DocumentRealtimeService {
       .build();
 
     this.connection.on('DocumentStatusChanged', onStatusChanged);
+    if (onDocumentDeleted) {
+      this.connection.on('DocumentDeleted', onDocumentDeleted);
+    }
     await this.connection.start();
     await this.connection.invoke('JoinTenant', tenantId);
   }
