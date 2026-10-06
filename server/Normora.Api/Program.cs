@@ -9,6 +9,7 @@ using Normora.Modules.Documents.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Duende.Bff;
+using Normora.Api.Features.Documents;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,5 +101,10 @@ app.MapControllers().AsBffApiEndpoint(); // Enforces CSRF protection
 app.MapBffManagementEndpoints(); // Adds /bff/login, /bff/logout, /bff/user
 app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint();
 app.MapHub<NotificationHub>("/hubs/notifications").AsBffApiEndpoint();
+
+RecurringJob.AddOrUpdate<PurgeDeletedDocumentsJob>(
+    "purge-deleted-documents",
+    job => job.ExecuteAsync(CancellationToken.None),
+    Cron.Daily(3, 0)); // 3:00 AM UTC
 
 app.Run();

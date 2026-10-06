@@ -51,4 +51,17 @@ public class Document
     /// The versions of this document.
     /// </summary>
     public ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
+
+    // --- Soft-Delete Audit Fields ---
+
+    /// <summary>
+    /// UTC timestamp of soft-deletion. NULL means the document is active and visible.
+    /// The global query filter in DocumentsDbContext excludes all rows where this is not null.
+    /// </summary>
+    public DateTime? DeletedAt { get; set; }
+
+    /// <summary>
+    /// The UserId (from the Users table) of the employer who performed the deletion.
+    /// </summary>
+    public Guid? DeletedByUserId { get; set; }
 }

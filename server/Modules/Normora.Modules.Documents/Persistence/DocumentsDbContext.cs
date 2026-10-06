@@ -43,7 +43,9 @@ public class DocumentsDbContext : DbContext
             entity.Property(d => d.FileName).IsRequired().HasMaxLength(255);
             
             // TENANT-14: Global Query Filter for Tenant Data Isolation
-            entity.HasQueryFilter(d => d.TenantId == _tenantContext.TenantId);
+            // Soft-delete: documents with a non-null DeletedAt are excluded from all queries.
+            // The PurgeDeletedDocumentsJob uses IgnoreQueryFilters() to process them.
+            entity.HasQueryFilter(d => d.TenantId == _tenantContext.TenantId && d.DeletedAt == null);
         });
 
         modelBuilder.Entity<DocumentVersion>(entity => 

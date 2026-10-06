@@ -97,11 +97,17 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> DeleteDocument(Guid id)
+    public async Task<IActionResult> DeleteDocument(Guid id, [FromServices] Normora.Modules.Tenants.Persistence.TenantsDbContext tenantsDb)
     {
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
-        var command = new DeleteDocumentCommand(id, tenantContext.TenantId.Value);
+        // Resolve the internal UserId from the Keycloak subject claim so the soft-delete
+        // audit trail references our users table rather than an opaque Keycloak ID.
+        var keycloakId = User.FindFirst("sub")?.Value ?? string.Empty;
+        var user = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(tenantsDb.Users, u => u.KeycloakUserId == keycloakId);
+        var deletedByUserId = user?.Id ?? Guid.Empty;
+
+        var command = new DeleteDocumentCommand(id, tenantContext.TenantId.Value, deletedByUserId);
         var deleted = await mediator.Send(command);
 
         if (!deleted) return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
