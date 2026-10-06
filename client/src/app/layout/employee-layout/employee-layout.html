@@ -20,15 +20,15 @@
       }
     </div>
 
-    @if (activeWorkspace) {
+    @if (activeWorkspace()) {
       <div class="items-center gap-3 p-3 my-6 bg-white/5 border border-white/10 rounded-lg hidden md:flex" [class.flex-col]="!isSidebarExpanded()" [class.p-2]="!isSidebarExpanded()">
         <div class="flex items-center justify-center w-8 h-8 bg-white/10 text-slate-300 rounded-md">
-          <i [class]="activeWorkspace.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
+          <i [class]="activeWorkspace()?.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
         </div>
         <div class="min-w-0 flex-1 relative" [class.hidden]="!isSidebarExpanded()">
           <p-select 
-            [options]="allWorkspaces" 
-            [ngModel]="activeWorkspace.tenantId"
+            [options]="allWorkspaces()" 
+            [ngModel]="activeWorkspace()?.tenantId"
             (onChange)="changeWorkspace($event.value)"
             optionLabel="tenantName"
             optionValue="tenantId"
@@ -58,11 +58,11 @@
 
     <nav class="grid gap-1 overflow-y-auto mt-4 md:mt-0 flex-row md:flex-col overflow-x-auto md:overflow-x-visible custom-scrollbar" aria-label="Employee navigation">
 
-      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'conversations']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
+      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employee', 'conversations']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
         <i class="pi pi-history text-base w-4"></i>
         <span [class.hidden]="!isSidebarExpanded()">Conversations</span>
       </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'saved-answers']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
+      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employee', 'saved-answers']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
         <i class="pi pi-bookmark text-base w-4"></i>
         <span [class.hidden]="!isSidebarExpanded()">Saved answers</span>
       </a>
@@ -76,7 +76,7 @@
           </div>
           <div class="min-w-0" [class.hidden]="!isSidebarExpanded()">
             <div class="text-sm font-bold truncate text-white">{{ user.displayName }}</div>
-            <div class="text-base text-slate-400 capitalize">{{ activeWorkspace?.role || 'Employee' }}</div>
+            <div class="text-base text-slate-400 capitalize">{{ activeWorkspace()?.role || 'Employee' }}</div>
           </div>
         </div>
       }
@@ -115,10 +115,10 @@
   <div class="md:hidden overflow-x-auto bg-slate-900 border-b border-white/10">
     <nav class="flex px-2 py-2 gap-1 custom-scrollbar">
 
-      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'conversations']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
+      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employee', 'conversations']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-history"></i> Conversations
       </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace?.tenantSlug, 'employee', 'saved-answers']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
+      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employee', 'saved-answers']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
         <i class="pi pi-bookmark"></i> Saved answers
       </a>
     </nav>
