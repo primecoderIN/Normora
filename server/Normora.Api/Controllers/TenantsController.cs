@@ -180,16 +180,28 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// </summary>
     [HttpGet("employees")]
     [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<List<Normora.Modules.Tenants.Application.Users.TenantUserDto>>))]
-    public async Task<IActionResult> GetEmployees()
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Normora.Modules.Tenants.Application.Users.PagedResult<Normora.Modules.Tenants.Application.Users.TenantEmployeeDto>>))]
+    public async Task<IActionResult> GetEmployees(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] Guid? departmentId = null,
+        [FromQuery] Guid? userGroupId = null)
     {
         if (!tenantContext.TenantId.HasValue)
             return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
 
-        var query = new Normora.Modules.Tenants.Application.Users.GetTenantUsersQuery(tenantContext.TenantId.Value);
+        var query = new Normora.Modules.Tenants.Application.Users.GetTenantEmployeesQuery(
+            tenantContext.TenantId.Value, 
+            page, 
+            pageSize, 
+            search, 
+            departmentId, 
+            userGroupId);
+            
         var employees = await mediator.Send(query);
 
-        return Ok(ApiResponse<List<Normora.Modules.Tenants.Application.Users.TenantUserDto>>.Ok(employees));
+        return Ok(ApiResponse<Normora.Modules.Tenants.Application.Users.PagedResult<Normora.Modules.Tenants.Application.Users.TenantEmployeeDto>>.Ok(employees));
     }
 
     /// <summary>
@@ -206,6 +218,27 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         var stats = await mediator.Send(query);
 
         return Ok(ApiResponse<object>.Ok(stats));
+    }
+
+    /// <summary>
+    /// Soft-deletes a user's membership from the current tenant.
+    /// Only Admins can perform this action.
+    /// </summary>
+    /// <param name="membershipId">The unique identifier of the tenant membership to remove.</param>
+    /// <returns>A success message if removed.</returns>
+    [HttpDelete("employees/{membershipId}")]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> RemoveEmployee(Guid membershipId)
+    {
+        var command = new Normora.Modules.Tenants.Application.Users.RemoveEmployeeCommand(membershipId);
+        
+        // BolaException maps to 404. BflaException maps to 403 globally.
+        await mediator.Send(command);
+
+        return Ok(ApiResponse.Ok("Employee removed successfully."));
     }
 }
 

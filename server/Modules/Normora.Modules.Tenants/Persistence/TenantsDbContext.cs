@@ -73,6 +73,9 @@ public class TenantsDbContext : DbContext
                   .WithMany(u => u.Memberships)
                   .HasForeignKey(m => m.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+                  
+            // Phase 21: Soft-delete for memberships
+            entity.HasQueryFilter(m => m.RemovedAt == null);
         });
 
         // TenantInvitation Configuration

@@ -34,4 +34,14 @@ public class TenantMembership
 
     /// <summary>User groups this membership belongs to.</summary>
     public ICollection<UserGroupMembership> UserGroupMemberships { get; set; } = new List<UserGroupMembership>();
+
+    /// <summary>
+    /// UTC timestamp of when the membership was soft-deleted (user removed from tenant).
+    /// </summary>
+    public DateTime? RemovedAt { get; set; }
+
+    /// <summary>
+    /// The UserId of the admin who removed this member.
+    /// </summary>
+    public Guid? RemovedByUserId { get; set; }
 }
