@@ -20,9 +20,18 @@ export class TenantService {
     return this.http.post<any>(this.apiUrl, payload);
   }
 
-  // Retrieve a list of employees for the current tenant
-  getEmployees(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/employees`);
+  // Retrieve a list of employees for the current tenant (paginated)
+  getEmployees(page: number = 1, pageSize: number = 10, search?: string, departmentId?: string, userGroupId?: string): Observable<any> {
+    let url = `${this.apiUrl}/employees?page=${page}&pageSize=${pageSize}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (departmentId) url += `&departmentId=${departmentId}`;
+    if (userGroupId) url += `&userGroupId=${userGroupId}`;
+    
+    return this.http.get<any>(url);
+  }
+
+  removeEmployee(membershipId: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/employees/${membershipId}`);
   }
 
   getEmployeeStats(): Observable<any> {
