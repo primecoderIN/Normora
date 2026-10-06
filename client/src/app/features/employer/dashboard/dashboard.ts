@@ -8,6 +8,7 @@ import { StatCardComponent } from '@shared/components/stat-card/stat-card.compon
 import { UserService } from '@core/services/user.service';
 import { DashboardService, DashboardSummaryDto } from '@core/services/dashboard.service';
 import { SkeletonModule } from 'primeng/skeleton';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,6 +19,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 export class Dashboard implements OnInit {
   public userService = inject(UserService);
   private dashboardService = inject(DashboardService);
+  private messageService = inject(MessageService);
   
   summary = signal<DashboardSummaryDto | null>(null);
   isLoading = signal(true);
@@ -141,9 +143,13 @@ export class Dashboard implements OnInit {
             borderDash: [4, 4]
           },
           min: 0,
-          max: 400
+          max: Math.ceil(Math.max(...activity.data, 10) * 1.2)
         }
       }
     };
+  }
+
+  showComingSoon() {
+    this.messageService.add({ severity: 'info', summary: 'Coming Soon', detail: 'This feature will be available in a future update.' });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +10,7 @@ import { TenantService } from '../../core/services/tenant.service';
 import { InvitationService } from '@core/services/invitation.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-employer-layout',
@@ -24,7 +25,7 @@ export class EmployerLayout {
   private invitationService = inject(InvitationService);
   public themeService = inject(ThemeService);
   public brandingService = inject(TenantBrandingService);
-  
+  private messageService = inject(MessageService);
   isAccepting = signal(false);
   isSidebarExpanded = signal(true);
 
@@ -33,23 +34,23 @@ export class EmployerLayout {
   }
 
   // Retrieve the currently active workspace, falling back to their first available workspace if none is explicitly selected
-  get activeWorkspace() {
+  activeWorkspace = computed(() => {
     const user = this.userService.currentUser();
     if (!user) return null;
     const activeId = this.userService.activeTenantId();
     return user.memberships.find(m => m.tenantId === activeId) || user.memberships[0];
-  }
+  });
 
-  get otherWorkspaces() {
+  otherWorkspaces = computed(() => {
     const user = this.userService.currentUser();
     if (!user) return [];
-    const activeId = this.activeWorkspace?.tenantId;
+    const activeId = this.activeWorkspace()?.tenantId;
     return user.memberships.filter(m => m.tenantId !== activeId);
-  }
+  });
 
-  get allWorkspaces() {
+  allWorkspaces = computed(() => {
     return this.userService.currentUser()?.memberships || [];
-  }
+  });
 
 
   // Switch the user's active workspace and enforce role-based redirection based on their access level in the new workspace
@@ -75,7 +76,7 @@ export class EmployerLayout {
     this.invitationService.acceptInvitation(token).subscribe({
       next: () => window.location.reload(),
       error: (err: any) => {
-        alert(err.error?.message || 'Failed to accept invitation');
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to accept invitation' });
         this.isAccepting.set(false);
       }
     });
@@ -87,7 +88,7 @@ export class EmployerLayout {
     this.invitationService.rejectInvitation(token).subscribe({
       next: () => window.location.reload(),
       error: (err: any) => {
-        alert(err.error?.message || 'Failed to reject invitation');
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to reject invitation' });
         this.isAccepting.set(false);
       }
     });

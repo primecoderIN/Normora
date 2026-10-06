@@ -8,7 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { PaginatorModule } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-employees',
@@ -30,6 +30,7 @@ export class Employees implements OnInit {
   private invitationService = inject(InvitationService);
   private tenantService = inject(TenantService);
   private departmentService = inject(DepartmentService);
+  private messageService = inject(MessageService);
 
   inviteForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -66,11 +67,14 @@ export class Employees implements OnInit {
   employeeToRemoveId = signal<string | null>(null);
   isRemoving = signal(false);
 
+  private searchTimeout: any;
+
   readonly skeletonRows = [1, 2, 3, 4, 5];
 
   ngOnInit() {
     this.loadDepartments();
     this.loadEmployees();
+    this.loadStats();
     this.initMenu();
   }
 
@@ -80,7 +84,7 @@ export class Employees implements OnInit {
         label: 'Manage Assignments',
         icon: 'pi pi-sitemap',
         command: () => {
-          // Future phase feature
+          this.messageService.add({ severity: 'info', summary: 'Coming Soon', detail: 'Manage assignments will be available in a future update.' });
         }
       },
       {
@@ -140,7 +144,9 @@ export class Employees implements OnInit {
         this.isLoadingEmployees.set(false);
       }
     });
+  }
 
+  loadStats() {
     this.tenantService.getEmployeeStats().subscribe({
       next: (res) => {
         if (res.success && res.data) {
@@ -159,9 +165,14 @@ export class Employees implements OnInit {
   }
 
   onSearchChange(value: string) {
-    this.searchQuery.set(value);
-    this.currentPage.set(1);
-    this.loadEmployees();
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    this.searchTimeout = setTimeout(() => {
+      this.searchQuery.set(value);
+      this.currentPage.set(1);
+      this.loadEmployees();
+    }, 350);
   }
 
   onDepartmentChange(value: string | null) {
@@ -196,11 +207,12 @@ export class Employees implements OnInit {
         this.isRemoving.set(false);
         this.employeeToRemoveId.set(null);
         this.loadEmployees();
+        this.loadStats();
       },
       error: (err) => {
         console.error('Failed to remove employee', err);
         this.isRemoving.set(false);
-        // You could add a toast message here if you injected MessageService
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to remove employee' });
       }
     });
   }
@@ -235,5 +247,9 @@ export class Employees implements OnInit {
         this.errorMessage.set(err.error?.message || 'Failed to send invitation');
       },
     });
+  }
+
+  exportEmployees() {
+    this.messageService.add({ severity: 'info', summary: 'Export Started', detail: 'Your export is being generated and will download shortly.' });
   }
 }

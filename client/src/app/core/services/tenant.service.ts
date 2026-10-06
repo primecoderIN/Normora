@@ -8,6 +8,16 @@ export interface CreateTenantPayload {
   slug: string;
 }
 
+export interface TenantEmployeeDto {
+  membershipId: string;
+  userId: string;
+  email: string;
+  displayName: string;
+  role: string;
+  joinedAt: string;
+  departments: any[];
+}
+
 @Injectable({
   providedIn: 'root',
 })

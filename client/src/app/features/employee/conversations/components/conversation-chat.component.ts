@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConversationDetailDto, MessageDto, ConversationService } from '@core/services/conversation.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
+import { MessageService } from 'primeng/api';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
@@ -176,7 +177,7 @@ import DOMPurify from 'dompurify';
                         <button
                           type="button"
                           class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
-                          (click)="copyToClipboard(msg.content)"
+                          (click)="copyToClipboard(msg.content, msg.id)"
                           [pTooltip]="copiedId === msg.id ? 'Copied!' : 'Copy'"
                           tooltipPosition="top"
                           [attr.aria-label]="'Copy message'"
@@ -273,7 +274,7 @@ import DOMPurify from 'dompurify';
           <form class="flex items-end gap-3 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-2xl transition-all focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-100/50 shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
                 (ngSubmit)="onSubmit()">
             
-            <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Attach file">
+            <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Attach file" (click)="showComingSoon()">
               <i class="pi pi-paperclip text-xl"></i>
             </button>
 
@@ -311,6 +312,7 @@ import DOMPurify from 'dompurify';
 export class ConversationChatComponent {
   private savedAnswerService = inject(SavedAnswerService);
   private conversationService = inject(ConversationService);
+  private messageService = inject(MessageService);
 
   @Input({ required: true }) conversation: ConversationDetailDto | null = null;
   @Input({ required: true }) isLoading = false;
@@ -420,15 +422,15 @@ export class ConversationChatComponent {
     return html;
   }
 
-  copyToClipboard(text: string) {
+  copyToClipboard(text: string, id: string) {
     navigator.clipboard.writeText(text).then(() => {
-      // Find the message by content to set copiedId
-      const msg = this.conversation?.messages.find(m => m.content === text);
-      if (msg) {
-        this.copiedId = msg.id;
-        setTimeout(() => this.copiedId = null, 2000);
-      }
+      this.copiedId = id;
+      setTimeout(() => this.copiedId = null, 2000);
     });
+  }
+
+  showComingSoon() {
+    this.messageService.add({ severity: 'info', summary: 'Coming Soon', detail: 'This feature will be available in a future update.' });
   }
 
   autoResize() {

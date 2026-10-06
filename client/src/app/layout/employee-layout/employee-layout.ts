@@ -10,8 +10,8 @@ import { InvitationService } from '@core/services/invitation.service';
 import { TenantService } from '@core/services/tenant.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
-import { signal } from '@angular/core';
-
+import { signal, computed } from '@angular/core';
+import { MessageService } from 'primeng/api';
 @Component({
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, SelectModule, FormsModule, CommonModule],
   selector: 'app-employee-layout',
@@ -25,28 +25,28 @@ export class EmployeeLayout {
   public themeService = inject(ThemeService);
   public brandingService = inject(TenantBrandingService);
   private invitationService = inject(InvitationService);
-  
+  private messageService = inject(MessageService);
   isAccepting = signal(false);
   isSidebarExpanded = signal(true);
 
   // Retrieve the currently active workspace, falling back to their first available workspace if none is explicitly selected
-  get activeWorkspace() {
+  activeWorkspace = computed(() => {
     const user = this.userService.currentUser();
     if (!user) return null;
     const activeId = this.userService.activeTenantId();
     return user.memberships.find(m => m.tenantId === activeId) || user.memberships[0];
-  }
+  });
 
-  get otherWorkspaces() {
+  otherWorkspaces = computed(() => {
     const user = this.userService.currentUser();
     if (!user) return [];
-    const activeId = this.activeWorkspace?.tenantId;
+    const activeId = this.activeWorkspace()?.tenantId;
     return user.memberships.filter(m => m.tenantId !== activeId);
-  }
+  });
 
-  get allWorkspaces() {
+  allWorkspaces = computed(() => {
     return this.userService.currentUser()?.memberships || [];
-  }
+  });
 
 
   // Switch the user's active workspace and enforce role-based redirection if they are an admin in the new workspace
@@ -76,7 +76,7 @@ export class EmployeeLayout {
     this.invitationService.acceptInvitation(token).subscribe({
       next: () => window.location.reload(),
       error: (err: any) => {
-        alert(err.error?.message || 'Failed to accept invitation');
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to accept invitation' });
         this.isAccepting.set(false);
       }
     });
@@ -88,7 +88,7 @@ export class EmployeeLayout {
     this.invitationService.rejectInvitation(token).subscribe({
       next: () => window.location.reload(),
       error: (err: any) => {
-        alert(err.error?.message || 'Failed to reject invitation');
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to reject invitation' });
         this.isAccepting.set(false);
       }
     });

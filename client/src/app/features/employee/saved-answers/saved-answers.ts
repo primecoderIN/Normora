@@ -17,62 +17,6 @@ interface ExportOption {
   selector: 'app-saved-answers',
   standalone: true,
   imports: [CommonModule, DatePipe, RouterModule, TooltipModule],
-  styles: [`
-    .export-dropdown {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      z-index: 50;
-      min-width: 188px;
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
-      overflow: hidden;
-      animation: dropdown-in 120ms ease-out;
-    }
-    :host-context(.dark) .export-dropdown {
-      background: #1e293b;
-      border-color: #334155;
-    }
-    @keyframes dropdown-in {
-      from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0)    scale(1); }
-    }
-    .export-dropdown-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      padding: 9px 14px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      text-align: left;
-      transition: background 120ms;
-    }
-    .export-dropdown-item:hover {
-      background: #f8fafc;
-    }
-    :host-context(.dark) .export-dropdown-item:hover {
-      background: #0f172a;
-    }
-    .export-dropdown-item:not(:last-child) {
-      border-bottom: 1px solid #f1f5f9;
-    }
-    :host-context(.dark) .export-dropdown-item:not(:last-child) {
-      border-bottom-color: #1e293b;
-    }
-    .export-spinner {
-      width: 12px;
-      height: 12px;
-      border: 2px solid #cbd5e1;
-      border-top-color: #6366f1;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  `],
   template: `
     <div class="flex flex-col gap-8 page-enter">
 
@@ -163,19 +107,18 @@ interface ExportOption {
                       [attr.aria-expanded]="openExportMenuId() === answer.id"
                     >
                       @if (exportingId() === answer.id) {
-                        <span class="export-spinner"></span>
+                        <span class="w-3 h-3 border-2 border-slate-300 dark:border-slate-600 border-t-primary-500 rounded-full animate-spin"></span>
                       } @else {
                         <i class="pi pi-download text-base"></i>
                       }
                     </button>
 
-                    <!-- Export format dropdown -->
                     @if (openExportMenuId() === answer.id) {
-                      <div class="export-dropdown" role="menu">
+                      <div class="absolute top-[calc(100%+6px)] right-0 z-50 min-w-[188px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.10),0_2px_6px_rgba(0,0,0,0.06)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150" role="menu">
                         <p class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-400 px-3.5 pt-2.5 pb-1 m-0">Export as</p>
                         @for (opt of exportOptions; track opt.format) {
                           <button
-                            class="export-dropdown-item"
+                            class="flex items-center gap-2.5 w-full px-3.5 py-2.5 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-900 border-b last:border-b-0 border-slate-100 dark:border-slate-700 text-left transition-colors cursor-pointer"
                             role="menuitem"
                             (click)="exportAnswer(answer, opt.format)"
                           >
@@ -308,7 +251,7 @@ export class SavedAnswers implements OnInit {
   onDocumentClick(event: Event) {
     if (this.openExportMenuId() !== null) {
       const target = event.target as HTMLElement;
-      if (!target.closest('.export-dropdown') && !target.closest('[id^="export-btn-"]')) {
+      if (!target.closest('[role="menu"]') && !target.closest('[id^="export-btn-"]')) {
         this.openExportMenuId.set(null);
       }
     }
@@ -386,7 +329,13 @@ export class SavedAnswers implements OnInit {
     if (cached) return cached;
     let html = marked.parse(content, { async: false, breaks: true }) as string;
     html = DOMPurify.sanitize(html);
-    this.markdownCache.set(content, html);
+    if (content.length > 50) {
+      this.markdownCache.set(content, html);
+      if (this.markdownCache.size > 100) {
+        const firstKey = this.markdownCache.keys().next().value;
+        if (firstKey) this.markdownCache.delete(firstKey);
+      }
+    }
     return html;
   }
 
