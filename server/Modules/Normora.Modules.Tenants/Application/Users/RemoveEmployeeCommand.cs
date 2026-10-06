@@ -42,6 +42,16 @@ public class RemoveEmployeeCommandHandler(
             throw new BflaException(); // Cannot remove yourself this way
         }
 
+        // Prevent removing the last admin
+        if (membership.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin)
+        {
+            var adminCount = await context.TenantMemberships.CountAsync(m => m.TenantId == tenantId && m.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin, cancellationToken);
+            if (adminCount <= 1)
+            {
+                throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.CannotRemoveLastAdmin);
+            }
+        }
+
         // 1. Soft-delete the membership locally
         // We get the current user's DB ID to populate RemovedByUserId
         var currentDbUser = await context.Users.FirstOrDefaultAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);

@@ -14,5 +14,6 @@ export const ApiMessages = {
   ServerError: {
     summary: 'Server Error',
     detail: 'An unexpected error occurred. Please try again later.'
-  }
+  },
+  CannotRemoveLastAdmin: 'Cannot remove the last administrator from the workspace.'
 } as const;

@@ -23,4 +23,7 @@ public static class ApiMessages
 
     // Server Errors
     public const string InternalServerError = "An unexpected error occurred. Please try again later.";
+    
+    // Actions
+    public const string CannotRemoveLastAdmin = "Cannot remove the last administrator from the workspace.";
 }
