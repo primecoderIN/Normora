@@ -184,3 +184,17 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Added a best-effort API sync via `IHttpClientFactory` to Keycloak that gracefully logs errors without breaking the local database transaction.
 - [x] Extracted the `Employees` view template into `employees.html` and rebuilt the table with a PrimeNG `p-paginator`, search input, and a department filter dropdown.
 - [x] Replaced the static ellipsis button with a fully functional `p-menu` triggering an inline optimistic confirmation strip for removing an employee with a single click.
+
+## ✅ Completed Employee Profile (Phase 22)
+- [x] Backend: Updated `CurrentUserDto` and `GetCurrentUserQuery` to include the user's `CreatedAt` (member since) date.
+- [x] Frontend: Created a dedicated `ProfileComponent` for employees to view their personal details and active workspaces.
+- [x] Integrated Keycloak account management URL into `AuthService.manageAccount()` to let users update their password/MFA securely.
+- [x] Added Profile navigation link to the Employee layout sidebars (both desktop and mobile views).
+- [x] Updated `app.routes.ts` with the new `/employee/profile` route protected by auth and role guards.
+
+## ✅ Completed Document Preview (Phase 23)
+- [x] Backend: Added `GetDocumentChunkQuery` and an API endpoint (`GET /api/documents/chunks/{chunkId}`) to retrieve individual document chunks.
+- [x] Security: Enforced strict BOLA checks to validate tenant ownership and department-level visibility before returning chunk content.
+- [x] Frontend: Created `DocumentChunkPreviewDto` and integrated the API call into `DocumentService`.
+- [x] Implemented a slide-out preview drawer using PrimeNG `<p-sidebar>` in both `ConversationChatComponent` and `SavedAnswers` components.
+- [x] Made AI citations clickable, allowing users to instantly view the original source text in the sidebar without leaving the chat interface.

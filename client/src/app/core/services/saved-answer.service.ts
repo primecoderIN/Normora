@@ -7,6 +7,7 @@ import { environment } from '@env/environment';
 
 export interface CitationDto {
   documentId: string;
+  documentChunkId: string;
   fileName: string;
   score: number;
   // Document Versioning (Phase 19): True if the cited document chunk belongs to an inactive (older) DocumentVersion.

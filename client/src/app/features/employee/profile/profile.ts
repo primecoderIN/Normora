@@ -65,7 +65,7 @@ import { AuthService } from '@core/services/auth.service';
                       <span class="text-xs text-slate-500 capitalize">{{ workspace.role }}</span>
                     </div>
                   </div>
-                  @if (workspace.tenantId === userService.currentTenant()?.tenantId) {
+                  @if (workspace.tenantId === userService.activeTenant()?.tenantId) {
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[0.7rem] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-500 tracking-wide uppercase">Active</span>
                   }
                 </div>

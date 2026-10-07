@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, 
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 import { ConversationDetailDto, MessageDto, ConversationService } from '@core/services/conversation.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { DocumentService, DocumentChunkPreviewDto } from '@core/services/document.service';
@@ -13,7 +13,7 @@ import DOMPurify from 'dompurify';
 @Component({
   selector: 'app-conversation-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, TooltipModule, DatePipe, SidebarModule],
+  imports: [CommonModule, FormsModule, TooltipModule, DatePipe, DrawerModule],
   template: `
     <section class="flex flex-col flex-1 min-w-0 bg-white dark:bg-slate-900 overflow-hidden">
       
@@ -311,8 +311,8 @@ import DOMPurify from 'dompurify';
       }
     </section>
 
-    <!-- Document Preview Sidebar -->
-    <p-sidebar [(visible)]="showPreview" position="right" styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700" [showCloseIcon]="true">
+    <!-- Document Preview Drawer -->
+    <p-drawer [(visible)]="showPreview" position="right" styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700" [showCloseIcon]="true">
       <ng-template pTemplate="header">
         <div class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white">
           <i class="pi pi-file-pdf text-primary-600"></i> Document Preview
@@ -347,7 +347,7 @@ import DOMPurify from 'dompurify';
           </div>
         }
       </ng-template>
-    </p-sidebar>
+    </p-drawer>
   `
 })
 export class ConversationChatComponent {

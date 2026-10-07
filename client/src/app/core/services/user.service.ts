@@ -22,6 +22,7 @@ export interface CurrentUser {
   displayName: string;
   memberships: UserTenantMembership[];
   pendingInvitations: PendingInvitation[];
+  createdAt: string;
 }
 
 import { ApiResponse } from '../models/api-response.model';

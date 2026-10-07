@@ -6,7 +6,7 @@ import { SavedAnswerService, SavedAnswerDto, ExportFormat } from '@core/services
 import { DocumentService, DocumentChunkPreviewDto } from '@core/services/document.service';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 
 interface ExportOption {
   format: ExportFormat;
@@ -18,7 +18,7 @@ interface ExportOption {
 @Component({
   selector: 'app-saved-answers',
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterModule, TooltipModule, SidebarModule],
+  imports: [CommonModule, DatePipe, RouterModule, TooltipModule, DrawerModule],
   template: `
     <div class="flex flex-col gap-8 page-enter">
 
@@ -220,8 +220,8 @@ interface ExportOption {
       }
     </div>
 
-    <!-- Document Preview Sidebar -->
-    <p-sidebar [(visible)]="showPreview" position="right" styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700" [showCloseIcon]="true">
+    <!-- Document Preview Drawer -->
+    <p-drawer [(visible)]="showPreview" position="right" styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700" [showCloseIcon]="true">
       <ng-template pTemplate="header">
         <div class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white">
           <i class="pi pi-file-pdf text-primary-600"></i> Document Preview
@@ -256,7 +256,7 @@ interface ExportOption {
           </div>
         }
       </ng-template>
-    </p-sidebar>
+    </p-drawer>
   `
 })
 export class SavedAnswers implements OnInit {
