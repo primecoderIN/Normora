@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Normora.Api.Hubs;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared;
+using Normora.Shared.Constants;
 
 namespace Normora.Api.Features.Documents;
 
@@ -82,83 +83,96 @@ public sealed class UploadDocumentCommandHandler(
         // that was not successfully stored. The tenant ID becomes part of the object key.
         var objectName = await storageService.UploadDocumentAsync(request.File, request.TenantId.ToString());
 
-        // 2. Create EF Core Record (or fetch existing)
-        Document document;
-        int nextVersionNumber = 1;
-
-        if (request.DocumentId.HasValue)
+        // SEC-4: All post-upload work is wrapped in a try/catch so that if any subsequent
+        // step fails (document lookup, DB persistence), the already-uploaded MinIO object
+        // is deleted — preventing accumulation of unreferenced orphan objects in storage.
+        try
         {
-            // NEW VERSION UPLOAD (Phase 19): 
-            // If the request contains a DocumentId, we are appending a new version to an existing document.
-            document = await context.Documents
-                .Include(d => d.Versions)
-                .SingleOrDefaultAsync(d => d.Id == request.DocumentId.Value && d.TenantId == request.TenantId, cancellationToken);
+            // 2. Create EF Core Record (or fetch existing)
+            Document document;
+            int nextVersionNumber = 1;
 
-            if (document == null) throw new InvalidOperationException("Document not found.");
-
-            if (document.Versions.Any())
+            if (request.DocumentId.HasValue)
             {
-                // Assign sequential version number based on the previous max version.
-                nextVersionNumber = document.Versions.Max(v => v.VersionNumber) + 1;
-                
-                // (Phase 19): Deactivate all older versions of this document.
-                // The new version being uploaded will be marked as IsActive = true below.
-                // This guarantees only one active version is used by the retrieval/RAG pipeline.
-                foreach (var v in document.Versions)
+                // NEW VERSION UPLOAD (Phase 19):
+                // If the request contains a DocumentId, we are appending a new version to an existing document.
+                document = await context.Documents
+                    .Include(d => d.Versions)
+                    .SingleOrDefaultAsync(d => d.Id == request.DocumentId.Value && d.TenantId == request.TenantId, cancellationToken);
+
+                if (document == null) throw new InvalidOperationException(ApiMessages.DocumentNotFound);
+
+                if (document.Versions.Any())
                 {
-                    v.IsActive = false;
+                    // Assign sequential version number based on the previous max version.
+                    nextVersionNumber = document.Versions.Max(v => v.VersionNumber) + 1;
+
+                    // (Phase 19): Deactivate all older versions of this document.
+                    // The new version being uploaded will be marked as IsActive = true below.
+                    // This guarantees only one active version is used by the retrieval/RAG pipeline.
+                    foreach (var v in document.Versions)
+                    {
+                        v.IsActive = false;
+                    }
                 }
             }
-        }
-        else
-        {
-            document = new Document
+            else
+            {
+                document = new Document
+                {
+                    Id = Guid.NewGuid(),
+                    FileName = request.File.FileName,
+                    ContentType = request.File.ContentType,
+                    Size = request.File.Length,
+                    UploadedAt = DateTime.UtcNow,
+                    TenantId = request.TenantId,
+                    DocumentDepartments = request.DepartmentIds?.Select(depId => new DocumentDepartment
+                    {
+                        DepartmentId = depId
+                    }).ToList() ?? new List<DocumentDepartment>()
+                };
+                context.Documents.Add(document);
+            }
+
+            // NEW VERSION UPLOAD (Phase 19):
+            // Create the new DocumentVersion entry.
+            // It carries the minio object name and the Active flag.
+            var version = new DocumentVersion
             {
                 Id = Guid.NewGuid(),
-                FileName = request.File.FileName,
-                ContentType = request.File.ContentType,
-                Size = request.File.Length,
-                UploadedAt = DateTime.UtcNow,
+                DocumentId = document.Id,
                 TenantId = request.TenantId,
-                DocumentDepartments = request.DepartmentIds?.Select(depId => new DocumentDepartment
-                {
-                    DepartmentId = depId
-                }).ToList() ?? new List<DocumentDepartment>()
+                VersionNumber = nextVersionNumber,
+                MinioObjectName = objectName,
+                Status = DocumentStatus.Uploaded,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
             };
-            context.Documents.Add(document);
+
+            document.Versions.Add(version);
+            context.DocumentVersions.Add(version);
+            await context.SaveChangesAsync(cancellationToken);
+
+            // Notify connected tenant members before queueing background work so clients observe
+            // the lifecycle in order: Uploaded, then Processing/Ready/Failed.
+            await hubContext.Clients.Group(DocumentHub.GroupName(document.TenantId))
+                .SendAsync("DocumentStatusChanged", new DocumentStatusChanged(
+                    document.Id,
+                    document.TenantId,
+                    document.FileName,
+                    version.Status.ToString()), cancellationToken);
+
+            backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
+                job.ProcessAsync(version.Id, document.TenantId));
+
+            return document.ToDto();
         }
-
-        // NEW VERSION UPLOAD (Phase 19):
-        // Create the new DocumentVersion entry.
-        // It carries the minio object name and the Active flag.
-        var version = new DocumentVersion
+        catch
         {
-            Id = Guid.NewGuid(),
-            DocumentId = document.Id,
-            TenantId = request.TenantId,
-            VersionNumber = nextVersionNumber,
-            MinioObjectName = objectName,
-            Status = DocumentStatus.Uploaded,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-        
-        document.Versions.Add(version);
-        context.DocumentVersions.Add(version);
-        await context.SaveChangesAsync(cancellationToken);
-
-        // Notify connected tenant members before queueing background work so clients observe
-        // the lifecycle in order: Uploaded, then Processing/Ready/Failed.
-        await hubContext.Clients.Group(DocumentHub.GroupName(document.TenantId))
-            .SendAsync("DocumentStatusChanged", new DocumentStatusChanged(
-                document.Id,
-                document.TenantId,
-                document.FileName,
-                version.Status.ToString()), cancellationToken);
-
-        backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
-            job.ProcessAsync(version.Id, document.TenantId));
-
-        return document.ToDto();
+            // SEC-4: Best-effort cleanup of the orphaned MinIO object.
+            // Swallow secondary exceptions so the original error is preserved and propagated.
+            try { await storageService.DeleteDocumentAsync(objectName); } catch { /* intentionally swallowed */ }
+            throw;
+        }
     }
 }

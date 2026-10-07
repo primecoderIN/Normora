@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Documents.Persistence;
+using Normora.Shared.Constants;
+using Normora.Shared.Interfaces;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;
 
@@ -25,11 +27,13 @@ public sealed record DocumentSearchResult(
 
 /// <summary>
 /// Handles <see cref="SearchDocumentsQuery"/> by performing a cosine similarity search on pgvector embeddings,
-/// restricted to the current tenant's documents via a global EF Core query filter.
+/// restricted to the current tenant's documents via a global EF Core query filter AND the caller's
+/// effective department visibility — mirroring the authorization policy applied in RAG retrieval.
 /// </summary>
 public sealed class SearchDocumentsQueryHandler(
     DocumentsDbContext context,
-    ITextEmbeddingService embeddingService) : IRequestHandler<SearchDocumentsQuery, IReadOnlyList<DocumentSearchResult>>
+    ITextEmbeddingService embeddingService,
+    ITenantContext tenantContext) : IRequestHandler<SearchDocumentsQuery, IReadOnlyList<DocumentSearchResult>>
 {
     public async Task<IReadOnlyList<DocumentSearchResult>> Handle(
         SearchDocumentsQuery request,
@@ -37,14 +41,20 @@ public sealed class SearchDocumentsQueryHandler(
     {
         if (!embeddingService.IsConfigured)
         {
-            throw new InvalidOperationException("Document search requires Gemini embeddings to be configured.");
+            throw new InvalidOperationException(ApiMessages.EmbeddingsNotConfigured);
         }
 
         var queryVector = new Vector(await embeddingService.CreateEmbeddingAsync(request.Query, cancellationToken));
         var limit = Math.Clamp(request.Limit, 1, 20);
+        var effectiveDepartments = tenantContext.EffectiveDepartments;
 
         // The global tenant filter applies before this ranking query, so similarity search
         // cannot compare the current user's question with another tenant's chunks.
+        // SEC-1: Additionally apply department-visibility to match the authorization policy
+        // enforced in RAG retrieval (RetrievalService). Documents with no department
+        // assignments are "company-wide" and visible to all tenant members. Documents
+        // assigned to specific departments are only returned when the caller's
+        // EffectiveDepartments overlap — preventing cross-department content leakage.
         return await context.DocumentChunks
             .AsNoTracking()
             .Where(chunk => chunk.Embedding != null)
@@ -57,7 +67,12 @@ public sealed class SearchDocumentsQueryHandler(
                 (chunk, version) => new { chunk, version }
             )
             .Join(
-                context.Documents.AsNoTracking(),
+                // SEC-1: Mirror department-visibility policy from RetrievalService.
+                // !Any() = no department restrictions (company-wide) → always visible.
+                // Any(dd => ...) = restricted to specific departments → caller must be a member.
+                context.Documents.AsNoTracking().Where(d =>
+                    !d.DocumentDepartments.Any() ||
+                    d.DocumentDepartments.Any(dd => effectiveDepartments.Contains(dd.DepartmentId))),
                 cv => cv.version.DocumentId,
                 document => document.Id,
                 (cv, document) => new

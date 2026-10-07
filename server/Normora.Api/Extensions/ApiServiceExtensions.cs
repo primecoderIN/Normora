@@ -47,10 +47,14 @@ public static class ApiServiceExtensions
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-            // "ai" limiter: 20 requests per minute, per user
+            // SEC-2: Partition by the raw Keycloak 'sub' claim.
+            // DefaultMapInboundClaims is disabled so the Microsoft ClaimTypes.NameIdentifier
+            // URI is never populated — all code that reads the subject uses the raw "sub" name
+            // (see CurrentUser.cs). Using the same claim here ensures each authenticated user
+            // gets an independent rate-limit bucket instead of sharing the "anonymous" fallback.
             options.AddPolicy("ai", context =>
             {
-                var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+                var userId = context.User?.FindFirst("sub")?.Value ?? "anonymous";
                 return RateLimitPartition.GetFixedWindowLimiter(userId, _ =>
                     new FixedWindowRateLimiterOptions
                     {

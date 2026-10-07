@@ -40,4 +40,6 @@ public static class ApiMessages
     // Feature Specific
     public const string FeedbackOnlyForAssistant = "Feedback can only be submitted for assistant messages.";
     public const string SaveOnlyAssistant = "Only assistant messages can be saved.";
+    public const string EmbeddingsNotConfigured = "Document search requires AI embeddings to be configured.";
+    public const string DocumentNotFound = "The specified document was not found in this workspace.";
 }

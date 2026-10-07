@@ -43,7 +43,7 @@ For a deeper dive into the architectural decisions, database schema, and API con
 - [**Backend Architecture & Patterns**](./docs/architecture.md) — MediatR request lifecycles, modular monolith design, and project dependency rules.
 - [**Authorization & Security Guide**](./docs/architecture.md#application-security-bola--bfla) — Comprehensive guide to BOLA and BFLA mitigation and the tenant-level RBAC enforcement.
 - [**Backend Onboarding & .NET Course**](./docs/backend_onboarding.md) — In-depth C#/.NET crash course tailored for developers transitioning from JS/Go/Python.
-- [**Frontend Onboarding Guide**](./docs/frontend_onboarding.md) — Angular 18 architecture, multi-tenant subdomain routing, Signal usage, and state management.
+- [**Frontend Onboarding Guide**](./docs/frontend_onboarding.md) — Angular 22 architecture, path-based workspace routing (`/app/workspaces/:slug`), Signal usage, and state management.
 - [**API Endpoints Catalog**](./docs/api_endpoints.md) — A comprehensive list of routes, parameters, authorization checks, and standard envelopes.
 - [**Database Schema & Entity Relationships**](./docs/database_schema.md) — Detailed mapping of module schemas, indexes, soft delete behaviors, and multi-tenant relationships.
 - [**How Normora Works (Access & RAG)**](./docs/how_normora_works.md) — End-to-end guide on document sharing, User Group isolation, and secure Conversational AI retrieval.

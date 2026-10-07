@@ -8,7 +8,7 @@ This guide is for developers working on the **Normora Angular SPA** (`client/`).
 
 | Concern | Technology |
 |---|---|
-| Framework | Angular 18 |
+| Framework | Angular 22 |
 | Styling | Tailwind CSS (v4) + PrimeNG Aura Theme (Hybrid Dark Mode) |
 | HTTP Client | `HttpClient` |
 | State Management | Signals + RxJS (for async streams) |
