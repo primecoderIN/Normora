@@ -3,8 +3,10 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TooltipModule } from 'primeng/tooltip';
 import { SavedAnswerService, SavedAnswerDto, ExportFormat } from '@core/services/saved-answer.service';
+import { DocumentService, DocumentChunkPreviewDto } from '@core/services/document.service';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { SidebarModule } from 'primeng/sidebar';
 
 interface ExportOption {
   format: ExportFormat;
@@ -16,7 +18,7 @@ interface ExportOption {
 @Component({
   selector: 'app-saved-answers',
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterModule, TooltipModule],
+  imports: [CommonModule, DatePipe, RouterModule, TooltipModule, SidebarModule],
   template: `
     <div class="flex flex-col gap-8 page-enter">
 
@@ -167,10 +169,11 @@ interface ExportOption {
                   <div class="flex flex-wrap gap-1.5">
                     <span class="text-[0.65rem] font-bold text-slate-400 tracking-widest uppercase mr-1 self-center">Sources</span>
                     @for (cite of answer.citations; track cite.documentId) {
-                      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-full text-[0.7rem] font-medium max-w-36"
+                      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-full text-[0.7rem] font-medium max-w-36 cursor-pointer hover:border-primary-300 hover:shadow-sm transition-all"
                            [class.bg-slate-50]="!cite.isOutdated" [class.dark:bg-slate-950]="!cite.isOutdated" [class.border-slate-200]="!cite.isOutdated" [class.dark:border-slate-700]="!cite.isOutdated" [class.text-slate-600]="!cite.isOutdated" [class.dark:text-slate-300]="!cite.isOutdated"
                            [class.bg-amber-50]="cite.isOutdated" [class.dark:bg-amber-950/50]="cite.isOutdated" [class.border-amber-200]="cite.isOutdated" [class.dark:border-amber-900]="cite.isOutdated" [class.text-amber-700]="cite.isOutdated" [class.dark:text-amber-500]="cite.isOutdated"
-                           [pTooltip]="cite.fileName" tooltipPosition="top">
+                           [pTooltip]="cite.fileName" tooltipPosition="top"
+                           (click)="openPreview(cite.documentChunkId)">
                         <i class="pi pi-file-pdf text-base flex-none" [class.text-slate-400]="!cite.isOutdated" [class.text-amber-500]="cite.isOutdated"></i>
                         <span class="truncate">{{ cite.fileName }}</span>
                         <span class="font-bold flex-none" [class.text-primary-600]="!cite.isOutdated" [class.text-amber-600]="cite.isOutdated">{{ formatScore(cite.score) }}</span>
@@ -216,10 +219,49 @@ interface ExportOption {
         }
       }
     </div>
+
+    <!-- Document Preview Sidebar -->
+    <p-sidebar [(visible)]="showPreview" position="right" styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700" [showCloseIcon]="true">
+      <ng-template pTemplate="header">
+        <div class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white">
+          <i class="pi pi-file-pdf text-primary-600"></i> Document Preview
+        </div>
+      </ng-template>
+      <ng-template pTemplate="content">
+        @if (isLoadingPreview) {
+          <div class="flex flex-col gap-4 animate-pulse p-4">
+            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6"></div>
+          </div>
+        } @else if (previewError) {
+          <div class="p-4 text-red-600 bg-red-50 dark:bg-red-950/50 dark:text-red-400 rounded-lg text-sm border border-red-100 dark:border-red-900">
+            {{ previewError }}
+          </div>
+        } @else if (previewData) {
+          <div class="flex flex-col gap-4 p-2">
+            <div class="flex flex-col gap-1 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <span class="text-base font-semibold text-slate-900 dark:text-white">{{ previewData.documentName }}</span>
+              @if (previewData.section || previewData.pageNumber) {
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  {{ previewData.section ? 'Section: ' + previewData.section : '' }}
+                  {{ previewData.section && previewData.pageNumber ? ' • ' : '' }}
+                  {{ previewData.pageNumber ? 'Page ' + previewData.pageNumber : '' }}
+                </span>
+              }
+            </div>
+            <div class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-serif">
+              {{ previewData.text }}
+            </div>
+          </div>
+        }
+      </ng-template>
+    </p-sidebar>
   `
 })
 export class SavedAnswers implements OnInit {
   private savedAnswerService = inject(SavedAnswerService);
+  private documentService = inject(DocumentService);
 
   savedAnswers = signal<SavedAnswerDto[]>([]);
   isLoading = signal(false);
@@ -345,5 +387,33 @@ export class SavedAnswers implements OnInit {
 
   hasOutdatedCitations(answer: SavedAnswerDto): boolean {
     return answer.citations.some(c => c.isOutdated);
+  }
+
+  showPreview = false;
+  isLoadingPreview = false;
+  previewError = '';
+  previewData: DocumentChunkPreviewDto | null = null;
+
+  openPreview(chunkId: string) {
+    if (!chunkId) {
+      this.previewError = 'This citation does not have an associated chunk ID.';
+      this.showPreview = true;
+      return;
+    }
+    this.showPreview = true;
+    this.isLoadingPreview = true;
+    this.previewError = '';
+    this.previewData = null;
+
+    this.documentService.getDocumentChunk(chunkId).subscribe({
+      next: (data) => {
+        this.previewData = data;
+        this.isLoadingPreview = false;
+      },
+      error: () => {
+        this.previewError = 'Failed to load document preview. You might not have permission to view it or it may have been deleted.';
+        this.isLoadingPreview = false;
+      }
+    });
   }
 }

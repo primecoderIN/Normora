@@ -13,6 +13,13 @@ export interface DocumentVersion {
   createdAt: string;
 }
 
+export interface DocumentChunkPreviewDto {
+  text: string;
+  documentName: string;
+  section?: string;
+  pageNumber?: number;
+}
+
 export interface Document {
   id: string;
   fileName: string;
@@ -86,5 +93,10 @@ export class DocumentService {
   deleteDocument(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`)
       .pipe(map(() => void 0));
+  }
+
+  getDocumentChunk(chunkId: string): Observable<DocumentChunkPreviewDto> {
+    return this.http.get<ApiResponse<DocumentChunkPreviewDto>>(`${this.apiUrl}/chunks/${chunkId}`)
+      .pipe(map(response => response.data));
   }
 }
