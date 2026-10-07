@@ -10,7 +10,7 @@ public record GetCurrentUserQuery : IRequest<CurrentUserDto>;
 /// <summary>
 /// Data transfer object representing the authenticated user's profile.
 /// </summary>
-public record CurrentUserDto(Guid Id, string Email, string DisplayName, List<UserTenantMembershipDto> Memberships, List<PendingInvitationDto> PendingInvitations);
+public record CurrentUserDto(Guid Id, string Email, string DisplayName, DateTime CreatedAt, List<UserTenantMembershipDto> Memberships, List<PendingInvitationDto> PendingInvitations);
 
 /// <summary>
 /// Represents a pending invitation to join a tenant.

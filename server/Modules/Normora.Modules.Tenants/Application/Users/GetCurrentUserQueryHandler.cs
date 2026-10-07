@@ -110,6 +110,6 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             m.Tenant.IsPersonal
         )).ToList();
 
-        return new CurrentUserDto(user.Id, user.Email ?? string.Empty, user.DisplayName ?? string.Empty, memberships, pendingInvitations);
+        return new CurrentUserDto(user.Id, user.Email ?? string.Empty, user.DisplayName ?? string.Empty, user.CreatedAt, memberships, pendingInvitations);
     }
 }

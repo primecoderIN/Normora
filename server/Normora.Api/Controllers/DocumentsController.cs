@@ -59,6 +59,19 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     }
 
     /// <summary>
+    /// Retrieves the content of a specific document chunk. Used for citation previews.
+    /// Access is restricted to chunks that belong to documents visible to the current user.
+    /// </summary>
+    [HttpGet("chunks/{chunkId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<DocumentChunkPreviewDto>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> GetDocumentChunk(Guid chunkId)
+    {
+        var result = await mediator.Send(new GetDocumentChunkQuery(chunkId));
+        return Ok(ApiResponse<DocumentChunkPreviewDto>.Ok(result));
+    }
+
+    /// <summary>
     /// Uploads a new document file and metadata.
     /// Limits payload size to 100MB.
     /// </summary>
