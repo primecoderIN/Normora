@@ -46,5 +46,10 @@ export class AuthService {
     // and redirects to Keycloak's end_session endpoint.
     window.location.href = this.logoutUrl ?? '/bff/logout';
   }
+
+  public manageAccount(): void {
+    // In production, this URL should be injected via environment config.
+    window.location.href = 'http://localhost:8080/realms/normora/account/';
+  }
 }
 

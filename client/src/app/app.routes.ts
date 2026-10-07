@@ -111,6 +111,10 @@ export const routes: Routes = [
           {
             path: 'saved-answers',
             loadComponent: () => import('./features/employee/saved-answers/saved-answers').then(m => m.SavedAnswers)
+          },
+          {
+            path: 'profile',
+            loadComponent: () => import('./features/employee/profile/profile').then(m => m.ProfileComponent)
           }
         ]
       }
