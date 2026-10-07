@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TooltipModule } from 'primeng/tooltip';
@@ -221,47 +221,45 @@ interface ExportOption {
     </div>
 
     <!-- Document Preview Drawer -->
-    <p-drawer [(visible)]="showPreview" position="right" styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700" [showCloseIcon]="true">
+    <p-drawer [(visible)]="showPreview" position="right" appendTo="body" [blockScroll]="false" styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700" [showCloseIcon]="true">
       <ng-template pTemplate="header">
         <div class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white">
           <i class="pi pi-file-pdf text-primary-600"></i> Document Preview
         </div>
       </ng-template>
-      <ng-template pTemplate="content">
-        @if (isLoadingPreview) {
-          <div class="flex flex-col gap-4 animate-pulse p-4">
-            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
-            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
-            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6"></div>
+      @if (isLoadingPreview) {
+        <div class="flex flex-col gap-4 animate-pulse p-4">
+          <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+          <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+          <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6"></div>
+        </div>
+      } @else if (previewError) {
+        <div class="p-4 text-red-600 bg-red-50 dark:bg-red-950/50 dark:text-red-400 rounded-lg text-sm border border-red-100 dark:border-red-900">
+          {{ previewError }}
+        </div>
+      } @else if (previewData) {
+        <div class="flex flex-col gap-4 p-2">
+          <div class="flex flex-col gap-1 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <span class="text-base font-semibold text-slate-900 dark:text-white">{{ previewData.documentName }}</span>
+            @if (previewData.section || previewData.pageNumber) {
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                {{ previewData.section ? 'Section: ' + previewData.section : '' }}
+                {{ previewData.section && previewData.pageNumber ? ' • ' : '' }}
+                {{ previewData.pageNumber ? 'Page ' + previewData.pageNumber : '' }}
+              </span>
+            }
           </div>
-        } @else if (previewError) {
-          <div class="p-4 text-red-600 bg-red-50 dark:bg-red-950/50 dark:text-red-400 rounded-lg text-sm border border-red-100 dark:border-red-900">
-            {{ previewError }}
+          <div class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-serif" [innerHTML]="renderMarkdown(previewData.text)">
           </div>
-        } @else if (previewData) {
-          <div class="flex flex-col gap-4 p-2">
-            <div class="flex flex-col gap-1 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <span class="text-base font-semibold text-slate-900 dark:text-white">{{ previewData.documentName }}</span>
-              @if (previewData.section || previewData.pageNumber) {
-                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  {{ previewData.section ? 'Section: ' + previewData.section : '' }}
-                  {{ previewData.section && previewData.pageNumber ? ' • ' : '' }}
-                  {{ previewData.pageNumber ? 'Page ' + previewData.pageNumber : '' }}
-                </span>
-              }
-            </div>
-            <div class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-serif">
-              {{ previewData.text }}
-            </div>
-          </div>
-        }
-      </ng-template>
+        </div>
+      }
     </p-drawer>
   `
 })
 export class SavedAnswers implements OnInit {
   private savedAnswerService = inject(SavedAnswerService);
   private documentService = inject(DocumentService);
+  private cdr = inject(ChangeDetectorRef);
 
   savedAnswers = signal<SavedAnswerDto[]>([]);
   isLoading = signal(false);
@@ -409,10 +407,12 @@ export class SavedAnswers implements OnInit {
       next: (data) => {
         this.previewData = data;
         this.isLoadingPreview = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.previewError = 'Failed to load document preview. You might not have permission to view it or it may have been deleted.';
         this.isLoadingPreview = false;
+        this.cdr.markForCheck();
       }
     });
   }

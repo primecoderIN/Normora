@@ -90,6 +90,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/employer/settings/branding/branding.component').then(m => m.BrandingComponent)
               }
             ]
+          },
+          {
+            path: 'profile',
+            loadComponent: () => import('./features/employee/profile/profile').then(m => m.ProfileComponent)
           }
         ]
       },
