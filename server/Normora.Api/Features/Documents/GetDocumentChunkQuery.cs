@@ -20,39 +20,38 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
             throw new UnauthorizedAccessException(ApiMessages.TenantContextMissing);
         }
 
-        var chunk = await dbContext.DocumentChunks
-            .Include(c => c.DocumentVersion)
-                .ThenInclude(v => v.Document)
-            .Where(c => c.Id == request.ChunkId)
+        var allowedDepartments = tenantContext.EffectiveDepartments;
+        var tenantId = tenantContext.TenantId.Value;
+
+        var result = await dbContext.DocumentChunks
+            .AsNoTracking()
+            .Where(c => c.Id == request.ChunkId && c.TenantId == tenantId)
+            .Join(
+                dbContext.DocumentVersions.AsNoTracking(),
+                chunk => chunk.DocumentVersionId,
+                version => version.Id,
+                (chunk, version) => new { chunk, version }
+            )
+            .Join(
+                dbContext.Documents.AsNoTracking().Where(d =>
+                    !d.DocumentDepartments.Any() ||
+                    d.DocumentDepartments.Any(dd => allowedDepartments.Contains(dd.DepartmentId))),
+                cv => cv.version.DocumentId,
+                document => document.Id,
+                (cv, document) => new { cv.chunk, document }
+            )
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (chunk == null)
+        if (result == null)
         {
-            throw new BolaException(); // BOLA: Return 404 for missing or cross-tenant access
-        }
-
-        // Enforce tenant boundary
-        if (chunk.DocumentVersion.Document.TenantId != tenantContext.TenantId.Value)
-        {
-            throw new BolaException();
-        }
-
-        // Apply department visibility rules
-        var allowedDepartments = tenantContext.EffectiveDepartments;
-        var hasAccess = chunk.DocumentVersion.Document.DepartmentIds == null || 
-                        chunk.DocumentVersion.Document.DepartmentIds.Length == 0 || 
-                        chunk.DocumentVersion.Document.DepartmentIds.Any(d => allowedDepartments.Contains(d));
-
-        if (!hasAccess)
-        {
-            throw new BolaException();
+            throw new BolaException(); // BOLA: Return 403/404 for missing, cross-tenant access, or restricted department access
         }
 
         return new DocumentChunkPreviewDto(
-            chunk.Text,
-            chunk.DocumentVersion.Document.FileName,
-            chunk.Section,
-            chunk.PageNumber
+            result.chunk.Content,
+            result.document.FileName,
+            null,
+            null
         );
     }
 }
