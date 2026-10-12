@@ -42,6 +42,15 @@ export interface ConversationDetailDto extends ConversationDto {
   messages: MessageDto[];
 }
 
+export interface ConversationShareDto {
+  token: string;
+  expiresAt?: string;
+}
+
+export interface SharedConversationDetailDto extends ConversationDetailDto {
+  sharedByName?: string;
+}
+
 export interface SendMessageResult {
   conversationId: string;
   userMessageId: string;
@@ -106,6 +115,20 @@ export class ConversationService {
   getSuggestions(): Observable<SuggestedQuestionDto[]> {
     return this.http
       .get<ApiResponse<SuggestedQuestionDto[]>>(`${environment.apiUrl}/api/suggestions`)
+      .pipe(map(r => r.data));
+  }
+
+  /** Create or retrieve a shareable read-only link token for a conversation. */
+  shareConversation(id: string): Observable<ConversationShareDto> {
+    return this.http
+      .post<ApiResponse<ConversationShareDto>>(`${this.baseUrl}/${id}/share`, {})
+      .pipe(map(r => r.data));
+  }
+
+  /** Retrieve a read-only shared conversation by token. */
+  getSharedConversation(token: string): Observable<SharedConversationDetailDto> {
+    return this.http
+      .get<ApiResponse<SharedConversationDetailDto>>(`${this.baseUrl}/shared/${token}`)
       .pipe(map(r => r.data));
   }
 }

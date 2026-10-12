@@ -65,6 +65,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/employee/conversations/conversations').then(m => m.Conversations)
           },
           {
+            path: 'conversations/shared/:token',
+            loadComponent: () => import('./features/employee/conversations/shared-conversation').then(m => m.SharedConversationComponent)
+          },
+          {
             path: 'employees',
             loadComponent: () => import('./features/employer/employees/employees').then(m => m.Employees)
           },
@@ -111,6 +115,10 @@ export const routes: Routes = [
           {
             path: 'conversations',
             loadComponent: () => import('./features/employee/conversations/conversations').then(m => m.Conversations)
+          },
+          {
+            path: 'conversations/shared/:token',
+            loadComponent: () => import('./features/employee/conversations/shared-conversation').then(m => m.SharedConversationComponent)
           },
           {
             path: 'saved-answers',

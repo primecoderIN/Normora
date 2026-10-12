@@ -73,8 +73,21 @@ import DOMPurify from 'dompurify';
               </div>
             </div>
           </div>
-          <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full text-green-600 text-[0.68rem] font-bold tracking-widest uppercase whitespace-nowrap">
-            <span class="block w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_0_2px_rgba(34,197,94,0.2)]"></span> Knowledge base online
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 text-xs font-medium cursor-pointer transition-colors"
+              (click)="shareConversation()"
+              [disabled]="isSharing()"
+              pTooltip="Share conversation"
+              tooltipPosition="bottom"
+            >
+              <i class="pi" [class.pi-spin]="isSharing()" [class.pi-spinner]="isSharing()" [class.pi-share-alt]="!isSharing()"></i>
+              <span>{{ isSharing() ? 'Sharing...' : 'Share' }}</span>
+            </button>
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full text-green-600 text-[0.68rem] font-bold tracking-widest uppercase whitespace-nowrap">
+              <span class="block w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_0_2px_rgba(34,197,94,0.2)]"></span> Knowledge base online
+            </div>
           </div>
         </header>
 
@@ -370,6 +383,7 @@ export class ConversationChatComponent implements OnInit {
 
   suggestions = signal<SuggestedQuestionDto[]>([]);
   isLoadingSuggestions = signal<boolean>(false);
+  isSharing = signal<boolean>(false);
 
   private readonly defaultSuggestions: SuggestedQuestionDto[] = [
     { question: 'How do I request time off?', iconClass: 'pi-file' },
@@ -404,6 +418,41 @@ export class ConversationChatComponent implements OnInit {
     if (this.textareaEl?.nativeElement) {
       this.textareaEl.nativeElement.focus();
     }
+  }
+
+  shareConversation(): void {
+    if (!this.conversation?.id || this.isSharing()) return;
+    this.isSharing.set(true);
+    this.conversationService.shareConversation(this.conversation.id).subscribe({
+      next: (res) => {
+        this.isSharing.set(false);
+        const match = window.location.pathname.match(/\/app\/workspaces\/[^/]+/);
+        const workspacePath = match ? match[0] : '';
+        const shareUrl = `${window.location.origin}${workspacePath}/employee/conversations/shared/${res.token}`;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Link Copied',
+            detail: 'Shareable conversation link copied to clipboard.'
+          });
+        }).catch(() => {
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Share Link',
+            detail: shareUrl
+          });
+        });
+      },
+      error: () => {
+        this.isSharing.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to generate share link.'
+        });
+      }
+    });
   }
 
   /** Set of message IDs that the current user has saved. */

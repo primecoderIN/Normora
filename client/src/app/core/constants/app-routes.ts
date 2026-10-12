@@ -10,5 +10,6 @@ export const AppRoutes = {
   // Helper to build dynamic workspace routes
   WorkspaceRoot: (slug: string) => `/app/workspaces/${slug}`,
   WorkspaceEmployerDashboard: (slug: string) => `/app/workspaces/${slug}/employer/dashboard`,
-  WorkspaceEmployeeConversations: (slug: string) => `/app/workspaces/${slug}/employee/conversations`
+  WorkspaceEmployeeConversations: (slug: string) => `/app/workspaces/${slug}/employee/conversations`,
+  WorkspaceEmployeeSharedConversation: (slug: string, token: string) => `/app/workspaces/${slug}/employee/conversations/shared/${token}`
 };
