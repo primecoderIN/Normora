@@ -198,3 +198,21 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Frontend: Created `DocumentChunkPreviewDto` and integrated the API call into `DocumentService`.
 - [x] Implemented a slide-out preview drawer using PrimeNG `<p-sidebar>` in both `ConversationChatComponent` and `SavedAnswers` components.
 - [x] Made AI citations clickable, allowing users to instantly view the original source text in the sidebar without leaving the chat interface.
+
+## ✅ Completed Suggested Questions
+- [x] Backend: Added `ISuggestionsService` and `GeminiSuggestionsService` with fallback resilience.
+- [x] Backend: Added `GetSuggestedQuestionsQuery` fetching accessible documents by effective departments and querying Gemini for tailored questions.
+- [x] Backend: Added `GET /api/suggestions` endpoint with tenant security.
+- [x] Frontend: Added `getSuggestions()` to `ConversationService` and `SuggestedQuestionDto` interface.
+- [x] Frontend: Dynamic suggestion cards in `ConversationChatComponent` empty state with skeleton loader and resilient static fallback.
+
+## ✅ Completed Conversation Sharing
+- [x] Backend: Added `ConversationShare` entity, `ConversationsDbContext` configuration, and EF Core migration `AddConversationShares`.
+- [x] Backend: Added `ShareConversationCommand` with cryptographic base62 token generation and idempotent retrieval.
+- [x] Backend: Added `GetSharedConversationQuery` with strict tenant isolation, link expiration check, and BOLA prevention.
+- [x] Backend: Added `POST /api/conversations/{id}/share` and `GET /api/conversations/shared/{token}` endpoints.
+- [x] Frontend: Added `shareConversation()` and `getSharedConversation()` methods to `ConversationService`.
+- [x] Frontend: Added "Share" button to chat header with instant clipboard copy and toast notification.
+- [x] Frontend: Created standalone `SharedConversationComponent` for read-only viewing of shared conversations, citations, and document previews.
+- [x] Frontend: Registered `/conversations/shared/:token` routes in `app.routes.ts`.
+
