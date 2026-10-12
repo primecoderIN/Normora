@@ -74,6 +74,13 @@ public static class DatabaseServiceExtensions
             client.Timeout = TimeSpan.FromMinutes(2);
         });
 
+        // Suggested Questions (Phase 24): lightweight Gemini generation call, no embedding pipeline.
+        services.AddHttpClient<Normora.Modules.Conversations.Application.Services.ISuggestionsService, Normora.Modules.Conversations.Infrastructure.Llm.GeminiSuggestionsService>(client =>
+        {
+            client.BaseAddress = new Uri(geminiOptions.Endpoint);
+            client.Timeout = TimeSpan.FromSeconds(30); // Shorter timeout — this is a UX-enhancing call, not critical path
+        });
+
         return services;
     }
 }
