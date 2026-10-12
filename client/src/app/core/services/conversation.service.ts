@@ -5,6 +5,11 @@ import { environment } from '@env/environment';
 
 // ─── Domain models ────────────────────────────────────────────────────────────
 
+export interface SuggestedQuestionDto {
+  question: string;
+  iconClass: string;
+}
+
 export interface ConversationDto {
   id: string;
   title: string;
@@ -95,5 +100,12 @@ export class ConversationService {
   /** Submit positive (1) or negative (2) feedback for an assistant message. */
   submitFeedback(conversationId: string, messageId: string, rating: 1 | 2, comment?: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${conversationId}/messages/${messageId}/feedback`, { rating, comment });
+  }
+
+  /** Fetch AI-generated suggested questions based on documents available to the employee. */
+  getSuggestions(): Observable<SuggestedQuestionDto[]> {
+    return this.http
+      .get<ApiResponse<SuggestedQuestionDto[]>>(`${environment.apiUrl}/api/suggestions`)
+      .pipe(map(r => r.data));
   }
 }

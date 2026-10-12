@@ -1,9 +1,9 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
 import { DrawerModule } from 'primeng/drawer';
-import { ConversationDetailDto, MessageDto, ConversationService } from '@core/services/conversation.service';
+import { ConversationDetailDto, MessageDto, ConversationService, SuggestedQuestionDto } from '@core/services/conversation.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { DocumentService, DocumentChunkPreviewDto } from '@core/services/document.service';
 import { MessageService } from 'primeng/api';
@@ -29,29 +29,27 @@ import DOMPurify from 'dompurify';
           </div>
           
           <!-- Suggestion Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-4">
-            <!-- Card 1 -->
-            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I request time off?'">
-              <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="pi pi-file text-lg"></i>
-              </div>
-              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">How do I request time off?</div>
-            </button>
-            <!-- Card 2 -->
-            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'What is our remote work policy?'">
-              <div class="w-10 h-10 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="pi pi-users text-lg"></i>
-              </div>
-              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">What is our remote work policy?</div>
-            </button>
-            <!-- Card 3 -->
-            <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="question = 'How do I submit expenses?'">
-              <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="pi pi-wallet text-lg"></i>
-              </div>
-              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">How do I submit expenses?</div>
-            </button>
-          </div>
+          @if (isLoadingSuggestions()) {
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-4">
+              @for (item of [1, 2, 3]; track item) {
+                <div class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl animate-pulse">
+                  <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800"></div>
+                  <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mt-2"></div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-4">
+              @for (s of suggestions(); track s.question) {
+                <button type="button" class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group" (click)="selectSuggestion(s.question)">
+                  <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="pi text-lg" [ngClass]="s.iconClass || 'pi-file-edit'"></i>
+                  </div>
+                  <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">{{ s.question }}</div>
+                </button>
+              }
+            </div>
+          }
         </div>
       } @else {
         <!-- Chat Header -->
@@ -347,7 +345,7 @@ import DOMPurify from 'dompurify';
     </p-drawer>
   `
 })
-export class ConversationChatComponent {
+export class ConversationChatComponent implements OnInit {
   private savedAnswerService = inject(SavedAnswerService);
   private conversationService = inject(ConversationService);
   private documentService = inject(DocumentService);
@@ -369,6 +367,44 @@ export class ConversationChatComponent {
 
   question = '';
   copiedId: string | null = null;
+
+  suggestions = signal<SuggestedQuestionDto[]>([]);
+  isLoadingSuggestions = signal<boolean>(false);
+
+  private readonly defaultSuggestions: SuggestedQuestionDto[] = [
+    { question: 'How do I request time off?', iconClass: 'pi-file' },
+    { question: 'What is our remote work policy?', iconClass: 'pi-users' },
+    { question: 'How do I submit expenses?', iconClass: 'pi-wallet' }
+  ];
+
+  ngOnInit(): void {
+    this.loadSuggestions();
+  }
+
+  loadSuggestions(): void {
+    this.isLoadingSuggestions.set(true);
+    this.conversationService.getSuggestions().subscribe({
+      next: (data) => {
+        if (data && data.length > 0) {
+          this.suggestions.set(data);
+        } else {
+          this.suggestions.set(this.defaultSuggestions);
+        }
+        this.isLoadingSuggestions.set(false);
+      },
+      error: () => {
+        this.suggestions.set(this.defaultSuggestions);
+        this.isLoadingSuggestions.set(false);
+      }
+    });
+  }
+
+  selectSuggestion(questionText: string): void {
+    this.question = questionText;
+    if (this.textareaEl?.nativeElement) {
+      this.textareaEl.nativeElement.focus();
+    }
+  }
 
   /** Set of message IDs that the current user has saved. */
   private savedMessageIds = signal(new Set<string>());
