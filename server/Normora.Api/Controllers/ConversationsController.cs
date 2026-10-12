@@ -130,6 +130,36 @@ public class ConversationsController(IMediator mediator) : ControllerBase
         await mediator.Send(new SubmitFeedbackCommand(id, messageId, body.Rating, body.Comment));
         return NoContent();
     }
+
+    /// <summary>
+    /// Generates a read-only shareable link token for a conversation.
+    /// Idempotent: returns existing token if already shared.
+    /// </summary>
+    /// <param name="id">The unique identifier of the conversation to share.</param>
+    /// <returns>The share token and expiration.</returns>
+    [HttpPost("{id:guid}/share")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<ConversationShareDto>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> ShareConversation(Guid id)
+    {
+        var result = await mediator.Send(new ShareConversationCommand(id));
+        return Ok(ApiResponse<ConversationShareDto>.Ok(result));
+    }
+
+    /// <summary>
+    /// Retrieves a read-only view of a shared conversation by token.
+    /// Accessible only to authenticated members of the same tenant.
+    /// </summary>
+    /// <param name="token">The unique share slug token.</param>
+    /// <returns>The shared conversation details.</returns>
+    [HttpGet("shared/{token}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<SharedConversationDto>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> GetSharedConversation(string token)
+    {
+        var result = await mediator.Send(new GetSharedConversationQuery(token));
+        return Ok(ApiResponse<SharedConversationDto>.Ok(result));
+    }
 }
 
 public sealed record AskConversationRequest(string Question, int Limit = 5);

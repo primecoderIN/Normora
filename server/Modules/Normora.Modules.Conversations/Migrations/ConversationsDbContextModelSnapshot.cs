@@ -64,6 +64,43 @@ namespace Normora.Modules.Conversations.Migrations
                     b.ToTable("Conversations");
                 });
 
+            modelBuilder.Entity("Normora.Modules.Conversations.Domain.ConversationShare", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("ConversationShares");
+                });
+
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.Message", b =>
                 {
                     b.Property<Guid>("Id")
@@ -220,6 +257,17 @@ namespace Normora.Modules.Conversations.Migrations
                         .IsUnique();
 
                     b.ToTable("SavedAnswers");
+                });
+
+            modelBuilder.Entity("Normora.Modules.Conversations.Domain.ConversationShare", b =>
+                {
+                    b.HasOne("Normora.Modules.Conversations.Domain.Conversation", "Conversation")
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.Message", b =>
