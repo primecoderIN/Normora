@@ -15,7 +15,8 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/audit-logs")]
-[Authorize(Roles = "employer")]
+[Authorize]
+[RequireTenant(TenantRoles.Admin)]
 [Produces("application/json")]
 public class AuditLogsController(IMediator mediator) : ControllerBase
 {

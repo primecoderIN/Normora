@@ -17,7 +17,8 @@ public record UpdatePlanTierRequest(PlanTier Tier);
 /// </summary>
 [ApiController]
 [Route("api/subscription")]
-[Authorize(Roles = "employer")]
+[Authorize]
+[RequireTenant(TenantRoles.Admin)]
 [Produces("application/json")]
 public class SubscriptionController(IMediator mediator) : ControllerBase
 {
