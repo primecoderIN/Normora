@@ -8,8 +8,14 @@ namespace Normora.Modules.Tenants.Application.UserGroups;
 /// <summary>
 /// Command to delete a specific user group from the current tenant.
 /// </summary>
-/// <param name="Id">The unique identifier of the user group to delete.</param>
-public record DeleteUserGroupCommand(Guid Id) : IRequest<bool>;
+public record DeleteUserGroupCommand(Guid Id) : IRequest<bool>, IAuditableRequest
+{
+    public string Action => "UserGroup.Deleted";
+    public string TargetType => "UserGroup";
+    public string? GetTargetId(object? response) => Id.ToString();
+    public string? GetMetadata(object? response) => null;
+}
+
 
 /// <summary>
 /// Handles the <see cref="DeleteUserGroupCommand"/> by finding and removing the specified user group.

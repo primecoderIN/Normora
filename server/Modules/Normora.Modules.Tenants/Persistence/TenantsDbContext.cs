@@ -24,6 +24,7 @@ public class TenantsDbContext : DbContext
     public DbSet<MembershipDepartment> MembershipDepartments { get; set; } = null!;
     public DbSet<UserGroupMembership> UserGroupMemberships { get; set; } = null!;
     public DbSet<UserGroupDepartment> UserGroupDepartments { get; set; } = null!;
+    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
 
     /// <summary>
     /// Configures the relational mappings and strict uniqueness constraints required for multi-tenancy.
@@ -189,5 +190,26 @@ public class TenantsDbContext : DbContext
                   .HasForeignKey(ugd => ugd.DepartmentId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
+
+        // AuditLog Configuration — immutable tenant mutation log
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.Action).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.TargetType).HasMaxLength(100);
+            entity.Property(a => a.TargetId).HasMaxLength(100);
+            entity.Property(a => a.ActorUserId).HasMaxLength(100);
+            entity.Property(a => a.ActorEmail).HasMaxLength(255);
+            entity.Property(a => a.ActorName).HasMaxLength(100);
+
+            entity.HasIndex(a => new { a.TenantId, a.OccurredAt });
+            entity.HasIndex(a => new { a.TenantId, a.Action });
+
+            entity.HasOne(a => a.Tenant)
+                  .WithMany()
+                  .HasForeignKey(a => a.TenantId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
+

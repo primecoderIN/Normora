@@ -22,6 +22,55 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ActorEmail")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ActorUserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TargetId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TargetType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Action");
+
+                    b.HasIndex("TenantId", "OccurredAt");
+
+                    b.ToTable("AuditLogs");
+                });
+
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.Department", b =>
                 {
                     b.Property<Guid>("Id")
@@ -312,6 +361,17 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("UserGroupId");
 
                     b.ToTable("UserGroupMemberships");
+                });
+
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.AuditLog", b =>
+                {
+                    b.HasOne("Normora.Modules.Tenants.Domain.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.Department", b =>

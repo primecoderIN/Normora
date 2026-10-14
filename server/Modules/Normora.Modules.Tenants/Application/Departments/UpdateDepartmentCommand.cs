@@ -11,7 +11,14 @@ namespace Normora.Modules.Tenants.Application.Departments;
 /// </summary>
 /// <param name="Id">The unique identifier of the department.</param>
 /// <param name="Name">The new name for the department.</param>
-public record UpdateDepartmentCommand(Guid Id, string Name) : IRequest<bool>;
+public record UpdateDepartmentCommand(Guid Id, string Name) : IRequest<bool>, IAuditableRequest
+{
+    public string Action => "Department.Updated";
+    public string TargetType => "Department";
+    public string? GetTargetId(object? response) => Id.ToString();
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name });
+}
+
 
 /// <summary>
 /// Validates the <see cref="UpdateDepartmentCommand"/>.

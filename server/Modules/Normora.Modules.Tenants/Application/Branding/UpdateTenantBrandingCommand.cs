@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Tenants.Domain;
 using Normora.Modules.Tenants.Persistence;
 
+using Normora.Shared.Interfaces;
+
 namespace Normora.Modules.Tenants.Application.Branding;
 
 public record UpdateTenantBrandingCommand(
@@ -13,7 +15,14 @@ public record UpdateTenantBrandingCommand(
     IFormFile? LogoFile,
     IFormFile? LogoFileDark,
     IFormFile? FaviconFile
-) : IRequest<TenantBrandingDto?>;
+) : IRequest<TenantBrandingDto?>, IAuditableRequest
+{
+    public string Action => "Branding.Updated";
+    public string TargetType => "TenantBranding";
+    public string? GetTargetId(object? response) => TenantId.ToString();
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { primaryColor = PrimaryColor, secondaryColor = SecondaryColor });
+}
+
 
 public class UpdateTenantBrandingCommandHandler(
     TenantsDbContext context,

@@ -7,7 +7,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Normora.Modules.Tenants.Application.Users;
 
-public record RemoveEmployeeCommand(Guid MembershipId) : IRequest<bool>;
+public record RemoveEmployeeCommand(Guid MembershipId) : IRequest<bool>, IAuditableRequest
+{
+    public string Action => "Employee.Removed";
+    public string TargetType => "Employee";
+    public string? GetTargetId(object? response) => MembershipId.ToString();
+    public string? GetMetadata(object? response) => null;
+}
+
 
 public class RemoveEmployeeCommandHandler(
     TenantsDbContext context,

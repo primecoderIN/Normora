@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Models;
 
 namespace Normora.Modules.Tenants.Application.Users;
+
 
 public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequestHandler<GetTenantEmployeesQuery, PagedResult<TenantEmployeeDto>>
 {

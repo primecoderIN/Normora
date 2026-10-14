@@ -11,8 +11,14 @@ namespace Normora.Modules.Tenants.Application.UserGroups;
 /// Command to create a new user group within the current tenant and assign it to departments.
 /// </summary>
 /// <param name="Name">The name of the user group.</param>
-/// <param name="DepartmentIds">A list of department IDs this group should have access to.</param>
-public record CreateUserGroupCommand(string Name, string? Description, List<Guid> DepartmentIds) : IRequest<Guid>;
+public record CreateUserGroupCommand(string Name, string? Description, List<Guid> DepartmentIds) : IRequest<Guid>, IAuditableRequest
+{
+    public string Action => "UserGroup.Created";
+    public string TargetType => "UserGroup";
+    public string? GetTargetId(object? response) => response is Guid id ? id.ToString() : null;
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name });
+}
+
 
 /// <summary>
 /// Validates the <see cref="CreateUserGroupCommand"/>.

@@ -11,7 +11,14 @@ namespace Normora.Modules.Tenants.Application.Departments;
 /// Command to create a new department within the current tenant.
 /// </summary>
 /// <param name="Name">The name of the new department.</param>
-public record CreateDepartmentCommand(string Name) : IRequest<Guid>;
+public record CreateDepartmentCommand(string Name) : IRequest<Guid>, IAuditableRequest
+{
+    public string Action => "Department.Created";
+    public string TargetType => "Department";
+    public string? GetTargetId(object? response) => response is Guid id ? id.ToString() : null;
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name });
+}
+
 
 /// <summary>
 /// Validates the <see cref="CreateDepartmentCommand"/>.

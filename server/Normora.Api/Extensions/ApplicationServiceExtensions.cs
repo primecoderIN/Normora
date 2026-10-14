@@ -34,6 +34,8 @@ public static class ApplicationServiceExtensions
             cfg.RegisterServicesFromAssemblies(assemblies);
             // Injects the ValidationBehavior into the MediatR pipeline to automatically validate commands.
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            // Injects the AuditBehavior into the MediatR pipeline to record auditable actions.
+            cfg.AddOpenBehavior(typeof(Normora.Shared.Audit.AuditBehavior<,>));
         });
         
         services.AddValidatorsFromAssemblies(assemblies);
@@ -41,6 +43,7 @@ public static class ApplicationServiceExtensions
         // Core Abstractions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<IAuditService, Normora.Modules.Tenants.Application.Audit.AuditService>();
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<INotificationService, NotificationService>();
 

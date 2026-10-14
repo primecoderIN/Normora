@@ -8,8 +8,14 @@ namespace Normora.Modules.Tenants.Application.Departments;
 /// <summary>
 /// Command to delete a specific department from the current tenant.
 /// </summary>
-/// <param name="Id">The unique identifier of the department to delete.</param>
-public record DeleteDepartmentCommand(Guid Id) : IRequest<bool>;
+public record DeleteDepartmentCommand(Guid Id) : IRequest<bool>, IAuditableRequest
+{
+    public string Action => "Department.Deleted";
+    public string TargetType => "Department";
+    public string? GetTargetId(object? response) => Id.ToString();
+    public string? GetMetadata(object? response) => null;
+}
+
 
 /// <summary>
 /// Handles the <see cref="DeleteDepartmentCommand"/> by finding and removing the specified department.

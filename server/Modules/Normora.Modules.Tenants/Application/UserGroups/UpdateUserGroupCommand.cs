@@ -12,8 +12,14 @@ namespace Normora.Modules.Tenants.Application.UserGroups;
 /// </summary>
 /// <param name="Id">The unique identifier of the user group.</param>
 /// <param name="Name">The new name for the user group.</param>
-/// <param name="DepartmentIds">The updated list of assigned department IDs.</param>
-public record UpdateUserGroupCommand(Guid Id, string Name, string? Description, List<Guid> DepartmentIds) : IRequest<bool>;
+public record UpdateUserGroupCommand(Guid Id, string Name, string? Description, List<Guid> DepartmentIds) : IRequest<bool>, IAuditableRequest
+{
+    public string Action => "UserGroup.Updated";
+    public string TargetType => "UserGroup";
+    public string? GetTargetId(object? response) => Id.ToString();
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name });
+}
+
 
 /// <summary>
 /// Validates the <see cref="UpdateUserGroupCommand"/>.

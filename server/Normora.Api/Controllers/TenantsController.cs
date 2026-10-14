@@ -180,7 +180,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// </summary>
     [HttpGet("employees")]
     [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Normora.Modules.Tenants.Application.Users.PagedResult<Normora.Modules.Tenants.Application.Users.TenantEmployeeDto>>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Normora.Shared.Models.PagedResult<Normora.Modules.Tenants.Application.Users.TenantEmployeeDto>>))]
     public async Task<IActionResult> GetEmployees(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -201,8 +201,9 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
             
         var employees = await mediator.Send(query);
 
-        return Ok(ApiResponse<Normora.Modules.Tenants.Application.Users.PagedResult<Normora.Modules.Tenants.Application.Users.TenantEmployeeDto>>.Ok(employees));
+        return Ok(ApiResponse<Normora.Shared.Models.PagedResult<Normora.Modules.Tenants.Application.Users.TenantEmployeeDto>>.Ok(employees));
     }
+
 
     /// <summary>
     /// Retrieves employee statistics for the current tenant.

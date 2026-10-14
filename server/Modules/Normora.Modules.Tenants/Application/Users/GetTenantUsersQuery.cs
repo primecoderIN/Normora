@@ -1,5 +1,6 @@
 using MediatR;
 using Normora.Shared.Interfaces;
+using Normora.Shared.Models;
 
 namespace Normora.Modules.Tenants.Application.Users;
 
@@ -25,10 +26,3 @@ public record TenantEmployeeDto(
 public record DepartmentSummaryDto(Guid Id, string Name);
 public record UserGroupSummaryDto(Guid Id, string Name);
 
-public record PagedResult<T>(
-    IReadOnlyList<T> Items,
-    int TotalCount,
-    int Page,
-    int PageSize,
-    int TotalPages
-);
