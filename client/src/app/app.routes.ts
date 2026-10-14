@@ -92,13 +92,23 @@ export const routes: Routes = [
               {
                 path: 'branding',
                 loadComponent: () => import('./features/employer/settings/branding/branding.component').then(m => m.BrandingComponent)
+              },
+              {
+                path: 'audit-logs',
+                loadComponent: () => import('./features/employer/settings/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent)
               }
             ]
+          },
+          {
+            path: 'audit-logs',
+            redirectTo: 'settings/audit-logs',
+            pathMatch: 'full'
           },
           {
             path: 'profile',
             loadComponent: () => import('./features/employee/profile/profile').then(m => m.ProfileComponent)
           }
+
         ]
       },
       {
