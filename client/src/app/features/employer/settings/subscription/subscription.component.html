@@ -1,0 +1,278 @@
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+  <!-- Header Section -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+          <i class="pi pi-sparkles text-xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Subscription & Plans</h1>
+            @if (usage(); as u) {
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
+                {{ u.planTier }} Plan
+              </span>
+            }
+          </div>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            Monitor real-time resource quotas and choose the right plan for your team.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        (click)="loadUsage()"
+        [disabled]="isLoading()"
+        class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs">
+        <i class="pi pi-refresh" [class.animate-spin]="isLoading()"></i>
+        <span>Refresh Quotas</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  @if (errorMessage()) {
+    <div class="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-exclamation-circle text-rose-500 text-lg"></i>
+        <span class="text-sm font-medium text-rose-700 dark:text-rose-300">{{ errorMessage() }}</span>
+      </div>
+      <button type="button" (click)="loadUsage()" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">
+        Try Again
+      </button>
+    </div>
+  }
+
+  <!-- Quota Warning Banner -->
+  @if (usage(); as u) {
+    @if (u.isDocumentLimitReached || u.isEmployeeLimitReached || u.isStorageLimitReached) {
+      <div class="rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-5 shadow-xs">
+        <div class="flex items-start gap-4">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-none mt-0.5">
+            <i class="pi pi-exclamation-triangle text-lg"></i>
+          </div>
+          <div class="space-y-1 flex-1">
+            <h3 class="text-sm font-bold text-amber-900 dark:text-amber-200">Workspace Resource Limit Reached</h3>
+            <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+              Your workspace has exhausted one or more plan limits.
+              @if (u.isDocumentLimitReached) { <span class="font-semibold block">• Document storage limit reached ({{ u.currentDocuments }}/{{ u.maxDocuments }}).</span> }
+              @if (u.isEmployeeLimitReached) { <span class="font-semibold block">• Team member seat quota reached ({{ u.currentEmployees }}/{{ u.maxEmployees }}).</span> }
+              @if (u.isStorageLimitReached) { <span class="font-semibold block">• Byte storage capacity exceeded ({{ formatBytes(u.currentStorageBytes) }}/{{ formatBytes(u.maxStorageBytes) }}).</span> }
+              Please upgrade to a higher tier below to unlock additional capacity.
+            </p>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Current Resource Usage Cards -->
+  <div>
+    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Resource Utilization</h2>
+    @if (isLoading()) {
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        @for (i of [1,2,3]; track i) {
+          <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+            <div class="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+            <div class="h-8 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+            <div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+          </div>
+        }
+      </div>
+    } @else if (usage(); as u) {
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Documents Quota Card -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-all hover:shadow-md">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-file text-slate-400"></i>
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Documents</span>
+            </div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(docPercent())">
+              {{ docPercent() }}%
+            </span>
+          </div>
+          <div class="flex items-baseline gap-2 mb-4">
+            <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ u.currentDocuments }}</span>
+            <span class="text-sm font-medium text-slate-500 dark:text-slate-400">/ {{ u.maxDocuments }} docs</span>
+          </div>
+          <!-- Progress Track -->
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              [ngClass]="getBarColorClass(docPercent())"
+              [style.width.%]="docPercent()"></div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
+            <span>{{ u.maxDocuments - u.currentDocuments }} remaining</span>
+            <span>Limit: {{ u.maxDocuments }}</span>
+          </div>
+        </div>
+
+        <!-- Team Members Quota Card -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-all hover:shadow-md">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-users text-slate-400"></i>
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Team Members</span>
+            </div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(empPercent())">
+              {{ empPercent() }}%
+            </span>
+          </div>
+          <div class="flex items-baseline gap-2 mb-4">
+            <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ u.currentEmployees }}</span>
+            <span class="text-sm font-medium text-slate-500 dark:text-slate-400">/ {{ u.maxEmployees }} seats</span>
+          </div>
+          <!-- Progress Track -->
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              [ngClass]="getBarColorClass(empPercent())"
+              [style.width.%]="empPercent()"></div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
+            <span>{{ u.maxEmployees - u.currentEmployees }} remaining</span>
+            <span>Limit: {{ u.maxEmployees }}</span>
+          </div>
+        </div>
+
+        <!-- Storage Quota Card -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-all hover:shadow-md">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-database text-slate-400"></i>
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Object Storage</span>
+            </div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(storagePercent())">
+              {{ storagePercent() }}%
+            </span>
+          </div>
+          <div class="flex items-baseline gap-2 mb-4">
+            <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ formatBytes(u.currentStorageBytes) }}</span>
+            <span class="text-sm font-medium text-slate-500 dark:text-slate-400">/ {{ formatBytes(u.maxStorageBytes) }}</span>
+          </div>
+          <!-- Progress Track -->
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              [ngClass]="getBarColorClass(storagePercent())"
+              [style.width.%]="storagePercent()"></div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
+            <span>{{ formatBytes(u.maxStorageBytes - u.currentStorageBytes) }} free</span>
+            <span>Limit: {{ formatBytes(u.maxStorageBytes) }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Plan Tiers Comparison Grid -->
+  <div class="pt-4">
+    <div class="text-center max-w-xl mx-auto mb-8 space-y-2">
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Choose Your Workspace Tier</h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        Instantly scale storage, team seats, and document boundaries to fit your organization's needs.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      @for (plan of planDefinitions; track plan.tier) {
+        <div
+          class="rounded-3xl p-6 sm:p-8 flex flex-col justify-between border transition-all duration-300 relative"
+          [ngClass]="[
+            usage()?.planTier === plan.tier
+              ? 'bg-white dark:bg-slate-900 border-primary-500 ring-2 ring-primary-500/20 shadow-lg'
+              : plan.isPopular
+                ? 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 shadow-md hover:border-primary-400'
+                : 'bg-slate-50/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+          ]">
+          
+          <!-- Popular Ribbon -->
+          @if (plan.isPopular) {
+            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-sm">
+              Most Popular
+            </div>
+          }
+
+          <div class="space-y-6">
+            <!-- Header -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ plan.name }}</h3>
+                @if (usage()?.planTier === plan.tier) {
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
+                    <i class="pi pi-check text-[10px]"></i> Active
+                  </span>
+                }
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 min-h-[32px]">{{ plan.description }}</p>
+            </div>
+
+            <!-- Price -->
+            <div class="flex items-baseline gap-1 border-b border-slate-100 dark:border-slate-800 pb-5">
+              <span class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ plan.price }}</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">/ month</span>
+            </div>
+
+            <!-- Quota Highlights -->
+            <div class="space-y-2 py-1">
+              <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
+                <i class="pi pi-file text-primary-500"></i>
+                <span>{{ plan.maxDocs }}</span>
+              </div>
+              <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
+                <i class="pi pi-users text-primary-500"></i>
+                <span>{{ plan.maxMembers }}</span>
+              </div>
+              <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
+                <i class="pi pi-database text-primary-500"></i>
+                <span>{{ plan.maxStorage }}</span>
+              </div>
+            </div>
+
+            <!-- Feature Bullet Points -->
+            <div class="space-y-2.5 border-t border-slate-100 dark:border-slate-800 pt-5">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Included Features</div>
+              @for (feat of plan.features; track feat) {
+                <div class="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300">
+                  <i class="pi pi-check-circle text-emerald-500 text-xs mt-0.5 flex-none"></i>
+                  <span>{{ feat }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Plan Action Button -->
+          <div class="pt-8">
+            @if (usage()?.planTier === plan.tier) {
+              <button
+                type="button"
+                disabled
+                class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-default">
+                Current Plan
+              </button>
+            } @else {
+              <button
+                type="button"
+                (click)="selectPlan(plan.tier)"
+                [disabled]="isUpdating()"
+                class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-xs"
+                [ngClass]="plan.isPopular ? 'bg-primary-600 hover:bg-primary-700' : 'bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white'">
+                @if (isUpdating()) {
+                  <i class="pi pi-spin pi-spinner mr-2"></i> Updating...
+                } @else {
+                  <span>Switch to {{ plan.tier }}</span>
+                }
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

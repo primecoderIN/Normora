@@ -96,6 +96,10 @@ export const routes: Routes = [
               {
                 path: 'audit-logs',
                 loadComponent: () => import('./features/employer/settings/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent)
+              },
+              {
+                path: 'subscription',
+                loadComponent: () => import('./features/employer/settings/subscription/subscription.component').then(m => m.SubscriptionComponent)
               }
             ]
           },
@@ -105,9 +109,15 @@ export const routes: Routes = [
             pathMatch: 'full'
           },
           {
+            path: 'subscription',
+            redirectTo: 'settings/subscription',
+            pathMatch: 'full'
+          },
+          {
             path: 'profile',
             loadComponent: () => import('./features/employee/profile/profile').then(m => m.ProfileComponent)
           }
+
 
         ]
       },
