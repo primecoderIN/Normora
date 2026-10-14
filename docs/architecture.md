@@ -454,4 +454,52 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
 - The Angular frontend interceptor handles 402 responses and surfaces clear, actionable upgrade guidance rather than generic failure toasts.
 - The `SubscriptionComponent` provides real-time resource meters (visual progress bars indicating document, seat, and storage utilization percentages) alongside tier cards for one-click plan upgrades.
 
+---
+
+## Code Quality, Security & Engineering Standards (Remediation & Best Practices)
+
+Following a comprehensive senior architectural audit, the codebase implements strict patterns across security, tenancy, performance, and frontend resilience:
+
+### 1. Security & Authorization (BOLA, BFLA & Zero Magic Strings)
+- **Centralized Error & Response Constants (`ApiMessages`)**:
+  - Hardcoded strings in exceptions, controllers, and alerts are strictly prohibited.
+  - All messages reside in `Normora.Shared.Constants.ApiMessages` on the backend and `@core/constants/api-messages.ts` on the frontend.
+- **BOLA Protection (Broken Object Level Authorization)**:
+  - When a user requests a resource they do not own or have access to within the tenant boundary, handlers throw `BolaException()`.
+  - Mapped globally to `404 Not Found` with generic `ApiMessages.NotFound` to completely eliminate resource ID enumeration vulnerabilities.
+- **BFLA Protection (Broken Function Level Authorization)**:
+  - When an authenticated user lacks permissions for an operation, handlers throw `BflaException()`.
+  - Mapped globally to `403 Forbidden` returning a structured `ApiResponse.Failure(ApiMessages.Forbidden)`.
+- **RAG Soft-Delete Data Isolation**:
+  - In cross-department joins where `.IgnoreQueryFilters()` is applied to evaluate user permissions, queries explicitly filter `x.doc.DeletedAt == null` to prevent soft-deleted documents from ever entering semantic or keyword retrieval pipelines.
+
+### 2. Multi-Tenancy & Database Schema Robustness
+- **Soft-Delete Unique Constraints**:
+  - Re-inviting previously removed members cannot trigger duplicate key violations because `TenantMemberships` enforces a partial unique index:
+    `HasIndex(m => new { m.TenantId, m.UserId }).IsUnique().HasFilter("\"RemovedAt\" IS NULL")`
+  - Handlers like `AcceptInvitationCommandHandler` check `.IgnoreQueryFilters()` to detect prior memberships and reactivate them cleanly (`RemovedAt = null`).
+- **Vector Search Indexing**:
+  - `DocumentChunks.Embedding` is indexed using PostgreSQL pgvector HNSW (`vector_cosine_ops`, `m = 16`, `ef_construction = 64`) ensuring $O(\log N)$ approximate nearest neighbor search under enterprise-scale chunk volumes.
+- **Concurrency & JIT Auto-Provisioning**:
+  - Just-in-Time user auto-provisioning catches `DbUpdateException` to safely handle concurrent parallel requests on initial authentication without race conditions.
+
+### 3. Clean Architecture & Decoupling
+- **Cross-Module CQRS Contracts**:
+  - Cross-module database context leakage is forbidden. For example, `DocumentsController` resolves user identity via the MediatR contract `GetUserIdQuery` / `GetUserIdQueryHandler` rather than directly referencing `TenantsDbContext`.
+- **Modern Primary Constructors**:
+  - All dependency injection across `DbContext`s, controllers, handlers, and background services utilizes C# primary constructors rather than verbose private fields and constructor boilerplate.
+- **Query Optimization**:
+  - Read-only middleware and verification queries apply `.AsNoTracking()` to avoid unnecessary EF Core change-tracker overhead.
+  - List queries project directly into DTOs via `.Select()` rather than loading heavy entity graphs with redundant `.Include()` statements.
+
+### 4. Frontend Resilience & Strict Typing (Angular)
+- **Centralized HTTP Interceptor Handling**:
+  - `api.interceptor.ts` centrally catches HTTP 401 (redirect), 402 (plan quota upgrade notification), 403 (BFLA toast), 404 (BOLA toast on non-GETs), 429 (rate-limit backoff), and 5xx (server error).
+  - `tenant.interceptor.ts` uses strict URL prefix matching (`.startsWith('/api/') || .startsWith(environment.apiUrl)`) to ensure `X-Tenant-Id` headers are reliably attached without contaminating third-party URLs.
+- **Contract Realignment & Strict Types**:
+  - All Angular services and components use strict TypeScript typing, avoiding `: any`.
+  - Route guards (`workspace.guard.ts`, `role.guard.ts`) strictly type user profiles using `CurrentUser` and `UserTenantMembership`.
+  - Paginated list components use typed `PagedResult<T>` and PrimeNG `PaginatorState`.
+  - UI reactive state uses Angular Signals (`signal`, `computed`) and eliminates nested RxJS subscriptions.
+
 

@@ -129,6 +129,11 @@ This separation keeps retrieval independently manageable from conversation lifec
   `Tenant A request` -> `Retrieval` -> `Tenant B document chunk`
 - Tenant filtering must be enforced in the retrieval path itself, not only on conversation tables.
 
+### 3.4 Soft-Delete Isolation in Hybrid Retrieval
+- When the retrieval pipeline evaluates cross-department document associations via EF Core, queries that apply `.IgnoreQueryFilters()` to bypass department-level query filters must explicitly enforce:
+  `&& x.doc.DeletedAt == null`
+- Soft-deleted documents (`DeletedAt != null`) are marked for background purging and must **never** be retrieved, scored, or included in RAG context prompts under any circumstances.
+
 ## 4. Conversation Memory Database Schema
 
 A dedicated conversation schema should be introduced in PostgreSQL.

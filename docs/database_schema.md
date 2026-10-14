@@ -39,10 +39,10 @@ The junction table linking physical `Users` to `Tenants` with a context-specific
 | `RemovedByUserId` | `uniqueidentifier` | ✅ | Audit trail for the admin who performed the removal |
 
 **Indexes:** 
-| Name | Columns | Unique |
-|---|---|---|
-| `UX_TenantMemberships_TenantId_UserId` | `(TenantId, UserId)` | ✅ |
-| `IX_TenantMemberships_UserId` | `UserId` | ❌ |
+| Name | Columns | Unique | Notes |
+|---|---|---|---|
+| `UX_TenantMemberships_TenantId_UserId` | `(TenantId, UserId)` | ✅ (Partial) | Filtered where `"RemovedAt" IS NULL` to permit clean member re-invitation |
+| `IX_TenantMemberships_UserId` | `UserId` | ❌ | Fast membership lookups by User |
 
 ---
 
@@ -150,7 +150,7 @@ Handles the document processing lifecycle, chunking, and vector embeddings.
 
 **Indexes:** 
 - `IX_Documents_TenantId`
-- `IX_Documents_TenantId_DeletedAt` (Filtered index where `DeletedAt IS NOT NULL` for fast purge jobs)
+- `IX_Documents_TenantId_DeletedAt` (Composite index on `(TenantId, DeletedAt)` for tenant query filters and background purge jobs)
 
 ---
 
@@ -186,8 +186,9 @@ Extracted text and 768-dimensional Gemini embeddings for RAG retrieval.
 | `Embedding` | `vector(768)` | ✅ | `pgvector` embedding from Gemini API |
 
 **Indexes:** 
-- `IX_DocumentChunks_DocumentId`
-- HNSW/IVFFlat index on `Embedding` for cosine distance search (if vector extension active).
+- `IX_DocumentChunks_TenantId` (Tenant-scoped chunk isolation)
+- `IX_DocumentChunks_DocumentVersionId`
+- `IX_DocumentChunks_Embedding_Hnsw` (HNSW index on `Embedding` with `vector_cosine_ops`, `m = 16`, `ef_construction = 64` for high-throughput sub-millisecond semantic search)
 
 ---
 
