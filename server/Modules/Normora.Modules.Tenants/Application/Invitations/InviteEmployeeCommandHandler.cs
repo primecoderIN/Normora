@@ -11,29 +11,17 @@ namespace Normora.Modules.Tenants.Application.Invitations;
 /// <summary>
 /// Handles <see cref="InviteEmployeeCommand"/> by creating an invitation record and sending the invitation email.
 /// </summary>
-public class InviteEmployeeCommandHandler : IRequestHandler<InviteEmployeeCommand, Guid>
+public class InviteEmployeeCommandHandler(
+    TenantsDbContext context,
+    ITenantContext tenantContext,
+    IEmailService emailService,
+    INotificationService notificationService,
+    IOptions<AppOptions> options) : IRequestHandler<InviteEmployeeCommand, Guid>
 {
-    private readonly TenantsDbContext context;
-    private readonly ITenantContext tenantContext;
-    private readonly IEmailService emailService;
-    private readonly INotificationService notificationService;
-    private readonly string baseUrl;
-
-    public InviteEmployeeCommandHandler(
-        TenantsDbContext context, 
-        ITenantContext tenantContext, 
-        IEmailService emailService,
-        INotificationService notificationService,
-        IOptions<AppOptions> options) 
-    {
-        this.context = context;
-        this.tenantContext = tenantContext;
-        this.emailService = emailService;
-        this.notificationService = notificationService;
-        this.baseUrl = options.Value.BaseUrl;
-    }
+    private readonly string baseUrl = options.Value.BaseUrl;
 
     public async Task<Guid> Handle(InviteEmployeeCommand request, CancellationToken cancellationToken)
+
     {
         // Ensure the inviter is acting within the context of a specific tenant before they can invite anyone
         if (!tenantContext.IsTenantResolved || !tenantContext.TenantId.HasValue)

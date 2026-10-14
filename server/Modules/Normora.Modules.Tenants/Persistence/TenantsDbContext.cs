@@ -8,12 +8,8 @@ namespace Normora.Modules.Tenants.Persistence;
 /// This context handles Tenants, Users, and the many-to-many Memberships between them.
 /// It operates independently of the main AppDbContext to ensure a strict boundary.
 /// </summary>
-public class TenantsDbContext : DbContext
+public class TenantsDbContext(DbContextOptions<TenantsDbContext> options) : DbContext(options)
 {
-    public TenantsDbContext(DbContextOptions<TenantsDbContext> options) : base(options)
-    {
-    }
-
     public DbSet<Tenant> Tenants { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<TenantMembership> TenantMemberships { get; set; } = null!;
@@ -63,8 +59,10 @@ public class TenantsDbContext : DbContext
         {
             entity.HasKey(m => m.Id);
             
-            // TENANT-05: (TenantId, UserId) → UNIQUE
-            entity.HasIndex(m => new { m.TenantId, m.UserId }).IsUnique();
+            // TENANT-05: (TenantId, UserId) → UNIQUE for active memberships (partial index)
+            entity.HasIndex(m => new { m.TenantId, m.UserId })
+                  .IsUnique()
+                  .HasFilter("\"RemovedAt\" IS NULL");
 
             // TENANT-04: Relationships
             entity.HasOne(m => m.Tenant)

@@ -49,8 +49,9 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             // Verify that the requested workspace URL slug isn't already taken by another organization
             if (await dbContext.Tenants.AnyAsync(t => t.Slug == request.Slug, cancellationToken))
             {
-                throw new InvalidOperationException($"Tenant slug '{request.Slug}' is already taken.");
+                throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantSlugTaken);
             }
+
 
             // Provision the new workspace entity
             var tenant = new Tenant

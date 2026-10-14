@@ -37,12 +37,14 @@ public class TenantResolutionMiddleware
                     // TENANT-12: Resolve user's tenant membership and effective departments
                     // 3. Verify that the authenticated user is actually a member of this tenant.
                     var membership = await tenantsDbContext.TenantMemberships
+                        .AsNoTracking()
                         .Include(m => m.User)
                         .Include(m => m.MembershipDepartments)
                         .Include(m => m.UserGroupMemberships)
                             .ThenInclude(ugm => ugm.UserGroup)
                                 .ThenInclude(ug => ug.UserGroupDepartments)
                         .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.KeycloakUserId == currentUser.KeycloakUserId);
+
 
                     if (membership != null)
                     {

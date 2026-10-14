@@ -54,13 +54,14 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             {
                 KeycloakUserId = currentUser.KeycloakUserId,
                 Email = currentUser.Email,
-                DisplayName = currentUser.DisplayName ?? "Invited User"
+                DisplayName = currentUser.DisplayName ?? string.Empty
             };
             context.Users.Add(user);
         }
 
-        // Make the acceptance idempotent by skipping membership creation if they are already a member of this workspace
+        // Make the acceptance idempotent by skipping membership creation if active, or reactivating if soft-deleted
         var existingMembership = await context.TenantMemberships
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(m => m.TenantId == invitation.TenantId && m.UserId == user.Id, cancellationToken);
 
         if (existingMembership == null)
@@ -73,6 +74,14 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             };
             context.TenantMemberships.Add(membership);
         }
+        else if (existingMembership.RemovedAt != null)
+        {
+            // Reactivate soft-deleted membership
+            existingMembership.RemovedAt = null;
+            existingMembership.RemovedByUserId = null;
+            existingMembership.Role = TenantRole.Employee;
+        }
+
 
         invitation.Status = InvitationStatus.Accepted;
 

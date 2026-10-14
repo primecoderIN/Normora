@@ -32,6 +32,16 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           router.navigate([AppRoutes.Login]);
           break;
 
+        case 402:
+          // Plan limit / quota exceeded
+          messageService?.add({
+            severity: 'warn',
+            summary: ApiMessages.PlanLimitExceeded.summary,
+            detail: error.error?.message || ApiMessages.PlanLimitExceeded.detail,
+            life: 6000
+          });
+          break;
+
         case 403:
           // Authenticated but not authorized (BFLA) — show toast
           messageService?.add({

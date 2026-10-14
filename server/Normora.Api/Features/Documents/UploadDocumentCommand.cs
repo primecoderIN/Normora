@@ -9,6 +9,7 @@ using Normora.Modules.Documents.Persistence;
 using Normora.Shared;
 using Normora.Shared.Constants;
 
+using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Features.Documents;
@@ -116,11 +117,12 @@ public sealed class UploadDocumentCommandHandler(
             {
                 // NEW VERSION UPLOAD (Phase 19):
                 // If the request contains a DocumentId, we are appending a new version to an existing document.
-                document = await context.Documents
+                var existingDoc = await context.Documents
                     .Include(d => d.Versions)
                     .SingleOrDefaultAsync(d => d.Id == request.DocumentId.Value && d.TenantId == request.TenantId, cancellationToken);
 
-                if (document == null) throw new InvalidOperationException(ApiMessages.DocumentNotFound);
+                if (existingDoc == null) throw new BolaException();
+                document = existingDoc;
 
                 if (document.Versions.Any())
                 {

@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
+using Normora.Shared.Constants;
 using Normora.Shared.Options;
 
 namespace Normora.Api.Features.Documents;
@@ -8,20 +9,11 @@ namespace Normora.Api.Features.Documents;
 /// <summary>
 /// Implementation of <see cref="ITextEmbeddingService"/> that uses Google's Gemini API for generating 768-dimensional embeddings.
 /// </summary>
-public sealed class GeminiEmbeddingService : ITextEmbeddingService
+public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<GeminiOptions> options) : ITextEmbeddingService
 {
     private const int EmbeddingDimensions = 768;
-    private readonly HttpClient httpClient;
-    private readonly string? apiKey;
-    private readonly string model;
-
-    public GeminiEmbeddingService(HttpClient httpClient, IOptions<GeminiOptions> options)
-    {
-        this.httpClient = httpClient;
-        var geminiOptions = options.Value;
-        this.apiKey = geminiOptions.ApiKey;
-        this.model = geminiOptions.EmbeddingModel;
-    }
+    private readonly string? apiKey = options.Value.ApiKey;
+    private readonly string model = options.Value.EmbeddingModel;
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(apiKey);
 
@@ -29,7 +21,7 @@ public sealed class GeminiEmbeddingService : ITextEmbeddingService
     {
         if (!IsConfigured)
         {
-            throw new InvalidOperationException("Gemini embedding is not configured.");
+            throw new InvalidOperationException(ApiMessages.GeminiEmbeddingNotConfigured);
         }
 
         // Convert the input text into a high-dimensional vector array so we can perform semantic similarity searches against it later
@@ -47,7 +39,7 @@ public sealed class GeminiEmbeddingService : ITextEmbeddingService
         var values = result?.Embedding?.Values;
         if (values is null || values.Count != EmbeddingDimensions)
         {
-            throw new InvalidOperationException("Gemini returned an invalid embedding vector.");
+            throw new InvalidOperationException(ApiMessages.GeminiInvalidEmbeddingVector);
         }
 
         return values.ToArray();

@@ -42,7 +42,9 @@ public sealed class RetrievalService(
                 cv => cv.version.DocumentId,
                 doc => doc.Id,
                 (cv, doc) => new { cv.chunk, cv.version, doc })
-            .Where(x => x.chunk.TenantId == activeTenantId || (personalTenantId.HasValue && x.chunk.TenantId == personalTenantId.Value));
+            .Where(x => (x.chunk.TenantId == activeTenantId || (personalTenantId.HasValue && x.chunk.TenantId == personalTenantId.Value))
+                     && x.doc.DeletedAt == null);
+
 
         // Vector search — top 20
         var vectorResults = await baseQuery

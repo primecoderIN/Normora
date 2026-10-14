@@ -11,7 +11,8 @@ using Normora.Modules.Conversations.Application.Feedback;
 using Microsoft.AspNetCore.Http;
 using Normora.Shared;
 
-namespace Normora.Modules.Conversations.Controllers;
+namespace Normora.Api.Controllers;
+
 
 [ApiController]
 [Route("api/[controller]")]

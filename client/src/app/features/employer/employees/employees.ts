@@ -2,11 +2,11 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { InvitationService } from '@core/services/invitation.service';
-import { TenantService } from '@core/services/tenant.service';
+import { TenantService, TenantEmployeeDto } from '@core/services/tenant.service';
 import { DepartmentService, Department } from '@core/services/department.service';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
-import { PaginatorModule } from 'primeng/paginator';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
 import { MenuItem, MessageService } from 'primeng/api';
 
@@ -40,7 +40,7 @@ export class Employees implements OnInit {
   isLoadingEmployees = signal(true);
   
   // Data
-  employees = signal<any[]>([]);
+  employees = signal<TenantEmployeeDto[]>([]);
   departments = signal<Department[]>([]);
   
   // Stats
@@ -62,12 +62,12 @@ export class Employees implements OnInit {
 
   // Actions
   menuItems: MenuItem[] = [];
-  targetEmployee = signal<any>(null);
+  targetEmployee = signal<TenantEmployeeDto | null>(null);
   
   employeeToRemoveId = signal<string | null>(null);
   isRemoving = signal(false);
 
-  private searchTimeout: any;
+  private searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   readonly skeletonRows = [1, 2, 3, 4, 5];
 
@@ -104,7 +104,7 @@ export class Employees implements OnInit {
     ];
   }
 
-  setMenuTarget(emp: any) {
+  setMenuTarget(emp: TenantEmployeeDto) {
     this.targetEmployee.set(emp);
   }
 
@@ -113,7 +113,7 @@ export class Employees implements OnInit {
       next: (depts) => {
         this.departments.set(depts || []);
       },
-      error: (err) => console.error('Failed to load departments', err)
+      error: (err: unknown) => console.error('Failed to load departments', err)
     });
   }
 
@@ -139,7 +139,7 @@ export class Employees implements OnInit {
         }
         this.isLoadingEmployees.set(false);
       },
-      error: (err) => {
+      error: (err: unknown) => {
         console.error('Failed to load employees', err);
         this.isLoadingEmployees.set(false);
       }
@@ -154,13 +154,15 @@ export class Employees implements OnInit {
           this.adminSeats.set(res.data.adminSeats);
         }
       },
-      error: (err) => console.error('Failed to load stats', err)
+      error: (err: unknown) => console.error('Failed to load stats', err)
     });
   }
 
-  onPageChange(event: any) {
-    this.currentPage.set(Math.floor(event.first / event.rows) + 1);
-    this.pageSize.set(event.rows);
+  onPageChange(event: PaginatorState) {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? 10;
+    this.currentPage.set(Math.floor(first / rows) + 1);
+    this.pageSize.set(rows);
     this.loadEmployees();
   }
 
@@ -209,7 +211,7 @@ export class Employees implements OnInit {
         this.loadEmployees();
         this.loadStats();
       },
-      error: (err) => {
+      error: (err: { error?: { message?: string } }) => {
         console.error('Failed to remove employee', err);
         this.isRemoving.set(false);
         this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to remove employee' });
@@ -227,22 +229,17 @@ export class Employees implements OnInit {
     const payload = this.inviteForm.value;
 
     this.invitationService.inviteEmployee(payload.email).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.isInviting.set(false);
         if (res.success) {
           this.successMessage.set(res.message);
           this.inviteForm.reset();
-          // Reload stats to update pending invites count
-          this.tenantService.getEmployeeStats().subscribe(statsRes => {
-             if (statsRes.success && statsRes.data) {
-                this.pendingInvites.set(statsRes.data.pendingInvites);
-             }
-          });
+          this.loadStats();
         } else {
           this.errorMessage.set(res.message);
         }
       },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isInviting.set(false);
         this.errorMessage.set(err.error?.message || 'Failed to send invitation');
       },

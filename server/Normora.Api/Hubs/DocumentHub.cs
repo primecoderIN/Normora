@@ -30,8 +30,9 @@ public sealed class DocumentHub(
 
         if (!isMember)
         {
-            throw new HubException("You do not have access to this tenant.");
+            throw new HubException(Normora.Shared.Constants.ApiMessages.HubTenantAccessDenied);
         }
+
 
         // Publishers use the same deterministic name, making group membership the sole
         // boundary for tenant-scoped document notifications.

@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Departments;
@@ -11,12 +12,13 @@ namespace Normora.Modules.Tenants.Application.Departments;
 /// </summary>
 /// <param name="Id">The unique identifier of the department.</param>
 /// <param name="Name">The new name for the department.</param>
-public record UpdateDepartmentCommand(Guid Id, string Name) : IRequest<bool>, IAuditableRequest
+/// <param name="Description">The updated description for the department.</param>
+public record UpdateDepartmentCommand(Guid Id, string Name, string? Description = null) : IRequest<bool>, IAuditableRequest
 {
     public string Action => "Department.Updated";
     public string TargetType => "Department";
     public string? GetTargetId(object? response) => Id.ToString();
-    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name });
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name, description = Description });
 }
 
 
@@ -29,6 +31,7 @@ public class UpdateDepartmentCommandValidator : AbstractValidator<UpdateDepartme
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(500);
     }
 }
 
@@ -47,7 +50,7 @@ public class UpdateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
 
         if (department == null)
         {
-            return false;
+            throw new BolaException();
         }
 
         // Enforce unique name per tenant (excluding self)
@@ -62,8 +65,10 @@ public class UpdateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
         }
 
         department.Name = request.Name;
+        department.Description = request.Description;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return true;
     }
 }
+

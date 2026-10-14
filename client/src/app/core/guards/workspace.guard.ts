@@ -1,7 +1,7 @@
 import { AppRoutes } from '@core/constants/app-routes';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { UserService } from '../services/user.service';
+import { UserService, CurrentUser, UserTenantMembership } from '../services/user.service';
 import { TenantBrandingService } from '../services/tenant-branding.service';
 import { map } from 'rxjs/operators';
 
@@ -19,9 +19,9 @@ export const workspaceGuard: CanActivateFn = (route) => {
   
   const currentUser = userService.currentUser();
   
-  const validateAccess = (user: any) => {
+  const validateAccess = (user: CurrentUser | null) => {
     if (!user) return router.createUrlTree([AppRoutes.Login]);
-    const membership = user.memberships.find((m: any) => m.tenantSlug === slug);
+    const membership = user.memberships.find((m: UserTenantMembership) => m.tenantSlug === slug);
     if (!membership) {
       // SEC-12: User is authenticated but not a member of this workspace —
       // redirect to access-denied instead of login to avoid a confusing loop.

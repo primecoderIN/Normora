@@ -48,5 +48,33 @@ public static class ApiMessages
     public const string PlanEmployeeLimitExceeded = "You have reached your workspace member limit. Please upgrade your subscription to invite more members.";
     public const string PlanStorageLimitExceeded = "This file exceeds your workspace remaining storage quota. Please upgrade your subscription.";
     public const string PlanLimitExceeded = "Your workspace has exceeded its subscription plan limits.";
+
+    // Slug & Tenancy Errors
+    public const string TenantSlugTaken = "This workspace URL slug is already taken.";
+    public const string TenantContextAlreadySet = "Tenant context is already set for this request.";
+    public const string HubTenantAccessDenied = "You do not have access to this tenant.";
+    public const string GeminiEmbeddingNotConfigured = "Gemini embedding is not configured.";
+    public const string GeminiInvalidEmbeddingVector = "Gemini returned an invalid embedding vector.";
+
+    // Success Messages
+    public const string TenantCreated = "Tenant created successfully.";
+    public const string TenantSuspended = "Tenant suspended successfully.";
+    public const string InvitationSent = "Invitation sent successfully.";
+    public const string InvitationAccepted = "Invitation accepted successfully.";
+    public const string InvitationRejected = "Invitation rejected.";
+    public const string EmployeeRemoved = "Employee removed successfully.";
+    public const string DocumentUploaded = "Document uploaded successfully.";
+    public const string DocumentDeleted = "Document deleted successfully.";
+    public const string DepartmentCreated = "Department created successfully.";
+    public const string DepartmentUpdated = "Department updated successfully.";
+    public const string DepartmentDeleted = "Department deleted successfully.";
+    public const string UserGroupCreated = "User group created successfully.";
+    public const string UserGroupUpdated = "User group updated successfully.";
+    public const string UserGroupAssignmentsUpdated = "User group assignments updated successfully.";
+    public const string UserGroupDeleted = "User group deleted successfully.";
+    public const string UserAssignmentsUpdated = "User assignments updated successfully.";
+    public const string SubscriptionUpdated = "Subscription plan updated successfully.";
+    public const string AnswerSaved = "Answer saved successfully.";
 }
+
 

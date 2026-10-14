@@ -46,8 +46,9 @@ public class SavedAnswersController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> SaveAnswer([FromBody] SaveAnswerRequest request)
     {
         var id = await mediator.Send(new SaveAnswerCommand(request.MessageId));
-        return Ok(ApiResponse<Guid>.Ok(id, "Answer saved."));
+        return Ok(ApiResponse<Guid>.Ok(id, ApiMessages.AnswerSaved));
     }
+
 
     /// <summary>
     /// Removes a saved answer by the original message ID. Idempotent.

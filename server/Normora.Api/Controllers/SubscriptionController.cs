@@ -48,6 +48,7 @@ public class SubscriptionController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> UpdateTier([FromBody] UpdatePlanTierRequest request, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new UpdateTenantPlanTierCommand(request.Tier), cancellationToken);
-        return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, "Subscription plan updated successfully."));
+        return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, ApiMessages.SubscriptionUpdated));
     }
 }
+

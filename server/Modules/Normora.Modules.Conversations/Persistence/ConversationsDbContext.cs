@@ -4,14 +4,9 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence;
 
-public class ConversationsDbContext : DbContext
+public class ConversationsDbContext(DbContextOptions<ConversationsDbContext> options, ITenantContext tenantContext) : DbContext(options)
 {
-    private readonly ITenantContext _tenantContext;
-
-    public ConversationsDbContext(DbContextOptions<ConversationsDbContext> options, ITenantContext tenantContext) : base(options)
-    {
-        _tenantContext = tenantContext;
-    }
+    private readonly ITenantContext _tenantContext = tenantContext;
 
     public DbSet<Conversation> Conversations { get; set; } = null!;
     public DbSet<Message> Messages { get; set; } = null!;

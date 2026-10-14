@@ -11,12 +11,12 @@ namespace Normora.Modules.Tenants.Application.Departments;
 /// Command to create a new department within the current tenant.
 /// </summary>
 /// <param name="Name">The name of the new department.</param>
-public record CreateDepartmentCommand(string Name) : IRequest<Guid>, IAuditableRequest
+public record CreateDepartmentCommand(string Name, string? Description = null) : IRequest<Guid>, IAuditableRequest
 {
     public string Action => "Department.Created";
     public string TargetType => "Department";
     public string? GetTargetId(object? response) => response is Guid id ? id.ToString() : null;
-    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name });
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name, description = Description });
 }
 
 
@@ -28,6 +28,7 @@ public class CreateDepartmentCommandValidator : AbstractValidator<CreateDepartme
     public CreateDepartmentCommandValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(500);
     }
 }
 
@@ -54,8 +55,10 @@ public class CreateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
         {
             Id = Guid.NewGuid(),
             TenantId = tenantContext.TenantId.Value,
-            Name = request.Name
+            Name = request.Name,
+            Description = request.Description
         };
+
 
         dbContext.Departments.Add(department);
         await dbContext.SaveChangesAsync(cancellationToken);

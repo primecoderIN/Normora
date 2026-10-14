@@ -1,6 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { UserService } from '../services/user.service';
+import { environment } from '@env/environment';
 
 export const tenantInterceptor: HttpInterceptorFn = (req, next) => {
   const userService = inject(UserService);
@@ -16,7 +17,11 @@ export const tenantInterceptor: HttpInterceptorFn = (req, next) => {
     const tenantId = activeTenantId || currentUser.memberships[0].tenantId;
     
     // Only intercept requests going to our API
-    if (req.url.includes('/api/')) {
+    const isApiRequest = req.url.startsWith('/api/') || 
+                         req.url.startsWith('/bff/') || 
+                         (Boolean(environment.apiUrl) && req.url.startsWith(environment.apiUrl));
+
+    if (isApiRequest) {
       const tenantReq = req.clone({
         headers: req.headers.set('X-Tenant-Id', tenantId)
       });

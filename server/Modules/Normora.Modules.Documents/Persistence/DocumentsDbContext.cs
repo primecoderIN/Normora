@@ -9,14 +9,9 @@ namespace Normora.Modules.Documents.Persistence;
 /// The primary database context for the Documents module. 
 /// Handles all document entities and enforces cross-tenant data isolation.
 /// </summary>
-public class DocumentsDbContext : DbContext
+public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, ITenantContext tenantContext) : DbContext(options)
 {
-    private readonly ITenantContext _tenantContext;
-
-    public DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, ITenantContext tenantContext) : base(options)
-    {
-        _tenantContext = tenantContext;
-    }
+    private readonly ITenantContext _tenantContext = tenantContext;
 
     public DbSet<Document> Documents { get; set; } = null!;
     // Document Versioning (Phase 19): Tracks immutable file versions within a Document container.
@@ -32,9 +27,10 @@ public class DocumentsDbContext : DbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasPostgresExtension("vector");
         
-        // Ensure TenantId is indexed for faster document queries
+        // Ensure TenantId and DeletedAt are indexed together for fast filtered document queries
         modelBuilder.Entity<Document>()
-            .HasIndex(d => d.TenantId);
+            .HasIndex(d => new { d.TenantId, d.DeletedAt });
+
             
         // Enforce database constraints previously handled by Data Annotations
         modelBuilder.Entity<Document>(entity => 
@@ -78,6 +74,11 @@ public class DocumentsDbContext : DbContext
             .HasIndex(chunk => chunk.SearchVector)
             .HasMethod("GIN");
 
+            // Vector similarity HNSW index for high-performance approximate nearest neighbor retrieval
+            entity.HasIndex(chunk => chunk.Embedding)
+                .HasMethod("hnsw")
+                .HasOperators("vector_cosine_ops");
+
             entity.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentVersionId, chunk.ChunkIndex }).IsUnique();
             entity.HasOne<DocumentVersion>()
                 .WithMany(v => v.Chunks)
@@ -87,6 +88,7 @@ public class DocumentsDbContext : DbContext
             // jobs may bypass this filter only after checking both tenant and document IDs.
             entity.HasQueryFilter(chunk => chunk.TenantId == _tenantContext.TenantId);
         });
+
 
         // DocumentDepartment — junction table for document department scoping.
         // DepartmentId is a plain Guid FK (no EF nav) to respect the module boundary.
@@ -140,6 +142,16 @@ public class DocumentsDbContext : DbContext
             }
         }
 
+        // Propagate TenantId to DocumentChunk rows.
+        foreach (var entry in ChangeTracker.Entries<DocumentChunk>().Where(e => e.State == EntityState.Added))
+        {
+            if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
+            {
+                entry.Entity.TenantId = _tenantContext.TenantId.Value;
+            }
+        }
+
         return base.SaveChangesAsync(cancellationToken);
     }
 }
+

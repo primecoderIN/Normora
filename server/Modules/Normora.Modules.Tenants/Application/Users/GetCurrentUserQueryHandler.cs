@@ -40,7 +40,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
         if (user == null)
         {
             // Auto-provision the user and create their default Personal Workspace on first login
-            user = new Normora.Modules.Tenants.Domain.User
+            var newUser = new Normora.Modules.Tenants.Domain.User
             {
                 Id = Guid.NewGuid(),
                 KeycloakUserId = currentUser.KeycloakUserId,
@@ -53,7 +53,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             {
                 Id = Guid.NewGuid(),
                 Name = "Personal Workspace",
-                Slug = $"personal-{user.Id.ToString().Substring(0, 8)}",
+                Slug = $"personal-{newUser.Id.ToString().Substring(0, 8)}",
                 Status = Normora.Modules.Tenants.Domain.TenantStatus.Active,
                 IsPersonal = true,
                 CreatedAt = DateTime.UtcNow
@@ -61,25 +61,34 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
 
             var membership = new Normora.Modules.Tenants.Domain.TenantMembership
             {
-                UserId = user.Id,
+                UserId = newUser.Id,
                 TenantId = personalTenant.Id,
                 Role = Normora.Modules.Tenants.Domain.TenantRole.Admin
             };
 
-            context.Users.Add(user);
-            context.Tenants.Add(personalTenant);
-            context.TenantMemberships.Add(membership);
+            try
+            {
+                context.Users.Add(newUser);
+                context.Tenants.Add(personalTenant);
+                context.TenantMemberships.Add(membership);
 
-            await context.SaveChangesAsync(cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                // In case of a concurrent parallel request already auto-provisioning this user,
+                // detach failed entries and re-fetch the successfully saved user.
+                context.Entry(newUser).State = EntityState.Detached;
+                context.Entry(personalTenant).State = EntityState.Detached;
+                context.Entry(membership).State = EntityState.Detached;
+            }
 
-            // BUG-5: Re-fetch user with memberships to avoid stale EF tracked collection.
-            // Manually reassigning user.Memberships after SaveChangesAsync is fragile
-            // because EF Core may have replaced the navigation collection with its own proxy.
             user = await context.Users
                 .Include(u => u.Memberships)
                 .ThenInclude(m => m.Tenant)
                 .FirstAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
         }
+
 
         // Sync any profile changes from Keycloak (e.g. if they updated their display name or email) to keep our local database up-to-date
         bool isUpdated = false;

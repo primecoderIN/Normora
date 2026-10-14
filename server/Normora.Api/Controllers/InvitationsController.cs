@@ -1,3 +1,4 @@
+using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,19 +19,20 @@ public class InvitationsController(IMediator mediator) : ControllerBase
     /// This endpoint is anonymous so the accept page can load before the user logs in.
     /// </summary>
     /// <param name="token">The unique invitation token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Details about the invitation such as the tenant name.</returns>
     [HttpGet("{token}")]
     [AllowAnonymous]
     [EnableRateLimiting("anon")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<InvitationDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> GetInvitation(Guid token)
+    public async Task<IActionResult> GetInvitation(Guid token, CancellationToken cancellationToken = default)
     {
         var query = new GetInvitationQuery(token);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
 
         if (result == null)
-            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
+            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
 
         return Ok(ApiResponse<InvitationDto>.Ok(result));
     }
@@ -39,41 +41,43 @@ public class InvitationsController(IMediator mediator) : ControllerBase
     /// Accepts the invitation and creates a tenant membership for the authenticated user.
     /// </summary>
     /// <param name="token">The unique invitation token to accept.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message if the invitation was accepted.</returns>
     [HttpPost("{token}/accept")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> AcceptInvitation(Guid token)
+    public async Task<IActionResult> AcceptInvitation(Guid token, CancellationToken cancellationToken = default)
     {
         var command = new AcceptInvitationCommand(token);
-        var success = await mediator.Send(command);
+        var success = await mediator.Send(command, cancellationToken);
 
         if (!success)
-            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.InvalidInvitation));
+            return BadRequest(ApiResponse.Failure(ApiMessages.InvalidInvitation));
 
-        return Ok(ApiResponse.Ok("Invitation accepted successfully."));
+        return Ok(ApiResponse.Ok(ApiMessages.InvitationAccepted));
     }
 
     /// <summary>
     /// Rejects the invitation and marks it as Rejected.
     /// </summary>
     /// <param name="token">The unique invitation token to reject.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message if the invitation was rejected.</returns>
     [HttpPost("{token}/reject")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> RejectInvitation(Guid token)
+    public async Task<IActionResult> RejectInvitation(Guid token, CancellationToken cancellationToken = default)
     {
         var command = new RejectInvitationCommand(token);
-        var success = await mediator.Send(command);
+        var success = await mediator.Send(command, cancellationToken);
 
         if (!success)
-            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.InvalidInvitation));
+            return BadRequest(ApiResponse.Failure(ApiMessages.InvalidInvitation));
 
-        return Ok(ApiResponse.Ok("Invitation rejected."));
+        return Ok(ApiResponse.Ok(ApiMessages.InvitationRejected));
     }
 }

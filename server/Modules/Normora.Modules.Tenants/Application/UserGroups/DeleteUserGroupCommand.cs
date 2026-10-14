@@ -32,8 +32,9 @@ public class DeleteUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
 
         if (group == null)
         {
-            return false;
+            throw new Normora.Shared.Exceptions.BolaException();
         }
+
 
         dbContext.UserGroups.Remove(group);
         await dbContext.SaveChangesAsync(cancellationToken);

@@ -33,16 +33,16 @@ export class DepartmentService {
       .pipe(map(r => r.data));
   }
 
-  create(req: CreateDepartmentRequest): Observable<Department> {
+  create(req: CreateDepartmentRequest): Observable<string> {
     return this.http
-      .post<ApiResponse<Department>>(this.apiUrl, req)
+      .post<ApiResponse<string>>(this.apiUrl, req)
       .pipe(map(r => r.data));
   }
 
-  update(id: string, req: UpdateDepartmentRequest): Observable<Department> {
+  update(id: string, req: UpdateDepartmentRequest): Observable<void> {
     return this.http
-      .put<ApiResponse<Department>>(`${this.apiUrl}/${id}`, req)
-      .pipe(map(r => r.data));
+      .put<ApiResponse<void>>(`${this.apiUrl}/${id}`, req)
+      .pipe(map(() => void 0));
   }
 
   delete(id: string): Observable<void> {

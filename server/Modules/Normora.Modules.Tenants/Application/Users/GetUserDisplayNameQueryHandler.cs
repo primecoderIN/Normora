@@ -12,10 +12,13 @@ public class GetUserDisplayNameQueryHandler(TenantsDbContext context)
     {
         var user = await context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.KeycloakUserId == request.KeycloakUserId, cancellationToken);
+            .Where(u => u.KeycloakUserId == request.KeycloakUserId)
+            .Select(u => new { u.DisplayName, u.Email })
+            .FirstOrDefaultAsync(cancellationToken);
 
         return !string.IsNullOrWhiteSpace(user?.DisplayName)
             ? user.DisplayName
             : user?.Email;
+
     }
 }

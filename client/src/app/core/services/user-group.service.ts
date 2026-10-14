@@ -26,11 +26,13 @@ export interface UserGroupDetail {
 export interface CreateUserGroupRequest {
   name: string;
   description?: string;
+  departmentIds?: string[];
 }
 
 export interface UpdateUserGroupRequest {
   name: string;
   description?: string;
+  departmentIds?: string[];
 }
 
 export interface UpdateUserGroupAssignmentsRequest {
@@ -55,16 +57,16 @@ export class UserGroupService {
       .pipe(map(r => r.data));
   }
 
-  create(req: CreateUserGroupRequest): Observable<UserGroup> {
+  create(req: CreateUserGroupRequest): Observable<string> {
     return this.http
-      .post<ApiResponse<UserGroup>>(this.apiUrl, req)
+      .post<ApiResponse<string>>(this.apiUrl, req)
       .pipe(map(r => r.data));
   }
 
-  update(id: string, req: UpdateUserGroupRequest): Observable<UserGroup> {
+  update(id: string, req: UpdateUserGroupRequest): Observable<void> {
     return this.http
-      .put<ApiResponse<UserGroup>>(`${this.apiUrl}/${id}`, req)
-      .pipe(map(r => r.data));
+      .put<ApiResponse<void>>(`${this.apiUrl}/${id}`, req)
+      .pipe(map(() => void 0));
   }
 
   updateAssignments(id: string, req: UpdateUserGroupAssignmentsRequest): Observable<void> {

@@ -45,8 +45,9 @@ public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITe
 
         if (membership == null)
         {
-            return false;
+            throw new Normora.Shared.Exceptions.BolaException();
         }
+
 
         // SEC-16: Validate that all provided DepartmentIds belong to the current tenant
         // to prevent an admin from injecting department references from other tenants.

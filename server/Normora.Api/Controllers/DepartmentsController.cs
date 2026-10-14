@@ -24,9 +24,9 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<List<DepartmentDto>>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> GetDepartments()
+    public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken = default)
     {
-        var result = await mediator.Send(new GetDepartmentsQuery());
+        var result = await mediator.Send(new GetDepartmentsQuery(), cancellationToken);
         return Ok(ApiResponse<List<DepartmentDto>>.Ok(result));
     }
 
@@ -34,16 +34,17 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
     /// Creates a new department in the current tenant.
     /// </summary>
     /// <param name="request">The payload containing the department name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The unique identifier of the newly created department.</returns>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Guid>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentRequest request)
+    public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new CreateDepartmentCommand(request.Name);
-        var id = await mediator.Send(command);
-        return Ok(ApiResponse<Guid>.Ok(id, "Department created successfully."));
+        var command = new CreateDepartmentCommand(request.Name, request.Description);
+        var id = await mediator.Send(command, cancellationToken);
+        return Ok(ApiResponse<Guid>.Ok(id, ApiMessages.DepartmentCreated));
     }
 
     /// <summary>
@@ -51,55 +52,44 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="id">The unique identifier of the department to update.</param>
     /// <param name="request">The payload containing the new department name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message if updated.</returns>
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> UpdateDepartment(Guid id, [FromBody] UpdateDepartmentRequest request)
+    public async Task<IActionResult> UpdateDepartment(Guid id, [FromBody] UpdateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new UpdateDepartmentCommand(id, request.Name);
-        var success = await mediator.Send(command);
-
-        if (!success)
-        {
-            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
-        }
-
-        return Ok(ApiResponse.Ok("Department updated successfully."));
+        var command = new UpdateDepartmentCommand(id, request.Name, request.Description);
+        await mediator.Send(command, cancellationToken);
+        return Ok(ApiResponse.Ok(ApiMessages.DepartmentUpdated));
     }
 
     /// <summary>
     /// Deletes an existing department.
     /// </summary>
     /// <param name="id">The unique identifier of the department to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message if deleted.</returns>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> DeleteDepartment(Guid id)
+    public async Task<IActionResult> DeleteDepartment(Guid id, CancellationToken cancellationToken = default)
     {
         var command = new DeleteDepartmentCommand(id);
-        var success = await mediator.Send(command);
-
-        if (!success)
-        {
-            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
-        }
-
-        return Ok(ApiResponse.Ok("Department deleted successfully."));
+        await mediator.Send(command, cancellationToken);
+        return Ok(ApiResponse.Ok(ApiMessages.DepartmentDeleted));
     }
 }
 
 /// <summary>
 /// Request payload for creating a department.
 /// </summary>
-public record CreateDepartmentRequest(string Name);
+public record CreateDepartmentRequest(string Name, string? Description = null);
 
 /// <summary>
 /// Request payload for updating a department.
 /// </summary>
-public record UpdateDepartmentRequest(string Name);
-
+public record UpdateDepartmentRequest(string Name, string? Description = null);

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Normora.Shared;
 using Normora.Shared.Interfaces;
 using System.Text.RegularExpressions;
+
 namespace Normora.Api.Controllers;
 
 /// <summary>
@@ -28,15 +29,16 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// be assigned the 'Admin' role for the newly created tenant.
     /// </summary>
     /// <param name="request">The payload containing the new tenant's name and slug.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The unique identifier of the newly created tenant.</returns>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Guid))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request)
+    public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request, CancellationToken cancellationToken = default)
     {
         var command = new CreateTenantCommand(request.Name, request.Slug);
-        var tenant = await mediator.Send(command);
-        return Ok(ApiResponse<Normora.Modules.Tenants.Application.CreateTenant.TenantDto>.Ok(tenant, "Tenant created successfully."));
+        var tenant = await mediator.Send(command, cancellationToken);
+        return Ok(ApiResponse<Normora.Modules.Tenants.Application.CreateTenant.TenantDto>.Ok(tenant, ApiMessages.TenantCreated));
     }
 
     /// <summary>
@@ -44,18 +46,19 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// Anonymous — called by the frontend before login to skin the app.
     /// </summary>
     /// <param name="slug">The unique URL slug of the tenant.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The branding configuration for the tenant.</returns>
     [HttpGet("branding/{slug}")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantBrandingDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> GetTenantBranding(string slug)
+    public async Task<IActionResult> GetTenantBranding(string slug, CancellationToken cancellationToken = default)
     {
         var query = new GetTenantBrandingQuery(slug);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
 
         if (result == null)
-            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
+            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
 
         return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
     }
@@ -73,10 +76,11 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         [FromForm] string? secondaryColor,
         [FromForm] IFormFile? logoFile,
         [FromForm] IFormFile? logoFileDark,
-        [FromForm] IFormFile? faviconFile)
+        [FromForm] IFormFile? faviconFile,
+        CancellationToken cancellationToken = default)
     {
         if (!tenantContext.TenantId.HasValue)
-            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
 
         var command = new UpdateTenantBrandingCommand(
             tenantContext.TenantId.Value,
@@ -87,10 +91,10 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
             faviconFile
         );
 
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
 
         if (result == null)
-            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
+            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
 
         return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
     }
@@ -108,11 +112,11 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         [FromServices] Normora.Modules.Tenants.Persistence.IBrandingStorageService storageService)
     {
         if (assetType != "logo" && assetType != "logo-dark" && assetType != "favicon")
-            return BadRequest();
+            return BadRequest(ApiResponse.Failure(ApiMessages.BadRequest));
 
         // SEC-6: Sanitize slug to prevent path traversal — only allow alphanumeric chars and hyphens
         if (!Regex.IsMatch(slug, @"^[a-zA-Z0-9\-]+$"))
-            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.InvalidSlug));
+            return BadRequest(ApiResponse.Failure(ApiMessages.InvalidSlug));
 
         try
         {
@@ -127,7 +131,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
             var safeSlug = slug.Replace("\r", "").Replace("\n", "");
             var safeAssetType = assetType.Replace("\r", "").Replace("\n", "");
             logger.LogError(ex, "Failed to serve branding asset '{AssetType}' for slug '{Slug}'", safeAssetType, safeSlug);
-            return NotFound();
+            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
         }
     }
 
@@ -136,25 +140,26 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// Only users with the 'admin' role within this specific tenant can perform this action.
     /// </summary>
     /// <param name="id">The unique identifier of the tenant to suspend.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message if the suspension was successful.</returns>
     [HttpPost("{id}/suspend")]
     [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> SuspendTenant(Guid id)
+    public async Task<IActionResult> SuspendTenant(Guid id, CancellationToken cancellationToken = default)
     {
         if (id != tenantContext.TenantId)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
         }
 
         var command = new SuspendTenantCommand(id);
-        var success = await mediator.Send(command);
+        var success = await mediator.Send(command, cancellationToken);
         
-        if (!success) return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
+        if (!success) return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
 
-        return Ok(ApiResponse<object>.Ok(new { }, "Tenant suspended successfully."));
+        return Ok(ApiResponse<object>.Ok(new { }, ApiMessages.TenantSuspended));
     }
 
     /// <summary>
@@ -162,19 +167,21 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// Only users with the 'admin' role within this specific tenant can perform this action.
     /// </summary>
     /// <param name="request">The payload containing the email address of the user to invite.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The invitation token that was generated.</returns>
     [HttpPost("invitations")]
     [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Guid>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> InviteEmployee([FromBody] InviteEmployeeRequest request)
+    public async Task<IActionResult> InviteEmployee([FromBody] InviteEmployeeRequest request, CancellationToken cancellationToken = default)
     {
         var command = new InviteEmployeeCommand(request.Email);
-        var token = await mediator.Send(command);
+        var token = await mediator.Send(command, cancellationToken);
 
-        return Ok(ApiResponse<Guid>.Ok(token, "Invitation sent successfully."));
+        return Ok(ApiResponse<Guid>.Ok(token, ApiMessages.InvitationSent));
     }
+
     /// <summary>
     /// Retrieves a list of employees for the current tenant.
     /// </summary>
@@ -186,10 +193,11 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? search = null,
         [FromQuery] Guid? departmentId = null,
-        [FromQuery] Guid? userGroupId = null)
+        [FromQuery] Guid? userGroupId = null,
+        CancellationToken cancellationToken = default)
     {
         if (!tenantContext.TenantId.HasValue)
-            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
 
         var query = new Normora.Modules.Tenants.Application.Users.GetTenantEmployeesQuery(
             tenantContext.TenantId.Value, 
@@ -199,26 +207,26 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
             departmentId, 
             userGroupId);
             
-        var employees = await mediator.Send(query);
+        var employees = await mediator.Send(query, cancellationToken);
 
         return Ok(ApiResponse<Normora.Shared.Models.PagedResult<Normora.Modules.Tenants.Application.Users.TenantEmployeeDto>>.Ok(employees));
     }
-
 
     /// <summary>
     /// Retrieves employee statistics for the current tenant.
     /// </summary>
     [HttpGet("employees/stats")]
     [RequireTenant(TenantRoles.Admin)]
-    public async Task<IActionResult> GetEmployeeStats()
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Normora.Modules.Tenants.Application.Users.TenantStatsDto>))]
+    public async Task<IActionResult> GetEmployeeStats(CancellationToken cancellationToken = default)
     {
         if (!tenantContext.TenantId.HasValue)
-            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
 
         var query = new Normora.Modules.Tenants.Application.Users.GetTenantStatsQuery(tenantContext.TenantId.Value);
-        var stats = await mediator.Send(query);
+        var stats = await mediator.Send(query, cancellationToken);
 
-        return Ok(ApiResponse<object>.Ok(stats));
+        return Ok(ApiResponse<Normora.Modules.Tenants.Application.Users.TenantStatsDto>.Ok(stats));
     }
 
     /// <summary>
@@ -226,24 +234,30 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// Only Admins can perform this action.
     /// </summary>
     /// <param name="membershipId">The unique identifier of the tenant membership to remove.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message if removed.</returns>
     [HttpDelete("employees/{membershipId}")]
     [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> RemoveEmployee(Guid membershipId)
+    public async Task<IActionResult> RemoveEmployee(Guid membershipId, CancellationToken cancellationToken = default)
     {
         var command = new Normora.Modules.Tenants.Application.Users.RemoveEmployeeCommand(membershipId);
         
         // BolaException maps to 404. BflaException maps to 403 globally.
-        await mediator.Send(command);
+        await mediator.Send(command, cancellationToken);
 
-        return Ok(ApiResponse.Ok("Employee removed successfully."));
+        return Ok(ApiResponse.Ok(ApiMessages.EmployeeRemoved));
     }
 }
 
+/// <summary>
+/// Request payload for inviting an employee.
+/// </summary>
 public record InviteEmployeeRequest(string Email);
 
+/// <summary>
+/// Request payload for creating a tenant.
+/// </summary>
 public record CreateTenantRequest(string Name, string Slug);
-

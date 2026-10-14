@@ -32,8 +32,9 @@ public class DeleteDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
 
         if (department == null)
         {
-            return false;
+            throw new Normora.Shared.Exceptions.BolaException();
         }
+
 
         dbContext.Departments.Remove(department);
         await dbContext.SaveChangesAsync(cancellationToken);

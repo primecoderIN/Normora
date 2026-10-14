@@ -2,7 +2,7 @@ import { AppRoutes } from '@core/constants/app-routes';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { UserService } from '../services/user.service';
+import { UserService, CurrentUser, UserTenantMembership } from '../services/user.service';
 import { map } from 'rxjs/operators';
 
 export const roleGuard: CanActivateFn = (route) => {
@@ -17,10 +17,10 @@ export const roleGuard: CanActivateFn = (route) => {
   // However, roleGuard is attached to children. To be safe, we can check the sync value.
   const currentUser = userService.currentUser();
 
-  const validateRole = (user: any) => {
+  const validateRole = (user: CurrentUser | null) => {
     if (!user) return router.createUrlTree([AppRoutes.Login]);
     
-    const hasRole = user.memberships.some((m: any) => {
+    const hasRole = user.memberships.some((m: UserTenantMembership) => {
       const effectiveRole = m.role?.toLowerCase() === 'admin' ? 'employer' : 'employee';
       return effectiveRole === requiredRole;
     });

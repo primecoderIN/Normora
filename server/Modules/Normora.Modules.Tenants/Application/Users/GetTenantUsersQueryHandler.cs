@@ -11,19 +11,17 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
     public async Task<PagedResult<TenantEmployeeDto>> Handle(GetTenantEmployeesQuery request, CancellationToken cancellationToken)
     {
         var query = context.TenantMemberships
-            .Include(m => m.User)
-            .Include(m => m.MembershipDepartments).ThenInclude(md => md.Department)
-            .Include(m => m.UserGroupMemberships).ThenInclude(ugm => ugm.UserGroup)
             .Where(m => m.TenantId == request.TenantId) // Soft-delete filter is applied automatically
             .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            var search = request.Search.ToLower();
+            var searchPattern = $"%{request.Search.Trim()}%";
             query = query.Where(m => 
-                (m.User.DisplayName != null && m.User.DisplayName.ToLower().Contains(search)) || 
-                (m.User.Email != null && m.User.Email.ToLower().Contains(search)));
+                (m.User.DisplayName != null && EF.Functions.ILike(m.User.DisplayName, searchPattern)) || 
+                (m.User.Email != null && EF.Functions.ILike(m.User.Email, searchPattern)));
         }
+
 
         if (request.DepartmentId.HasValue)
         {

@@ -23,8 +23,9 @@ public class TenantContext : ITenantContext
     {
         if (IsTenantResolved)
         {
-            throw new InvalidOperationException("Tenant context is already set for this request.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextAlreadySet);
         }
+
 
         TenantId = tenantId;
         TenantRole = role;

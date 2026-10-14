@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Features.Documents;
 using Normora.Shared;
+using Normora.Shared.Contracts.Tenants;
 using Normora.Shared.Interfaces;
 using Normora.Api.Middleware;
 using System.Security.Claims;
@@ -21,19 +22,19 @@ namespace Normora.Api.Controllers;
 [Produces("application/json")]
 public class DocumentsController(IMediator mediator, ITenantContext tenantContext) : ControllerBase
 {
-
     /// <summary>
     /// Retrieves all documents for the currently authenticated tenant.
     /// Uses MediatR to send a GetEmployerDocumentsQuery. Data isolation is handled at the DbContext level.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of documents for the current tenant.</returns>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<List<DocumentDto>>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> GetDocuments()
+    public async Task<IActionResult> GetDocuments(CancellationToken cancellationToken = default)
     {
         var query = new GetEmployerDocumentsQuery();
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
 
         return Ok(ApiResponse<List<DocumentDto>>.Ok(result));
     }
@@ -43,18 +44,19 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// </summary>
     /// <param name="query">The search query.</param>
     /// <param name="limit">The maximum number of results to return.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of search results with relevance scores.</returns>
     [HttpGet("search")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<IReadOnlyList<DocumentSearchResult>>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> SearchDocuments([FromQuery] string query, [FromQuery] int limit = 5)
+    public async Task<IActionResult> SearchDocuments([FromQuery] string query, [FromQuery] int limit = 5, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
-            return BadRequest(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.SearchQueryRequired));
+            return BadRequest(ApiResponse.Failure(ApiMessages.SearchQueryRequired));
         }
 
-        var result = await mediator.Send(new SearchDocumentsQuery(query.Trim(), limit));
+        var result = await mediator.Send(new SearchDocumentsQuery(query.Trim(), limit), cancellationToken);
         return Ok(ApiResponse<IReadOnlyList<DocumentSearchResult>>.Ok(result));
     }
 
@@ -62,12 +64,14 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// Retrieves the content of a specific document chunk. Used for citation previews.
     /// Access is restricted to chunks that belong to documents visible to the current user.
     /// </summary>
+    /// <param name="chunkId">The unique chunk identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("chunks/{chunkId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<DocumentChunkPreviewDto>))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> GetDocumentChunk(Guid chunkId)
+    public async Task<IActionResult> GetDocumentChunk(Guid chunkId, CancellationToken cancellationToken = default)
     {
-        var result = await mediator.Send(new GetDocumentChunkQuery(chunkId));
+        var result = await mediator.Send(new GetDocumentChunkQuery(chunkId), cancellationToken);
         return Ok(ApiResponse<DocumentChunkPreviewDto>.Ok(result));
     }
 
@@ -77,6 +81,8 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// </summary>
     /// <param name="file">The physical file to upload.</param>
     /// <param name="departmentIds">Optional department IDs to assign to the document.</param>
+    /// <param name="documentId">Optional document container ID to append a new version.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The newly created document record.</returns>
     [HttpPost("upload")]
     [RequireTenant(TenantRoles.Admin)] // Security: only admins may add documents to the knowledge base
@@ -84,48 +90,42 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<DocumentDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    // Document Versioning (Phase 19): Added optional documentId parameter.
-    // If provided, the system appends a new file version to the existing document record.
-    public async Task<IActionResult> UploadDocument([FromForm] IFormFile file, [FromForm] Guid[]? departmentIds = null, [FromForm] Guid? documentId = null)
+    public async Task<IActionResult> UploadDocument(
+        [FromForm] IFormFile file, 
+        [FromForm] Guid[]? departmentIds = null, 
+        [FromForm] Guid? documentId = null,
+        CancellationToken cancellationToken = default)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // 1. Validation (file empty, size, extension) is handled automatically
-        // by FluentValidation through the MediatR Pipeline Behavior.
         var command = new UploadDocumentCommand(file, tenantContext.TenantId.Value, departmentIds, documentId);
-        
-        // 3. Dispatch the command to the MediatR handler.
-        var document = await mediator.Send(command);
+        var document = await mediator.Send(command, cancellationToken);
 
-        return Ok(ApiResponse<DocumentDto>.Ok(document, "Document uploaded successfully."));
+        return Ok(ApiResponse<DocumentDto>.Ok(document, ApiMessages.DocumentUploaded));
     }
 
     /// <summary>
     /// Permanently deletes a document from the system and storage.
     /// </summary>
     /// <param name="id">The unique identifier of the document to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message if deleted.</returns>
     [HttpDelete("{id}")]
     [RequireTenant(TenantRoles.Admin)] // Security: only admins may delete documents from the knowledge base
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> DeleteDocument(Guid id, [FromServices] Normora.Modules.Tenants.Persistence.TenantsDbContext tenantsDb)
+    public async Task<IActionResult> DeleteDocument(Guid id, CancellationToken cancellationToken = default)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // Resolve the internal UserId from the Keycloak subject claim so the soft-delete
-        // audit trail references our users table rather than an opaque Keycloak ID.
         var keycloakId = User.FindFirst("sub")?.Value ?? string.Empty;
-        var user = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(tenantsDb.Users, u => u.KeycloakUserId == keycloakId);
-        var deletedByUserId = user?.Id ?? Guid.Empty;
+        var userId = await mediator.Send(new GetUserIdQuery(keycloakId), cancellationToken);
+        var deletedByUserId = userId ?? Guid.Empty;
 
         var command = new DeleteDocumentCommand(id, tenantContext.TenantId.Value, deletedByUserId);
-        var deleted = await mediator.Send(command);
+        await mediator.Send(command, cancellationToken);
 
-        if (!deleted) return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
-
-        return Ok(ApiResponse.Ok("Document deleted successfully."));
+        return Ok(ApiResponse.Ok(ApiMessages.DocumentDeleted));
     }
 }
-

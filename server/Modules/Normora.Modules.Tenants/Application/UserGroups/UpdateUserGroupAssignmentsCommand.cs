@@ -45,8 +45,9 @@ public class UpdateUserGroupAssignmentsCommandHandler(TenantsDbContext dbContext
 
         if (group == null)
         {
-            return false;
+            throw new Normora.Shared.Exceptions.BolaException();
         }
+
 
         // Resolve user IDs to tenant membership IDs
         var membershipIds = await dbContext.TenantMemberships

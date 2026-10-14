@@ -51,8 +51,9 @@ public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
 
         if (group == null)
         {
-            return false;
+            throw new Normora.Shared.Exceptions.BolaException();
         }
+
 
         var exists = await dbContext.UserGroups
             .AnyAsync(g => g.TenantId == tenantContext.TenantId.Value 
