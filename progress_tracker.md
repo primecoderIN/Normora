@@ -216,3 +216,22 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Frontend: Created standalone `SharedConversationComponent` for read-only viewing of shared conversations, citations, and document previews.
 - [x] Frontend: Registered `/conversations/shared/:token` routes in `app.routes.ts`.
 
+## ✅ Completed Audit Logging
+- [x] Backend: Added `AuditLog` domain entity, `TenantsDbContext` model configuration, and EF Core migration `AddAuditLogs`.
+- [x] Backend: Added `IAuditableRequest` and `IAuditService` abstractions with `AuditBehavior` MediatR open pipeline behavior.
+- [x] Backend: Integrated auditable tracking across all mutations: document uploads, version creations, document deletions, invitations sent/accepted, employee removals, department & user group operations, branding updates, and tenant suspension.
+- [x] Backend: Added `GetAuditLogsQuery` with pagination, date filtering, action filtering, actor/target search, and `AuditLogsController` (`GET /api/audit-logs`).
+- [x] Frontend: Added `AuditLogService` with pagination and filter parameters.
+- [x] Frontend: Built modern `AuditLogsComponent` with responsive filters, color-coded action badges, pagination, skeleton loaders, and JSON detail inspection modal.
+- [x] Frontend: Added "Audit logs" navigation item in employer layout and registered routes in `app.routes.ts`.
+
+## ✅ Completed Subscription & Plan Limits
+- [x] Backend: Added `TenantPlan` domain entity (`Free`, `Pro`, `Enterprise` tiers with `MaxDocuments`, `MaxEmployees`, `MaxStorageBytes`), `TenantsDbContext` configuration, and EF Core migration `AddTenantPlans`.
+- [x] Backend: Added `PlanLimitExceededException` mapped globally to HTTP 402 Payment Required in `GlobalExceptionHandler`.
+- [x] Backend: Added quota enforcement in `UploadDocumentCommandHandler` (checking document count and storage bytes) and `InviteEmployeeCommandHandler` (checking seat limits).
+- [x] Backend: Added `GetTenantDocumentUsageQuery` and `CheckTenantUploadLimitQuery` contracts for cross-module quota checks.
+- [x] Backend: Added `GetTenantSubscriptionUsageQuery`, `UpdateTenantPlanTierCommand`, and `SubscriptionController` (`GET /api/subscription/usage`, `POST /api/subscription/tier`).
+- [x] Frontend: Added `SubscriptionService` with usage and tier update API methods.
+- [x] Frontend: Built `SubscriptionComponent` with real-time usage meters for documents, member seats, and storage, warning alerts when limits approach/exceed, and interactive plan tier selection cards.
+- [x] Frontend: Added "Subscription & Plans" navigation link to employer layout and registered routes in `app.routes.ts`.
+
