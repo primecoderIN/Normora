@@ -70,7 +70,12 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             };
             dbContext.TenantMemberships.Add(membership);
 
+            // Initialize default subscription plan (Free tier)
+            var plan = TenantPlan.CreateDefault(tenant.Id);
+            dbContext.TenantPlans.Add(plan);
+
             await dbContext.SaveChangesAsync(cancellationToken);
+
 
             // Commit the transaction to save all changes.
             await transaction.CommitAsync(cancellationToken);

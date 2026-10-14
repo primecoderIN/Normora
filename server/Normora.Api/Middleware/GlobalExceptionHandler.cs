@@ -75,6 +75,16 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             return true;
         }
 
+        // 6. Handle subscription plan limit exceeded errors.
+        // Maps to 402 Payment Required.
+        if (exception is PlanLimitExceededException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status402PaymentRequired;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(exception.Message), cancellationToken);
+            return true;
+        }
+
+
         // 5. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
         logger.LogError(exception, "An unhandled exception occurred.");
         

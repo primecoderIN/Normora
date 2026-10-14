@@ -42,4 +42,11 @@ public static class ApiMessages
     public const string SaveOnlyAssistant = "Only assistant messages can be saved.";
     public const string EmbeddingsNotConfigured = "Document search requires AI embeddings to be configured.";
     public const string DocumentNotFound = "The specified document was not found in this workspace.";
+
+    // Subscription & Plan Limits
+    public const string PlanDocumentLimitExceeded = "You have reached your workspace document limit. Please upgrade your subscription to upload more documents.";
+    public const string PlanEmployeeLimitExceeded = "You have reached your workspace member limit. Please upgrade your subscription to invite more members.";
+    public const string PlanStorageLimitExceeded = "This file exceeds your workspace remaining storage quota. Please upgrade your subscription.";
+    public const string PlanLimitExceeded = "Your workspace has exceeded its subscription plan limits.";
 }
+

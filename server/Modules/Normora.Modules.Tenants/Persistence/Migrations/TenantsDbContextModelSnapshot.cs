@@ -268,6 +268,46 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.ToTable("TenantMemberships");
                 });
 
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MaxDocuments")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxEmployees")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("MaxStorageBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PlanTier")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ValidUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("TenantPlans");
+                });
+
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -443,6 +483,17 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.Navigation("Tenant");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantPlan", b =>
+                {
+                    b.HasOne("Normora.Modules.Tenants.Domain.Tenant", "Tenant")
+                        .WithOne()
+                        .HasForeignKey("Normora.Modules.Tenants.Domain.TenantPlan", "TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.UserGroup", b =>

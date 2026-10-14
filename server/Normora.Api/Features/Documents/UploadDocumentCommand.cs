@@ -87,11 +87,19 @@ public sealed class UploadDocumentCommandHandler(
     DocumentsDbContext context,
     IDocumentStorageService storageService,
     IBackgroundJobClient backgroundJobClient,
-    IHubContext<DocumentHub> hubContext) : IRequestHandler<UploadDocumentCommand, DocumentDto>
+    IHubContext<DocumentHub> hubContext,
+    IMediator mediator) : IRequestHandler<UploadDocumentCommand, DocumentDto>
 {
     public async Task<DocumentDto> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
+        // Enforce subscription plan limits before initiating binary storage upload
+        await mediator.Send(new Normora.Shared.Contracts.Tenants.CheckTenantUploadLimitQuery(
+            request.TenantId,
+            request.File.Length,
+            !request.DocumentId.HasValue), cancellationToken);
+
         // Persist the binary before metadata so a database row never points to an object
+
         // that was not successfully stored. The tenant ID becomes part of the object key.
         var objectName = await storageService.UploadDocumentAsync(request.File, request.TenantId.ToString());
 

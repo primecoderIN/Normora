@@ -25,6 +25,8 @@ public class TenantsDbContext : DbContext
     public DbSet<UserGroupMembership> UserGroupMemberships { get; set; } = null!;
     public DbSet<UserGroupDepartment> UserGroupDepartments { get; set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+    public DbSet<TenantPlan> TenantPlans { get; set; } = null!;
+
 
     /// <summary>
     /// Configures the relational mappings and strict uniqueness constraints required for multi-tenancy.
@@ -210,6 +212,20 @@ public class TenantsDbContext : DbContext
                   .HasForeignKey(a => a.TenantId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // TenantPlan Configuration — 1-to-1 with Tenant
+        modelBuilder.Entity<TenantPlan>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.HasIndex(p => p.TenantId).IsUnique();
+            entity.Property(p => p.PlanTier).HasConversion<string>().HasMaxLength(20);
+
+            entity.HasOne(p => p.Tenant)
+                  .WithOne()
+                  .HasForeignKey<TenantPlan>(p => p.TenantId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
+
 

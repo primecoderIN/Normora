@@ -52,7 +52,24 @@ public class InviteEmployeeCommandHandler : IRequestHandler<InviteEmployeeComman
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.PendingInvitationExists);
         }
 
+        // Enforce employee quota based on subscription plan
+        var plan = await context.TenantPlans
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken)
+            ?? TenantPlan.CreateDefault(tenantId);
+
+        var currentMembers = await context.TenantMemberships
+            .CountAsync(m => m.TenantId == tenantId && m.RemovedAt == null, cancellationToken);
+        var pendingInvites = await context.TenantInvitations
+            .CountAsync(i => i.TenantId == tenantId && i.Status == InvitationStatus.Pending, cancellationToken);
+
+        if (currentMembers + pendingInvites >= plan.MaxEmployees)
+        {
+            throw new Normora.Shared.Exceptions.PlanLimitExceededException(Normora.Shared.Constants.ApiMessages.PlanEmployeeLimitExceeded);
+        }
+
         // Create the new invitation token which the employee will use to accept the invite
+
         var invitation = new TenantInvitation
         {
             Email = request.Email,
