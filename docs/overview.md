@@ -20,6 +20,8 @@ Normora is an enterprise-grade full-stack web application. It is designed to be 
 - **Department & User Group Isolation**: Documents and users can be segmented into Departments and User Groups. The hybrid search pipeline strictly filters answers so employees only ever interact with Company Wide documents or documents restricted to their assigned departments.
 - **Personal Workspaces**: Every user is automatically provisioned a private, personal workspace. Personal workspaces offer simplified organization (e.g. no departmental segregation) and allow individuals to curate and chat with their own private documents securely.
 - **Audit Trails & Soft Deletion**: Employee removals and document deletions utilize a soft-deletion architecture backed by Global Query Filters, ensuring critical audit history is preserved and accidental data loss is prevented.
+- **Enterprise Audit Logging**: MediatR pipeline behaviors automatically intercept and record all critical workspace mutations (document uploads/deletions, member invitations/removals, department and group changes, branding modifications). Employers can inspect, filter, and review JSON-level audit events through a dedicated UI.
+- **Subscription & Plan Limits**: Strict resource quota enforcement across plan tiers (`Free`, `Pro`, `Enterprise`). Validates document counts, member seats, and storage bytes prior to operations, exposing usage meters and real-time upgrade pathways.
 - **Deferred Physical Data Purge**: Soft-deleted resources undergo physical cleanup (e.g., permanent deletion of MinIO objects and vector chunks) via scheduled Hangfire background jobs to comply with data retention policies while maintaining UI responsiveness.
 
 ## Target Audience

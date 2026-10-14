@@ -91,6 +91,47 @@ Logical groupings of users that inherit access to specific departments.
 
 ---
 
+### `AuditLogs`
+Records all critical administrative and domain events executed within the tenant workspace.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uniqueidentifier` | ❌ | PK |
+| `TenantId` | `uniqueidentifier` | ❌ | FK → `Tenants.Id` (`Cascade`) |
+| `UserId` | `uniqueidentifier` | ❌ | The user ID who performed the action |
+| `Action` | `varchar(100)` | ❌ | Action name (e.g., `Document.Upload`, `Employee.Invite`) |
+| `TargetType` | `varchar(100)` | ✅ | Type of entity affected (e.g., `Document`, `Employee`) |
+| `TargetId` | `varchar(100)` | ✅ | Entity ID affected |
+| `Metadata` | `text` | ✅ | JSON payload containing event context |
+| `CreatedAtUtc` | `datetime2` | ❌ | UTC timestamp |
+
+**Indexes:**
+- `IX_AuditLogs_TenantId_CreatedAtUtc`
+- `IX_AuditLogs_TenantId_Action`
+
+---
+
+### `TenantPlans`
+Defines subscription tiers and resource limits for multi-tenant quota enforcement.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uniqueidentifier` | ❌ | PK |
+| `TenantId` | `uniqueidentifier` | ❌ | FK → `Tenants.Id` (`Cascade`), **Unique** |
+| `PlanTier` | `int` | ❌ | Enum: `Free=0`, `Pro=1`, `Enterprise=2` |
+| `Status` | `varchar(50)` | ❌ | `Active`, `PastDue`, `Canceled` |
+| `MaxDocuments` | `int` | ❌ | Limit on active documents (Free: 25, Pro: 250, Enterprise: 5000) |
+| `MaxEmployees` | `int` | ❌ | Limit on team member seats (Free: 5, Pro: 50, Enterprise: 1000) |
+| `MaxStorageBytes` | `bigint` | ❌ | Storage cap in bytes (Free: 50MB, Pro: 1GB, Enterprise: 25GB) |
+| `StartDateUtc` | `datetime2` | ❌ | Subscription start date |
+| `RenewalDateUtc` | `datetime2` | ✅ | Subscription renewal / next billing date |
+| `CreatedAtUtc` | `datetime2` | ❌ | UTC timestamp |
+| `UpdatedAtUtc` | `datetime2` | ❌ | UTC timestamp |
+
+**Indexes:** `UX_TenantPlans_TenantId` (Unique)
+
+---
+
 ## Module: Documents (`documents` schema)
 Handles the document processing lifecycle, chunking, and vector embeddings.
 
@@ -220,3 +261,21 @@ Stores thumbs-up/thumbs-down ratings from users on assistant messages.
 | `Comment` | `nvarchar(500)` | ✅ | Optional feedback text |
 
 **Indexes:** `UX_MessageFeedbacks_UserId_MessageId` (Unique)
+
+---
+
+### `ConversationShares`
+Enables secure snapshot sharing of assistant conversations via unique cryptographic URL tokens.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uniqueidentifier` | ❌ | PK |
+| `ConversationId` | `uniqueidentifier` | ❌ | FK → `Conversations.Id` (`Cascade`) |
+| `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
+| `ShareToken` | `varchar(64)` | ❌ | Base62 unique cryptographic token |
+| `CreatedByUserId` | `nvarchar(max)` | ❌ | Keycloak Subject ID of the owner |
+| `CreatedAtUtc` | `datetime2` | ❌ | UTC timestamp |
+| `ExpiresAtUtc` | `datetime2` | ✅ | Optional expiration timestamp |
+| `RevokedAtUtc` | `datetime2` | ✅ | Soft revocation timestamp |
+
+**Indexes:** `UX_ConversationShares_ShareToken` (Unique)

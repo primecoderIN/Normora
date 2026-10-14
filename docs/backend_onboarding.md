@@ -36,28 +36,22 @@ public async Task<IActionResult> Create([FromBody] CreateDepartmentCommand comma
 }
 ```
 
-2. **The Handler**: The actual business logic lives here.
+2. **The Handler**: The actual business logic lives here (using modern C# Primary Constructors for clean DI):
 ```csharp
-public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCommand, Guid>
+public class CreateDepartmentCommandHandler(TenantsDbContext db, ITenantContext tenantContext) 
+    : IRequestHandler<CreateDepartmentCommand, Guid>
 {
-    private readonly TenantsDbContext _db;
-    private readonly ITenantContext _tenantContext;
-
-    public CreateDepartmentCommandHandler(TenantsDbContext db, ITenantContext tenantContext)
-    {
-        _db = db;
-        _tenantContext = tenantContext; // Automatically resolved from headers
-    }
-
     public async Task<Guid> Handle(CreateDepartmentCommand request, CancellationToken ct)
     {
-        var dept = new Department { Name = request.Name, TenantId = _tenantContext.TenantId };
-        _db.Departments.Add(dept);
-        await _db.SaveChangesAsync(ct);
+        var dept = new Department { Name = request.Name, TenantId = tenantContext.TenantId };
+        db.Departments.Add(dept);
+        await db.SaveChangesAsync(ct);
         return dept.Id;
     }
 }
 ```
+
+3. **Pipeline Behaviors**: Cross-cutting concerns are handled via open pipeline behaviors (e.g., `AuditBehavior<TRequest, TResponse>`). By implementing marker interfaces such as `IAuditableRequest`, commands automatically trigger structured audit event logging on completion without polluting handler business logic.
 
 ---
 

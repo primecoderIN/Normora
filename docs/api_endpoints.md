@@ -30,8 +30,8 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 | `POST` | `/invitations` | RequireTenant(Employer) | Invite a user to the current tenant by email. |
 | `GET` | `/invitations/my` | Authenticated | List all pending invitations for the current user. |
 | `POST` | `/invitations/{id}/accept` | Authenticated | Accept an invitation to join a tenant. |
-| `GET` | `/tenants/employees` | RequireTenant(Admin, Employee) | List employees with pagination, search, and department/group filters. (Phase 21) |
-| `DELETE` | `/tenants/employees/{membershipId}` | RequireTenant(Admin) | Remove an employee's membership from the current workspace (Soft delete). (Phase 21) |
+| `GET` | `/tenants/employees` | RequireTenant(Admin, Employee) | List employees with pagination, search, and department/group filters. |
+| `DELETE` | `/tenants/employees/{membershipId}` | RequireTenant(Admin) | Remove an employee's membership from the current workspace (Soft delete). |
 
 ---
 
@@ -62,9 +62,10 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
 | `GET` | `/documents` | RequireTenant(Employer) | List all uploaded documents and their processing status (`Uploaded`, `Processing`, `Ready`, `Failed`). |
-| `POST` | `/documents/upload` | RequireTenant(Employer) | Upload a document (PDF, TXT) and assign it to departments or Company Wide. |
-| `DELETE` | `/documents/{id}` | RequireTenant(Employer) | Soft-delete a document and broadcast a real-time event. Physical deletion is handled by a Hangfire job after 30 days. (Phase 20) |
+| `POST` | `/documents/upload` | RequireTenant(Employer) | Upload a document (PDF, TXT) and assign it to departments or Company Wide. Quota-checked against subscription plan limits. |
+| `DELETE` | `/documents/{id}` | RequireTenant(Employer) | Soft-delete a document and broadcast a real-time event. Physical deletion is handled by a Hangfire job after 30 days. |
 | `GET` | `/documents/search` | RequireTenant(Employee) | Perform a hybrid vector/keyword search across tenant documents. Filtered by the user's assigned departments. |
+| `GET` | `/documents/chunks/{chunkId}` | RequireTenant(Employee) | Retrieve full text and metadata of a specific chunk for citation preview. Enforces department authorization. |
 
 ---
 
@@ -78,6 +79,33 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 | `POST` | `/conversations/{id}/messages` | RequireTenant(Employee) | Send a follow-up message in an existing conversation (Multi-turn RAG). |
 | `POST` | `/conversations/{id}/messages/{messageId}/feedback` | RequireTenant(Employee) | Submit a Positive (1) or Negative (2) rating for an AI message. |
 | `DELETE` | `/conversations/{id}` | RequireTenant(Employee) | Delete a conversation history. |
+| `POST` | `/conversations/{id}/share` | RequireTenant(Employee) | Create or retrieve a shareable read-only link token for a conversation. |
+| `GET` | `/conversations/shared/{token}` | Authenticated | Fetch a read-only snapshot of a shared conversation by token. |
+
+---
+
+## 💡 Suggestions
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/suggestions` | RequireTenant(Employee) | Generate dynamic AI suggested prompt questions based on accessible department documents. |
+
+---
+
+## 🛡️ Audit Logs
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/audit-logs` | RequireTenant(Employer) | List paginated audit trail events with optional filters (`action`, `userId`, `fromDate`, `toDate`, `search`). |
+
+---
+
+## 💳 Subscription & Plans
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/subscription/usage` | RequireTenant(Employer) | Fetch tenant resource usage (documents, member seats, storage bytes) compared against current plan limits. |
+| `POST` | `/subscription/tier` | RequireTenant(Employer) | Upgrade or change tenant subscription tier (`Free`, `Pro`, `Enterprise`). |
 
 ---
 

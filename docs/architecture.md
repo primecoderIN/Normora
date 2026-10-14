@@ -354,3 +354,104 @@ Normora relies heavily on soft deletion (`DeletedAt`, `RemovedAt`) combined with
 - **Document Purge**: Soft-deleted documents broadcast a SignalR event for optimistic UI updates. They are physically deleted from MinIO (and database rows purged) via a nightly Hangfire job (`PurgeDeletedDocumentsJob`) after a 30-day grace period.
 - **Local-First Identity Sync**: Removing an employee soft-deletes their `TenantMembership` locally first. Access is instantly revoked via Global Query Filters. Afterward, a best-effort `IHttpClientFactory` call attempts to un-sync the user from the Keycloak Admin API, safely logging any errors without rolling back the local transaction. This protects against identity provider outages preventing critical access revocations.
 
+## Audit Logging Architecture
+
+Normora implements automatic, cross-cutting audit logging via MediatR's open pipeline behavior pattern (`IPipelineBehavior<TRequest, TResponse>`).
+
+### 1. The `IAuditableRequest` Abstraction
+Any MediatR command that modifies tenant state implements the `IAuditableRequest` marker interface:
+
+```csharp
+public interface IAuditableRequest
+{
+    string Action { get; }
+    string? TargetType => null;
+    string? TargetId => null;
+    object? GetAuditMetadata() => null;
+}
+```
+
+Audited operations include:
+- `UploadDocumentCommand` (`Document.Upload`)
+- `DeleteDocumentCommand` (`Document.Delete`)
+- `InviteEmployeeCommand` (`Employee.Invite`)
+- `AcceptInvitationCommand` (`Employee.AcceptInvitation`)
+- `RemoveEmployeeCommand` (`Employee.Remove`)
+- Department CRUD (`Department.Create`, `Department.Update`, `Department.Delete`)
+- User Group CRUD (`UserGroup.Create`, `UserGroup.Update`, `UserGroup.Delete`)
+- `UpdateTenantBrandingCommand` (`Tenant.UpdateBranding`)
+- `SuspendTenantCommand` (`Tenant.Suspend`)
+
+### 2. MediatR `AuditBehavior`
+The pipeline behavior intercepts requests before and after execution:
+1. Checks if the incoming request implements `IAuditableRequest`.
+2. Resolves active tenant context (`ITenantContext`) and authenticated actor (`ICurrentUser`).
+3. Executes the inner request handler (`await next()`).
+4. If successful, creates an `AuditLog` domain record via `IAuditService` containing:
+   - `TenantId` (guaranteed tenant boundary)
+   - `UserId` (authenticated actor GUID)
+   - `Action` (e.g. `Document.Upload`)
+   - `TargetType` & `TargetId` (affected resource)
+   - `Metadata` (serialized JSON context)
+   - `CreatedAtUtc` (UTC timestamp)
+
+```csharp
+public class AuditBehavior<TRequest, TResponse>(
+    IAuditService auditService,
+    ITenantContext tenantContext,
+    ICurrentUser currentUser) : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
+{
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+    {
+        var response = await next();
+        if (request is IAuditableRequest auditable && tenantContext.HasTenant)
+        {
+            await auditService.LogAsync(
+                tenantContext.TenantId,
+                currentUser.UserId,
+                auditable.Action,
+                auditable.TargetType,
+                auditable.TargetId,
+                auditable.GetAuditMetadata(),
+                ct);
+        }
+        return response;
+    }
+}
+```
+
+### 3. Querying and UI
+Employers access audit logs via `GET /api/audit-logs` (`GetAuditLogsQuery`). The endpoint supports cursor-style or page-based pagination, date-range filtering (`fromDate`, `toDate`), action category filtering, and keyword search against metadata and actor display names.
+
+---
+
+## Subscription & Plan Limits Architecture
+
+Multi-tenant SaaS scalability requires strict governance over shared compute, storage, and AI resource consumption. Normora implements tier-based quota management directly in the core application pipeline.
+
+### 1. Tier Definitions
+Each workspace is associated with a `TenantPlan` record (`tenants.tenant_plans`):
+
+| Plan Tier | Max Documents | Max Employees | Max Storage Bytes | Description |
+|---|---|---|---|---|
+| **Free** | 25 | 5 | 50 MB | Starter tier for small teams and evaluations. |
+| **Pro** | 250 | 50 | 1 GB | Growth tier for departmental knowledge bases. |
+| **Enterprise** | 5,000 | 1,000 | 25 GB | Full-scale enterprise tier with advanced quotas. |
+
+### 2. Cross-Module Quota Verification
+Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
+- The `Documents` module exposes CQRS query contracts (`GetTenantDocumentUsageQuery` and `CheckTenantUploadLimitQuery`).
+- When a document upload is initiated (`UploadDocumentCommandHandler`):
+  1. The handler retrieves the tenant's active `TenantPlan`.
+  2. Queries current document usage (count of non-deleted documents and sum of stored file sizes).
+  3. Verifies that `currentDocs + 1 <= MaxDocuments` and `currentBytes + incomingFile.Length <= MaxStorageBytes`.
+  4. If either quota would be exceeded, throws a `PlanLimitExceededException`.
+- Similarly, `InviteEmployeeCommandHandler` validates current active memberships (`Count < MaxEmployees`) before dispatching new invitations.
+
+### 3. HTTP 402 Payment Required & Client Handling
+- `PlanLimitExceededException` is caught by `GlobalExceptionHandler` and mapped to HTTP `402 Payment Required` with a structured `ApiResponse.Failure(ApiMessages.PlanLimitExceeded)`.
+- The Angular frontend interceptor handles 402 responses and surfaces clear, actionable upgrade guidance rather than generic failure toasts.
+- The `SubscriptionComponent` provides real-time resource meters (visual progress bars indicating document, seat, and storage utilization percentages) alongside tier cards for one-click plan upgrades.
+
+

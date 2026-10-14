@@ -32,12 +32,19 @@ The application follows a strictly modular structure, separating core logic from
 
 ```
 client/src/app/
-├── core/             # Singleton services (Auth, Tenant Context, API interceptors)
+├── core/             # Singleton services (Auth, Tenant Context, API interceptors, Realtime)
 ├── shared/           # Reusable UI components, pipes, and directives
 ├── features/         # Domain-specific modules
 │   ├── auth/         # Login callbacks, Keycloak integration
-│   ├── employer/     # Employer portal (Document management, Users, Departments)
-│   └── employee/     # Employee portal (Ask Normora / Conversational RAG)
+│   ├── employer/     # Employer portal
+│   │   ├── dashboard/   # Overview statistics
+│   │   ├── documents/   # Document management, versioning, status tracking
+│   │   ├── employees/   # Team roster, roles, invite modal, pagination
+│   │   └── settings/    # Branding, Departments, User Groups, Audit Logs, Subscription
+│   └── employee/     # Employee portal
+│       ├── ask/         # Ask Normora / Conversational RAG with citation drawers & suggestions
+│       ├── saved/       # Bookmarked answers with multi-format export (PDF/DOCX/MD)
+│       └── profile/     # User profile and linked workspaces
 └── layout/           # Main application shell, Sidebar, Header
 ```
 

@@ -1772,17 +1772,17 @@ Scanned PDFs (image-based) contain no extractable text. Apache Tika with a Tesse
 
 The following phases extend the Phase plan in §31 to cover the features described in this section.
 
-#### Phase 17 — Export Answers
-- `IAnswerExporter` abstraction and `MarkdownAnswerExporter` implementation
-- QuestPDF-based `PdfAnswerExporter`
-- Hangfire export job with MinIO pre-signed URL delivery
-- Angular export button and format dropdown on saved-answers page
+#### Phase 17 — Export Answers (Completed)
+- ✅ `IAnswerExporter` abstraction and `MarkdownAnswerExporter` implementation
+- ✅ QuestPDF-based `PdfAnswerExporter`
+- ✅ OpenXML-based `DocxAnswerExporter`
+- ✅ Angular export button and format dropdown on saved-answers page with in-process stream downloads
 
-#### Phase 18 — Answer Feedback
-- `MessageFeedback` entity, EF migration, and unique index
-- `SubmitFeedbackCommand` + handler
-- `POST /api/conversations/{id}/messages/{messageId}/feedback` endpoint
-- Thumbs-up / thumbs-down UI in the chat bubble
+#### Phase 18 — Answer Feedback (Completed)
+- ✅ `MessageFeedback` entity, EF migration, and unique index
+- ✅ `SubmitFeedbackCommand` + handler
+- ✅ `POST /api/conversations/{id}/messages/{messageId}/feedback` endpoint
+- ✅ Thumbs-up / thumbs-down UI in the chat bubble
 
 #### Phase 19 — Document Versioning (Completed)
 - ✅ `DocumentVersions` table and EF migration
@@ -1792,21 +1792,22 @@ The following phases extend the Phase plan in §31 to cover the features describ
 - ✅ Outdated citation warnings on old saved answers
 - ✅ Handled existing FK constraint issues during migration via custom sequence
 
-#### Phase 20 — Document Deletion
-- Soft-delete fields on `Documents` + EF global query filter
-- `DeleteDocumentCommand` + SignalR notification
-- `PurgeDeletedDocumentsJob` Hangfire scheduled job
-- Confirmation dialog in Angular document list
+#### Phase 20 — Document Deletion (Completed)
+- ✅ Soft-delete fields on `Documents` + EF global query filter
+- ✅ `DeleteDocumentCommand` + SignalR notification
+- ✅ `PurgeDeletedDocumentsJob` Hangfire scheduled job
+- ✅ Confirmation dialog in Angular document list
 
-#### Phase 21 — Full Employee Management
-- `GetTenantEmployeesQuery` with pagination and department/group filters
-- `RemoveEmployeeCommand` + Keycloak Admin API revocation
-- Full employer Employee Management page
+#### Phase 21 — Full Employee Management (Completed)
+- ✅ `GetTenantEmployeesQuery` with pagination and department/group filters
+- ✅ `RemoveEmployeeCommand` + Keycloak Admin API revocation
+- ✅ Full employer Employee Management page with soft-delete safeguards
 
-#### Phase 22 — Audit Log
-- `AuditLog` entity, EF migration
-- `AuditBehavior` MediatR pipeline behavior
-- Read-only Audit Log page in Employer Settings
+#### Phase 22 — Audit Log (Completed)
+- ✅ `AuditLog` entity, EF migration `AddAuditLogs`
+- ✅ `IAuditableRequest` and `AuditBehavior` MediatR open pipeline behavior
+- ✅ Comprehensive audit coverage across document, employee, department, user group, and branding mutations
+- ✅ Read-only Audit Log page in Employer Settings with filtering, pagination, and JSON viewer
 
 #### Phase 23 — Email Notifications
 - `IEmailSender` abstraction + SendGrid implementation
@@ -1818,10 +1819,11 @@ The following phases extend the Phase plan in §31 to cover the features describ
 - `GetTenantAnalyticsQuery`
 - Chart-based Analytics page in Employer dashboard
 
-#### Phase 25 — Subscription / Plan Limits
-- `TenantPlan` + `TenantUsage` entities
-- Limit enforcement in upload and invitation handlers
-- Usage display in Employer Settings
+#### Phase 25 — Subscription / Plan Limits (Completed)
+- ✅ `TenantPlan` domain entity (`Free`, `Pro`, `Enterprise` tiers) and EF migration `AddTenantPlans`
+- ✅ `PlanLimitExceededException` mapped to HTTP 402 Payment Required in `GlobalExceptionHandler`
+- ✅ Proactive limit enforcement in document upload (count + storage bytes) and employee invitation handlers
+- ✅ Real-time usage meters and interactive plan tier selection cards in Employer Settings
 
 #### Phase 26 — Redis Application Caching
 - `ICacheService` abstraction + Redis implementation
@@ -1867,13 +1869,11 @@ Since we already have an ASP.NET Core API, we can configure it to act as both th
 #### Option B: Node.js / Next.js BFF (If we ever migrate from Angular)
 If the frontend was a meta-framework like Next.js, the Node server would act as the BFF natively (e.g., via NextAuth). For Angular, this would require spinning up a dedicated Express proxy just for auth.
 
-### 13.4. Recommendation for Normora
-**Verdict: Postpone until required by enterprise compliance.**
+### 13.4. Final Status: Fully Implemented (Option A)
+**Verdict: Implemented and In Production.**
 
-While BFF is technically more secure against XSS, our current implementation using **OIDC + PKCE** is highly robust and perfectly acceptable for V1.
-Implementing a BFF requires a significant architectural shift:
-1. Stripping `angular-auth-oidc-client` from the frontend.
-2. Handling anti-CSRF tokens for the new HTTP-Only cookies.
-3. Dealing with CORS and cookie domain restrictions if the frontend (`localhost:4200`) and backend (`localhost:5000`) are on different ports/domains during development.
-
-**Next Steps**: We will stick with the Public Client + PKCE architecture for now. If Enterprise clients specifically request HTTP-Only cookie auth for compliance reasons (e.g., strict SOC2 or HIPAA requirements), we will pivot to the `Duende.BFF` model in ASP.NET Core.
+Normora transitioned fully to the **Backend-For-Frontend (BFF)** pattern utilizing `Duende.BFF` and `Duende.BFF.EntityFramework` in ASP.NET Core:
+1. **Token Elimination**: Browser storage (LocalStorage/SessionStorage) contains zero tokens. Authentication is backed by an `HttpOnly`, `SameSite=Strict`, encrypted `__Host-spa` cookie.
+2. **Persistent Sessions**: User sessions are backed by PostgreSQL via `Duende.BFF.EntityFramework`, preventing session drops across container recycles.
+3. **CSRF Protection**: All state-modifying requests require the `X-CSRF: 1` header, automatically injected via Angular HTTP interceptor.
+4. **SignalR Integration**: Realtime hubs are secured with `.AsBffApiEndpoint()`, eliminating unauthenticated redirect loops.
