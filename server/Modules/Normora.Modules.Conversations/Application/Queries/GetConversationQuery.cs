@@ -36,7 +36,8 @@ public record MessageCitationDto(
 
 public class GetConversationQueryHandler(
     ConversationsDbContext context,
-    ICurrentUser currentUser) : IRequestHandler<GetConversationQuery, ConversationDetailDto?>
+    ICurrentUser currentUser,
+    IMediator mediator) : IRequestHandler<GetConversationQuery, ConversationDetailDto?>
 {
     public async Task<ConversationDetailDto?> Handle(GetConversationQuery request, CancellationToken cancellationToken)
     {
@@ -54,25 +55,11 @@ public class GetConversationQueryHandler(
             throw new Normora.Shared.Exceptions.BolaException();
         }
 
-        // Document Versioning (Phase 19): Identify citations that belong to inactive document versions.
+        // Identify citations that belong to inactive document versions
         var chunkIds = conversation.Messages.SelectMany(m => m.Citations.Select(c => c.DocumentChunkId)).Distinct().ToList();
-        var outdatedChunkIds = new HashSet<Guid>();
-        
-        if (chunkIds.Any())
-        {
-            var sql = $@"
-                SELECT c.""Id"" 
-                FROM ""DocumentChunks"" c
-                JOIN ""DocumentVersions"" v ON c.""DocumentVersionId"" = v.""Id""
-                WHERE v.""IsActive"" = false AND c.""Id"" = ANY(@chunkIds)";
-
-            var param = new Npgsql.NpgsqlParameter("chunkIds", chunkIds.ToArray());
-            var results = await context.Database.SqlQueryRaw<Guid>(sql, param).ToListAsync(cancellationToken);
-            foreach (var id in results)
-            {
-                outdatedChunkIds.Add(id);
-            }
-        }
+        var outdatedChunkIds = chunkIds.Count > 0
+            ? await mediator.Send(new Normora.Shared.Contracts.Documents.GetOutdatedChunkIdsQuery(chunkIds), cancellationToken)
+            : [];
 
         return new ConversationDetailDto(
             conversation.Id,

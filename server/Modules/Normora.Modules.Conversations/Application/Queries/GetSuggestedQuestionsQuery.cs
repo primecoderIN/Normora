@@ -1,9 +1,6 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Conversations.Application.Services;
-using Normora.Modules.Conversations.Persistence;
 using Normora.Shared.Interfaces;
-using Npgsql;
 
 namespace Normora.Modules.Conversations.Application.Queries;
 
@@ -26,13 +23,10 @@ public record SuggestedQuestionDto(string Question, string IconClass);
 /// Falls back to 3 static questions if no documents exist or if the AI call fails.
 /// </summary>
 public class GetSuggestedQuestionsQueryHandler(
-    ConversationsDbContext context,
     ISuggestionsService suggestionsService,
-    ITenantContext tenantContext) : IRequestHandler<GetSuggestedQuestionsQuery, IReadOnlyList<SuggestedQuestionDto>>
+    ITenantContext tenantContext,
+    IMediator mediator) : IRequestHandler<GetSuggestedQuestionsQuery, IReadOnlyList<SuggestedQuestionDto>>
 {
-    // Status enum value 2 = Ready (DocumentStatus.Ready in the Documents module)
-    private const int DocumentStatusReady = 2;
-
     // Static icon classes cycled over the returned suggestions
     private static readonly string[] Icons =
     [
@@ -60,69 +54,17 @@ public class GetSuggestedQuestionsQueryHandler(
             return FallbackSuggestions;
         }
 
-        var tenantId = tenantContext.TenantId.Value;
         var effectiveDepts = tenantContext.EffectiveDepartments.ToArray();
-
-        // Cross-module raw SQL: Read document filenames from the Documents module's tables.
-        // This is safe in a modular monolith that shares a single database — raw SQL is the
-        // intentional cross-module boundary here (no EF entity references across modules).
-        //
-        // Filter: tenant-owned, not soft-deleted, active version is Ready, and scoped to
-        // Company Wide (no dept assignments) OR the user's effective departments.
-        // Cap at 20 names to keep the Gemini prompt small and cheap.
-
-        string sql;
-        List<string> documentNames;
+        IReadOnlyList<string> documentNames;
 
         try
         {
-            if (effectiveDepts.Length == 0)
-            {
-                // No department assignments → only company-wide docs (those with no dept rows)
-                sql = """
-                    SELECT DISTINCT d."FileName"
-                    FROM "Documents" d
-                    JOIN "DocumentVersions" dv ON dv."DocumentId" = d."Id" AND dv."IsActive" = true
-                    LEFT JOIN "DocumentDepartments" dd ON dd."DocumentId" = d."Id"
-                    WHERE d."TenantId" = @tenantId
-                      AND d."DeletedAt" IS NULL
-                      AND dv."Status" = @status
-                      AND dd."DepartmentId" IS NULL
-                    LIMIT 20
-                    """;
-
-                documentNames = await context.Database
-                    .SqlQueryRaw<string>(sql,
-                        new NpgsqlParameter("tenantId", tenantId),
-                        new NpgsqlParameter("status", DocumentStatusReady))
-                    .ToListAsync(cancellationToken);
-            }
-            else
-            {
-                // Has departments → company-wide + their departments
-                sql = """
-                    SELECT DISTINCT d."FileName"
-                    FROM "Documents" d
-                    JOIN "DocumentVersions" dv ON dv."DocumentId" = d."Id" AND dv."IsActive" = true
-                    LEFT JOIN "DocumentDepartments" dd ON dd."DocumentId" = d."Id"
-                    WHERE d."TenantId" = @tenantId
-                      AND d."DeletedAt" IS NULL
-                      AND dv."Status" = @status
-                      AND (dd."DepartmentId" IS NULL OR dd."DepartmentId" = ANY(@deptIds))
-                    LIMIT 20
-                    """;
-
-                documentNames = await context.Database
-                    .SqlQueryRaw<string>(sql,
-                        new NpgsqlParameter("tenantId", tenantId),
-                        new NpgsqlParameter("status", DocumentStatusReady),
-                        new NpgsqlParameter("deptIds", effectiveDepts))
-                    .ToListAsync(cancellationToken);
-            }
+            documentNames = await mediator.Send(
+                new Normora.Shared.Contracts.Documents.GetAccessibleDocumentFileNamesQuery(effectiveDepts, Limit: 20),
+                cancellationToken);
         }
         catch (Exception)
         {
-            // If the cross-module SQL fails for any reason, silently return the fallback.
             return FallbackSuggestions;
         }
 

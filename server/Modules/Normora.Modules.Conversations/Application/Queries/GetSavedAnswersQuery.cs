@@ -15,7 +15,8 @@ public record GetSavedAnswersQuery(int Limit = 50, int Offset = 0)
 
 public class GetSavedAnswersQueryHandler(
     ConversationsDbContext context,
-    ICurrentUser currentUser) : IRequestHandler<GetSavedAnswersQuery, IReadOnlyList<SavedAnswerDto>>
+    ICurrentUser currentUser,
+    IMediator mediator) : IRequestHandler<GetSavedAnswersQuery, IReadOnlyList<SavedAnswerDto>>
 {
     public async Task<IReadOnlyList<SavedAnswerDto>> Handle(
         GetSavedAnswersQuery request, CancellationToken cancellationToken)
@@ -34,29 +35,11 @@ public class GetSavedAnswersQueryHandler(
             .Take(limit)
             .ToListAsync(cancellationToken);
 
-        // Document Versioning (Phase 19): Identify citations that belong to inactive document versions.
-        // We collect all chunk IDs from the fetched answers to verify their version status.
+        // Identify citations that belong to inactive document versions
         var chunkIds = answers.SelectMany(a => a.Message.Citations.Select(c => c.DocumentChunkId)).Distinct().ToList();
-        var outdatedChunkIds = new HashSet<Guid>();
-        
-        if (chunkIds.Any())
-        {
-            var idsStr = string.Join(",", chunkIds.Select(id => $"'{id}'"));
-            
-            // Raw SQL query to maintain module independence without EF navigation properties.
-            // Checks if any of the document chunks belong to a DocumentVersion where IsActive = false.
-            var sql = $@"
-                SELECT c.""Id"" 
-                FROM ""DocumentChunks"" c
-                JOIN ""DocumentVersions"" v ON c.""DocumentVersionId"" = v.""Id""
-                WHERE v.""IsActive"" = false AND c.""Id"" IN ({idsStr})";
-                
-            var results = await context.Database.SqlQueryRaw<Guid>(sql).ToListAsync(cancellationToken);
-            foreach (var id in results)
-            {
-                outdatedChunkIds.Add(id);
-            }
-        }
+        var outdatedChunkIds = chunkIds.Count > 0
+            ? await mediator.Send(new Normora.Shared.Contracts.Documents.GetOutdatedChunkIdsQuery(chunkIds), cancellationToken)
+            : [];
 
         return answers.Select(s => new SavedAnswerDto(
             s.Id,
