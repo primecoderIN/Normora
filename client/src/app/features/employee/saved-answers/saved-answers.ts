@@ -116,7 +116,7 @@ interface ExportOption {
                     </button>
 
                     @if (openExportMenuId() === answer.id) {
-                      <div class="absolute top-[calc(100%+6px)] right-0 z-50 min-w-[188px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.10),0_2px_6px_rgba(0,0,0,0.06)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150" role="menu">
+                      <div class="absolute top-[calc(100%+6px)] right-0 z-50 min-w-47 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.10),0_2px_6px_rgba(0,0,0,0.06)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150" role="menu">
                         <p class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-400 px-3.5 pt-2.5 pb-1 m-0">Export as</p>
                         @for (opt of exportOptions; track opt.format) {
                           <button

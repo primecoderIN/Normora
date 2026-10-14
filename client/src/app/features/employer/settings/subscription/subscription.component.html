@@ -194,7 +194,7 @@
           
           <!-- Popular Ribbon -->
           @if (plan.isPopular) {
-            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-sm">
+            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-linear-to-r from-primary-600 to-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-sm">
               Most Popular
             </div>
           }
@@ -210,7 +210,7 @@
                   </span>
                 }
               </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 min-h-[32px]">{{ plan.description }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 min-h-8">{{ plan.description }}</p>
             </div>
 
             <!-- Price -->
