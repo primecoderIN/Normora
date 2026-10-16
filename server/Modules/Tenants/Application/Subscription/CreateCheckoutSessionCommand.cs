@@ -25,8 +25,10 @@ public class CreateCheckoutSessionCommandHandler(
 {
     public async Task<CheckoutSessionResultDto> Handle(CreateCheckoutSessionCommand request, CancellationToken cancellationToken)
     {
+        // 1. Resolve current active tenant from scoped ambient context
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
+        // 2. Fetch workspace details (name and slug) for dynamic return URLs and Stripe customer receipts
         var tenant = await context.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
@@ -34,6 +36,7 @@ public class CreateCheckoutSessionCommandHandler(
 
         var userEmail = currentUser.Email ?? string.Empty;
 
+        // 3. Request Stripe service to build hosted checkout session with tenant metadata
         var checkoutUrl = await stripeService.CreateCheckoutSessionAsync(
             tenantId,
             tenant.Name,

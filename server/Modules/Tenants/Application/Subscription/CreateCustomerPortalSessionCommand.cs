@@ -27,18 +27,22 @@ public class CreateCustomerPortalSessionCommandHandler(
 {
     public async Task<CustomerPortalResultDto> Handle(CreateCustomerPortalSessionCommand request, CancellationToken cancellationToken)
     {
+        // 1. Resolve current active tenant from scoped ambient context
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
+        // 2. Fetch workspace slug to construct workspace-specific return URL
         var tenant = await context.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
+        // 3. Fallback to standard subscription settings route if no explicit returnUrl was provided
         var returnUrl = !string.IsNullOrWhiteSpace(request.ReturnUrl)
             ? request.ReturnUrl
             : (tenant != null
                 ? $"{appOptions.Value.BaseUrl}/app/workspaces/{tenant.Slug}/employer/settings/subscription"
                 : $"{appOptions.Value.BaseUrl}/settings/subscription");
 
+        // 4. Create hosted Stripe Customer Portal session for billing management
         var portalUrl = await stripeService.CreateCustomerPortalSessionAsync(
             tenantId,
             returnUrl,

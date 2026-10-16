@@ -27,23 +27,30 @@ export class SubscriptionRedirectComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
+    // Fetch current user memberships to determine the active workspace slug
     this.userService.getMe().subscribe({
       next: (res) => {
         const memberships = res.data?.memberships || [];
+        // Prioritize admin role workspace, fallback to first membership
         const activeTenant = memberships.find(m => m.role === 'admin') || memberships[0];
         const slug = activeTenant?.tenantSlug;
+
+        // Preserve all query parameters (status=success, session_id=cs_test_..., etc.)
         const queryParams = this.route.snapshot.queryParams;
 
         if (slug) {
+          // Route seamlessly to tenant-scoped subscription settings with Stripe session parameters
           this.router.navigate(['/app/workspaces', slug, 'employer', 'settings', 'subscription'], {
             queryParams,
             replaceUrl: true
           });
         } else {
+          // If user has no active tenant memberships, direct to workspace onboarding
           this.router.navigate(['/onboarding'], { replaceUrl: true });
         }
       },
       error: () => {
+        // Fallback to landing root if unauthenticated
         this.router.navigate(['/'], { replaceUrl: true });
       }
     });

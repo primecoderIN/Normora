@@ -225,13 +225,20 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Frontend: Built modern `AuditLogsComponent` with responsive filters, color-coded action badges, pagination, skeleton loaders, and JSON detail inspection modal.
 - [x] Frontend: Added "Audit logs" navigation item in employer layout and registered routes in `app.routes.ts`.
 
-## ✅ Completed Subscription & Plan Limits
+## ✅ Completed Subscription & Stripe Billing Integration
 - [x] Backend: Added `TenantPlan` domain entity (`Free`, `Pro`, `Enterprise` tiers with `MaxDocuments`, `MaxEmployees`, `MaxStorageBytes`), `TenantsDbContext` configuration, and EF Core migration `AddTenantPlans`.
 - [x] Backend: Added `PlanLimitExceededException` mapped globally to HTTP 402 Payment Required in `GlobalExceptionHandler`.
 - [x] Backend: Added quota enforcement in `UploadDocumentCommandHandler` (checking document count and storage bytes) and `InviteEmployeeCommandHandler` (checking seat limits).
 - [x] Backend: Added `GetTenantDocumentUsageQuery` and `CheckTenantUploadLimitQuery` contracts for cross-module quota checks.
 - [x] Backend: Added `GetTenantSubscriptionUsageQuery`, `UpdateTenantPlanTierCommand`, and `SubscriptionController` (`GET /api/subscription/usage`, `POST /api/subscription/tier`).
-- [x] Frontend: Added `SubscriptionService` with usage and tier update API methods.
+- [x] Backend: Integrated Stripe Hosted Checkout (`POST /api/subscription/checkout`, `CreateCheckoutSessionCommand`, `IStripePaymentService`).
+- [x] Backend: Integrated Stripe HMAC-SHA256 Webhook verification (`POST /api/subscription/webhook`) handling `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, and `invoice.payment_failed`.
+- [x] Backend: Integrated Stripe Billing Customer Portal (`POST /api/subscription/portal`, `CreateCustomerPortalSessionCommand`) for self-service invoice and payment method management.
+- [x] Backend: Implemented **Synchronous Dual-Fulfillment** (`FulfillSessionAsync`) in `GetTenantSubscriptionUsageQuery` to immediately verify and provision quotas on Checkout redirect return without relying on local webhooks.
+- [x] Backend: Added BOLA metadata validation and idempotency guards to prevent duplicate mutations or audit logs.
+- [x] Frontend: Added `SubscriptionService` with usage, checkout session, customer portal, and tier update API methods.
 - [x] Frontend: Built `SubscriptionComponent` with real-time usage meters for documents, member seats, and storage, warning alerts when limits approach/exceed, and interactive plan tier selection cards.
+- [x] Frontend: Implemented **Tier Hierarchy Action Locking**: when on a higher tier (e.g. Enterprise), previous tiers are locked and disabled with `"Included in {Plan}"`, directing all downgrades/cancellations safely through the Customer Portal.
+- [x] Frontend: Created `SubscriptionRedirectComponent` handling top-level `/settings/subscription` return redirects from Stripe and routing seamlessly to `/app/workspaces/:slug/employer/settings/subscription` with preserved query parameters.
 - [x] Frontend: Added "Subscription & Plans" navigation link to employer layout and registered routes in `app.routes.ts`.
 

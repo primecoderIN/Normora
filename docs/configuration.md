@@ -85,6 +85,19 @@ The following options classes are defined in the `Normora.Shared` project. All p
   * `Port` (int): SMTP Port. Defaults to `1025` (MailHog).
   * `From` (string): The sender email address. Defaults to `noreply@normora.local`.
 
+### `StripeOptions`
+* **Section:** `Stripe`
+* **Owner:** `Normora.Shared`
+* **Properties:**
+  * `SecretKey` (string): Sensitive. The Stripe secret API key (`sk_test_...` or `sk_live_...`).
+  * `PublishableKey` (string): The Stripe publishable API key (`pk_test_...` or `pk_live_...`).
+  * `WebhookSecret` (string): Sensitive. HMAC signature verification secret for Stripe webhooks (`whsec_...`).
+  * `ProPriceId` (string): Optional pre-created Stripe Price ID for Pro plan monthly subscription.
+  * `EnterprisePriceId` (string): Optional pre-created Stripe Price ID for Enterprise plan monthly subscription.
+  * `SuccessUrl` (string): Return URL pattern on successful checkout.
+  * `CancelUrl` (string): Return URL pattern when checkout is cancelled.
+  * `IsConfigured` (bool, computed): Evaluates whether valid secret keys are present. When false, the application automatically falls back to an offline simulated sandbox mode for frictionless local testing.
+
 ---
 
 ## 3. Environment Configuration Guide

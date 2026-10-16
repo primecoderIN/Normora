@@ -436,9 +436,9 @@ Each workspace is associated with a `TenantPlan` record (`tenants.tenant_plans`)
 
 | Plan Tier | Max Documents | Max Employees | Max Storage Bytes | Description |
 |---|---|---|---|---|
-| **Free** | 25 | 5 | 50 MB | Starter tier for small teams and evaluations. |
-| **Pro** | 250 | 50 | 1 GB | Growth tier for departmental knowledge bases. |
-| **Enterprise** | 5,000 | 1,000 | 25 GB | Full-scale enterprise tier with advanced quotas. |
+| **Free** | 10 | 5 | 50 MB | Starter tier for small teams and evaluations. |
+| **Pro** | 100 | 50 | 5 GB | Growth tier with department and user group scoping. |
+| **Enterprise** | 10,000 | 5,000 | 500 GB | Full-scale enterprise tier with white-label branding, pgvector search, and audit trails. |
 
 ### 2. Cross-Module Quota Verification
 Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
@@ -455,12 +455,17 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
 - The Angular frontend interceptor handles 402 responses and surfaces clear, actionable upgrade guidance rather than generic failure toasts.
 - The `SubscriptionComponent` provides real-time resource meters (visual progress bars indicating document, seat, and storage utilization percentages) alongside tier cards for one-click plan upgrades.
 
-### 4. Secure Payment Processing (Stripe Integration)
+### 4. Secure Payment Processing (Stripe Integration & Dual Fulfillment)
 - **Hosted Checkout Sessions (`POST /api/subscription/checkout`)**:
   - Eliminates PCI-DSS compliance surface by using Stripe-hosted Checkout Sessions.
   - Server securely generates checkout sessions with workspace metadata (`tenant_id`, `plan_tier`) and redirects the user to Stripe.
   - Supports both pre-configured Price IDs and dynamic line items for zero-config onboarding.
   - When keys are omitted, gracefully defaults to simulated sandbox activation for frictionless local dev.
+- **Dual Fulfillment Pattern (`FulfillSessionAsync`)**:
+  - In addition to asynchronous webhooks, Normora supports **synchronous fulfillment** upon redirect return (`?status=success&session_id={CHECKOUT_SESSION_ID}`).
+  - When the browser returns to the workspace subscription settings, the frontend automatically forwards `sessionId` to `GET /api/subscription/usage?sessionId=...`.
+  - The backend calls `FulfillSessionAsync`, directly queries the Stripe API for session status (`paid` or `complete`), cryptographically validates tenant metadata against the active `ITenantContext` (preventing BOLA / cross-tenant ID spoofing), and immediately provisions the upgraded plan limits in PostgreSQL.
+  - Includes an **idempotency guard** to ensure that subsequent webhook deliveries or page refreshes do not duplicate database mutations or audit logs.
 - **Asynchronous Webhook Fulfillment (`POST /api/subscription/webhook`)**:
   - Securely receives webhook events without exposing public authorization flaws (`[AllowAnonymous]` + `[IgnoreAntiforgeryToken]`).
   - Verifies cryptographic authenticity using Stripe's HMAC-SHA256 signature (`Stripe-Signature` header + Webhook Secret).
@@ -471,6 +476,10 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
     - `invoice.payment_failed`: Marks workspace subscription status as `past_due` without abrupt lockout, notifying admins.
 - **Stripe Billing Customer Portal (`POST /api/subscription/portal`)**:
   - Enables self-service invoice downloading, payment method management, and plan cancellations directly through Stripe's hosted portal, reducing custom billing UI overhead and maximizing security.
+- **Tier Hierarchy & Action Locking**:
+  - The UI models a strict tier hierarchy: `Free` (0) < `Pro` (1) < `Enterprise` (2).
+  - When a workspace is subscribed to a tier (e.g., Enterprise), all lower/previous tier buttons are permanently disabled (`cursor-not-allowed`) and indicate `"Included in {Plan}"`.
+  - Only upgrade pathways to strictly higher tiers are selectable. Downgrades and plan cancellations are securely directed through the Stripe Billing Customer Portal to avoid orphan Stripe subscriptions.
 
 ---
 

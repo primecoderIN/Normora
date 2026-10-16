@@ -32,7 +32,7 @@ Normora is architected from the ground up to deliver a resilient and performant 
   - **Relational Data**: Powered by **PostgreSQL** for reliable ACID-compliant transactions across isolated module schemas.
 - **Conversational AI & RAG**: Features an advanced Retrieval-Augmented Generation pipeline. Uses **pgvector** for hybrid vector-keyword retrieval (RRF scoring) and the **Gemini 1.5 Flash API** to answer complex queries strictly grounded in secure company documentation.
 - **Enterprise Governance & Auditability**: Automatically tracks all sensitive business operations (document lifecycle, employee invitations/removals, permissions, branding) through open MediatR pipeline behaviors into immutable audit logs.
-- **Subscription Tiers & Quota Governance**: Built-in plan tier management (`Free`, `Pro`, `Enterprise`) that proactively enforces limits on employee seats, document counts, and storage allocations.
+- **Subscription Tiers & Stripe Billing Governance**: Built-in plan tier management (`Free`, `Pro`, `Enterprise`) that proactively enforces limits on employee seats, document counts, and storage allocations. Integrated with Stripe Hosted Checkout, synchronous dual fulfillment on redirect return, Stripe Customer Billing Portal, and tier hierarchy action locking.
 - **Observability**: Fully instrumented with **OpenTelemetry (OTLP)** for distributed tracing and granular metrics (e.g. tracking LLM token consumption and DB query latencies).
 - **Containerization & DevOps**: The entire application and its complex dependencies are thoroughly Dockerized. It highlights a focus on developer experience (DX)—a single script provisions the database, IAM server, object storage, API, and the Web Client from scratch.
 

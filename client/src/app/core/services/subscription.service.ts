@@ -38,6 +38,11 @@ export class SubscriptionService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/subscription`;
 
+  /**
+   * Retrieves current workspace usage metrics and quota thresholds.
+   * If sessionId is provided (upon redirect return from Stripe Checkout),
+   * the backend performs synchronous verification and instant quota provisioning.
+   */
   getUsage(sessionId?: string): Observable<SubscriptionUsageDto> {
     const params = sessionId ? { sessionId } : undefined;
     return this.http
@@ -45,6 +50,10 @@ export class SubscriptionService {
       .pipe(map(res => res.data));
   }
 
+  /**
+   * Initiates a Stripe-hosted checkout session for upgrading to a paid tier.
+   * Returns the hosted checkout URL to which the browser will redirect.
+   */
   createCheckoutSession(tier: PlanTierType): Observable<CheckoutSessionResult> {
     const tierEnumMap: Record<PlanTierType, number> = {
       Free: 0,
@@ -57,12 +66,19 @@ export class SubscriptionService {
       .pipe(map(res => res.data));
   }
 
+  /**
+   * Opens the Stripe Billing Customer Portal session for managing payment methods,
+   * viewing invoices, or scheduling plan cancellations without orphan subscriptions.
+   */
   createCustomerPortalSession(returnUrl?: string): Observable<CustomerPortalResult> {
     return this.http
       .post<ApiResponse<CustomerPortalResult>>(`${this.apiUrl}/portal`, { returnUrl })
       .pipe(map(res => res.data));
   }
 
+  /**
+   * Updates workspace plan tier directly (used for manual or free tier management).
+   */
   updateTier(tier: PlanTierType): Observable<SubscriptionUsageDto> {
     const tierEnumMap: Record<PlanTierType, number> = {
       Free: 0,

@@ -112,21 +112,24 @@ Records all critical administrative and domain events executed within the tenant
 ---
 
 ### `TenantPlans`
-Defines subscription tiers and resource limits for multi-tenant quota enforcement.
+Defines subscription tiers, quota boundaries, and Stripe Billing integration metadata for multi-tenant resource governance.
 
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `Id` | `uniqueidentifier` | ❌ | PK |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `Tenants.Id` (`Cascade`), **Unique** |
 | `PlanTier` | `int` | ❌ | Enum: `Free=0`, `Pro=1`, `Enterprise=2` |
-| `Status` | `varchar(50)` | ❌ | `Active`, `PastDue`, `Canceled` |
-| `MaxDocuments` | `int` | ❌ | Limit on active documents (Free: 25, Pro: 250, Enterprise: 5000) |
-| `MaxEmployees` | `int` | ❌ | Limit on team member seats (Free: 5, Pro: 50, Enterprise: 1000) |
-| `MaxStorageBytes` | `bigint` | ❌ | Storage cap in bytes (Free: 50MB, Pro: 1GB, Enterprise: 25GB) |
-| `StartDateUtc` | `datetime2` | ❌ | Subscription start date |
-| `RenewalDateUtc` | `datetime2` | ✅ | Subscription renewal / next billing date |
-| `CreatedAtUtc` | `datetime2` | ❌ | UTC timestamp |
-| `UpdatedAtUtc` | `datetime2` | ❌ | UTC timestamp |
+| `MaxDocuments` | `int` | ❌ | Limit on active documents (Free: 10, Pro: 100, Enterprise: 10,000) |
+| `MaxEmployees` | `int` | ❌ | Limit on team member seats (Free: 5, Pro: 50, Enterprise: 5,000) |
+| `MaxStorageBytes` | `bigint` | ❌ | Storage cap in bytes (Free: 50MB, Pro: 5GB, Enterprise: 500GB) |
+| `ValidUntil` | `datetime2` | ✅ | Optional expiration timestamp |
+| `CreatedAt` | `datetime2` | ❌ | UTC creation timestamp |
+| `UpdatedAt` | `datetime2` | ✅ | UTC last update timestamp |
+| `StripeCustomerId` | `varchar(255)` | ✅ | Stripe Customer ID (`cus_...`) |
+| `StripeSubscriptionId` | `varchar(255)` | ✅ | Stripe Subscription ID (`sub_...`) |
+| `SubscriptionStatus` | `varchar(50)` | ✅ | Subscription status (`active`, `trialing`, `past_due`, `canceled`) |
+| `CurrentPeriodEndUtc` | `datetime2` | ✅ | Stripe billing cycle renewal date |
+| `CancelAtPeriodEnd` | `boolean` | ❌ | True if cancellation is scheduled at end of current billing period |
 
 **Indexes:** `UX_TenantPlans_TenantId` (Unique)
 

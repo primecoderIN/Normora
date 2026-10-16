@@ -22,18 +22,22 @@ public class UpdateTenantPlanTierCommandHandler(
 {
     public async Task<SubscriptionUsageDto> Handle(UpdateTenantPlanTierCommand request, CancellationToken cancellationToken)
     {
+        // 1. Resolve active tenant from ambient context
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
+        // 2. Fetch existing plan or initialize a new default record
         var plan = await context.TenantPlans
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
 
         if (plan == null)
         {
+            // Create initial plan entity with requested tier template quotas
             plan = TenantPlan.CreateDefault(tenantId, request.Tier);
             context.TenantPlans.Add(plan);
         }
         else
         {
+            // Reassign tier quotas (documents, employees, storage bytes) based on plan tier template
             var template = TenantPlan.CreateDefault(tenantId, request.Tier);
             plan.PlanTier = request.Tier;
             plan.MaxDocuments = template.MaxDocuments;
@@ -44,6 +48,7 @@ public class UpdateTenantPlanTierCommandHandler(
 
         await context.SaveChangesAsync(cancellationToken);
 
+        // 3. Return updated subscription usage dto
         return await mediator.Send(new GetTenantSubscriptionUsageQuery(), cancellationToken);
     }
 }

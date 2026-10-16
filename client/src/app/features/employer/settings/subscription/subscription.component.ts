@@ -109,31 +109,45 @@ export class SubscriptionComponent implements OnInit {
     return Math.min(100, Math.round((u.currentStorageBytes / u.maxStorageBytes) * 100));
   });
 
+  // Strict tier hierarchy ranking: Free (0) < Pro (1) < Enterprise (2)
   private readonly tierHierarchy: Record<PlanTierType, number> = {
     Free: 0,
     Pro: 1,
     Enterprise: 2
   };
 
+  /**
+   * Returns numeric hierarchy index for a given plan tier.
+   */
   getTierLevel(tier: PlanTierType): number {
     return this.tierHierarchy[tier] ?? 0;
   }
 
+  /**
+   * Evaluates if the tier matches the workspace's active subscription tier.
+   */
   isTierCurrent(tier: PlanTierType): boolean {
     return (this.usage()?.planTier ?? 'Free') === tier;
   }
 
+  /**
+   * Evaluates if the tier is lower than the active subscription (locked/disabled).
+   */
   isTierDowngrade(tier: PlanTierType): boolean {
     const currentTier = this.usage()?.planTier ?? 'Free';
     return this.getTierLevel(tier) < this.getTierLevel(currentTier);
   }
 
+  /**
+   * Evaluates if the tier represents a viable upgrade pathway.
+   */
   isTierUpgrade(tier: PlanTierType): boolean {
     const currentTier = this.usage()?.planTier ?? 'Free';
     return this.getTierLevel(tier) > this.getTierLevel(currentTier);
   }
 
   ngOnInit(): void {
+    // Read optional session_id from query params upon return from Stripe Checkout
     const sessionId = this.route.snapshot.queryParamMap.get('session_id') || undefined;
     this.handleRouteParams();
     this.loadUsage(sessionId);
@@ -166,6 +180,10 @@ export class SubscriptionComponent implements OnInit {
     });
   }
 
+  /**
+   * Loads resource usage and quota metrics for the active workspace.
+   * If a Stripe checkout sessionId is supplied, dual fulfillment activates instantly.
+   */
   loadUsage(sessionId?: string): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -183,6 +201,7 @@ export class SubscriptionComponent implements OnInit {
   }
 
   selectPlan(tier: PlanTierType): void {
+    // Business rule: Only upgrade pathways can be selected. Lower/previous tiers are locked.
     if (!this.isTierUpgrade(tier)) {
       return;
     }
