@@ -13,6 +13,20 @@ Normora is deployed as a single API process, but internally it is strictly divid
 2. **No Direct Joins**: You cannot write a LINQ query that joins a `Document` with a `Tenant`. You must query by IDs across boundaries.
 3. **Cross-Module Communication**: If the `Documents` module needs to know if a user has access, it doesn't query the `TenantsDbContext`. It sends a MediatR query to the `Tenants` module's API contract.
 
+### Module Directory & Assembly Conventions
+Modules live in `server/Modules/<ModuleName>/<ModuleName>.csproj` (e.g., `server/Modules/Tenants/Tenants.csproj`).
+Inside each `.csproj`, we explicitly specify:
+```xml
+<PropertyGroup>
+  <AssemblyName>Normora.Modules.<ModuleName></AssemblyName>
+  <RootNamespace>Normora.Modules.<ModuleName></RootNamespace>
+</PropertyGroup>
+```
+**Why this is required:**
+- **Clean Folder Naming**: Eliminates repetitive folder prefixes (`Modules/Tenants/` instead of `Modules/Normora.Modules.Tenants/`).
+- **Binary & Snapshot Stability**: In .NET, MSBuild defaults the output assembly to the project name (`Tenants.dll`). Setting `<AssemblyName>` preserves the compiled binary name (`Normora.Modules.Tenants.dll`), ensuring that existing EF Core migration snapshots and Hangfire background job type serializers continue to resolve without type mismatches.
+- **Namespace Consistency**: `<RootNamespace>` ensures new C# types created in the module default to `Normora.Modules.<ModuleName>.*`.
+
 ---
 
 ## 2. MediatR and CQRS
@@ -184,6 +198,17 @@ Because we have multiple `DbContexts`, you must specify the context when creatin
 ```bash
 dotnet ef migrations add AddUserGroups --context TenantsDbContext --project Modules/Tenants
 dotnet ef database update --context TenantsDbContext
+```
+
+### Startup Automatic Migrations & `PendingModelChangesWarning`
+On startup, `Normora.Api` invokes `Database.Migrate()` across all module `DbContexts` (see `Program.cs`).
+
+In EF Core 9 / 10 (.NET 10), EF Core checks for differences between the compiled migration snapshot and the current model during `Migrate()`. When using provider-level dynamic extensions such as PostgreSQL vector support (`npgsql => npgsql.UseVector()` in `DocumentsDbContext`), the model comparer generates a `RelationalEventId.PendingModelChangesWarning`.
+
+In development, EF Core promotes warnings to fatal exceptions, which crashes the API on boot and produces an Nginx `502 Bad Gateway`. To prevent false-positive startup crashes while preserving migration capability, each `DbContext` configuration suppresses this warning in `DatabaseServiceExtensions.cs`:
+```csharp
+options.UseNpgsql(connectionString)
+       .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
 ```
 
 ---
