@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { UserGroupService, UserGroup, UserGroupDetail } from '@core/services/user-group.service';
 import { DepartmentService, Department } from '@core/services/department.service';
@@ -84,7 +85,7 @@ export class UserGroups implements OnInit {
     this.formError.set('');
     const target = this.editTarget();
 
-    const obs = target
+    const obs: Observable<unknown> = target
       ? this.groupService.update(target.id, payload)
       : this.groupService.create(payload);
 

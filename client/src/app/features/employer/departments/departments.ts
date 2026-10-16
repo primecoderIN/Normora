@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { DepartmentService, Department } from '@core/services/department.service';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
@@ -69,7 +70,7 @@ export class Departments implements OnInit {
     this.formError.set('');
     const target = this.editTarget();
 
-    const obs = target
+    const obs: Observable<unknown> = target
       ? this.deptService.update(target.id, payload)
       : this.deptService.create(payload);
 
