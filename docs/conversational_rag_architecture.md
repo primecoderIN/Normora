@@ -522,7 +522,7 @@ Create a dedicated module:
 ```
 server/
 └── Modules/
-    └── Normora.Modules.Conversations/
+    └── Conversations/
         ├── Application/
         │   ├── Commands/
         │   ├── Queries/

@@ -182,7 +182,7 @@ builder.Entity<Tenant>().HasQueryFilter(t => !t.IsDeleted);
 ### Migrations
 Because we have multiple `DbContexts`, you must specify the context when creating migrations:
 ```bash
-dotnet ef migrations add AddUserGroups --context TenantsDbContext --project Modules/Normora.Modules.Tenants
+dotnet ef migrations add AddUserGroups --context TenantsDbContext --project Modules/Tenants
 dotnet ef database update --context TenantsDbContext
 ```
 

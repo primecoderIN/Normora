@@ -5,10 +5,11 @@ WORKDIR /src
 COPY ["Normora.Api/Normora.Api.csproj", "Normora.Api/"]
 COPY ["Normora.Shared/Normora.Shared.csproj", "Normora.Shared/"]
 
-COPY ["Modules/Normora.Modules.Auth/Normora.Modules.Auth.csproj", "Modules/Normora.Modules.Auth/"]
-COPY ["Modules/Normora.Modules.Tenants/Normora.Modules.Tenants.csproj", "Modules/Normora.Modules.Tenants/"]
-COPY ["Modules/Normora.Modules.Users/Normora.Modules.Users.csproj", "Modules/Normora.Modules.Users/"]
-COPY ["Modules/Normora.Modules.Documents/Normora.Modules.Documents.csproj", "Modules/Normora.Modules.Documents/"]
+COPY ["Modules/Auth/Auth.csproj", "Modules/Auth/"]
+COPY ["Modules/Conversations/Conversations.csproj", "Modules/Conversations/"]
+COPY ["Modules/Documents/Documents.csproj", "Modules/Documents/"]
+COPY ["Modules/Tenants/Tenants.csproj", "Modules/Tenants/"]
+COPY ["Modules/Users/Users.csproj", "Modules/Users/"]
 
 RUN dotnet restore "Normora.Api/Normora.Api.csproj"
 
