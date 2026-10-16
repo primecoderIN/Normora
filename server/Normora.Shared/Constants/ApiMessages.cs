@@ -74,6 +74,10 @@ public static class ApiMessages
     public const string UserGroupDeleted = "User group deleted successfully.";
     public const string UserAssignmentsUpdated = "User assignments updated successfully.";
     public const string SubscriptionUpdated = "Subscription plan updated successfully.";
+    public const string CheckoutSessionCreated = "Checkout session created successfully.";
+    public const string CustomerPortalCreated = "Billing portal session created successfully.";
+    public const string FreeTierCannotCheckout = "Free tier does not require payment processing.";
+    public const string StripeBillingAccountNotFound = "No Stripe billing account found for this workspace. Please subscribe to a plan first.";
     public const string AnswerSaved = "Answer saved successfully.";
 }
 

@@ -116,6 +116,11 @@ services:
       - Smtp__Port=1025
       - Tika__Endpoint=http://tika:9998/
       - Gemini__ApiKey=${GEMINI_API_KEY:-}
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY:-}
+      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE_KEY:-}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET:-}
+      - Stripe__ProPriceId=${STRIPE_PRO_PRICE_ID:-}
+      - Stripe__EnterprisePriceId=${STRIPE_ENTERPRISE_PRICE_ID:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -38,6 +38,9 @@ public static class ConfigurationServiceExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<StripeOptions>()
+            .Bind(configuration.GetSection(StripeOptions.SectionName));
+
         return services;
     }
 }

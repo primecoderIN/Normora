@@ -19,6 +19,34 @@ export const ApiMessages = {
   PlanLimitExceeded: {
     summary: 'Plan Limit Exceeded',
     detail: 'Your workspace has reached its subscription resource limit. Please upgrade your plan to proceed.'
+  },
+  CheckoutSuccess: {
+    summary: 'Payment Successful',
+    detail: 'Your subscription has been activated successfully.'
+  },
+  CheckoutCancelled: {
+    summary: 'Checkout Cancelled',
+    detail: 'The checkout process was cancelled. No charges were made.'
+  },
+  CheckoutFailed: {
+    summary: 'Checkout Failed',
+    detail: 'Unable to initiate checkout session. Please try again.'
+  },
+  PortalFailed: {
+    summary: 'Portal Error',
+    detail: 'Unable to open billing portal. Please try again.'
+  },
+  SubscriptionUpdated: {
+    summary: 'Subscription Updated',
+    detail: 'Your subscription plan has been updated successfully.'
+  },
+  SubscriptionUpdateFailed: {
+    summary: 'Update Failed',
+    detail: 'Could not change the subscription plan. Please try again.'
+  },
+  SubscriptionQuotaFailed: {
+    summary: 'Failed to Load Quotas',
+    detail: 'Failed to retrieve subscription quotas. Please try again.'
   }
 } as const;
 

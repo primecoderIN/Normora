@@ -19,7 +19,11 @@ public record SubscriptionUsageDto(
     DateTime? ValidUntil,
     bool IsDocumentLimitReached,
     bool IsEmployeeLimitReached,
-    bool IsStorageLimitReached
+    bool IsStorageLimitReached,
+    bool HasActiveSubscription,
+    string? SubscriptionStatus,
+    DateTime? CurrentPeriodEndUtc,
+    bool CancelAtPeriodEnd
 );
 
 public record GetTenantSubscriptionUsageQuery : IRequest<SubscriptionUsageDto>;
@@ -50,6 +54,7 @@ public class GetTenantSubscriptionUsageQueryHandler(
         var isDocLimitReached = docUsage.DocumentCount >= plan.MaxDocuments;
         var isEmpLimitReached = currentEmployees >= plan.MaxEmployees;
         var isStorageLimitReached = docUsage.TotalStorageBytes >= plan.MaxStorageBytes;
+        var hasActiveSubscription = !string.IsNullOrWhiteSpace(plan.StripeSubscriptionId) && plan.PlanTier != PlanTier.Free;
 
         return new SubscriptionUsageDto(
             plan.PlanTier.ToString(),
@@ -62,7 +67,11 @@ public class GetTenantSubscriptionUsageQueryHandler(
             plan.ValidUntil,
             isDocLimitReached,
             isEmpLimitReached,
-            isStorageLimitReached
+            isStorageLimitReached,
+            hasActiveSubscription,
+            plan.SubscriptionStatus,
+            plan.CurrentPeriodEndUtc,
+            plan.CancelAtPeriodEnd
         );
     }
 }

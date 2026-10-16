@@ -455,6 +455,23 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
 - The Angular frontend interceptor handles 402 responses and surfaces clear, actionable upgrade guidance rather than generic failure toasts.
 - The `SubscriptionComponent` provides real-time resource meters (visual progress bars indicating document, seat, and storage utilization percentages) alongside tier cards for one-click plan upgrades.
 
+### 4. Secure Payment Processing (Stripe Integration)
+- **Hosted Checkout Sessions (`POST /api/subscription/checkout`)**:
+  - Eliminates PCI-DSS compliance surface by using Stripe-hosted Checkout Sessions.
+  - Server securely generates checkout sessions with workspace metadata (`tenant_id`, `plan_tier`) and redirects the user to Stripe.
+  - Supports both pre-configured Price IDs and dynamic line items for zero-config onboarding.
+  - When keys are omitted, gracefully defaults to simulated sandbox activation for frictionless local dev.
+- **Asynchronous Webhook Fulfillment (`POST /api/subscription/webhook`)**:
+  - Securely receives webhook events without exposing public authorization flaws (`[AllowAnonymous]` + `[IgnoreAntiforgeryToken]`).
+  - Verifies cryptographic authenticity using Stripe's HMAC-SHA256 signature (`Stripe-Signature` header + Webhook Secret).
+  - Handles key lifecycle events:
+    - `checkout.session.completed`: Upgrades workspace quotas, attaches `StripeCustomerId` and `StripeSubscriptionId`, and records an immutable audit log entry.
+    - `customer.subscription.updated`: Synchronizes subscription status (`active`, `past_due`, `canceled`), renewal date (`CurrentPeriodEndUtc`), and scheduled cancellations (`CancelAtPeriodEnd`).
+    - `customer.subscription.deleted`: Gracefully reverts the workspace to the `Free` tier quotas and marks status as `canceled`.
+    - `invoice.payment_failed`: Marks workspace subscription status as `past_due` without abrupt lockout, notifying admins.
+- **Stripe Billing Customer Portal (`POST /api/subscription/portal`)**:
+  - Enables self-service invoice downloading, payment method management, and plan cancellations directly through Stripe's hosted portal, reducing custom billing UI overhead and maximizing security.
+
 ---
 
 ## Code Quality, Security & Engineering Standards (Remediation & Best Practices)

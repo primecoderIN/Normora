@@ -1,10 +1,12 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageService } from 'primeng/api';
 import { SubscriptionService, SubscriptionUsageDto, PlanTierType } from '@core/services/subscription.service';
 import { UserService } from '@core/services/user.service';
+import { ApiMessages } from '@core/constants/api-messages';
 
 interface PlanTierDefinition {
   tier: PlanTierType;
@@ -21,18 +23,21 @@ interface PlanTierDefinition {
 @Component({
   selector: 'app-subscription',
   standalone: true,
-  imports: [CommonModule, ButtonModule, SkeletonModule],
+  imports: [CommonModule, ButtonModule, SkeletonModule, DatePipe],
   templateUrl: './subscription.component.html'
 })
-
 export class SubscriptionComponent implements OnInit {
   private subscriptionService = inject(SubscriptionService);
   private messageService = inject(MessageService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   public userService = inject(UserService);
 
   usage = signal<SubscriptionUsageDto | null>(null);
   isLoading = signal(true);
   isUpdating = signal(false);
+  isOpeningPortal = signal(false);
+  selectedTierLoading = signal<PlanTierType | null>(null);
   errorMessage = signal<string | null>(null);
 
   planDefinitions: PlanTierDefinition[] = [
@@ -105,7 +110,35 @@ export class SubscriptionComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.handleRouteParams();
     this.loadUsage();
+  }
+
+  private handleRouteParams(): void {
+    const status = this.route.snapshot.queryParamMap.get('status');
+    if (status === 'success') {
+      this.messageService.add({
+        severity: 'success',
+        summary: ApiMessages.CheckoutSuccess.summary,
+        detail: ApiMessages.CheckoutSuccess.detail
+      });
+      this.clearQueryParams();
+    } else if (status === 'cancelled') {
+      this.messageService.add({
+        severity: 'warn',
+        summary: ApiMessages.CheckoutCancelled.summary,
+        detail: ApiMessages.CheckoutCancelled.detail
+      });
+      this.clearQueryParams();
+    }
+  }
+
+  private clearQueryParams(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true
+    });
   }
 
   loadUsage(): void {
@@ -118,7 +151,7 @@ export class SubscriptionComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to retrieve subscription quotas. Please try again.');
+        this.errorMessage.set(ApiMessages.SubscriptionQuotaFailed.detail);
         this.isLoading.set(false);
       }
     });
@@ -127,23 +160,74 @@ export class SubscriptionComponent implements OnInit {
   selectPlan(tier: PlanTierType): void {
     if (this.usage()?.planTier === tier) return;
 
+    if (tier === 'Free') {
+      this.isUpdating.set(true);
+      this.selectedTierLoading.set(tier);
+      this.subscriptionService.updateTier(tier).subscribe({
+        next: (updated) => {
+          this.usage.set(updated);
+          this.isUpdating.set(false);
+          this.selectedTierLoading.set(null);
+          this.messageService.add({
+            severity: 'success',
+            summary: ApiMessages.SubscriptionUpdated.summary,
+            detail: `Your workspace has been switched to the ${tier} plan.`
+          });
+        },
+        error: () => {
+          this.isUpdating.set(false);
+          this.selectedTierLoading.set(null);
+          this.messageService.add({
+            severity: 'error',
+            summary: ApiMessages.SubscriptionUpdateFailed.summary,
+            detail: ApiMessages.SubscriptionUpdateFailed.detail
+          });
+        }
+      });
+      return;
+    }
+
+    // For paid tiers (Pro, Enterprise), initiate Stripe Hosted Checkout Session
     this.isUpdating.set(true);
-    this.subscriptionService.updateTier(tier).subscribe({
-      next: (updated) => {
-        this.usage.set(updated);
-        this.isUpdating.set(false);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Subscription Updated',
-          detail: `Your workspace has been switched to the ${tier} plan.`
-        });
+    this.selectedTierLoading.set(tier);
+
+    this.subscriptionService.createCheckoutSession(tier).subscribe({
+      next: (session) => {
+        if (session.checkoutUrl) {
+          window.location.href = session.checkoutUrl;
+        } else {
+          this.isUpdating.set(false);
+          this.selectedTierLoading.set(null);
+        }
       },
       error: () => {
         this.isUpdating.set(false);
+        this.selectedTierLoading.set(null);
         this.messageService.add({
           severity: 'error',
-          summary: 'Update Failed',
-          detail: 'Could not change the subscription plan. Please try again.'
+          summary: ApiMessages.CheckoutFailed.summary,
+          detail: ApiMessages.CheckoutFailed.detail
+        });
+      }
+    });
+  }
+
+  openCustomerPortal(): void {
+    this.isOpeningPortal.set(true);
+    this.subscriptionService.createCustomerPortalSession().subscribe({
+      next: (session) => {
+        if (session.portalUrl) {
+          window.location.href = session.portalUrl;
+        } else {
+          this.isOpeningPortal.set(false);
+        }
+      },
+      error: () => {
+        this.isOpeningPortal.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: ApiMessages.PortalFailed.summary,
+          detail: ApiMessages.PortalFailed.detail
         });
       }
     });

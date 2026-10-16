@@ -19,6 +19,18 @@ export interface SubscriptionUsageDto {
   isDocumentLimitReached: boolean;
   isEmployeeLimitReached: boolean;
   isStorageLimitReached: boolean;
+  hasActiveSubscription: boolean;
+  subscriptionStatus: string | null;
+  currentPeriodEndUtc: string | null;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface CheckoutSessionResult {
+  checkoutUrl: string;
+}
+
+export interface CustomerPortalResult {
+  portalUrl: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +41,24 @@ export class SubscriptionService {
   getUsage(): Observable<SubscriptionUsageDto> {
     return this.http
       .get<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/usage`)
+      .pipe(map(res => res.data));
+  }
+
+  createCheckoutSession(tier: PlanTierType): Observable<CheckoutSessionResult> {
+    const tierEnumMap: Record<PlanTierType, number> = {
+      Free: 0,
+      Pro: 1,
+      Enterprise: 2
+    };
+
+    return this.http
+      .post<ApiResponse<CheckoutSessionResult>>(`${this.apiUrl}/checkout`, { tier: tierEnumMap[tier] })
+      .pipe(map(res => res.data));
+  }
+
+  createCustomerPortalSession(returnUrl?: string): Observable<CustomerPortalResult> {
+    return this.http
+      .post<ApiResponse<CustomerPortalResult>>(`${this.apiUrl}/portal`, { returnUrl })
       .pipe(map(res => res.data));
   }
 

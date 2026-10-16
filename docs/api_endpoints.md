@@ -104,8 +104,11 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `GET` | `/subscription/usage` | RequireTenant(Employer) | Fetch tenant resource usage (documents, member seats, storage bytes) compared against current plan limits. |
-| `POST` | `/subscription/tier` | RequireTenant(Employer) | Upgrade or change tenant subscription tier (`Free`, `Pro`, `Enterprise`). |
+| `GET` | `/subscription/usage` | RequireTenant | Fetch tenant resource usage (documents, member seats, storage bytes, Stripe status) compared against current plan limits. |
+| `POST` | `/subscription/checkout` | RequireTenant(Admin) | Create a Stripe Hosted Checkout Session to upgrade to a paid tier (`Pro`, `Enterprise`). |
+| `POST` | `/subscription/portal` | RequireTenant(Admin) | Create a Stripe Billing Customer Portal session to manage invoices, payment methods, or subscriptions. |
+| `POST` | `/subscription/webhook` | AllowAnonymous | Securely receive and fulfill asynchronous Stripe billing webhooks verified by HMAC signature. |
+| `POST` | `/subscription/tier` | RequireTenant(Admin) | Upgrade or downgrade tenant subscription tier directly (free tier fallback). |
 
 ---
 

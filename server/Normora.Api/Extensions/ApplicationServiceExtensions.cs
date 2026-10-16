@@ -44,6 +44,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IAuditService, Normora.Modules.Tenants.Application.Audit.AuditService>();
+        services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IStripePaymentService, Normora.Modules.Tenants.Persistence.StripePaymentService>();
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<INotificationService, NotificationService>();
 

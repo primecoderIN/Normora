@@ -263,7 +263,8 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("TenantId", "UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"RemovedAt\" IS NULL");
 
                     b.ToTable("TenantMemberships");
                 });
@@ -274,7 +275,13 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("CancelAtPeriodEnd")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CurrentPeriodEndUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("MaxDocuments")
@@ -290,6 +297,18 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<string>("StripeCustomerId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("StripeSubscriptionId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SubscriptionStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
