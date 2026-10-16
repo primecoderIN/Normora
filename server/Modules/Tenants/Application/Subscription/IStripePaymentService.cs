@@ -11,6 +11,7 @@ public interface IStripePaymentService
     Task<string> CreateCheckoutSessionAsync(
         Guid tenantId,
         string tenantName,
+        string tenantSlug,
         string userEmail,
         PlanTier tier,
         CancellationToken cancellationToken = default);

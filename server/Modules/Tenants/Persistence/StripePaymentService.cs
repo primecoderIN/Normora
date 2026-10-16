@@ -25,6 +25,7 @@ public class StripePaymentService(
     public async Task<string> CreateCheckoutSessionAsync(
         Guid tenantId,
         string tenantName,
+        string tenantSlug,
         string userEmail,
         PlanTier tier,
         CancellationToken cancellationToken = default)
@@ -69,9 +70,7 @@ public class StripePaymentService(
             await context.SaveChangesAsync(cancellationToken);
 
             var mockSessionId = "simulated_sess_" + Guid.NewGuid().ToString("N");
-            var mockSuccessUrl = (_options.SuccessUrl.Contains("{CHECKOUT_SESSION_ID}")
-                ? _options.SuccessUrl.Replace("{CHECKOUT_SESSION_ID}", mockSessionId)
-                : _options.SuccessUrl) + "&tier=" + tier;
+            var mockSuccessUrl = $"{_app.BaseUrl}/app/workspaces/{tenantSlug}/employer/settings/subscription?status=success&session_id={mockSessionId}&tier={tier}";
 
             return mockSuccessUrl;
         }
@@ -125,18 +124,22 @@ public class StripePaymentService(
             });
         }
 
+        var successUrl = $"{_app.BaseUrl}/app/workspaces/{tenantSlug}/employer/settings/subscription?status=success&session_id={{CHECKOUT_SESSION_ID}}";
+        var cancelUrl = $"{_app.BaseUrl}/app/workspaces/{tenantSlug}/employer/settings/subscription?status=cancelled";
+
         var sessionOptions = new Stripe.Checkout.SessionCreateOptions
         {
             Mode = "subscription",
             PaymentMethodTypes = ["card"],
             LineItems = lineItems,
-            SuccessUrl = _options.SuccessUrl,
-            CancelUrl = _options.CancelUrl,
+            SuccessUrl = successUrl,
+            CancelUrl = cancelUrl,
             Metadata = new Dictionary<string, string>
             {
                 ["tenant_id"] = tenantId.ToString(),
                 ["plan_tier"] = tier.ToString(),
-                ["tenant_name"] = tenantName
+                ["tenant_name"] = tenantName,
+                ["tenant_slug"] = tenantSlug
             },
             SubscriptionData = new Stripe.Checkout.SessionSubscriptionDataOptions
             {

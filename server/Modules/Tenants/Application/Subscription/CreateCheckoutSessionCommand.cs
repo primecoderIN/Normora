@@ -37,6 +37,7 @@ public class CreateCheckoutSessionCommandHandler(
         var checkoutUrl = await stripeService.CreateCheckoutSessionAsync(
             tenantId,
             tenant.Name,
+            tenant.Slug,
             userEmail,
             request.Tier,
             cancellationToken);

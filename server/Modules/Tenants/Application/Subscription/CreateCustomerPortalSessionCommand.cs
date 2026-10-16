@@ -5,6 +5,8 @@ using Normora.Shared.Interfaces;
 using Normora.Shared.Options;
 using Microsoft.Extensions.Options;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace Normora.Modules.Tenants.Application.Subscription;
 
 public record CustomerPortalResultDto(string PortalUrl);
@@ -18,6 +20,7 @@ public record CreateCustomerPortalSessionCommand(string? ReturnUrl = null) : IRe
 }
 
 public class CreateCustomerPortalSessionCommandHandler(
+    TenantsDbContext context,
     ITenantContext tenantContext,
     IStripePaymentService stripeService,
     IOptions<AppOptions> appOptions) : IRequestHandler<CreateCustomerPortalSessionCommand, CustomerPortalResultDto>
@@ -26,9 +29,15 @@ public class CreateCustomerPortalSessionCommandHandler(
     {
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
+        var tenant = await context.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
         var returnUrl = !string.IsNullOrWhiteSpace(request.ReturnUrl)
             ? request.ReturnUrl
-            : $"{appOptions.Value.BaseUrl}/settings/subscription";
+            : (tenant != null
+                ? $"{appOptions.Value.BaseUrl}/app/workspaces/{tenant.Slug}/employer/settings/subscription"
+                : $"{appOptions.Value.BaseUrl}/settings/subscription");
 
         var portalUrl = await stripeService.CreateCustomerPortalSessionAsync(
             tenantId,

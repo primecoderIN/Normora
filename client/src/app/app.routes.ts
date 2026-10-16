@@ -38,6 +38,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/onboarding/onboarding.component').then(m => m.OnboardingComponent)
   },
   {
+    // Handles Stripe Checkout & Billing Portal returns to forward users to their active workspace
+    path: 'settings/subscription',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/employer/settings/subscription/subscription-redirect.component').then(m => m.SubscriptionRedirectComponent)
+  },
+  {
     path: 'app/workspaces/:slug',
     canActivate: [authGuard, workspaceGuard],
     children: [
