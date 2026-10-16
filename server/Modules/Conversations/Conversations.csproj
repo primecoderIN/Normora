@@ -16,6 +16,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>Normora.Modules.Conversations</AssemblyName>
+    <RootNamespace>Normora.Modules.Conversations</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

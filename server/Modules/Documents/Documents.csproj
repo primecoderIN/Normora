@@ -14,6 +14,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>Normora.Modules.Documents</AssemblyName>
+    <RootNamespace>Normora.Modules.Documents</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
