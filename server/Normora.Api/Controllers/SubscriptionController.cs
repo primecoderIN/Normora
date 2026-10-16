@@ -33,9 +33,9 @@ public class SubscriptionController(
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<SubscriptionUsageDto>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> GetUsage(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUsage([FromQuery] string? sessionId, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetTenantSubscriptionUsageQuery(), cancellationToken);
+        var result = await mediator.Send(new GetTenantSubscriptionUsageQuery(sessionId), cancellationToken);
         return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result));
     }
 

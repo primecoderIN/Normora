@@ -26,16 +26,22 @@ public record SubscriptionUsageDto(
     bool CancelAtPeriodEnd
 );
 
-public record GetTenantSubscriptionUsageQuery : IRequest<SubscriptionUsageDto>;
+public record GetTenantSubscriptionUsageQuery(string? SessionId = null) : IRequest<SubscriptionUsageDto>;
 
 public class GetTenantSubscriptionUsageQueryHandler(
     TenantsDbContext context,
     ITenantContext tenantContext,
-    IMediator mediator) : IRequestHandler<GetTenantSubscriptionUsageQuery, SubscriptionUsageDto>
+    IMediator mediator,
+    IStripePaymentService stripePaymentService) : IRequestHandler<GetTenantSubscriptionUsageQuery, SubscriptionUsageDto>
 {
     public async Task<SubscriptionUsageDto> Handle(GetTenantSubscriptionUsageQuery request, CancellationToken cancellationToken)
     {
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
+
+        if (!string.IsNullOrWhiteSpace(request.SessionId))
+        {
+            await stripePaymentService.FulfillSessionAsync(request.SessionId, tenantId, cancellationToken);
+        }
 
         var plan = await context.TenantPlans
             .AsNoTracking()

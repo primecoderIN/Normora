@@ -38,9 +38,10 @@ export class SubscriptionService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/subscription`;
 
-  getUsage(): Observable<SubscriptionUsageDto> {
+  getUsage(sessionId?: string): Observable<SubscriptionUsageDto> {
+    const params = sessionId ? { sessionId } : undefined;
     return this.http
-      .get<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/usage`)
+      .get<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/usage`, { params })
       .pipe(map(res => res.data));
   }
 

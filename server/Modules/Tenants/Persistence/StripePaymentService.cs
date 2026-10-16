@@ -277,6 +277,67 @@ public class StripePaymentService(
         return true;
     }
 
+    public async Task<bool> FulfillSessionAsync(
+        string sessionId,
+        Guid expectedTenantId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return false;
+        }
+
+        if (!_options.IsConfigured)
+        {
+            return true;
+        }
+
+        try
+        {
+            StripeConfiguration.ApiKey = _options.SecretKey;
+            var sessionService = new Stripe.Checkout.SessionService();
+            var session = await sessionService.GetAsync(sessionId, cancellationToken: cancellationToken);
+
+            if (session == null)
+            {
+                logger.LogWarning("Checkout session {SessionId} not found in Stripe.", sessionId);
+                return false;
+            }
+
+            // Verify tenant matches to prevent BOLA / misuse of other tenants' sessions
+            if (session.Metadata == null ||
+                !session.Metadata.TryGetValue("tenant_id", out var tenantIdStr) ||
+                !Guid.TryParse(tenantIdStr, out var tenantId) ||
+                tenantId != expectedTenantId)
+            {
+                logger.LogWarning("Session {SessionId} metadata tenant mismatch. Expected: {ExpectedTenantId}, Got: {MetadataTenantId}",
+                    sessionId, expectedTenantId, session.Metadata?.GetValueOrDefault("tenant_id"));
+                return false;
+            }
+
+            // Verify session is paid or complete
+            if (session.PaymentStatus != "paid" && session.Status != "complete")
+            {
+                logger.LogInformation("Checkout session {SessionId} has status {Status} and payment status {PaymentStatus}. Not fulfilling yet.",
+                    sessionId, session.Status, session.PaymentStatus);
+                return false;
+            }
+
+            await HandleCheckoutSessionCompletedAsync(session, cancellationToken);
+            return true;
+        }
+        catch (StripeException ex)
+        {
+            logger.LogError(ex, "Stripe error during synchronous fulfillment of session {SessionId}: {Message}", sessionId, ex.Message);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error fulfilling session {SessionId}: {Message}", sessionId, ex.Message);
+            return false;
+        }
+    }
+
     private async Task HandleCheckoutSessionCompletedAsync(Stripe.Checkout.Session session, CancellationToken cancellationToken)
     {
         if (!session.Metadata.TryGetValue("tenant_id", out var tenantIdStr) || !Guid.TryParse(tenantIdStr, out var tenantId))
@@ -306,6 +367,16 @@ public class StripePaymentService(
         }
         else
         {
+            // Idempotency check: if already upgraded to this tier with this subscription, avoid duplicate processing
+            if (plan.PlanTier == tier &&
+                !string.IsNullOrWhiteSpace(plan.StripeSubscriptionId) &&
+                plan.StripeSubscriptionId == session.SubscriptionId &&
+                plan.SubscriptionStatus == "active")
+            {
+                logger.LogInformation("Tenant {TenantId} already fulfilled with tier {Tier} and subscription {SubscriptionId}.", tenantId, tier, plan.StripeSubscriptionId);
+                return;
+            }
+
             plan.PlanTier = tier;
             plan.MaxDocuments = template.MaxDocuments;
             plan.MaxEmployees = template.MaxEmployees;
@@ -316,6 +387,25 @@ public class StripePaymentService(
             plan.UpdatedAt = DateTime.UtcNow;
         }
 
+        // Fetch subscription period details from Stripe if available
+        if (!string.IsNullOrWhiteSpace(plan.StripeSubscriptionId) && _options.IsConfigured)
+        {
+            try
+            {
+                var subscriptionService = new Stripe.SubscriptionService();
+                var sub = await subscriptionService.GetAsync(plan.StripeSubscriptionId, cancellationToken: cancellationToken);
+                if (sub != null)
+                {
+                    plan.CurrentPeriodEndUtc = sub.Items?.Data?.FirstOrDefault()?.CurrentPeriodEnd ?? sub.CancelAt;
+                    plan.CancelAtPeriodEnd = sub.CancelAtPeriodEnd;
+                }
+            }
+            catch (Exception subEx)
+            {
+                logger.LogWarning(subEx, "Failed to retrieve subscription details for {SubscriptionId}", plan.StripeSubscriptionId);
+            }
+        }
+
         // Add audit log entry
         context.AuditLogs.Add(new AuditLog
         {
@@ -323,9 +413,9 @@ public class StripePaymentService(
             Action = "Subscription.CheckoutCompleted",
             TargetType = "TenantPlan",
             TargetId = plan.Id.ToString(),
-            ActorUserId = "stripe_webhook",
+            ActorUserId = "stripe_checkout",
             ActorEmail = "stripe@normora.internal",
-            ActorName = "Stripe Webhook",
+            ActorName = "Stripe Checkout",
             Metadata = JsonSerializer.Serialize(new
             {
                 tier = tier.ToString(),

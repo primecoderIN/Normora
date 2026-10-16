@@ -109,9 +109,34 @@ export class SubscriptionComponent implements OnInit {
     return Math.min(100, Math.round((u.currentStorageBytes / u.maxStorageBytes) * 100));
   });
 
+  private readonly tierHierarchy: Record<PlanTierType, number> = {
+    Free: 0,
+    Pro: 1,
+    Enterprise: 2
+  };
+
+  getTierLevel(tier: PlanTierType): number {
+    return this.tierHierarchy[tier] ?? 0;
+  }
+
+  isTierCurrent(tier: PlanTierType): boolean {
+    return (this.usage()?.planTier ?? 'Free') === tier;
+  }
+
+  isTierDowngrade(tier: PlanTierType): boolean {
+    const currentTier = this.usage()?.planTier ?? 'Free';
+    return this.getTierLevel(tier) < this.getTierLevel(currentTier);
+  }
+
+  isTierUpgrade(tier: PlanTierType): boolean {
+    const currentTier = this.usage()?.planTier ?? 'Free';
+    return this.getTierLevel(tier) > this.getTierLevel(currentTier);
+  }
+
   ngOnInit(): void {
+    const sessionId = this.route.snapshot.queryParamMap.get('session_id') || undefined;
     this.handleRouteParams();
-    this.loadUsage();
+    this.loadUsage(sessionId);
   }
 
   private handleRouteParams(): void {
@@ -141,11 +166,11 @@ export class SubscriptionComponent implements OnInit {
     });
   }
 
-  loadUsage(): void {
+  loadUsage(sessionId?: string): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.subscriptionService.getUsage().subscribe({
+    this.subscriptionService.getUsage(sessionId).subscribe({
       next: (data) => {
         this.usage.set(data);
         this.isLoading.set(false);
@@ -158,32 +183,7 @@ export class SubscriptionComponent implements OnInit {
   }
 
   selectPlan(tier: PlanTierType): void {
-    if (this.usage()?.planTier === tier) return;
-
-    if (tier === 'Free') {
-      this.isUpdating.set(true);
-      this.selectedTierLoading.set(tier);
-      this.subscriptionService.updateTier(tier).subscribe({
-        next: (updated) => {
-          this.usage.set(updated);
-          this.isUpdating.set(false);
-          this.selectedTierLoading.set(null);
-          this.messageService.add({
-            severity: 'success',
-            summary: ApiMessages.SubscriptionUpdated.summary,
-            detail: `Your workspace has been switched to the ${tier} plan.`
-          });
-        },
-        error: () => {
-          this.isUpdating.set(false);
-          this.selectedTierLoading.set(null);
-          this.messageService.add({
-            severity: 'error',
-            summary: ApiMessages.SubscriptionUpdateFailed.summary,
-            detail: ApiMessages.SubscriptionUpdateFailed.detail
-          });
-        }
-      });
+    if (!this.isTierUpgrade(tier)) {
       return;
     }
 

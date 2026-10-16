@@ -33,4 +33,13 @@ public interface IStripePaymentService
         string jsonPayload,
         string stripeSignatureHeader,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verifies and fulfills a completed checkout session directly from Stripe API on redirect return.
+    /// Ensures instant quota provisioning without waiting for webhook delivery.
+    /// </summary>
+    Task<bool> FulfillSessionAsync(
+        string sessionId,
+        Guid expectedTenantId,
+        CancellationToken cancellationToken = default);
 }
