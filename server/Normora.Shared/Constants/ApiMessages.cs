@@ -23,6 +23,11 @@ public static class ApiMessages
 
     // Server Errors
     public const string InternalServerError = "An unexpected error occurred. Please try again later.";
+    public const string AskGeminiNotConfigured = "Ask Normora requires Gemini generation to be configured.";
+    public const string McpInvalidRequest = "Invalid MCP JSON-RPC request.";
+    public const string McpMethodNotFound = "The requested MCP method was not found.";
+    public const string McpToolNotFound = "The requested MCP tool was not found.";
+    public const string McpResourceNotFound = "The requested MCP resource was not found.";
     
     // Actions
     public const string CannotRemoveLastAdmin = "Cannot remove the last administrator from the workspace.";

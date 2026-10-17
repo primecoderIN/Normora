@@ -26,6 +26,18 @@ public interface ITextGenerationService
         IReadOnlyList<AskSource> sources,
         IReadOnlyList<ConversationTurn> history,
         string companyName,
+        CancellationToken cancellationToken = default)
+        => GenerateConversationalAnswerAsync(question, sources, history, companyName, null, cancellationToken);
+
+    /// <summary>
+    /// Generates a grounded, multi-turn answer with optional Gemini Tool Calling execution.
+    /// </summary>
+    Task<string> GenerateConversationalAnswerAsync(
+        string question,
+        IReadOnlyList<AskSource> sources,
+        IReadOnlyList<ConversationTurn> history,
+        string companyName,
+        Normora.Api.Features.Ask.Tools.ToolExecutionContext? toolContext,
         CancellationToken cancellationToken = default);
 
     /// <summary>

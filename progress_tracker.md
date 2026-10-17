@@ -269,3 +269,22 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Backend: Implemented dashboard cache eviction on document uploads (`UploadDocumentCommandHandler`), deletions (`DeleteDocumentCommandHandler`), and version state changes (`DocumentProcessingJob`).
 - [x] Backend: Cached AI suggested questions (`suggested-questions:{tenantId}:{deptKey}`) with 6-hour TTL in `GetSuggestedQuestionsQueryHandler`, preventing expensive redundant Gemini generation calls.
 
+## ✅ Completed Gemini Tool Calling & Model Context Protocol (MCP)
+- [x] Backend: Created `IAgentTool` interface and `ToolExecutionContext` holding workspace tenant metadata, user identity, and scope.
+- [x] Backend: Implemented `CalculatePolicyLimitTool` (`calculate_policy_limit`): Deterministically computes corporate expense allowances (hotel caps by tier, per-diem daily allowances, meal itemization, hardware stipends, and wellness subsidies).
+- [x] Backend: Implemented `EscalateInquiryTool` (`escalate_hr_inquiry`): Resolves workspace administrators and dispatches transactional escalation emails via `IEmailService` (Resend + Hangfire) when policies do not answer a user's inquiry or human assistance is needed.
+- [x] Backend: Implemented `SearchCompanyDocumentsTool` (`search_company_documents`): Performs targeted semantic and keyword document search across company documentation via `IRetrievalService`.
+- [x] Backend: Implemented `IAgentToolRegistry` and `AgentToolRegistry`: Aggregates registered tools, compiles OpenAPI / Gemini FunctionDeclaration schema, provides safe tool execution, and exposes MCP tool definitions.
+- [x] Backend: Updated `GeminiTextGenerationService` with multi-turn function calling execution loop: passes tool declarations to Gemini, intercepts `functionCall` turns, executes matching agent tools, feeds `functionResponse` back, and synthesizes final natural language answers with up to 3 iterative turns.
+- [x] Backend: Updated `AskConversationCommand`: Passes `ToolExecutionContext` to generation and enables tool-backed answering even when zero document chunks matched with high confidence (e.g. for deterministic policy limit calculations or HR escalation).
+- [x] Backend: Implemented `McpController` (`/api/mcp`) adhering to JSON-RPC 2.0 and MCP specification (v2024-11-05).
+- [x] Backend: Secured with `[RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]` ensuring strict tenant data isolation, authentication, and BOLA/BFLA protection.
+- [x] Backend: Implemented standard MCP methods:
+  - `initialize`: Returns protocol capabilities (`tools`, `resources`) and server info.
+  - `notifications/initialized` and `ping`: Protocol handshake and liveness.
+  - `tools/list`: Lists all available tools with JSON schema parameter validation.
+  - `tools/call`: Executes workspace tools in the authenticated user's tenant context.
+  - `resources/list`: Lists verified corporate documents scoped to the user's effective department permissions.
+  - `resources/read`: Reads document chunks via `normora://documents/{id}` with strict BOLA checks.
+  - `GET /api/mcp`: Discovery manifest endpoint returning workspace server status and tool inventory.
+

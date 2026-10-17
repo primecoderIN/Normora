@@ -90,6 +90,12 @@ public static class ApplicationServiceExtensions
         services.AddSingleton<IAnswerExporter, PdfAnswerExporter>();
         services.AddSingleton<IAnswerExporter, DocxAnswerExporter>();
 
+        // Agent Tools & Tool Registry (Gemini Tool Calling + MCP)
+        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentTool, Normora.Api.Features.Ask.Tools.CalculatePolicyLimitTool>();
+        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentTool, Normora.Api.Features.Ask.Tools.EscalateInquiryTool>();
+        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentTool, Normora.Api.Features.Ask.Tools.SearchCompanyDocumentsTool>();
+        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentToolRegistry, Normora.Api.Features.Ask.Tools.AgentToolRegistry>();
+
         return services;
     }
 }

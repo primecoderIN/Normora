@@ -69,7 +69,7 @@ public sealed class AskConversationCommandHandler(
         CancellationToken cancellationToken)
     {
         if (!generationService.IsConfigured)
-            throw new InvalidOperationException("Ask Normora requires Gemini generation to be configured.");
+            throw new InvalidOperationException(ApiMessages.AskGeminiNotConfigured);
 
         var stopwatch = Stopwatch.StartNew();
         try
@@ -137,14 +137,27 @@ public sealed class AskConversationCommandHandler(
         var (topCandidates, vectorSimOfFirst) =
             await retrievalService.RunHybridRetrievalAsync(rewrittenQuestion, limit, personalTenantId, cancellationToken);
 
-        // ── 6. Multi-turn grounded generation ─────────────────────────────────
+        // ── 6. Multi-turn grounded generation with Tool Calling ──────────────
         string answerText;
         List<MessageCitation> citations = [];
+
+        var toolContext = new Tools.ToolExecutionContext(
+            tenantContext.TenantId!.Value,
+            activeTenantName,
+            currentUser.KeycloakUserId,
+            currentUser.Email,
+            currentUser.DisplayName,
+            personalTenantId);
+
+        var historyTurns = AskHelpers.BuildConversationTurns(budgetedHistory);
 
         if (topCandidates.Count == 0 ||
             (vectorSimOfFirst > 0 && vectorSimOfFirst < MinimumSimilarity))
         {
-            answerText = RagConstants.FallbackAnswer;
+            // If no document sources matched with high confidence, still allow generation with tools
+            // so deterministic calculators and escalation workflows can fulfill the request.
+            answerText = await generationService.GenerateConversationalAnswerAsync(
+                rewrittenQuestion, [], historyTurns, activeTenantName, toolContext, cancellationToken);
         }
         else
         {
@@ -152,11 +165,8 @@ public sealed class AskConversationCommandHandler(
                 .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
                 .ToList();
 
-            // Build paired conversation turns for the generation prompt
-            var historyTurns = AskHelpers.BuildConversationTurns(budgetedHistory);
-
             answerText = await generationService.GenerateConversationalAnswerAsync(
-                rewrittenQuestion, sources, historyTurns, activeTenantName, cancellationToken);
+                rewrittenQuestion, sources, historyTurns, activeTenantName, toolContext, cancellationToken);
 
             // ── 7a. Build citations ───────────────────────────────────────────
             citations = topCandidates.Select((c, idx) => new MessageCitation

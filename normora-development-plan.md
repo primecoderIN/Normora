@@ -1847,6 +1847,15 @@ The following phases extend the Phase plan in §31 to cover the features describ
 - Suggested questions feature (§38.1.4)
 - Document Preview side-panel (§38.1.5)
 
+#### Phase 29 — Gemini Tool Calling & Model Context Protocol (MCP) (Completed)
+- **Agent Tool Abstraction**: `IAgentTool`, `ToolExecutionContext`, `AgentToolResult`, and `IAgentToolRegistry`.
+- **Corporate Policy Tools**:
+  - `calculate_policy_limit`: Deterministic expense limits for hotel night caps, per-diem allowances, meal limits, hardware stipends, and wellness subsidies.
+  - `escalate_hr_inquiry`: Automated escalation to workspace HR admins via transactional email (`IEmailService`, Resend, and Hangfire).
+  - `search_company_documents`: Deep targeted semantic and keyword document search via `IRetrievalService`.
+- **Gemini Multi-Turn Tool Calling Loop**: Integrated into `GeminiTextGenerationService` with schema generation, automatic function call interception, tool execution, and synthesized multi-turn answering.
+- **Model Context Protocol (MCP) Server**: Full JSON-RPC 2.0 endpoint (`/api/mcp`) supporting `initialize`, `ping`, `tools/list`, `tools/call`, `resources/list`, and `resources/read` with strict tenant isolation, department scoping, and BOLA/BFLA protection.
+
 ---
 
 ## 13. BFF (Backend-For-Frontend) Architecture Evaluation (Draft)

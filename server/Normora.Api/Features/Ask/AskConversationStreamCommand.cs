@@ -43,7 +43,7 @@ public sealed class AskConversationStreamCommandHandler(
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (!generationService.IsConfigured)
-            throw new InvalidOperationException("Ask Normora requires Gemini generation to be configured.");
+            throw new InvalidOperationException(ApiMessages.AskGeminiNotConfigured);
 
         var stopwatch = Stopwatch.StartNew();
         try
