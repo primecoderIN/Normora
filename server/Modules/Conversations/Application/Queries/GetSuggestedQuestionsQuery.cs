@@ -25,7 +25,8 @@ public record SuggestedQuestionDto(string Question, string IconClass);
 public class GetSuggestedQuestionsQueryHandler(
     ISuggestionsService suggestionsService,
     ITenantContext tenantContext,
-    IMediator mediator) : IRequestHandler<GetSuggestedQuestionsQuery, IReadOnlyList<SuggestedQuestionDto>>
+    IMediator mediator,
+    ICacheService cache) : IRequestHandler<GetSuggestedQuestionsQuery, IReadOnlyList<SuggestedQuestionDto>>
 {
     // Static icon classes cycled over the returned suggestions
     private static readonly string[] Icons =
@@ -54,35 +55,41 @@ public class GetSuggestedQuestionsQueryHandler(
             return FallbackSuggestions;
         }
 
-        var effectiveDepts = tenantContext.EffectiveDepartments.ToArray();
-        IReadOnlyList<string> documentNames;
+        var effectiveDepts = tenantContext.EffectiveDepartments.OrderBy(d => d).ToArray();
+        var deptKey = effectiveDepts.Length == 0 ? "company-wide" : string.Join("-", effectiveDepts);
+        var cacheKey = $"suggested-questions:{tenantContext.TenantId.Value}:{deptKey}";
 
-        try
+        return await cache.GetOrCreateAsync(cacheKey, async ct =>
         {
-            documentNames = await mediator.Send(
-                new Normora.Shared.Contracts.Documents.GetAccessibleDocumentFileNamesQuery(effectiveDepts, Limit: 20),
-                cancellationToken);
-        }
-        catch (Exception)
-        {
-            return FallbackSuggestions;
-        }
+            IReadOnlyList<string> documentNames;
 
-        if (documentNames.Count == 0)
-        {
-            return FallbackSuggestions;
-        }
+            try
+            {
+                documentNames = await mediator.Send(
+                    new Normora.Shared.Contracts.Documents.GetAccessibleDocumentFileNamesQuery(effectiveDepts, Limit: 20),
+                    ct);
+            }
+            catch (Exception)
+            {
+                return FallbackSuggestions;
+            }
 
-        var questions = await suggestionsService.GenerateSuggestionsAsync(documentNames, cancellationToken);
+            if (documentNames.Count == 0)
+            {
+                return FallbackSuggestions;
+            }
 
-        if (questions.Count == 0)
-        {
-            return FallbackSuggestions;
-        }
+            var questions = await suggestionsService.GenerateSuggestionsAsync(documentNames, ct);
 
-        return questions
-            .Select((q, i) => new SuggestedQuestionDto(q, Icons[i % Icons.Length]))
-            .ToList()
-            .AsReadOnly();
+            if (questions.Count == 0)
+            {
+                return FallbackSuggestions;
+            }
+
+            return (IReadOnlyList<SuggestedQuestionDto>)questions
+                .Select((q, i) => new SuggestedQuestionDto(q, Icons[i % Icons.Length]))
+                .ToList()
+                .AsReadOnly();
+        }, TimeSpan.FromHours(6), cancellationToken);
     }
 }

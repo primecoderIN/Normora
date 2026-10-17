@@ -1828,9 +1828,13 @@ The following phases extend the Phase plan in §31 to cover the features describ
 - ✅ Proactive limit enforcement in document upload (count + storage bytes) and employee invitation handlers
 - ✅ Real-time usage meters and interactive plan tier selection cards in Employer Settings
 
-#### Phase 26 — Redis Application Caching
-- `ICacheService` abstraction + Redis implementation
-- Branding, dashboard, and suggested-questions cache entries
+#### Phase 26 — Redis Application Caching (Completed)
+- ✅ `ICacheService` abstraction in `Normora.Shared.Interfaces`
+- ✅ `DistributedCacheService` implementation utilizing `IDistributedCache` / `Microsoft.Extensions.Caching.StackExchangeRedis` with graceful in-memory fallback
+- ✅ Dockerized Redis service (`redis:7-alpine`) in `docker-compose.yml`
+- ✅ Cached tenant branding (`branding:{slug}`) with automatic invalidation on updates
+- ✅ Cached employer dashboard statistics (`dashboard:{tenantId}`) with invalidation on uploads, versioning, status changes, and soft-deletions
+- ✅ Cached suggested questions (`suggested-questions:{tenantId}:{deptKey}`) with 6-hour TTL, saving expensive repetitive Gemini calls
 
 #### Phase 27 — Admin Super-Panel
 - `normora-admin` Keycloak role

@@ -18,6 +18,7 @@ public sealed class DocumentProcessingJob(
     ITextEmbeddingService embeddingService,
     IHubContext<DocumentHub> hubContext,
     Normora.Shared.Interfaces.IEmailService emailService,
+    Normora.Shared.Interfaces.ICacheService cache,
     ILogger<DocumentProcessingJob> logger)
 {
     [AutomaticRetry(Attempts = 3)]
@@ -113,6 +114,9 @@ public sealed class DocumentProcessingJob(
                 documentVersionId,
                 tenantId);
 
+            // Evict cached dashboard metrics so processing status is updated
+            await cache.RemoveAsync($"dashboard:{tenantId}");
+
             // Notify employers that the document is ready for queries
             await NotifyDocumentReadyAsync(version.Document, tenantId);
         }
@@ -122,6 +126,9 @@ public sealed class DocumentProcessingJob(
             await context.SaveChangesAsync();
             await PublishStatusAsync(version.Document, version.Status);
             logger.LogError(exception, "Document version {DocumentVersionId} failed processing for tenant {TenantId}.", documentVersionId, tenantId);
+
+            // Evict cached dashboard metrics on failure
+            await cache.RemoveAsync($"dashboard:{tenantId}");
 
             // Notify employers about the processing failure
             await NotifyDocumentProcessingFailedAsync(version.Document, tenantId, exception.Message);

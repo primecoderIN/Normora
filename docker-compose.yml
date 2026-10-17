@@ -81,6 +81,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: normora_redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   tika:
     image: apache/tika:3.2.3.0-full
     container_name: normora_tika
@@ -97,6 +108,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-password}
+      - ConnectionStrings__Redis=redis:6379
       - Keycloak__Authority=http://keycloak:8080/realms/normora
       - Keycloak__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
       - Minio__Endpoint=minio:9000

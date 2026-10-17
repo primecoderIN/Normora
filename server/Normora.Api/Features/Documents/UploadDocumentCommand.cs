@@ -8,9 +8,9 @@ using Normora.Api.Hubs;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared;
 using Normora.Shared.Constants;
+using Normora.Shared.Interfaces;
 
 using Normora.Shared.Exceptions;
-using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Features.Documents;
 
@@ -89,7 +89,8 @@ public sealed class UploadDocumentCommandHandler(
     IDocumentStorageService storageService,
     IBackgroundJobClient backgroundJobClient,
     IHubContext<DocumentHub> hubContext,
-    IMediator mediator) : IRequestHandler<UploadDocumentCommand, DocumentDto>
+    IMediator mediator,
+    ICacheService cache) : IRequestHandler<UploadDocumentCommand, DocumentDto>
 {
     public async Task<DocumentDto> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
@@ -174,6 +175,9 @@ public sealed class UploadDocumentCommandHandler(
             document.Versions.Add(version);
             context.DocumentVersions.Add(version);
             await context.SaveChangesAsync(cancellationToken);
+
+            // Invalidate cached dashboard metrics for this tenant
+            await cache.RemoveAsync($"dashboard:{document.TenantId}", cancellationToken);
 
             // Notify connected tenant members before queueing background work so clients observe
             // the lifecycle in order: Uploaded, then Processing/Ready/Failed.

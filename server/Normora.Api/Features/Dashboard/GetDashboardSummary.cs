@@ -5,6 +5,7 @@ using Normora.Modules.Conversations.Persistence;
 using Normora.Modules.Documents.Persistence;
 using Normora.Modules.Tenants.Persistence;
 using Normora.Shared;
+using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Features.Dashboard;
 
@@ -13,14 +14,21 @@ public record GetDashboardSummaryQuery() : IRequest<DashboardSummaryDto>;
 public class GetDashboardSummaryQueryHandler(
     TenantsDbContext tenantsDb,
     DocumentsDbContext documentsDb,
-    ConversationsDbContext conversationsDb) : IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>
+    ConversationsDbContext conversationsDb,
+    ITenantContext tenantContext,
+    ICacheService cache) : IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>
 {
     public async Task<DashboardSummaryDto> Handle(GetDashboardSummaryQuery request, CancellationToken cancellationToken)
     {
-        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
-        var thirtyDaysAgoOffset = DateTimeOffset.UtcNow.AddDays(-30);
+        var tenantId = tenantContext.TenantId?.ToString() ?? "global";
+        var cacheKey = $"dashboard:{tenantId}";
 
-        var totalDocuments = await documentsDb.Documents.CountAsync(cancellationToken);
+        return await cache.GetOrCreateAsync(cacheKey, async ct =>
+        {
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            var thirtyDaysAgoOffset = DateTimeOffset.UtcNow.AddDays(-30);
+
+            var totalDocuments = await documentsDb.Documents.CountAsync(ct);
         var documentsThisMonth = await documentsDb.Documents
             .Where(d => d.UploadedAt >= thirtyDaysAgo)
             .CountAsync(cancellationToken);
@@ -151,6 +159,7 @@ public class GetDashboardSummaryQueryHandler(
         };
 
         return summary;
+        }, TimeSpan.FromMinutes(2), cancellationToken);
     }
 }
 

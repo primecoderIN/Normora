@@ -42,6 +42,7 @@ public sealed class DeleteDocumentCommandValidator : AbstractValidator<DeleteDoc
 public sealed class DeleteDocumentCommandHandler(
     DocumentsDbContext context,
     IHubContext<DocumentHub> hubContext,
+    ICacheService cache,
     ILogger<DeleteDocumentCommandHandler> logger) : IRequestHandler<DeleteDocumentCommand, bool>
 {
     public async Task<bool> Handle(DeleteDocumentCommand request, CancellationToken cancellationToken)
@@ -61,6 +62,9 @@ public sealed class DeleteDocumentCommandHandler(
         document.DeletedAt = DateTime.UtcNow;
         document.DeletedByUserId = request.DeletedByUserId;
         await context.SaveChangesAsync(cancellationToken);
+
+        // Invalidate cached dashboard metrics for this tenant
+        await cache.RemoveAsync($"dashboard:{document.TenantId}", cancellationToken);
 
         // Broadcast to all employer sessions connected to this tenant so the document
         // row is removed from the list in real time without a page refresh.

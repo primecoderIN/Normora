@@ -84,6 +84,25 @@ public static class DatabaseServiceExtensions
             client.Timeout = TimeSpan.FromSeconds(30); // Shorter timeout — this is a UX-enhancing call, not critical path
         });
 
+        // Configure Distributed Cache (Redis with in-memory fallback for local dev / tests without Redis)
+        var redisConnectionString = configuration.GetConnectionString("Redis")
+            ?? configuration["REDIS_CONNECTION"];
+
+        if (!string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = "normora:";
+            });
+        }
+        else
+        {
+            services.AddDistributedMemoryCache();
+        }
+
+        services.AddSingleton<Normora.Shared.Interfaces.ICacheService, Normora.Api.Services.Caching.DistributedCacheService>();
+
         return services;
     }
 }

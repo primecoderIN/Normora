@@ -26,7 +26,8 @@ public record UpdateTenantBrandingCommand(
 
 public class UpdateTenantBrandingCommandHandler(
     TenantsDbContext context,
-    IBrandingStorageService storageService
+    IBrandingStorageService storageService,
+    ICacheService cache
 ) : IRequestHandler<UpdateTenantBrandingCommand, TenantBrandingDto?>
 {
     public async Task<TenantBrandingDto?> Handle(UpdateTenantBrandingCommand request, CancellationToken cancellationToken)
@@ -68,6 +69,9 @@ public class UpdateTenantBrandingCommandHandler(
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        // Invalidate cached branding for this tenant slug
+        await cache.RemoveAsync($"branding:{tenant.Slug.ToLowerInvariant()}", cancellationToken);
 
         return new TenantBrandingDto(
             tenant.Id,

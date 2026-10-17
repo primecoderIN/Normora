@@ -257,3 +257,15 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Backend: Integrated asynchronous invitation emails into `InviteEmployeeCommandHandler`.
 - [x] Backend: Integrated automated failure alerts and document-ready notices into `DocumentProcessingJob`.
 
+## ✅ Completed Redis Application Caching (Phase 26)
+- [x] Backend: Created `ICacheService` abstraction in `Normora.Shared.Interfaces` with `GetAsync`, `SetAsync`, `GetOrCreateAsync`, and `RemoveAsync`.
+- [x] Backend: Installed `Microsoft.Extensions.Caching.StackExchangeRedis` 10.0.13 and implemented `DistributedCacheService`.
+- [x] Backend: Added fault-tolerant resilience: wraps cache operations in safe exception handling to prevent cache failures from breaking user requests.
+- [x] Backend: Added automatic in-memory fallback (`AddDistributedMemoryCache`) when Redis is not running or unconfigured.
+- [x] Backend: Dockerized Redis (`redis:7-alpine`) on port `6379` in `docker-compose.yml`.
+- [x] Backend: Cached tenant branding (`branding:{slug}`) with 5-minute TTL in `GetTenantBrandingQueryHandler`.
+- [x] Backend: Implemented instant branding cache eviction upon `UpdateTenantBrandingCommand`.
+- [x] Backend: Cached employer dashboard summary metrics (`dashboard:{tenantId}`) with 2-minute TTL in `GetDashboardSummaryQueryHandler`.
+- [x] Backend: Implemented dashboard cache eviction on document uploads (`UploadDocumentCommandHandler`), deletions (`DeleteDocumentCommandHandler`), and version state changes (`DocumentProcessingJob`).
+- [x] Backend: Cached AI suggested questions (`suggested-questions:{tenantId}:{deptKey}`) with 6-hour TTL in `GetSuggestedQuestionsQueryHandler`, preventing expensive redundant Gemini generation calls.
+
