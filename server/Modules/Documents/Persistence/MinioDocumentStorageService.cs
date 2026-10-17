@@ -12,33 +12,37 @@ namespace Normora.Modules.Documents.Persistence;
 /// A storage service implementation that interacts with a MinIO S3-compatible object storage server.
 /// MinIO is used to physically store the uploaded documents, keeping large binary data out of the PostgreSQL database.
 /// </summary>
-public class MinioDocumentStorageService : IDocumentStorageService
+public class MinioDocumentStorageService(IMinioClient minioClient) : IDocumentStorageService
 {
-    private readonly IMinioClient _minioClient;
     private const string BucketName = "normora-documents";
-
-    public MinioDocumentStorageService(IMinioClient minioClient)
-    {
-        _minioClient = minioClient;
-        EnsureBucketExistsAsync().GetAwaiter().GetResult();
-    }
+    private static volatile bool _bucketEnsured;
+    private static readonly SemaphoreSlim _lock = new(1, 1);
 
     /// <summary>
-    /// Checks if the configured bucket exists in MinIO during startup, and creates it if it doesn't.
+    /// Checks if the configured bucket exists in MinIO lazily on first access, and creates it if it doesn't.
+    /// Thread-safe and non-blocking during DI service instantiation.
     /// </summary>
     private async Task EnsureBucketExistsAsync()
     {
+        if (_bucketEnsured) return;
+        await _lock.WaitAsync();
         try
         {
-            bool found = await _minioClient.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
+            if (_bucketEnsured) return;
+            bool found = await minioClient.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
             if (!found)
             {
-                await _minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
+                await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
             }
+            _bucketEnsured = true;
         }
         catch (MinioException e)
         {
             Console.WriteLine($"Error occurred: {e}");
+        }
+        finally
+        {
+            _lock.Release();
         }
     }
 
@@ -50,11 +54,13 @@ public class MinioDocumentStorageService : IDocumentStorageService
     /// <returns>The generated Object Name (Key) that can be used to retrieve the file later.</returns>
     public async Task<string> UploadDocumentAsync(IFormFile file, string tenantId)
     {
+        await EnsureBucketExistsAsync();
+
         // Prefix the file path with the TenantId to physically isolate organizations' documents inside the shared S3 bucket
         var objectName = $"{tenantId}/{Guid.NewGuid()}_{file.FileName}";
 
         using var stream = file.OpenReadStream();
-        await _minioClient.PutObjectAsync(new PutObjectArgs()
+        await minioClient.PutObjectAsync(new PutObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName)
             .WithStreamData(stream)
@@ -68,7 +74,7 @@ public class MinioDocumentStorageService : IDocumentStorageService
     {
         var stream = new MemoryStream();
 
-        await _minioClient.GetObjectAsync(new GetObjectArgs()
+        await minioClient.GetObjectAsync(new GetObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName)
             .WithCallbackStream(async (objectStream, cancellationToken) =>
@@ -86,7 +92,7 @@ public class MinioDocumentStorageService : IDocumentStorageService
     /// <param name="objectName">The exact Key/ObjectName of the file in the bucket.</param>
     public async Task DeleteDocumentAsync(string objectName)
     {
-        await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
+        await minioClient.RemoveObjectAsync(new RemoveObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName));
     }
@@ -100,7 +106,7 @@ public class MinioDocumentStorageService : IDocumentStorageService
     public async Task<string> GetDocumentUrlAsync(string objectName)
     {
         // Generate a secure, time-limited download link directly to S3 so large files don't proxy through our API servers
-        return await _minioClient.PresignedGetObjectAsync(new PresignedGetObjectArgs()
+        return await minioClient.PresignedGetObjectAsync(new PresignedGetObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName)
             .WithExpiry(60 * 60)); // The URL becomes invalid after 1 hour for security.

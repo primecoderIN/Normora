@@ -17,6 +17,7 @@ public static class ApiMessages
     public const string InvalidSlug = "Invalid tenant slug.";
     public const string InvalidInvitation = "Failed to accept invitation. It may be expired or invalid.";
     public const string SearchQueryRequired = "A search query is required.";
+    public const string UnsupportedExportFormat = "The requested export format is not supported.";
 
     // Resource
     public const string NotFound = "The requested resource was not found.";

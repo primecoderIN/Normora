@@ -123,7 +123,7 @@ export class AcceptInviteComponent implements OnInit {
     // Invitation details are safe to inspect anonymously; the API remains authoritative
     // when accepting and requires the authenticated email to match the recipient.
     this.invitationService.getInvitation(this.token!).subscribe({
-      next: (res: any) => {
+      next: (res: { success?: boolean; data?: InvitationDto; message?: string }) => {
         this.isLoading.set(false);
         if (res.success && res.data) {
           this.invitation.set(res.data);
@@ -135,10 +135,10 @@ export class AcceptInviteComponent implements OnInit {
             this.invitation.set(null);
           }
         } else {
-          this.error.set(res.message);
+          this.error.set(res.message || 'Failed to load invitation.');
         }
       },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isLoading.set(false);
         this.error.set(err.error?.message || 'Failed to load invitation.');
       },
@@ -159,17 +159,17 @@ export class AcceptInviteComponent implements OnInit {
     this.error.set('');
 
     this.invitationService.acceptInvitation(this.token).subscribe({
-      next: (res: any) => {
+      next: (res: { success?: boolean; message?: string }) => {
         this.isAccepting.set(false);
         if (res.success) {
           this.success.set(true);
           this.invitation.set(null);
           localStorage.removeItem('pending_invitation');
         } else {
-          this.error.set(res.message);
+          this.error.set(res.message || 'Failed to accept invitation.');
         }
       },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isAccepting.set(false);
         this.error.set(err.error?.message || 'Failed to accept invitation.');
       },
@@ -183,15 +183,15 @@ export class AcceptInviteComponent implements OnInit {
     this.error.set('');
 
     this.invitationService.rejectInvitation(this.token).subscribe({
-      next: (res: any) => {
+      next: (res: { success?: boolean; message?: string }) => {
         this.isAccepting.set(false);
         if (res.success) {
           this.router.navigate(['/']);
         } else {
-          this.error.set(res.message);
+          this.error.set(res.message || 'Failed to reject invitation.');
         }
       },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isAccepting.set(false);
         this.error.set(err.error?.message || 'Failed to reject invitation.');
       },

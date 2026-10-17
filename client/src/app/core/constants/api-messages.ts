@@ -47,6 +47,50 @@ export const ApiMessages = {
   SubscriptionQuotaFailed: {
     summary: 'Failed to Load Quotas',
     detail: 'Failed to retrieve subscription quotas. Please try again.'
+  },
+  DocumentUploaded: {
+    summary: 'Success',
+    detail: 'Document uploaded successfully'
+  },
+  DocumentDeleted: {
+    summary: 'Success',
+    detail: 'Document deleted successfully'
+  },
+  DocumentDeleteFailed: {
+    summary: 'Error',
+    detail: 'Failed to delete document'
+  },
+  EmployeeRemoved: {
+    summary: 'Success',
+    detail: 'Employee removed successfully'
+  },
+  EmployeeRemoveFailed: {
+    summary: 'Error',
+    detail: 'Failed to remove employee'
+  },
+  BrandingSaved: {
+    summary: 'Saved!',
+    detail: 'Branding changes applied to all users.'
+  },
+  BrandingSaveFailed: {
+    summary: 'Error',
+    detail: 'Failed to save branding.'
+  },
+  InvitationAccepted: {
+    summary: 'Success',
+    detail: 'Invitation accepted successfully'
+  },
+  InvitationAcceptFailed: {
+    summary: 'Error',
+    detail: 'Failed to accept invitation'
+  },
+  InvitationRejected: {
+    summary: 'Rejected',
+    detail: 'Invitation rejected successfully'
+  },
+  InvitationRejectFailed: {
+    summary: 'Error',
+    detail: 'Failed to reject invitation'
   }
 } as const;
 

@@ -10,6 +10,7 @@ import { SharedModule, MessageService } from 'primeng/api';
 import { DividerModule } from 'primeng/divider';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
 import { UserService } from '@core/services/user.service';
+import { ApiMessages } from '@core/constants/api-messages';
 
 export interface ColorPalette {
   name: string;
@@ -82,25 +83,25 @@ export class BrandingComponent {
     this.secondaryColor.set('#10B981');
   }
 
-  onLogoSelect(event: any) {
+  onLogoSelect(event: { files?: File[]; currentFiles?: File[] }) {
     const files = event.files ?? event.currentFiles;
-    if (files?.length > 0) {
+    if (files && files.length > 0) {
       this.logoFile.set(files[0]);
       this.logoPreviewUrl.set(URL.createObjectURL(files[0]));
     }
   }
 
-  onLogoDarkSelect(event: any) {
+  onLogoDarkSelect(event: { files?: File[]; currentFiles?: File[] }) {
     const files = event.files ?? event.currentFiles;
-    if (files?.length > 0) {
+    if (files && files.length > 0) {
       this.logoFileDark.set(files[0]);
       this.logoDarkPreviewUrl.set(URL.createObjectURL(files[0]));
     }
   }
 
-  onFaviconSelect(event: any) {
+  onFaviconSelect(event: { files?: File[]; currentFiles?: File[] }) {
     const files = event.files ?? event.currentFiles;
-    if (files?.length > 0) this.faviconFile.set(files[0]);
+    if (files && files.length > 0) this.faviconFile.set(files[0]);
   }
 
   removeLogo() { this.logoFile.set(null); this.logoPreviewUrl.set(null); }
@@ -151,11 +152,11 @@ export class BrandingComponent {
 
     this.brandingService.updateBranding(formData).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Saved!', detail: 'Branding changes applied to all users.' });
+        this.messageService.add({ severity: 'success', summary: ApiMessages.BrandingSaved.summary, detail: ApiMessages.BrandingSaved.detail });
         this.isSaving.set(false);
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save branding.' });
+        this.messageService.add({ severity: 'error', summary: ApiMessages.BrandingSaveFailed.summary, detail: ApiMessages.BrandingSaveFailed.detail });
         this.isSaving.set(false);
       }
     });

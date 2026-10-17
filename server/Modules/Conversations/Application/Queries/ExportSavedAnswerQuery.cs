@@ -36,7 +36,7 @@ public class ExportSavedAnswerQueryHandler(
     public async Task<ExportResult> Handle(ExportSavedAnswerQuery request, CancellationToken cancellationToken)
     {
         if (!_exporterMap.TryGetValue(request.Format, out var exporter))
-            throw new InvalidOperationException($"Export format '{request.Format}' is not supported.");
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.UnsupportedExportFormat);
 
         // Fetch the saved answer — the EF Core global query filter already enforces tenant isolation.
         var savedAnswer = await context.SavedAnswers

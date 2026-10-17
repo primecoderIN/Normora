@@ -2,44 +2,29 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Normora.Shared.Constants;
 using Normora.Shared.Options;
 using Normora.Modules.Conversations.Application.Services;
 
 namespace Normora.Modules.Conversations.Infrastructure.Llm;
 
-public class GeminiQueryRewriterService : IQueryRewriterService
+public class GeminiQueryRewriterService(
+    HttpClient httpClient,
+    IOptions<GeminiOptions> options,
+    ILogger<GeminiQueryRewriterService> logger) : IQueryRewriterService
 {
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<GeminiQueryRewriterService> _logger;
-    private readonly string? apiKey;
-    private readonly string model;
-
-    public GeminiQueryRewriterService(
-        HttpClient httpClient,
-        IOptions<GeminiOptions> options,
-        ILogger<GeminiQueryRewriterService> logger)
-    {
-        _httpClient = httpClient;
-        _logger = logger;
-
-        var geminiOptions = options.Value;
-        apiKey = geminiOptions.ApiKey;
-        model = geminiOptions.GenerationModel;
-
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            _logger.LogWarning("Gemini API key is not configured. Query rewriter service will fail.");
-        }
-    }
-
     public async Task<string> RewriteQueryAsync(
         string currentQuestion,
         IReadOnlyList<ConversationMessageContext> conversationHistory,
         CancellationToken cancellationToken = default)
     {
+        var geminiOptions = options.Value;
+        var apiKey = geminiOptions.ApiKey;
+        var model = geminiOptions.GenerationModel;
+
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            throw new InvalidOperationException("Gemini generation is not configured.");
+            throw new InvalidOperationException(ApiMessages.AskGeminiNotConfigured);
         }
 
         // Skip rewriting if this is the very first question in the conversation since there's no context yet
@@ -68,7 +53,7 @@ public class GeminiQueryRewriterService : IQueryRewriterService
             [new GeminiContent([new GeminiPart(prompt)])],
             new GeminiGenerationConfig(0.0)); // low temperature for consistent rewrites
 
-        using var response = await _httpClient.PostAsJsonAsync(
+        using var response = await httpClient.PostAsJsonAsync(
             $"models/{model}:generateContent?key={apiKey}",
             request,
             cancellationToken);
@@ -76,6 +61,7 @@ public class GeminiQueryRewriterService : IQueryRewriterService
 
         var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
         var rewritten = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+        logger.LogDebug("Query rewritten from '{Original}' to '{Rewritten}'", currentQuestion, rewritten);
         
         return string.IsNullOrWhiteSpace(rewritten) ? currentQuestion : rewritten.Trim();
     }

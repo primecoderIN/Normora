@@ -311,7 +311,7 @@ export class Conversations implements OnInit, AfterViewChecked {
                     content: '',
                     createdAt: new Date().toISOString(),
                     rewritten: false,
-                    citations: (evt.sources ?? []).map((s: any) => ({
+                    citations: (evt.sources ?? []).map((s: { documentId: string; fileName: string; score: number }) => ({
                       documentId: s.documentId,
                       documentChunkId: '',
                       fileName: s.fileName,
@@ -350,8 +350,9 @@ export class Conversations implements OnInit, AfterViewChecked {
 
       // Refresh list for updated title
       this.loadConversations();
-    } catch (err: any) {
-      this.chatError.set(err?.message || 'Something went wrong while streaming the response.');
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Something went wrong while streaming the response.';
+      this.chatError.set(errorMsg);
       this.activeConversation.update(c =>
         c ? { ...c, messages: c.messages.filter(m => m.id !== optimisticUser.id) } : c
       );

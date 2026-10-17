@@ -8,16 +8,9 @@ namespace Normora.Api.Services;
 /// A scoped service that extracts the current user's identity from the HTTP Context.
 /// This acts as an adapter over ASP.NET Core's ClaimsPrincipal, decoupling our core modules from HTTP specifics.
 /// </summary>
-public class CurrentUser : ICurrentUser
+public class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUser
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public CurrentUser(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
+    private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     /// <inheritdoc />
     // When DefaultMapInboundClaims = false, Keycloak's raw 'sub' claim is NOT mapped

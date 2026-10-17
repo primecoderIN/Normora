@@ -8,14 +8,8 @@ namespace Normora.Api.Middleware;
 /// Middleware responsible for extracting the active tenant from the request and validating the user's access.
 /// This establishes the Tenant Context for the remainder of the HTTP request pipeline.
 /// </summary>
-public class TenantResolutionMiddleware
+public class TenantResolutionMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public TenantResolutionMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
 
     /// <summary>
     /// Invokes the middleware to resolve the tenant based on the X-Tenant-Id header and current user identity.
@@ -66,6 +60,6 @@ public class TenantResolutionMiddleware
             // context unresolved; RequireTenant then rejects protected endpoints.
         }
 
-        await _next(context);
+        await next(context);
     }
 }

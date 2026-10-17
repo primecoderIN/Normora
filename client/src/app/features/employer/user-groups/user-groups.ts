@@ -91,7 +91,7 @@ export class UserGroups implements OnInit {
 
     obs.subscribe({
       next: () => { this.isSaving.set(false); this.closeModal(); this.loadGroups(); },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isSaving.set(false);
         this.formError.set(err?.error?.message ?? 'Something went wrong.');
       },
@@ -130,7 +130,7 @@ export class UserGroups implements OnInit {
 
     this.groupService.updateAssignments(target.id, payload).subscribe({
       next: () => { this.isSaving.set(false); this.closeAssignmentsModal(); this.loadGroups(); },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isSaving.set(false);
         this.formError.set(err?.error?.message ?? 'Failed to save assignments.');
       },
@@ -150,7 +150,7 @@ export class UserGroups implements OnInit {
     this.isSaving.set(true);
     this.groupService.delete(target.id).subscribe({
       next: () => { this.isSaving.set(false); this.deleteTarget.set(null); this.loadGroups(); },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isSaving.set(false);
         this.formError.set(err?.error?.message ?? 'Failed to delete group.');
       },

@@ -12,37 +12,37 @@ namespace Normora.Modules.Tenants.Persistence;
 /// A storage service implementation that interacts with a MinIO S3-compatible object storage server.
 /// MinIO is used to physically store the tenant branding assets.
 /// </summary>
-public class MinioBrandingStorageService : IBrandingStorageService
+public class MinioBrandingStorageService(IMinioClient minioClient) : IBrandingStorageService
 {
-    private readonly IMinioClient _minioClient;
     private const string BucketName = "normora-branding";
-
-    public MinioBrandingStorageService(IMinioClient minioClient)
-    {
-        _minioClient = minioClient;
-        EnsureBucketExistsAsync().GetAwaiter().GetResult();
-    }
+    private static volatile bool _bucketEnsured;
+    private static readonly SemaphoreSlim _lock = new(1, 1);
 
     /// <summary>
-    /// Checks if the configured bucket exists in MinIO during startup, and creates it if it doesn't.
+    /// Checks if the configured bucket exists in MinIO lazily on first upload, and creates it if it doesn't.
+    /// Thread-safe and non-blocking during DI service instantiation.
     /// </summary>
     private async Task EnsureBucketExistsAsync()
     {
+        if (_bucketEnsured) return;
+        await _lock.WaitAsync();
         try
         {
-            bool found = await _minioClient.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
+            if (_bucketEnsured) return;
+            bool found = await minioClient.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
             if (!found)
             {
-                await _minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
-                
-                // For branding assets, we could set the bucket policy to public-read, 
-                // but since we are proxying via the API to avoid internal/external DNS issues,
-                // we leave the bucket private and let the API read from it using credentials.
+                await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
             }
+            _bucketEnsured = true;
         }
         catch (MinioException e)
         {
             Console.WriteLine($"Error occurred: {e}");
+        }
+        finally
+        {
+            _lock.Release();
         }
     }
 
@@ -55,11 +55,13 @@ public class MinioBrandingStorageService : IBrandingStorageService
     /// <returns>The generated Object Name (Key) that can be used to retrieve the file later.</returns>
     public async Task<string> UploadAssetAsync(IFormFile file, string tenantSlug, string assetType)
     {
+        await EnsureBucketExistsAsync();
+
         // Object name format: {slug}/{assetType}
         var objectName = $"{tenantSlug}/{assetType}";
 
         using var stream = file.OpenReadStream();
-        await _minioClient.PutObjectAsync(new PutObjectArgs()
+        await minioClient.PutObjectAsync(new PutObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName)
             .WithStreamData(stream)
@@ -71,13 +73,13 @@ public class MinioBrandingStorageService : IBrandingStorageService
 
     public async Task<(Stream Content, string ContentType)> DownloadAssetAsync(string objectName)
     {
-        var stat = await _minioClient.StatObjectAsync(new StatObjectArgs()
+        var stat = await minioClient.StatObjectAsync(new StatObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName));
 
         var stream = new MemoryStream();
 
-        await _minioClient.GetObjectAsync(new GetObjectArgs()
+        await minioClient.GetObjectAsync(new GetObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName)
             .WithCallbackStream(async (objectStream, cancellationToken) =>
@@ -95,7 +97,7 @@ public class MinioBrandingStorageService : IBrandingStorageService
     /// <param name="objectName">The exact Key/ObjectName of the file in the bucket.</param>
     public async Task DeleteAssetAsync(string objectName)
     {
-        await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
+        await minioClient.RemoveObjectAsync(new RemoveObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName));
     }

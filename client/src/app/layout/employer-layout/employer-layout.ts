@@ -11,6 +11,7 @@ import { InvitationService } from '@core/services/invitation.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
 import { MessageService } from 'primeng/api';
+import { ApiMessages } from '@core/constants/api-messages';
 
 @Component({
   selector: 'app-employer-layout',
@@ -75,8 +76,8 @@ export class EmployerLayout {
     this.isAccepting.set(true);
     this.invitationService.acceptInvitation(token).subscribe({
       next: () => window.location.reload(),
-      error: (err: any) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to accept invitation' });
+      error: (err: { error?: { message?: string } }) => {
+        this.messageService.add({ severity: 'error', summary: ApiMessages.InvitationAcceptFailed.summary, detail: err.error?.message || ApiMessages.InvitationAcceptFailed.detail });
         this.isAccepting.set(false);
       }
     });
@@ -87,8 +88,8 @@ export class EmployerLayout {
     this.isAccepting.set(true);
     this.invitationService.rejectInvitation(token).subscribe({
       next: () => window.location.reload(),
-      error: (err: any) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to reject invitation' });
+      error: (err: { error?: { message?: string } }) => {
+        this.messageService.add({ severity: 'error', summary: ApiMessages.InvitationRejectFailed.summary, detail: err.error?.message || ApiMessages.InvitationRejectFailed.detail });
         this.isAccepting.set(false);
       }
     });

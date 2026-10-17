@@ -17,6 +17,7 @@ import { DocumentUploadModalComponent } from './components/document-upload-modal
 import { UserService } from '@core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '@core/services/document-realtime.service';
 import { DepartmentService, Department } from '@core/services/department.service';
+import { ApiMessages } from '@core/constants/api-messages';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 
@@ -116,14 +117,14 @@ export class Documents implements OnInit, OnDestroy {
     });
   }
 
-  onUploadSuccess(event: any) {
-    this.messageService.add({ severity: 'info', summary: 'Success', detail: 'Document uploaded successfully' });
+  onUploadSuccess(_event: unknown) {
+    this.messageService.add({ severity: 'success', summary: ApiMessages.DocumentUploaded.summary, detail: ApiMessages.DocumentUploaded.detail });
     this.showUploadDialog.set(false);
     this.uploadingDocumentId.set(null);
     this.loadDocuments();
   }
 
-  onUploadError(event: any) {
+  onUploadError(event: { error?: { error?: string } }) {
     let errorDetail = 'Upload failed.';
     if (event.error?.error) {
       errorDetail = typeof event.error.error === 'string' ? event.error.error : 'Invalid file type or size.';
@@ -177,7 +178,7 @@ export class Documents implements OnInit, OnDestroy {
 
     this.documentService.deleteDocument(id).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Document deleted' });
+        this.messageService.add({ severity: 'success', summary: ApiMessages.DocumentDeleted.summary, detail: ApiMessages.DocumentDeleted.detail });
         this.isDeleting.set(false);
       },
       error: (err) => {
@@ -186,7 +187,7 @@ export class Documents implements OnInit, OnDestroy {
         if (documentToRemove) {
           this.documents.set([...this.documents(), documentToRemove]);
         }
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete document' });
+        this.messageService.add({ severity: 'error', summary: ApiMessages.DocumentDeleteFailed.summary, detail: ApiMessages.DocumentDeleteFailed.detail });
         this.isDeleting.set(false);
       }
     });

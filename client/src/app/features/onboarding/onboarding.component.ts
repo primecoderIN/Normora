@@ -271,7 +271,7 @@ export class OnboardingComponent {
       next: () => {
         window.location.href = '/employee/ask';
       },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.acceptError.set(err.error?.message || 'Failed to accept invitation');
         this.isAccepting.set(false);
         this.acceptingToken.set(null);
@@ -288,7 +288,7 @@ export class OnboardingComponent {
       next: () => {
         window.location.reload();
       },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.acceptError.set(err.error?.message || 'Failed to reject invitation');
         this.isAccepting.set(false);
         this.acceptingToken.set(null);
@@ -306,12 +306,12 @@ export class OnboardingComponent {
     const payload = this.onboardingForm.value;
 
     this.tenantService.createTenant(payload).subscribe({
-      next: (res: any) => {
+      next: (res: { data?: { slug?: string } }) => {
         // Use the slug returned from API if available, otherwise the one from payload
         const slug = res?.data?.slug || payload.slug;
         window.location.href = `/app/workspaces/${slug}/employer/dashboard`;
       },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.error.set(err.error?.message || 'Failed to create organization');
         this.isLoading.set(false);
       },

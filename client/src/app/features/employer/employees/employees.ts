@@ -9,6 +9,7 @@ import { MenuModule } from 'primeng/menu';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
 import { MenuItem, MessageService } from 'primeng/api';
+import { ApiMessages } from '@core/constants/api-messages';
 
 @Component({
   selector: 'app-employees',
@@ -214,7 +215,7 @@ export class Employees implements OnInit {
       error: (err: { error?: { message?: string } }) => {
         console.error('Failed to remove employee', err);
         this.isRemoving.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to remove employee' });
+        this.messageService.add({ severity: 'error', summary: ApiMessages.EmployeeRemoveFailed.summary, detail: err.error?.message || ApiMessages.EmployeeRemoveFailed.detail });
       }
     });
   }

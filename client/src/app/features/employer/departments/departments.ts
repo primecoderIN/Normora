@@ -76,7 +76,7 @@ export class Departments implements OnInit {
 
     obs.subscribe({
       next: () => { this.isSaving.set(false); this.closeModal(); this.loadDepartments(); },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isSaving.set(false);
         this.formError.set(err?.error?.message ?? 'Something went wrong. Please try again.');
       },
@@ -94,7 +94,7 @@ export class Departments implements OnInit {
     this.isSaving.set(true);
     this.deptService.delete(target.id).subscribe({
       next: () => { this.isSaving.set(false); this.deleteTarget.set(null); this.loadDepartments(); },
-      error: (err: any) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isSaving.set(false);
         this.formError.set(err?.error?.message ?? 'Failed to delete department.');
       },

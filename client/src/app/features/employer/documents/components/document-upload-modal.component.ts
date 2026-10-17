@@ -95,8 +95,9 @@ export class DocumentUploadModalComponent {
     
     // Document Versioning (Phase 19): If present, append the existing document ID 
     // to signal the API to create a new DocumentVersion instead of a new Document.
-    if (this.documentId()) {
-      event.formData.append('documentId', this.documentId());
+    const docId = this.documentId();
+    if (docId) {
+      event.formData.append('documentId', docId);
     }
   }
 
