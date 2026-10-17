@@ -5,6 +5,7 @@ using Normora.Api.Features.Documents;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Shared.Interfaces;
 using Normora.Api.Services;
+using Normora.Api.Services.Email;
 using Normora.Shared;
 using Normora.Shared.Validation;
 using Normora.Modules.Conversations.Application.Exports;
@@ -45,7 +46,32 @@ public static class ApplicationServiceExtensions
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IAuditService, Normora.Modules.Tenants.Application.Audit.AuditService>();
         services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IStripePaymentService, Normora.Modules.Tenants.Persistence.StripePaymentService>();
-        services.AddScoped<IEmailService, SmtpEmailService>();
+        // Email Services (Resend + Hangfire Background Delivery)
+        services.AddHttpClient<ResendEmailSender>();
+        services.AddTransient<ResendEmailSender>();
+        services.AddTransient<NullEmailSender>();
+
+        services.AddTransient<IEmailSender>(sp =>
+        {
+            var emailOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Normora.Shared.Options.EmailOptions>>().Value;
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResendEmailSender>>();
+
+            if (string.Equals(emailOptions.Provider, "Null", StringComparison.OrdinalIgnoreCase))
+            {
+                return sp.GetRequiredService<NullEmailSender>();
+            }
+
+            if (!string.IsNullOrWhiteSpace(emailOptions.ResendApiKey))
+            {
+                return sp.GetRequiredService<ResendEmailSender>();
+            }
+
+            logger.LogWarning("No RESEND_API_KEY detected in configuration. Falling back to NullEmailSender (emails will be logged to console instead of dispatched).");
+            return sp.GetRequiredService<NullEmailSender>();
+        });
+
+        services.AddScoped<Normora.Api.Features.Email.SendEmailJob>();
+        services.AddScoped<IEmailService, BackgroundEmailService>();
         services.AddScoped<INotificationService, NotificationService>();
 
         services.AddScoped<DocumentProcessingJob>();

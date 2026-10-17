@@ -1,0 +1,66 @@
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Normora.Shared.Interfaces;
+using Normora.Shared.Options;
+
+namespace Normora.Api.Services.Email;
+
+/// <summary>
+/// Cloud transactional email implementation of <see cref="IEmailSender"/> powered by Resend (https://resend.com).
+/// </summary>
+public class ResendEmailSender(
+    HttpClient httpClient,
+    IOptions<EmailOptions> options,
+    ILogger<ResendEmailSender> logger) : IEmailSender
+{
+    private const string ResendApiUrl = "https://api.resend.com/emails";
+
+    public async Task SendAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default)
+    {
+        var emailOptions = options.Value;
+        if (string.IsNullOrWhiteSpace(emailOptions.ResendApiKey))
+        {
+            throw new InvalidOperationException("Resend API Key is not configured. Set RESEND_API_KEY in your environment or .env file.");
+        }
+
+        var formattedFrom = !string.IsNullOrWhiteSpace(emailOptions.FromName)
+            ? $"{emailOptions.FromName} <{emailOptions.FromEmail}>"
+            : emailOptions.FromEmail;
+
+        var payload = new
+        {
+            from = formattedFrom,
+            to = new[] { to },
+            subject,
+            html = htmlBody
+        };
+
+        var json = JsonSerializer.Serialize(payload);
+        using var request = new HttpRequestMessage(HttpMethod.Post, ResendApiUrl)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", emailOptions.ResendApiKey);
+
+        try
+        {
+            var response = await httpClient.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogError("Resend API request failed with status {StatusCode}: {Response}", response.StatusCode, responseContent);
+                response.EnsureSuccessStatusCode();
+            }
+
+            logger.LogInformation("Resend successfully dispatched email to {To} with subject '{Subject}'", to, subject);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to transmit email via Resend to {To}", to);
+            throw;
+        }
+    }
+}

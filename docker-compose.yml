@@ -81,16 +81,6 @@ services:
       timeout: 5s
       retries: 5
 
-  mailpit:
-    image: axllent/mailpit:latest
-    container_name: normora_mailpit
-    environment:
-      MP_MAX_MESSAGES: 5000
-      MP_UI_AUTH_FILE: ""
-    ports:
-      - "8025:8025" # UI
-      - "1025:1025" # SMTP
-
   tika:
     image: apache/tika:3.2.3.0-full
     container_name: normora_tika
@@ -112,8 +102,8 @@ services:
       - Minio__Endpoint=minio:9000
       - Minio__AccessKey=${MINIO_ROOT_USER:-admin}
       - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
-      - Smtp__Host=mailpit
-      - Smtp__Port=1025
+      - Email__ResendApiKey=${RESEND_API_KEY:-}
+      - Email__FromEmail=${RESEND_FROM_EMAIL:-onboarding@resend.dev}
       - Tika__Endpoint=http://tika:9998/
       - Gemini__ApiKey=${GEMINI_API_KEY:-}
       - Stripe__SecretKey=${STRIPE_SECRET_KEY:-}

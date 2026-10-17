@@ -12,10 +12,12 @@ namespace Normora.Api.Features.Documents;
 /// </summary>
 public sealed class DocumentProcessingJob(
     DocumentsDbContext context,
+    Normora.Modules.Tenants.Persistence.TenantsDbContext tenantsContext,
     IDocumentStorageService storageService,
     IDocumentTextExtractor textExtractor,
     ITextEmbeddingService embeddingService,
     IHubContext<DocumentHub> hubContext,
+    Normora.Shared.Interfaces.IEmailService emailService,
     ILogger<DocumentProcessingJob> logger)
 {
     [AutomaticRetry(Attempts = 3)]
@@ -110,6 +112,9 @@ public sealed class DocumentProcessingJob(
                 "Document version {DocumentVersionId} was extracted successfully for tenant {TenantId}.",
                 documentVersionId,
                 tenantId);
+
+            // Notify employers that the document is ready for queries
+            await NotifyDocumentReadyAsync(version.Document, tenantId);
         }
         catch (Exception exception)
         {
@@ -117,7 +122,83 @@ public sealed class DocumentProcessingJob(
             await context.SaveChangesAsync();
             await PublishStatusAsync(version.Document, version.Status);
             logger.LogError(exception, "Document version {DocumentVersionId} failed processing for tenant {TenantId}.", documentVersionId, tenantId);
+
+            // Notify employers about the processing failure
+            await NotifyDocumentProcessingFailedAsync(version.Document, tenantId, exception.Message);
+
             throw;
+        }
+    }
+
+    private async Task NotifyDocumentProcessingFailedAsync(Document document, Guid tenantId, string errorMessage)
+    {
+        try
+        {
+            var tenant = await tenantsContext.Tenants.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == tenantId);
+            var tenantName = tenant?.Name ?? "Your Organization";
+
+            var adminEmails = await tenantsContext.TenantMemberships
+                .IgnoreQueryFilters()
+                .Where(m => m.TenantId == tenantId && m.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin && m.RemovedAt == null)
+                .Include(m => m.User)
+                .Where(m => !string.IsNullOrEmpty(m.User.Email))
+                .Select(m => m.User.Email!)
+                .Distinct()
+                .ToListAsync();
+
+            if (adminEmails.Count == 0)
+            {
+                logger.LogInformation("No employer email recipients found for tenant {TenantId}.", tenantId);
+                return;
+            }
+
+            var html = Normora.Shared.Templates.EmailTemplates.DocumentProcessingFailedEmail(tenantName, document.FileName, errorMessage);
+            var subject = $"[Action Required] Processing failed: {document.FileName}";
+
+            foreach (var email in adminEmails)
+            {
+                await emailService.SendEmailAsync(email, subject, html);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to dispatch document failure notification emails for document {DocumentId}.", document.Id);
+        }
+    }
+
+    private async Task NotifyDocumentReadyAsync(Document document, Guid tenantId)
+    {
+        try
+        {
+            var tenant = await tenantsContext.Tenants.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == tenantId);
+            var tenantName = tenant?.Name ?? "Your Organization";
+
+            var departments = await context.DocumentDepartments
+                .Where(dd => dd.DocumentId == document.Id)
+                .ToListAsync();
+
+            string scopeDescription = departments.Count == 0 ? "Company-Wide" : $"{departments.Count} Department(s)";
+
+            var employerEmails = await tenantsContext.TenantMemberships
+                .IgnoreQueryFilters()
+                .Where(m => m.TenantId == tenantId && m.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin && m.RemovedAt == null)
+                .Include(m => m.User)
+                .Where(m => !string.IsNullOrEmpty(m.User.Email))
+                .Select(m => m.User.Email!)
+                .Distinct()
+                .ToListAsync();
+
+            var html = Normora.Shared.Templates.EmailTemplates.DocumentReadyEmail(tenantName, document.FileName, scopeDescription);
+            var subject = $"New document available: {document.FileName}";
+
+            foreach (var email in employerEmails)
+            {
+                await emailService.SendEmailAsync(email, subject, html);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to dispatch document ready notification emails for document {DocumentId}.", document.Id);
         }
     }
 

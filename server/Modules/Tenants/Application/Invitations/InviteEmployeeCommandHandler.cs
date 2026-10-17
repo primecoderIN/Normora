@@ -71,13 +71,10 @@ public class InviteEmployeeCommandHandler(
         var tenant = await context.Tenants.FindAsync(new object[] { tenantId }, cancellationToken);
         var tenantName = tenant?.Name ?? "An organization";
 
-        // SEC-18: HTML-encode tenant name before injecting into email body to prevent HTML injection
-        var safeTenantName = System.Net.WebUtility.HtmlEncode(tenantName);
-
-        // Dispatch the invitation email containing the secure acceptance link
+        // Dispatch the branded invitation email containing the secure acceptance link
         var acceptLink = $"{baseUrl}/accept-invite?token={invitation.Token}";
-        var body = $"<p>You have been invited to join {safeTenantName} on Normora.</p><p><a href='{acceptLink}'>Click here to accept the invitation</a>.</p>";
-        await emailService.SendEmailAsync(request.Email, $"Invitation to join {safeTenantName}", body, cancellationToken);
+        var body = Normora.Shared.Templates.EmailTemplates.InvitationEmail(tenantName, acceptLink);
+        await emailService.SendEmailAsync(request.Email, $"Invitation to join {tenantName}", body, cancellationToken);
 
         // Push a real-time notification to the user if they happen to already be logged in to the platform
         await notificationService.NotifyInvitationReceivedAsync(request.Email, tenantName, cancellationToken);

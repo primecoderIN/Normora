@@ -2,7 +2,7 @@ namespace Normora.Shared.Interfaces;
 
 /// <summary>
 /// An abstraction for sending emails to users.
-/// Implementations (like SmtpEmailService) handle the physical transmission of the email.
+/// Enqueues emails into background queues (Hangfire) for reliable, non-blocking delivery.
 /// </summary>
 public interface IEmailService
 {

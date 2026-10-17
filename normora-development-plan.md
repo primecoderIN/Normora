@@ -1809,10 +1809,13 @@ The following phases extend the Phase plan in §31 to cover the features describ
 - ✅ Comprehensive audit coverage across document, employee, department, user group, and branding mutations
 - ✅ Read-only Audit Log page in Employer Settings with filtering, pagination, and JSON viewer
 
-#### Phase 23 — Email Notifications
-- `IEmailSender` abstraction + SendGrid implementation
-- `SendEmailJob` Hangfire handler
-- Invitation email, document-failed email
+#### Phase 23 — Email Notifications (Completed)
+- ✅ `IEmailSender` transport abstraction + `ResendEmailSender` (Resend REST API) + `NullEmailSender` (tests/graceful suppression)
+- ✅ Replaced Mailpit container with cloud-native Resend delivery and eliminated local SMTP container overhead
+- ✅ `SendEmailJob` Hangfire handler with exponential retry policy (10s, 30s, 60s)
+- ✅ `BackgroundEmailService` implementing `IEmailService` for non-blocking asynchronous email queuing
+- ✅ Responsive branded HTML templates (`EmailTemplates`) for invitations, document failure alerts, and document ready notifications
+- ✅ Integrated email dispatch on employee invitations and document processing failure/completion in `DocumentProcessingJob`
 
 #### Phase 24 — Analytics Dashboard
 - `AnalyticsSnapshots` table + nightly aggregation Hangfire job

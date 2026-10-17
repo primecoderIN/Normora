@@ -242,3 +242,18 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Frontend: Created `SubscriptionRedirectComponent` handling top-level `/settings/subscription` return redirects from Stripe and routing seamlessly to `/app/workspaces/:slug/employer/settings/subscription` with preserved query parameters.
 - [x] Frontend: Added "Subscription & Plans" navigation link to employer layout and registered routes in `app.routes.ts`.
 
+## ✅ Completed Email Notifications (Phase 23)
+- [x] Backend: Created `IEmailSender` transport abstraction in `Normora.Shared.Interfaces`.
+- [x] Backend: Implemented `ResendEmailSender` utilizing Resend's REST API via `HttpClient` (https://resend.com).
+- [x] Backend: Removed `mailpit` container from `docker-compose.yml`, switching completely to cloud-native Resend.
+- [x] Backend: Implemented `NullEmailSender` for headless test runs and graceful local suppression when `RESEND_API_KEY` is not provided.
+- [x] Backend: Added `EmailOptions` configuration section supporting Resend and Null selection.
+- [x] Backend: Implemented `SendEmailJob` Hangfire background worker with exponential retry policy (10s, 30s, 60s).
+- [x] Backend: Implemented `BackgroundEmailService` implementing `IEmailService`, ensuring email dispatch never blocks HTTP request threads.
+- [x] Backend: Created responsive, branded HTML templates in `EmailTemplates`:
+  - `InvitationEmail`: Branded invitation with direct acceptance CTA and expiration notice.
+  - `DocumentProcessingFailedEmail`: Alert notification to workspace admins with error diagnostics.
+  - `DocumentReadyEmail`: Notification alerting members that a new document has completed extraction and indexing.
+- [x] Backend: Integrated asynchronous invitation emails into `InviteEmployeeCommandHandler`.
+- [x] Backend: Integrated automated failure alerts and document-ready notices into `DocumentProcessingJob`.
+

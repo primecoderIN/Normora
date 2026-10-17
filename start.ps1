@@ -12,6 +12,8 @@ MINIO_ROOT_PASSWORD=password
 ASPNETCORE_ENVIRONMENT=Development
 PGADMIN_DEFAULT_EMAIL=admin@normora.com
 PGADMIN_DEFAULT_PASSWORD=admin
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=onboarding@resend.dev
 "@
 
 if (-not (Test-Path $envFile)) {

@@ -33,13 +33,11 @@ public static class ConfigurationServiceExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
             
-        services.AddOptions<SmtpOptions>()
-            .Bind(configuration.GetSection(SmtpOptions.SectionName))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-
         services.AddOptions<StripeOptions>()
             .Bind(configuration.GetSection(StripeOptions.SectionName));
+
+        services.AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName));
 
         return services;
     }
