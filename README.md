@@ -61,7 +61,10 @@ Starting the whole stack locally is incredibly simple:
 *(This script will automatically generate a `.env` file with defaults, pull necessary images, and build the .NET API & Angular client).*
 
 > [!IMPORTANT]  
-> **LLM Features Requirement:** To use the Conversational AI and Retrieval-Augmented Generation (RAG) features, you must provide a Google Gemini API Key. After running the start script for the first time, open the generated `.env` file in the root directory and update the `GEMINI_API_KEY` value, then restart the application.
+> **API Configuration Requirement:**
+> - **Google Gemini API Key**: To use Conversational AI, RAG document search, and tool calling, set `GEMINI_API_KEY` in your `.env` file.
+> - **Resend Email API Key**: To enable transactional notifications (invitations, document alerts, escalation emails), set `RESEND_API_KEY` in `.env`.
+> - **Dev Email Override**: When testing with Resend's free tier, emails can only be delivered to your registered Resend account. Set `DEV_OVERRIDE_EMAIL=your-resend-account@email.com` in `.env` to route all outbound test emails to your inbox.
 
 To gracefully stop the environment without destroying your data volumes:
 ```powershell
@@ -76,5 +79,4 @@ Once the Docker containers are running, you can access the ecosystem at:
 - **API Documentation & Testing (Scalar)**: `http://localhost:5000/scalar/v1`
 - **Keycloak Admin Console**: `http://localhost:8080`
 - **MinIO Console**: `http://localhost:9001`
-- **Mailpit (Email Testing UI)**: `http://localhost:8025`
 - **pgAdmin**: `http://localhost:5050`

@@ -24,6 +24,7 @@ public static class ApiMessages
     // Server Errors
     public const string InternalServerError = "An unexpected error occurred. Please try again later.";
     public const string AskGeminiNotConfigured = "Ask Normora requires Gemini generation to be configured.";
+    public const string ResendApiKeyNotConfigured = "Resend API Key is not configured. Set RESEND_API_KEY in your environment or .env file.";
     public const string McpInvalidRequest = "Invalid MCP JSON-RPC request.";
     public const string McpMethodNotFound = "The requested MCP method was not found.";
     public const string McpToolNotFound = "The requested MCP tool was not found.";

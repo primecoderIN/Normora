@@ -40,6 +40,7 @@ services:
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      JAVA_OPTS_APPEND: "-Xms256m -Xmx512m"
       KC_DB: postgres
       KC_DB_URL_HOST: postgres
       KC_DB_URL_DATABASE: keycloakdb
@@ -116,6 +117,7 @@ services:
       - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
       - Email__ResendApiKey=${RESEND_API_KEY:-}
       - Email__FromEmail=${RESEND_FROM_EMAIL:-onboarding@resend.dev}
+      - Email__DevOverrideRecipient=${DEV_OVERRIDE_EMAIL:-}
       - Tika__Endpoint=http://tika:9998/
       - Gemini__ApiKey=${GEMINI_API_KEY:-}
       - Stripe__SecretKey=${STRIPE_SECRET_KEY:-}

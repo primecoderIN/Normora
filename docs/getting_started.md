@@ -17,7 +17,10 @@ We have configured the entire stack to run locally using Docker Compose. This in
    .\start.ps1
    ```
    *This script will automatically generate a `.env` file with default credentials and start all containers in the background.*
-3. **Configure Gemini API Key**: To use the Conversational AI features, open the newly generated `.env` file and set your `GEMINI_API_KEY`. Then, restart the environment.
+3. **Configure API Keys in `.env`**:
+   - **Gemini API Key**: Set `GEMINI_API_KEY` to enable conversational AI, embeddings search, and autonomous tool calling.
+   - **Resend Email API Key**: Set `RESEND_API_KEY` to enable transactional email delivery (member invitations, document readiness/failure notices, and HR escalation alerts).
+   - **Developer Email Override**: When using Resend's free test tier (`resend.dev`), email delivery is strictly limited to the email address registered with your Resend account. Set `DEV_OVERRIDE_EMAIL=your-resend-account@email.com` so that all simulated outbound emails across all workspaces and roles are safely redirected to your personal inbox with a `[Dev: to {original}]` subject prefix.
 4. **Wait for builds**: The first time you run this, Docker will build the .NET API and the Angular client. This might take a few minutes.
 
 ## Accessing the Application
@@ -29,7 +32,6 @@ Once the containers are up and running, you can access the services at the follo
 - **API Documentation & Testing (Scalar)**: [http://localhost:5000/scalar/v1](http://localhost:5000/scalar/v1)
 - **Keycloak Admin Console**: [http://localhost:8080](http://localhost:8080)
 - **MinIO Console**: [http://localhost:9001](http://localhost:9001)
-- **Mailpit (Email Testing UI)**: [http://localhost:8025](http://localhost:8025)
 - **pgAdmin**: [http://localhost:5050](http://localhost:5050)
 
 ## Default Credentials

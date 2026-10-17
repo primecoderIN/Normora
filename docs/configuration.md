@@ -77,13 +77,15 @@ The following options classes are defined in the `Normora.Shared` project. All p
 * **Properties:**
   * `Endpoint` (string): Host for the Apache Tika server. Defaults to `http://localhost:9998/`.
 
-### `SmtpOptions`
-* **Section:** `Smtp`
+### `EmailOptions`
+* **Section:** `Email`
 * **Owner:** `Normora.Shared`
 * **Properties:**
-  * `Host` (string): SMTP Server. Defaults to `localhost`.
-  * `Port` (int): SMTP Port. Defaults to `1025` (MailHog).
-  * `From` (string): The sender email address. Defaults to `noreply@normora.local`.
+  * `Provider` (string): Transactional email delivery provider (`Resend` or `Null`). Defaults to `Resend`.
+  * `ResendApiKey` (string): Sensitive. The API key for Resend (`re_...`). Injected via environment variable `RESEND_API_KEY`.
+  * `FromEmail` (string): Sender email address (e.g., `normora@resend.dev` or a verified domain address). Injected via `RESEND_FROM_EMAIL`. Defaults to `onboarding@resend.dev`.
+  * `FromName` (string): Friendly display name for the sender. Defaults to `Normora`.
+  * `DevOverrideRecipient` (string): Optional developer email address to intercept and redirect all outbound emails during local development and testing. Particularly useful with sandbox providers like Resend's free tier, which restricts delivery strictly to the registered account owner. Injected via `DEV_OVERRIDE_EMAIL`.
 
 ### `StripeOptions`
 * **Section:** `Stripe`
@@ -117,10 +119,16 @@ Notice the **double underscore (`__`)** is used to represent the section hierarc
 * Inside Docker, services communicate using internal hostnames.
 * For MinIO: `Minio__Endpoint=minio:9000`
 * For Tika: `Tika__Endpoint=http://tika:9998/`
+* For Redis: `ConnectionStrings__Redis=redis:6379`
+* For Resend Email:
+  * `Email__ResendApiKey=${RESEND_API_KEY}`
+  * `Email__FromEmail=${RESEND_FROM_EMAIL:-normora@resend.dev}`
+  * `Email__DevOverrideRecipient=${DEV_OVERRIDE_EMAIL:-}`
 * For Keycloak: The OIDC handler uses `KeycloakOptions.InternalAuthority` (`http://keycloak:8080`) for token validation and backchannel requests, but issues redirects to the browser using `KeycloakOptions.ExternalAuthority` (`http://localhost:8080`).
+* **Keycloak Memory Setting**: On Windows Docker Desktop, Keycloak is configured with `JAVA_OPTS_APPEND: "-Xms256m -Xmx512m"` to restrict heap usage and prevent unexpected exit code 137 (OOM killed) during concurrent builds.
 
 ### Production
-* Use Environment Variables for sensitive keys: `Gemini__ApiKey`, `Minio__SecretKey`.
+* Use Environment Variables for sensitive keys: `Gemini__ApiKey`, `Minio__SecretKey`, `Email__ResendApiKey`, `Stripe__SecretKey`.
 * Ensure `App__BaseUrl` points to the actual HTTPS public domain.
 * All HTTP internal endpoints (like Tika/MinIO) are fine, but Keycloak external URLs must be HTTPS.
 

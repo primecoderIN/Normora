@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Normora.Shared.Constants;
 using Normora.Shared.Interfaces;
 using Normora.Shared.Options;
 
@@ -23,18 +24,26 @@ public class ResendEmailSender(
         var emailOptions = options.Value;
         if (string.IsNullOrWhiteSpace(emailOptions.ResendApiKey))
         {
-            throw new InvalidOperationException("Resend API Key is not configured. Set RESEND_API_KEY in your environment or .env file.");
+            throw new InvalidOperationException(ApiMessages.ResendApiKeyNotConfigured);
         }
 
         var formattedFrom = !string.IsNullOrWhiteSpace(emailOptions.FromName)
             ? $"{emailOptions.FromName} <{emailOptions.FromEmail}>"
             : emailOptions.FromEmail;
 
+        var targetRecipient = !string.IsNullOrWhiteSpace(emailOptions.DevOverrideRecipient)
+            ? emailOptions.DevOverrideRecipient
+            : to;
+
+        var targetSubject = !string.IsNullOrWhiteSpace(emailOptions.DevOverrideRecipient) && !string.Equals(emailOptions.DevOverrideRecipient, to, StringComparison.OrdinalIgnoreCase)
+            ? $"[Dev: to {to}] {subject}"
+            : subject;
+
         var payload = new
         {
             from = formattedFrom,
-            to = new[] { to },
-            subject,
+            to = new[] { targetRecipient },
+            subject = targetSubject,
             html = htmlBody
         };
 

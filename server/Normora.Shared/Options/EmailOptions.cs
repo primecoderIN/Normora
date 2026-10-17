@@ -27,4 +27,10 @@ public class EmailOptions
     /// Friendly sender display name (e.g., "Normora").
     /// </summary>
     public string FromName { get; set; } = "Normora";
+
+    /// <summary>
+    /// Optional developer email address to redirect all outbound emails to during development/testing.
+    /// Particularly useful with sandbox providers like Resend free tier that only allow delivery to the account owner.
+    /// </summary>
+    public string? DevOverrideRecipient { get; set; }
 }
