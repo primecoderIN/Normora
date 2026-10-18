@@ -5,11 +5,15 @@ import { MenuItem } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { UserGroup } from '@core/services/user-group.service';
 
+/**
+ * Presentational table component rendering user groups, assigned department counts, and action menus.
+ */
 @Component({
   selector: 'app-user-group-list',
   standalone: true,
   imports: [CommonModule, DatePipe, MenuModule],
   template: `
+
     <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="text-sm! min-w-[160px]!"></p-menu>
 
     <div class="overflow-x-auto">

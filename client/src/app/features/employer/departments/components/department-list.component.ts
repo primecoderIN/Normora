@@ -5,11 +5,15 @@ import { MenuItem } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { Department } from '@core/services/department.service';
 
+/**
+ * Presentational table component rendering department listings, actions menu, and member counts.
+ */
 @Component({
   selector: 'app-department-list',
   standalone: true,
   imports: [CommonModule, DatePipe, MenuModule],
   template: `
+
     <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="text-sm! min-w-[150px]!"></p-menu>
 
     <div class="overflow-x-auto">

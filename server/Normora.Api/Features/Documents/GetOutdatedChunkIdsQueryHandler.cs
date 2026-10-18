@@ -5,6 +5,10 @@ using Normora.Shared.Contracts.Documents;
 
 namespace Normora.Api.Features.Documents;
 
+/// <summary>
+/// Identifies document chunks that belong to deactivated or superseded document versions.
+/// Used during RAG retrieval to filter out stale knowledge before generating answers.
+/// </summary>
 public class GetOutdatedChunkIdsQueryHandler(DocumentsDbContext context)
     : IRequestHandler<GetOutdatedChunkIdsQuery, HashSet<Guid>>
 {
@@ -15,6 +19,7 @@ public class GetOutdatedChunkIdsQueryHandler(DocumentsDbContext context)
             return [];
         }
 
+        // Identify chunks belonging to inactive document versions
         var outdatedIds = await context.DocumentChunks
             .AsNoTracking()
             .Where(c => request.ChunkIds.Contains(c.Id))
@@ -28,3 +33,4 @@ public class GetOutdatedChunkIdsQueryHandler(DocumentsDbContext context)
         return outdatedIds.ToHashSet();
     }
 }
+

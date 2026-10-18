@@ -1,11 +1,15 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+/**
+ * Reusable empty state view displayed when a list, table, or search result has no items.
+ */
 @Component({
   selector: 'app-empty-state',
   standalone: true,
   imports: [CommonModule],
   template: `
+
     <div class="flex flex-col items-center justify-center p-10 text-center bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 min-h-72 gap-1">
       <div 
         class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-sm"

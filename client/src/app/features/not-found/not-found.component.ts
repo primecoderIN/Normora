@@ -3,11 +3,15 @@ import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { AppRoutes } from '@core/constants/app-routes';
 
+/**
+ * 404 Not Found error view shown for unmapped or unauthorized resource routes.
+ */
 @Component({
   selector: 'app-not-found',
   standalone: true,
   imports: [RouterLink, ButtonModule],
   template: `
+
     <div class="min-h-screen bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-4 relative overflow-hidden transition-colors duration-200">
       
       <!-- Decorative Background Elements -->

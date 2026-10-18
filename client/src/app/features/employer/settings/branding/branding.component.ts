@@ -18,10 +18,15 @@ export interface ColorPalette {
   secondary: string;
 }
 
+/**
+ * White-label employer branding settings component.
+ * Allows administrators to customize theme colors, upload light/dark logos, and configure favicons.
+ */
 @Component({
   selector: 'app-employer-branding-settings',
   standalone: true,
   imports: [
+
     CommonModule,
     FormsModule,
     ButtonModule,

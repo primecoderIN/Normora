@@ -2,6 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, catchError, map, of } from 'rxjs';
 
+/**
+ * Service managing user authentication state, Duende BFF session checks,
+ * and secure redirects to Keycloak OpenID Connect flows.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -15,17 +19,18 @@ export class AuthService {
     return this.authStatus.value === true;
   }
 
-  // Duende BFF provides the logout URL (with the anti-forgery `sid` parameter)
-  // as a claim in the /bff/user response. We store it here for use in logout().
+  // Stores the BFF anti-forgery logout URL containing the session ID (sid) parameter
   private logoutUrl: string | null = null;
 
+  /**
+   * Queries the BFF `/bff/user` endpoint to verify active cookie session claims.
+   */
   public checkAuth(): Observable<boolean> {
     return this.http.get<any[]>('/bff/user').pipe(
       map(claims => {
         const isAuth = Array.isArray(claims) && claims.length > 0;
         this.authStatus.next(isAuth);
 
-        // Extract the logout URL from the BFF claims
         if (isAuth) {
           const logoutClaim = claims.find(c => c.type === 'bff:logout_url');
           this.logoutUrl = logoutClaim?.value ?? '/bff/logout';
@@ -40,20 +45,24 @@ export class AuthService {
     );
   }
 
+  /**
+   * Redirects browser to initiate the OIDC challenge via Duende BFF.
+   */
   public login(): void {
     window.location.href = '/bff/login';
   }
 
+  /**
+   * Cleans up local session and redirects to Keycloak's end_session endpoint.
+   */
   public logout(): void {
-    // Navigate to the BFF logout URL which includes the `sid` query parameter
-    // for anti-forgery protection. This triggers server-side session cleanup
-    // and redirects to Keycloak's end_session endpoint.
     window.location.href = this.logoutUrl ?? '/bff/logout';
   }
 
+  /**
+   * Redirects to the Keycloak account management console.
+   */
   public manageAccount(): void {
-    // In production, this URL should be injected via environment config.
     window.location.href = 'http://localhost:8080/realms/normora/account/';
   }
 }
-

@@ -14,6 +14,11 @@ export interface TenantBrandingDto {
   faviconUrl: string | null;
 }
 
+/**
+ * Service managing tenant white-label branding.
+ * Dynamically computes PrimeNG Aura palette variables (50-950) from the tenant's primary hex color,
+ * injects CSS custom properties into :root, updates the favicon, and exposes the active branding signal.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -22,15 +27,12 @@ export class TenantBrandingService {
   private apiUrl = `${environment.apiUrl}/api/tenants`;
 
   /**
-   * The currently applied branding configuration, exposed as a signal for reactive UI bindings (like logos).
+   * The active branding configuration exposed as a reactive signal.
    */
   currentBranding = signal<TenantBrandingDto | null>(null);
 
-  // Subdomain routing logic has been removed in favor of path-based workspace routing
-
-
   /**
-   * Fetches branding for the given slug and applies CSS variables globally.
+   * Fetches branding metadata for a tenant slug and applies CSS variables globally.
    */
   applyBrandingForSlug(slug: string) {
     return this.http.get<ApiResponse<TenantBrandingDto>>(`${this.apiUrl}/branding/${slug}`).pipe(
@@ -45,7 +47,7 @@ export class TenantBrandingService {
   }
 
   /**
-   * Updates the active tenant's branding configuration.
+   * Persists updated branding configurations (colors, logos, favicon).
    */
   updateBranding(payload: FormData) {
     return this.http.put<ApiResponse<TenantBrandingDto>>(`${this.apiUrl}/branding`, payload).pipe(
@@ -60,16 +62,14 @@ export class TenantBrandingService {
 
   /**
    * Fetches branding for the currently authenticated tenant by slug.
-   * Called after login to ensure authenticated users see their brand colors.
    */
   applyBrandingForAuthenticatedTenant(tenantSlug: string) {
     return this.applyBrandingForSlug(tenantSlug);
   }
 
   /**
-   * Injects the tenant's brand colors into the document root as CSS custom properties.
-   * Generates the full PrimeNG Aura primary palette (50-950) from a single hex value
-   * so all PrimeNG components (buttons, inputs, focus rings) adopt the brand color.
+   * Injects tenant brand colors into document root as CSS variables.
+   * Generates shades 50-950 for PrimeNG Aura components and custom styles.
    */
   private applyCssVariables(branding: TenantBrandingDto): void {
     if (typeof document === 'undefined') return;
@@ -79,10 +79,9 @@ export class TenantBrandingService {
     if (branding.primaryColor) {
       root.style.setProperty('--brand-primary', branding.primaryColor);
 
-      // Generate a full palette from the hex color
       const palette = this.generatePalette(branding.primaryColor);
 
-      // Set all PrimeNG Aura primary CSS variables
+      // Populate PrimeNG Aura primary CSS variables
       root.style.setProperty('--p-primary-50',  palette[50]);
       root.style.setProperty('--p-primary-100', palette[100]);
       root.style.setProperty('--p-primary-200', palette[200]);
@@ -94,8 +93,6 @@ export class TenantBrandingService {
       root.style.setProperty('--p-primary-800', palette[800]);
       root.style.setProperty('--p-primary-900', palette[900]);
       root.style.setProperty('--p-primary-950', palette[950]);
-
-      // Also set the legacy variable for any custom usages
       root.style.setProperty('--p-primary-color', branding.primaryColor);
     }
 
@@ -110,9 +107,7 @@ export class TenantBrandingService {
   }
 
   /**
-   * Generates a Tailwind-style color palette (50–950) from a base hex color.
-   * The base color maps to the 500 shade, and lighter/darker variants are generated
-   * by interpolating with white and black respectively.
+   * Interpolates base color with white and black to generate balanced 50-950 palette shades.
    */
   private generatePalette(hex: string): Record<number, string> {
     const base = this.hexToRgb(hex);
@@ -149,5 +144,4 @@ export class TenantBrandingService {
       b: parseInt(clean.substring(4, 6), 16),
     };
   }
-
 }

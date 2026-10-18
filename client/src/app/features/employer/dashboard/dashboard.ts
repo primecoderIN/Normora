@@ -11,6 +11,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { MessageService } from 'primeng/api';
 import { ApiMessages } from '@core/constants/api-messages';
 
+/**
+ * Dashboard component displaying high-level tenant metrics:
+ * document coverage breakdown (donut chart), 30-day chat conversation activity (line chart),
+ * and aggregate KPI stat cards.
+ */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -45,6 +50,9 @@ export class Dashboard implements OnInit {
     });
   }
 
+  /**
+   * Initializes the document coverage donut chart using active theme CSS variables.
+   */
   initDocumentChart(coverage: DashboardSummaryDto['documentCoverage']) {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--p-text-color') || '#334155';

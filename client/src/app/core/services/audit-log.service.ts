@@ -5,6 +5,9 @@ import { map } from 'rxjs/operators';
 import { environment } from '@env/environment';
 import { ApiResponse } from '../models/api-response.model';
 
+/**
+ * Historical security/audit record payload.
+ */
 export interface AuditLogDto {
   id: string;
   actorUserId: string | null;
@@ -34,12 +37,19 @@ export interface AuditLogFilterParams {
   to?: string;
 }
 
+/**
+ * Handles fetching tenant security audit logs with pagination and search filtering.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuditLogService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/audit-logs`;
 
+  /**
+   * Fetches paginated audit log entries matching provided filters.
+   */
   getAuditLogs(filters: AuditLogFilterParams = {}): Observable<PagedResult<AuditLogDto>> {
+    // Construct query parameters
     let params = new HttpParams()
       .set('page', (filters.page ?? 1).toString())
       .set('pageSize', (filters.pageSize ?? 20).toString());
@@ -62,3 +72,4 @@ export class AuditLogService {
       .pipe(map(res => res.data));
   }
 }
+

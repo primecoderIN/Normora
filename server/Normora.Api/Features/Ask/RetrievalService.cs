@@ -7,11 +7,16 @@ using Normora.Api.Features.Documents;
 
 namespace Normora.Api.Features.Ask;
 
+/// <summary>
+/// Executes hybrid retrieval combining pgvector dense embeddings with PostgreSQL full-text search,
+/// merged via Reciprocal Rank Fusion (RRF) for optimal context grounding in RAG queries.
+/// </summary>
 public sealed class RetrievalService(
     DocumentsDbContext documentsContext,
     ITenantContext tenantContext,
     ITextEmbeddingService embeddingService) : IRetrievalService
 {
+    // Standard RRF smoothing constant to balance dense and sparse rank distributions
     private const double RrfK = 60.0;
 
     public async Task<(List<RetrievalCandidate> Candidates, double VectorSimOfFirst)>
@@ -25,11 +30,11 @@ public sealed class RetrievalService(
             StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 2).ToArray();
         var tsQueryText = queryWords.Length > 0 ? string.Join(" | ", queryWords) : null;
 
+        // Base query joins chunks with active versions and applies tenant + department RBAC visibility filters
         var baseQuery = documentsContext.DocumentChunks
             .IgnoreQueryFilters()
             .AsNoTracking()
-            // Document Versioning (Phase 19): Only retrieve chunks from the active document version.
-            // This ensures RAG never pulls content from superseded document uploads.
+            // Only retrieve from active versions to exclude superseded document revisions
             .Join(
                 documentsContext.DocumentVersions.IgnoreQueryFilters().AsNoTracking().Where(v => v.IsActive),
                 chunk => chunk.DocumentVersionId,
@@ -83,7 +88,7 @@ public sealed class RetrievalService(
                 .ToListAsync(ct);
         }
 
-        // RRF merge
+        // Merge dense vector and sparse keyword result sets using Reciprocal Rank Fusion: Score = sum(1 / (k + rank))
         var rrfMap = new Dictionary<string, RetrievalCandidate>();
 
         for (int i = 0; i < vectorResults.Count; i++)

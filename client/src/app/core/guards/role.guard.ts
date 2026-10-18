@@ -5,25 +5,26 @@ import { AuthService } from '../services/auth.service';
 import { UserService, CurrentUser, UserTenantMembership } from '../services/user.service';
 import { map } from 'rxjs/operators';
 
+/**
+ * Route guard that validates user role permissions ('employer' or 'employee').
+ * Strictly scopes the check to the current active workspace (via activeTenantId or route slug)
+ * to prevent Broken Function Level Authorization (BFLA).
+ */
 export const roleGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const userService = inject(UserService);
 
-  // Enforce route protection by verifying the user has the required access level across any of their active workspaces
   const requiredRole = route.data['role'] as string;
-
-  // We rely on the CurrentUser being already fetched in the rootGuard or auth flow
-  // However, roleGuard is attached to children. To be safe, we can check the sync value.
   const currentUser = userService.currentUser();
 
   const validateRole = (user: CurrentUser | null) => {
     if (!user) return router.createUrlTree([AppRoutes.Login]);
-    
-    // SEC-11: Validate role scoped strictly to the current workspace to prevent BFLA
+
+    // Find the specific membership belonging to the currently active workspace
     const activeTenantId = userService.activeTenantId();
     const slug = route.parent?.paramMap.get('slug') || route.paramMap.get('slug');
-    
+
     let membership: UserTenantMembership | undefined;
     if (activeTenantId) {
       membership = user.memberships.find(m => m.tenantId === activeTenantId);
@@ -40,12 +41,13 @@ export const roleGuard: CanActivateFn = (route) => {
       return router.createUrlTree([AppRoutes.AccessDenied]);
     }
 
+    // Map internal tenant role (admin -> employer, employee -> employee)
     const effectiveRole = membership.role?.toLowerCase() === 'admin' ? 'employer' : 'employee';
     if (effectiveRole === requiredRole) {
       return true;
     }
 
-    // SEC-11: User is authenticated but lacks the required role in this specific workspace
+    // User is authenticated but lacks required privilege in this workspace
     console.warn(`Access denied. Role in active workspace is '${effectiveRole}', required: '${requiredRole}'`);
     return router.createUrlTree([AppRoutes.AccessDenied]);
   };

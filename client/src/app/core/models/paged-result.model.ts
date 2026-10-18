@@ -1,3 +1,6 @@
+/**
+ * Generic container for paginated API responses matching the backend PagedResult structure.
+ */
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;
@@ -5,3 +8,4 @@ export interface PagedResult<T> {
   pageSize: number;
   totalPages: number;
 }
+

@@ -102,22 +102,18 @@ public sealed class UploadDocumentCommandHandler(
 
         // Persist the binary before metadata so a database row never points to an object
 
-        // that was not successfully stored. The tenant ID becomes part of the object key.
+        // Persist the binary in object storage before database metadata is created.
         var objectName = await storageService.UploadDocumentAsync(request.File, request.TenantId.ToString());
 
-        // SEC-4: All post-upload work is wrapped in a try/catch so that if any subsequent
-        // step fails (document lookup, DB persistence), the already-uploaded MinIO object
-        // is deleted — preventing accumulation of unreferenced orphan objects in storage.
+        // Wrap subsequent operations in a compensating try/catch to delete the MinIO object if database persistence fails
         try
         {
-            // 2. Create EF Core Record (or fetch existing)
             Document document;
             int nextVersionNumber = 1;
 
             if (request.DocumentId.HasValue)
             {
-                // NEW VERSION UPLOAD (Phase 19):
-                // If the request contains a DocumentId, we are appending a new version to an existing document.
+                // Append a new version to an existing document container
                 var existingDoc = await context.Documents
                     .Include(d => d.Versions)
                     .SingleOrDefaultAsync(d => d.Id == request.DocumentId.Value && d.TenantId == request.TenantId, cancellationToken);
@@ -127,12 +123,10 @@ public sealed class UploadDocumentCommandHandler(
 
                 if (document.Versions.Any())
                 {
-                    // Assign sequential version number based on the previous max version.
+                    // Compute next sequential version number
                     nextVersionNumber = document.Versions.Max(v => v.VersionNumber) + 1;
 
-                    // (Phase 19): Deactivate all older versions of this document.
-                    // The new version being uploaded will be marked as IsActive = true below.
-                    // This guarantees only one active version is used by the retrieval/RAG pipeline.
+                    // Deactivate prior versions so the retrieval pipeline only matches against the newest revision
                     foreach (var v in document.Versions)
                     {
                         v.IsActive = false;
@@ -157,9 +151,7 @@ public sealed class UploadDocumentCommandHandler(
                 context.Documents.Add(document);
             }
 
-            // NEW VERSION UPLOAD (Phase 19):
-            // Create the new DocumentVersion entry.
-            // It carries the minio object name and the Active flag.
+            // Create the new active DocumentVersion record
             var version = new DocumentVersion
             {
                 Id = Guid.NewGuid(),
@@ -179,8 +171,7 @@ public sealed class UploadDocumentCommandHandler(
             // Invalidate cached dashboard metrics for this tenant
             await cache.RemoveAsync($"dashboard:{document.TenantId}", cancellationToken);
 
-            // Notify connected tenant members before queueing background work so clients observe
-            // the lifecycle in order: Uploaded, then Processing/Ready/Failed.
+            // Broadcast status change via SignalR before scheduling background work
             await hubContext.Clients.Group(DocumentHub.GroupName(document.TenantId))
                 .SendAsync("DocumentStatusChanged", new DocumentStatusChanged(
                     document.Id,
@@ -195,8 +186,7 @@ public sealed class UploadDocumentCommandHandler(
         }
         catch
         {
-            // SEC-4: Best-effort cleanup of the orphaned MinIO object.
-            // Swallow secondary exceptions so the original error is preserved and propagated.
+            // Best-effort compensation: purge the uploaded binary from MinIO storage on failure
             try { await storageService.DeleteDocumentAsync(objectName); } catch { /* intentionally swallowed */ }
             throw;
         }

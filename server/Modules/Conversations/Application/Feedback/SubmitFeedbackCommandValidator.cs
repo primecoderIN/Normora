@@ -2,6 +2,9 @@ using FluentValidation;
 
 namespace Normora.Modules.Conversations.Application.Feedback;
 
+/// <summary>
+/// Validates user feedback submissions ensuring valid identifiers, defined enum values, and length limits.
+/// </summary>
 public sealed class SubmitFeedbackCommandValidator : AbstractValidator<SubmitFeedbackCommand>
 {
     public SubmitFeedbackCommandValidator()
@@ -12,3 +15,4 @@ public sealed class SubmitFeedbackCommandValidator : AbstractValidator<SubmitFee
         RuleFor(x => x.Comment).MaximumLength(500);
     }
 }
+

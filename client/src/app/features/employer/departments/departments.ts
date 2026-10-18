@@ -8,18 +8,22 @@ import { DepartmentListComponent } from './components/department-list.component'
 import { DepartmentFormComponent } from './components/department-form.component';
 import { SkeletonModule } from 'primeng/skeleton';
 
+/**
+ * Employer department management feature view.
+ * Handles department creation, updating, deletion, and search filtering using Angular signals.
+ */
 @Component({
   selector: 'app-departments',
   standalone: true,
   imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent, SkeletonModule],
   templateUrl: './departments.html',
-
 })
 export class Departments implements OnInit {
   private deptService = inject(DepartmentService);
 
   departments = signal<Department[]>([]);
   isLoading = signal(true);
+
   isSaving = signal(false);
 
   showModal = signal(false);

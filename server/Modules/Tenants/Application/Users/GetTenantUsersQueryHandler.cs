@@ -5,15 +5,19 @@ using Normora.Shared.Models;
 
 namespace Normora.Modules.Tenants.Application.Users;
 
-
+/// <summary>
+/// Handles fetching and filtering tenant employees with department and group joins.
+/// </summary>
 public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequestHandler<GetTenantEmployeesQuery, PagedResult<TenantEmployeeDto>>
 {
     public async Task<PagedResult<TenantEmployeeDto>> Handle(GetTenantEmployeesQuery request, CancellationToken cancellationToken)
     {
+        // Query active memberships; soft-delete filters are applied automatically by EF Core global query filters
         var query = context.TenantMemberships
-            .Where(m => m.TenantId == request.TenantId) // Soft-delete filter is applied automatically
+            .Where(m => m.TenantId == request.TenantId)
             .AsNoTracking();
 
+        // Optional case-insensitive search by display name or email
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var searchPattern = $"%{request.Search.Trim()}%";
@@ -22,12 +26,13 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
                 (m.User.Email != null && EF.Functions.ILike(m.User.Email, searchPattern)));
         }
 
-
+        // Filter by assigned department
         if (request.DepartmentId.HasValue)
         {
             query = query.Where(m => m.MembershipDepartments.Any(md => md.DepartmentId == request.DepartmentId.Value));
         }
 
+        // Filter by assigned user group
         if (request.UserGroupId.HasValue)
         {
             query = query.Where(m => m.UserGroupMemberships.Any(ugm => ugm.UserGroupId == request.UserGroupId.Value));
@@ -36,6 +41,7 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
         var totalCount = await query.CountAsync(cancellationToken);
         var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
 
+        // Fetch paginated results with projected department and group names
         var items = await query
             .OrderByDescending(m => m.CreatedAt)
             .Skip((request.Page - 1) * request.PageSize)
@@ -61,3 +67,4 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
         );
     }
 }
+

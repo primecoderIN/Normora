@@ -85,7 +85,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         }
 
 
-        // 5. Handle generic unexpected exceptions (e.g., NullReference, DB Connection)
+        // 7. Handle generic unexpected exceptions (e.g. database failure, unhandled runtime errors)
         logger.LogError(exception, "An unhandled exception occurred.");
         
         var serverErrorMessage = env.IsProduction() ? ApiMessages.InternalServerError : exception.Message;

@@ -7,6 +7,9 @@ using Normora.Shared.Models;
 
 namespace Normora.Modules.Tenants.Application.Audit;
 
+/// <summary>
+/// Data transfer object representing a historical tenant security/audit record.
+/// </summary>
 public record AuditLogDto(
     Guid Id,
     string? ActorUserId,
@@ -19,6 +22,9 @@ public record AuditLogDto(
     DateTime OccurredAt
 );
 
+/// <summary>
+/// Paginated query for retrieving audit logs with optional filtering by action, free text search, and date range.
+/// </summary>
 public record GetAuditLogsQuery(
     int Page = 1,
     int PageSize = 20,
@@ -28,24 +34,30 @@ public record GetAuditLogsQuery(
     DateTime? ToDate = null
 ) : IRequest<PagedResult<AuditLogDto>>;
 
+/// <summary>
+/// Handles retrieving tenant audit records with date range normalizations and text searching.
+/// </summary>
 public class GetAuditLogsQueryHandler(
     TenantsDbContext context,
     ITenantContext tenantContext) : IRequestHandler<GetAuditLogsQuery, PagedResult<AuditLogDto>>
 {
     public async Task<PagedResult<AuditLogDto>> Handle(GetAuditLogsQuery request, CancellationToken cancellationToken)
     {
+        // Enforce tenant boundary: audit logs are strictly isolated to the calling tenant
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
         var query = context.AuditLogs
             .AsNoTracking()
             .Where(a => a.TenantId == tenantId);
 
+        // Filter by action type (e.g. USER_INVITED, DOCUMENT_UPLOADED)
         if (!string.IsNullOrWhiteSpace(request.Action))
         {
             var actionFilter = request.Action.Trim();
             query = query.Where(a => a.Action == actionFilter);
         }
 
+        // Substring search across actor email, display name, target entity ID, and metadata
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var search = request.Search.Trim().ToLower();
@@ -56,6 +68,7 @@ public class GetAuditLogsQueryHandler(
                 (a.Metadata != null && a.Metadata.ToLower().Contains(search)));
         }
 
+        // Apply UTC-normalized date boundaries
         if (request.FromDate.HasValue)
         {
             var fromUtc = DateTime.SpecifyKind(request.FromDate.Value, DateTimeKind.Utc);
@@ -93,3 +106,4 @@ public class GetAuditLogsQueryHandler(
         return new PagedResult<AuditLogDto>(items, totalCount, page, pageSize, totalPages);
     }
 }
+

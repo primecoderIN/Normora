@@ -5,11 +5,15 @@ import { ButtonModule } from 'primeng/button';
 import { Department } from '@core/services/department.service';
 import { FormErrorComponent } from '@shared/components/form-error/form-error.component';
 
+/**
+ * Modal form component for creating or editing department metadata.
+ */
 @Component({
   selector: 'app-department-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ButtonModule, FormErrorComponent],
   template: `
+
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" (click)="onCancel()">
       <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">

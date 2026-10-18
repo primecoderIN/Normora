@@ -1,9 +1,13 @@
 import { Component, input } from '@angular/core';
 
+/**
+ * Reusable alert banner rendering validation and submission errors for reactive forms.
+ */
 @Component({
   selector: 'app-form-error',
   standalone: true,
   template: `
+
     @if (error()) {
       <div
         class="flex items-start gap-2.5 p-3 mt-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"

@@ -8,8 +8,11 @@ import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { environment } from '@env/environment';
 
+/**
+ * HTTP interceptor that prefixes API requests with the configured backend URL
+ * and provides global HTTP error handling (session redirects, quota notifications, BFLA toasts).
+ */
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
-  // Optional inject because not all components provide MessageService
   const messageService = inject(MessageService, { optional: true });
   const router = inject(Router);
 
@@ -25,15 +28,15 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     catchError(error => {
       console.error('API Error:', error);
       
-      // SEC-14 / UX-3: Centralized error handling for common HTTP status codes
+      // Centralized error translation based on HTTP response status codes
       switch (error.status) {
         case 401:
-          // Session expired or unauthenticated — redirect to login
+          // Unauthenticated or expired session: redirect to login
           router.navigate([AppRoutes.Login]);
           break;
 
         case 402:
-          // Plan limit / quota exceeded
+          // Subscription plan limit or quota exceeded: prompt upgrade
           messageService?.add({
             severity: 'warn',
             summary: ApiMessages.PlanLimitExceeded.summary,
@@ -43,7 +46,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         case 403:
-          // Authenticated but not authorized (BFLA) — show toast
+          // Action forbidden due to insufficient role permissions (BFLA protection)
           messageService?.add({
             severity: 'warn',
             summary: ApiMessages.Forbidden.summary,
@@ -53,7 +56,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         case 429:
-          // UX-7: Rate limit hit — show a user-friendly message
+          // Server rate limiting triggered: alert user to throttle requests
           messageService?.add({
             severity: 'warn',
             summary: ApiMessages.RateLimit.summary,
@@ -63,7 +66,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         case 404:
-          // For BOLA or missing resources, show toast unless it's a routine GET that shouldn't alert
+          // Non-GET resource missing or BOLA authorization rejection
           if (req.method !== 'GET' && messageService) {
             messageService.add({
               severity: 'warn',
@@ -75,7 +78,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         default:
-          // Generic server errors (5xx)
+          // Internal server or network errors (5xx)
           if (error.status >= 500 && messageService) {
             messageService.add({
               severity: 'error',

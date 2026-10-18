@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@env/environment';
 import { Observable, catchError, of, tap, shareReplay } from 'rxjs';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface UserTenantMembership {
   tenantId: string;
@@ -25,8 +26,9 @@ export interface CurrentUser {
   createdAt: string;
 }
 
-import { ApiResponse } from '../models/api-response.model';
-
+/**
+ * Service managing user identity, tenant memberships, and active workspace state via Angular Signals.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -34,10 +36,13 @@ export class UserService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/users`;
 
-  // Application state using Signals
+  /** Authenticated user profile and memberships signal */
   public currentUser = signal<CurrentUser | null>(null);
+
+  /** Currently selected tenant workspace ID */
   public activeTenantId = signal<string | null>(null);
 
+  /** Active tenant membership computed reactively from activeTenantId or default */
   public activeTenant = computed(() => {
     const user = this.currentUser();
     if (!user) return null;
@@ -45,11 +50,17 @@ export class UserService {
     return user.memberships.find(m => m.tenantId === activeId) || user.memberships[0] || null;
   });
 
+  /** Indicates whether the active workspace is the user's personal private space */
   public isPersonalWorkspace = computed(() => this.activeTenant()?.isPersonal ?? false);
+
+  /** Display name of the active workspace */
   public activeTenantName = computed(() => this.activeTenant()?.tenantName || 'your organization');
 
   private meRequest$?: Observable<ApiResponse<CurrentUser>>;
 
+  /**
+   * Retrieves the current user profile, caching the in-flight request and initializing default activeTenantId.
+   */
   public getMe(): Observable<ApiResponse<CurrentUser>> {
     if (this.currentUser()) {
       return of({ success: true, message: '', data: this.currentUser()! });

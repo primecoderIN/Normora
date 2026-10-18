@@ -5,6 +5,10 @@ import { UserService } from '../../../core/services/user.service';
 import { TenantRoles } from '../../../core/constants/tenant-roles';
 import { AppRoutes } from '../../../core/constants/app-routes';
 
+/**
+ * Authentication entry component handling Keycloak login redirect
+ * and automatic routing for users already authenticated.
+ */
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -17,6 +21,7 @@ export class Login implements OnInit {
   private router = inject(Router);
 
   ngOnInit() {
+    // If user is already authenticated, route directly to their default workspace
     if (this.authService.isAuthenticated || this.userService.currentUser()) {
       const activeTenant = this.userService.activeTenant();
       const user = this.userService.currentUser();
@@ -29,6 +34,7 @@ export class Login implements OnInit {
         this.router.navigateByUrl(target);
         return;
       }
+
       if (user?.memberships && user.memberships.length > 0) {
         const defaultMembership = user.memberships.find(m => !m.isPersonal) || user.memberships[0];
         const isAdmin = defaultMembership.role === TenantRoles.Admin;

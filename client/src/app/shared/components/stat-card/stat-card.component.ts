@@ -1,9 +1,13 @@
 import { Component, computed, input } from '@angular/core';
 
+/**
+ * Metric KPI stat card displaying icons, values, and trend indicators with dark mode support.
+ */
 @Component({
   selector: 'app-stat-card',
   standalone: true,
   template: `
+
     <div class="group bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 flex items-start gap-4 min-h-28">
       <div
         class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 border border-slate-100 dark:border-slate-800"

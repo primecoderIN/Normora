@@ -6,14 +6,18 @@ import { map, take, switchMap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { UserService } from '../services/user.service';
 
+/**
+ * Root route guard that directs authenticated users to their primary workspace portal
+ * (Employer Dashboard or Employee Ask), unauthenticated visitors to Login,
+ * and users without memberships to the Onboarding wizard.
+ */
 export const rootGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const userService = inject(UserService);
 
   return authService.isAuthenticated$.pipe(
-    // BUG-3: Wait until authentication state is definitely known (not null)
-    // before taking a value, to prevent incorrect redirects on cold first load.
+    // Wait for the initial authentication verification check to resolve from null
     filter(v => v !== null),
     take(1),
     switchMap((isAuthenticated) => {
@@ -21,24 +25,21 @@ export const rootGuard: CanActivateFn = () => {
         return of(router.createUrlTree([AppRoutes.Login]));
       }
 
-      // Ensure the user's local database profile is created/synced on their very first login via the backend API
+      // Synchronize and retrieve user profile with tenant memberships
       return userService.getMe().pipe(
         map(response => {
           if (!response.success || !response.data) {
-            // Backend issue or user not found at all
             return router.createUrlTree([AppRoutes.Login]);
           }
 
           const memberships = response.data.memberships;
 
-          // Force users with zero workspaces into the onboarding flow where they can accept invites or create an org
+          // Route users without existing workspaces to organization setup
           if (memberships.length === 0) {
             return router.createUrlTree(['/onboarding']);
           }
 
-          // SEC-15: Use the first non-personal workspace for routing decisions.
-          // Falling back to memberships[0] could route a user with a personal workspace
-          // as their first entry to the employer dashboard incorrectly.
+          // Prioritize corporate workspace over personal sandbox for initial landing
           const primaryMembership = memberships.find(m => !m.isPersonal) ?? memberships[0];
 
           if (primaryMembership.role === 'admin') {

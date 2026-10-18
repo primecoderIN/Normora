@@ -7,10 +7,19 @@ using Normora.Shared.Constants;
 
 namespace Normora.Api.Features.Documents;
 
+/// <summary>
+/// Query to retrieve a specific text chunk for citation previews, enforcing tenant isolation and department RBAC.
+/// </summary>
 public record GetDocumentChunkQuery(Guid ChunkId) : IRequest<DocumentChunkPreviewDto>;
 
+/// <summary>
+/// Preview representation of a document chunk.
+/// </summary>
 public record DocumentChunkPreviewDto(string Text, string DocumentName, string? Section, int? PageNumber);
 
+/// <summary>
+/// Handles chunk retrieval ensuring the calling user has access to the owning department.
+/// </summary>
 public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantContext tenantContext) : IRequestHandler<GetDocumentChunkQuery, DocumentChunkPreviewDto>
 {
     public async Task<DocumentChunkPreviewDto> Handle(GetDocumentChunkQuery request, CancellationToken cancellationToken)
@@ -23,6 +32,7 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
         var allowedDepartments = tenantContext.EffectiveDepartments;
         var tenantId = tenantContext.TenantId.Value;
 
+        // Verify chunk exists, belongs to caller's tenant, and satisfies department restrictions
         var result = await dbContext.DocumentChunks
             .AsNoTracking()
             .Where(c => c.Id == request.ChunkId && c.TenantId == tenantId)
@@ -42,9 +52,10 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
             )
             .FirstOrDefaultAsync(cancellationToken);
 
+        // Protect against BOLA: throw BolaException if chunk does not exist or user lacks department permission
         if (result == null)
         {
-            throw new BolaException(); // BOLA: Return 403/404 for missing, cross-tenant access, or restricted department access
+            throw new BolaException();
         }
 
         return new DocumentChunkPreviewDto(
@@ -55,3 +66,4 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
         );
     }
 }
+

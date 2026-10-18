@@ -1,8 +1,13 @@
+/**
+ * Centralized constant error, warning, and toast notifications.
+ * Eliminates magic strings across the frontend UI and aligns with backend ApiMessages.
+ */
 export const ApiMessages = {
   Forbidden: {
     summary: 'Access Denied',
     detail: 'You do not have permission to perform this action.'
   },
+
   RateLimit: {
     summary: 'Slow Down',
     detail: 'You are sending requests too fast. Please wait a moment and try again.'

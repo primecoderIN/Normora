@@ -10,7 +10,6 @@ namespace Normora.Api.Middleware;
 /// </summary>
 public class TenantResolutionMiddleware(RequestDelegate next)
 {
-
     /// <summary>
     /// Invokes the middleware to resolve the tenant based on the X-Tenant-Id header and current user identity.
     /// </summary>
@@ -28,8 +27,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             {
                 if (Guid.TryParse(tenantIdValues.FirstOrDefault(), out var tenantId))
                 {
-                    // TENANT-12: Resolve user's tenant membership and effective departments
-                    // 3. Verify that the authenticated user is actually a member of this tenant.
+                    // Resolve active tenant membership and aggregate direct + user group department access
                     var membership = await tenantsDbContext.TenantMemberships
                         .AsNoTracking()
                         .Include(m => m.User)
@@ -38,7 +36,6 @@ public class TenantResolutionMiddleware(RequestDelegate next)
                             .ThenInclude(ugm => ugm.UserGroup)
                                 .ThenInclude(ug => ug.UserGroupDepartments)
                         .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.KeycloakUserId == currentUser.KeycloakUserId);
-
 
                     if (membership != null)
                     {
@@ -49,8 +46,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
 
                         var effectiveDepartments = directDepartments.Concat(inheritedDepartments).Distinct().ToList();
 
-                        // 4. If valid, initialize the ITenantContext so down-stream services (like AppDbContext) 
-                        //    and authorization filters ([RequireTenant]) can enforce isolation.
+                        // Initialize ITenantContext so down-stream queries and [RequireTenant] filters enforce tenant isolation
                         tenantContext.SetContext(tenantId, membership.Role.ToString(), effectiveDepartments);
                     }
                 }

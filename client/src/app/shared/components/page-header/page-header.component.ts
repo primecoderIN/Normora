@@ -1,9 +1,13 @@
 import { Component, input, output } from '@angular/core';
 
+/**
+ * Standardized page header component displaying eyebrow title, main heading, subtitle, and primary call-to-action.
+ */
 @Component({
   selector: 'app-page-header',
   standalone: true,
   template: `
+
     <header class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
       <div>
         @if (eyebrow()) {

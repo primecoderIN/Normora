@@ -5,10 +5,15 @@ import { UserService } from '@core/services/user.service';
 import { TenantRoles } from '@core/constants/tenant-roles';
 import { AppRoutes } from '@core/constants/app-routes';
 
+/**
+ * Access Denied error view displayed when an authenticated user attempts to access
+ * an endpoint or workspace route where their role lacks necessary permissions (BFLA/RBAC).
+ */
 @Component({
   selector: 'app-access-denied',
   standalone: true,
   template: `
+
     <div class="access-denied-wrapper">
       <div class="access-denied-card">
         <div class="icon-ring">

@@ -8,7 +8,8 @@ using Normora.Shared;
 namespace Normora.Api.Features.Documents;
 
 /// <summary>
-/// Background boundary for document ingestion. Text extraction and indexing are added in later slices.
+/// Hangfire background job orchestrating document ingestion: text extraction (Tika), semantic chunking,
+/// vector embedding generation (Gemini), chunk persistence, cache eviction, and real-time client notifications.
 /// </summary>
 public sealed class DocumentProcessingJob(
     DocumentsDbContext context,
@@ -22,8 +23,7 @@ public sealed class DocumentProcessingJob(
     ILogger<DocumentProcessingJob> logger)
 {
     [AutomaticRetry(Attempts = 3)]
-    // Document Versioning (Phase 19): Processes a specific DocumentVersion, not a Document.
-    // Each version carries its own MinIO object, extracted text, and chunk set.
+    // Processes an individual DocumentVersion, ensuring separate storage keys, extracted text, and vector chunks per revision.
     public async Task ProcessAsync(Guid documentVersionId, Guid tenantId)
     {
         // Hangfire has no HTTP tenant context, so bypass the request-scoped filter and

@@ -114,7 +114,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         if (assetType != "logo" && assetType != "logo-dark" && assetType != "favicon")
             return BadRequest(ApiResponse.Failure(ApiMessages.BadRequest));
 
-        // SEC-6: Sanitize slug to prevent path traversal — only allow alphanumeric chars and hyphens
+        // Sanitize slug to prevent path traversal; restrict strictly to alphanumeric characters and hyphens
         if (!Regex.IsMatch(slug, @"^[a-zA-Z0-9\-]+$"))
             return BadRequest(ApiResponse.Failure(ApiMessages.InvalidSlug));
 
@@ -126,8 +126,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
         }
         catch (Exception ex)
         {
-            // SEC-6: Log storage errors instead of swallowing them silently.
-            // Sanitize inputs to prevent Log Forging (CRLF injection) flagged by SAST.
+            // Strip CRLF characters from logged parameters to guard against log injection
             var safeSlug = slug.Replace("\r", "").Replace("\n", "");
             var safeAssetType = assetType.Replace("\r", "").Replace("\n", "");
             logger.LogError(ex, "Failed to serve branding asset '{AssetType}' for slug '{Slug}'", safeAssetType, safeSlug);

@@ -6,8 +6,14 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Application.Commands;
 
+/// <summary>
+/// Command to initialize a new conversation thread for the current authenticated user and tenant.
+/// </summary>
 public record CreateConversationCommand() : IRequest<ConversationDto>;
 
+/// <summary>
+/// Handles conversation thread creation with default title and zeroed summary state.
+/// </summary>
 public class CreateConversationCommandHandler(
     ConversationsDbContext context,
     ICurrentUser currentUser,
@@ -15,6 +21,7 @@ public class CreateConversationCommandHandler(
 {
     public async Task<ConversationDto> Handle(CreateConversationCommand request, CancellationToken cancellationToken)
     {
+        // Initialize an empty thread scoped to the authenticated tenant and user
         var conversation = new Conversation
         {
             Id = Guid.NewGuid(),
@@ -39,3 +46,4 @@ public class CreateConversationCommandHandler(
             conversation.LastMessageAt);
     }
 }
+
