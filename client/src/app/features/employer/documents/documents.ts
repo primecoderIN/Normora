@@ -125,11 +125,11 @@ export class Documents implements OnInit, OnDestroy {
   }
 
   onUploadError(event: { error?: { error?: string } }) {
-    let errorDetail = 'Upload failed.';
+    let errorDetail: string = ApiMessages.UploadFailed.detail;
     if (event.error?.error) {
-      errorDetail = typeof event.error.error === 'string' ? event.error.error : 'Invalid file type or size.';
+      errorDetail = typeof event.error.error === 'string' ? event.error.error : ApiMessages.UploadFailed.detail;
     }
-    this.messageService.add({ severity: 'error', summary: 'Upload Error', detail: errorDetail });
+    this.messageService.add({ severity: 'error', summary: ApiMessages.UploadFailed.summary, detail: errorDetail });
   }
 
   private onDocumentStatusChanged(event: DocumentStatusChanged) {
@@ -147,9 +147,9 @@ export class Documents implements OnInit, OnDestroy {
         : document));
 
     if (event.status === 'Ready') {
-      this.messageService.add({ severity: 'success', summary: 'Document ready', detail: `${event.fileName} is ready for search.` });
+      this.messageService.add({ severity: 'success', summary: ApiMessages.DocumentReady.summary, detail: `${event.fileName} is ready for search.` });
     } else if (event.status === 'Failed') {
-      this.messageService.add({ severity: 'error', summary: 'Processing failed', detail: `${event.fileName} could not be processed.` });
+      this.messageService.add({ severity: 'error', summary: ApiMessages.DocumentProcessingFailed.summary, detail: `${event.fileName} could not be processed.` });
     }
   }
 

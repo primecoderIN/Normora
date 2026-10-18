@@ -85,7 +85,7 @@ export class Employees implements OnInit {
         label: 'Manage Assignments',
         icon: 'pi pi-sitemap',
         command: () => {
-          this.messageService.add({ severity: 'info', summary: 'Coming Soon', detail: 'Manage assignments will be available in a future update.' });
+          this.messageService.add({ severity: 'info', summary: ApiMessages.ComingSoon.summary, detail: ApiMessages.ComingSoon.detail });
         }
       },
       {
@@ -209,6 +209,7 @@ export class Employees implements OnInit {
       next: () => {
         this.isRemoving.set(false);
         this.employeeToRemoveId.set(null);
+        this.messageService.add({ severity: 'success', summary: ApiMessages.EmployeeRemoved.summary, detail: ApiMessages.EmployeeRemoved.detail });
         this.loadEmployees();
         this.loadStats();
       },
@@ -242,12 +243,12 @@ export class Employees implements OnInit {
       },
       error: (err: { error?: { message?: string } }) => {
         this.isInviting.set(false);
-        this.errorMessage.set(err.error?.message || 'Failed to send invitation');
+        this.errorMessage.set(err.error?.message || ApiMessages.InvitationSendFailed.detail);
       },
     });
   }
 
   exportEmployees() {
-    this.messageService.add({ severity: 'info', summary: 'Export Started', detail: 'Your export is being generated and will download shortly.' });
+    this.messageService.add({ severity: 'info', summary: ApiMessages.ExportStarted.summary, detail: ApiMessages.ExportStarted.detail });
   }
 }

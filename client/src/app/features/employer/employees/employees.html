@@ -10,37 +10,37 @@
 
   <!-- Stat cards -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex items-center gap-4">
-      <div class="flex items-center justify-center flex-none w-11 h-11 bg-primary-50 text-primary-600 rounded-xl">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex items-center gap-4">
+      <div class="flex items-center justify-center flex-none w-11 h-11 bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-800/40 rounded-xl">
         <i class="pi pi-users text-lg"></i>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Active employees</p>
-        <strong class="text-2xl font-bold text-slate-900 dark:text-white">{{ totalEmployees() }}</strong>
+        <p class="text-[0.7rem] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 m-0 mb-1">Active employees</p>
+        <strong class="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{{ totalEmployees() }}</strong>
       </div>
     </div>
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex items-center gap-4">
-      <div class="flex items-center justify-center flex-none w-11 h-11 bg-amber-50 text-amber-600 rounded-xl">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex items-center gap-4">
+      <div class="flex items-center justify-center flex-none w-11 h-11 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/40 rounded-xl">
         <i class="pi pi-envelope text-lg"></i>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Pending invites</p>
-        <strong class="text-2xl font-bold text-slate-900 dark:text-white">{{ pendingInvites() }}</strong>
+        <p class="text-[0.7rem] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 m-0 mb-1">Pending invites</p>
+        <strong class="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{{ pendingInvites() }}</strong>
       </div>
     </div>
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm flex items-center gap-4">
-      <div class="flex items-center justify-center flex-none w-11 h-11 bg-purple-50 text-purple-600 rounded-xl">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex items-center gap-4">
+      <div class="flex items-center justify-center flex-none w-11 h-11 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/40 rounded-xl">
         <i class="pi pi-shield text-lg"></i>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 m-0 mb-0.5">Admin seats</p>
-        <strong class="text-2xl font-bold text-slate-900 dark:text-white">{{ adminSeats() }}</strong>
+        <p class="text-[0.7rem] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 m-0 mb-1">Admin seats</p>
+        <strong class="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{{ adminSeats() }}</strong>
       </div>
     </div>
   </div>
 
   <!-- Invite section -->
-  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
     <div class="border-b border-slate-100 dark:border-slate-800 px-6 py-5">
       <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Invite employee</h2>
       <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">Send an invitation link to join this workspace.</p>
@@ -76,7 +76,7 @@
           <input
             type="email"
             formControlName="email"
-            class="w-full h-10 pl-9 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder:text-slate-400"
+            class="w-full h-10 pl-9 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder:text-slate-400"
             placeholder="employee@company.com"
           />
         </div>
@@ -92,7 +92,7 @@
   </section>
 
   <!-- Employees table -->
-  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+  <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
       <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Members</h2>
       <div class="flex flex-wrap items-center gap-3">
@@ -116,12 +116,12 @@
     </div>
     
     @if (isLoadingEmployees()) {
-      <div class="divide-y divide-slate-100">
+      <div class="divide-y divide-slate-100 dark:divide-slate-800">
         @for (row of skeletonRows; track row) {
           <div class="flex items-center gap-4 px-6 py-4 animate-pulse">
-            <div class="flex-none w-9 h-9 bg-slate-200 rounded-full"></div>
+            <div class="flex-none w-9 h-9 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
             <div class="flex-1 space-y-2">
-              <div class="h-3 bg-slate-200 rounded-full w-1/4"></div>
+              <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded-full w-1/4"></div>
               <div class="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full w-1/3"></div>
             </div>
             <div class="h-6 w-16 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
@@ -141,12 +141,12 @@
               <th class="px-4 sm:px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider w-16 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             @for (emp of employees(); track emp.membershipId) {
               <tr class="hover:bg-slate-50 dark:hover:bg-slate-950/80 transition-colors group">
                 <td class="px-6 py-3 whitespace-nowrap">
                   <div class="flex items-center gap-3">
-                    <div class="flex-none w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm">
+                    <div class="flex-none w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-950/70 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800/50 flex items-center justify-center font-bold text-sm">
                       {{ emp.displayName ? emp.displayName.charAt(0).toUpperCase() : (emp.email ? emp.email.charAt(0).toUpperCase() : '?') }}
                     </div>
                     <div>
@@ -175,7 +175,7 @@
                   {{ emp.joinedAt | date:'mediumDate' }}
                 </td>
                 <td class="px-6 py-3 whitespace-nowrap text-right">
-                  <button type="button" (click)="menu.toggle($event); setMenuTarget(emp)" class="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 transition-colors ml-auto">
+                  <button type="button" (click)="menu.toggle($event); setMenuTarget(emp)" class="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors ml-auto">
                     <i class="pi pi-ellipsis-v text-base"></i>
                   </button>
                 </td>
@@ -235,7 +235,7 @@
       }
     } @else {
       <div class="flex flex-col items-center justify-center gap-3 py-12 text-center">
-        <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-50 text-primary-400">
+        <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-950/50 text-primary-400">
           <i class="pi pi-users text-2xl"></i>
         </div>
         <p class="text-sm font-medium text-slate-500 dark:text-slate-400 m-0">No members found matching your filters.</p>

@@ -8,6 +8,9 @@ import { DocumentService, DocumentChunkPreviewDto } from '@core/services/documen
 import { MessageService } from 'primeng/api';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { ApiMessages } from '@core/constants/api-messages';
+import { UserService } from '@core/services/user.service';
+import { AppRoutes } from '@core/constants/app-routes';
 
 @Component({
   selector: 'app-shared-conversation',
@@ -150,7 +153,7 @@ import DOMPurify from 'dompurify';
                                 (click)="openPreview(c.documentChunkId)"
                               >
                                 <i class="pi pi-file-pdf text-[0.7rem] text-slate-500 group-hover:text-primary-600 transition-colors"></i>
-                                <span class="truncate max-w-[200px]">{{ c.fileName }}</span>
+                                <span class="truncate max-w-50">{{ c.fileName }}</span>
                                 @if (c.isOutdated) {
                                   <span class="inline-flex items-center text-[0.65rem] px-1 py-0.2 rounded bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 font-bold ml-1">
                                     Outdated
@@ -240,6 +243,7 @@ export class SharedConversationComponent implements OnInit {
   private documentService = inject(DocumentService);
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
+  private userService = inject(UserService);
 
   conversation = signal<SharedConversationDetailDto | null>(null);
   isLoading = signal(true);
@@ -257,7 +261,7 @@ export class SharedConversationComponent implements OnInit {
   ngOnInit(): void {
     const token = this.route.snapshot.paramMap.get('token');
     if (!token) {
-      this.errorMessage.set('Invalid share link: no token provided.');
+      this.errorMessage.set(ApiMessages.InvalidShareToken);
       this.isLoading.set(false);
       return;
     }
@@ -275,13 +279,22 @@ export class SharedConversationComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        this.errorMessage.set('This conversation link is either invalid, expired, or belongs to another workspace.');
+        this.errorMessage.set(ApiMessages.SharedConversationNotFound);
         this.isLoading.set(false);
       }
     });
   }
 
   goToConversations(): void {
+    const slug = this.userService.activeTenant()?.tenantSlug || this.route.snapshot.paramMap.get('slug');
+    if (slug) {
+      const isEmployer = window.location.pathname.includes('/employer/');
+      const target = isEmployer 
+        ? AppRoutes.WorkspaceEmployerDashboard(slug).replace('/dashboard', '/conversations') 
+        : AppRoutes.WorkspaceEmployeeConversations(slug);
+      this.router.navigateByUrl(target);
+      return;
+    }
     const match = window.location.pathname.match(/\/app\/workspaces\/[^/]+/);
     const workspacePath = match ? match[0] : '';
     this.router.navigateByUrl(`${workspacePath}/employee/conversations`);
@@ -312,7 +325,7 @@ export class SharedConversationComponent implements OnInit {
 
   openPreview(chunkId: string): void {
     if (!chunkId) {
-      this.previewError = 'This citation does not have an associated chunk ID.';
+      this.previewError = ApiMessages.ChunkMissing;
       this.showPreview = true;
       return;
     }
@@ -328,7 +341,7 @@ export class SharedConversationComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.previewError = 'Failed to load document preview. You might not have permission to view it or it may have been deleted.';
+        this.previewError = ApiMessages.ChunkPreviewFailed;
         this.isLoadingPreview = false;
         this.cdr.markForCheck();
       }

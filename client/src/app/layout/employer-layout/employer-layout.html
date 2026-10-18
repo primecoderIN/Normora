@@ -1,28 +1,37 @@
 <div class="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden">
-  <aside class="md:flex-none flex-col p-4 bg-slate-950 text-white transition-all duration-300 border-r border-white/10 hidden md:flex relative"
+  
+  <!-- Desktop Collapsible Sidebar -->
+  <aside class="md:flex-none flex-col p-4 bg-slate-950 text-white transition-all duration-300 border-r border-white/10 hidden md:flex relative z-20 shadow-xl"
          [class.md:w-64]="isSidebarExpanded()" [class.md:w-20]="!isSidebarExpanded()" [class.items-center]="!isSidebarExpanded()">
     
-    <!-- Expand/Collapse Toggle -->
-    <button type="button" class="absolute -right-3 top-6 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full hidden md:flex items-center justify-center text-slate-400 hover:text-white cursor-pointer z-10" (click)="isSidebarExpanded.set(!isSidebarExpanded())">
+    <!-- Expand/Collapse Toggle Button -->
+    <button type="button" 
+            class="absolute -right-3 top-6 w-6 h-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full hidden md:flex items-center justify-center text-slate-400 hover:text-white cursor-pointer z-30 transition-all shadow-md"
+            (click)="isSidebarExpanded.set(!isSidebarExpanded())"
+            [title]="isSidebarExpanded() ? 'Collapse sidebar' : 'Expand sidebar'">
       <i class="pi text-xs" [class.pi-chevron-left]="isSidebarExpanded()" [class.pi-chevron-right]="!isSidebarExpanded()"></i>
     </button>
-    <div class="flex items-center gap-3 min-h-12" [class.justify-center]="!isSidebarExpanded()">
+
+    <!-- Brand / Logo -->
+    <div class="flex items-center gap-3 min-h-12 w-full" [class.justify-center]="!isSidebarExpanded()">
       @if (themeService.isDarkMode() && brandingService.currentBranding()?.logoUrlDark) {
         <img [src]="brandingService.currentBranding()?.logoUrlDark" alt="Logo" class="h-8 max-w-full object-contain">
       } @else if (brandingService.currentBranding()?.logoUrl) {
         <img [src]="brandingService.currentBranding()?.logoUrl" alt="Logo" class="h-8 max-w-full object-contain">
       } @else {
-        <div class="flex items-center justify-center w-8 h-8 bg-primary-600 rounded-lg font-extrabold text-white">N</div>
-        <div [class.hidden]="!isSidebarExpanded()">
-          <div class="text-base font-extrabold leading-tight">Normora</div>
-          <div class="text-xs text-slate-400">Admin console</div>
+        <div class="flex items-center justify-center w-8 h-8 bg-linear-to-br from-primary-500 to-indigo-600 rounded-lg font-extrabold text-white text-base shadow-sm shrink-0">N</div>
+        <div [class.hidden]="!isSidebarExpanded()" class="min-w-0">
+          <div class="text-sm font-extrabold tracking-tight leading-tight text-white">Normora</div>
+          <div class="text-[11px] text-slate-400 font-medium">Enterprise Admin</div>
         </div>
       }
     </div>
 
+    <!-- Workspace Switcher Pill -->
     @if (activeWorkspace()) {
-      <div class="items-center gap-3 p-3 my-6 bg-white/5 border border-white/10 rounded-lg hidden md:flex" [class.flex-col]="!isSidebarExpanded()" [class.p-2]="!isSidebarExpanded()">
-        <div class="flex items-center justify-center w-8 h-8 bg-white/10 text-slate-300 rounded-md">
+      <div class="items-center gap-2.5 p-2.5 my-5 bg-white/5 hover:bg-white/8 border border-white/10 rounded-xl hidden md:flex transition-colors w-full" 
+           [class.flex-col]="!isSidebarExpanded()" [class.p-2]="!isSidebarExpanded()">
+        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-500/20 text-primary-400 font-bold text-xs shrink-0 border border-primary-500/30">
           <i [class]="activeWorkspace()?.isPersonal ? 'pi pi-user' : 'pi pi-building'"></i>
         </div>
         <div class="min-w-0 flex-1 relative" [class.hidden]="!isSidebarExpanded()">
@@ -33,188 +42,353 @@
             optionLabel="tenantName"
             optionValue="tenantId"
             styleClass="bg-transparent! border-none! shadow-none! w-full p-0!"
-            panelStyleClass="bg-slate-800! border-slate-700! text-sm overflow-hidden"
+            panelStyleClass="bg-slate-900! border-slate-700! text-sm overflow-hidden shadow-2xl"
             class="w-full"
             appendTo="body"
-            [dropdownIcon]="'pi pi-chevron-down text-[0.6rem] text-slate-400'"
+            [dropdownIcon]="'pi pi-chevron-down text-[0.65rem] text-slate-400'"
           >
             <ng-template pTemplate="selected" let-selectedOption>
-              <div class="text-sm font-bold truncate text-white" style="margin-top: -2px;">
+              <div class="text-xs font-bold truncate text-white leading-tight">
                 {{ selectedOption.tenantName }}
+              </div>
+              <div class="text-[10px] text-slate-400 font-medium leading-none mt-0.5 capitalize">
+                {{ selectedOption.role || 'Admin' }}
               </div>
             </ng-template>
             <ng-template pTemplate="item" let-option>
-              <div class="text-sm font-medium text-slate-200 hover:text-white truncate">
-                {{ option.tenantName }}
+              <div class="flex items-center justify-between gap-2 py-1">
+                <span class="text-xs font-semibold text-slate-200 hover:text-white truncate">
+                  {{ option.tenantName }}
+                </span>
+                <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  {{ option.role }}
+                </span>
               </div>
             </ng-template>
           </p-select>
         </div>
-        <a routerLink="/onboarding" class="flex items-center justify-center flex-none w-8 h-8 bg-white/10 text-slate-300 hover:text-white hover:bg-white/20 rounded-md transition-colors" title="Create new workspace" [class.hidden]="!isSidebarExpanded()">
-          <i class="pi pi-plus"></i>
+        <a routerLink="/onboarding" 
+           class="flex items-center justify-center flex-none w-7 h-7 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white rounded-lg transition-colors cursor-pointer" 
+           title="Create workspace" 
+           [class.hidden]="!isSidebarExpanded()">
+          <i class="pi pi-plus text-xs"></i>
         </a>
       </div>
     }
 
-    <nav class="grid gap-1 overflow-y-auto mt-4 md:mt-0 flex-row md:flex-col overflow-x-auto md:overflow-x-visible custom-scrollbar" aria-label="Employer navigation">
+    <!-- Navigation Menu -->
+    <nav class="flex-1 w-full space-y-1 overflow-y-auto custom-scrollbar" aria-label="Employer navigation">
+      
+      <!-- Group: Workspace -->
+      <div class="px-3 mb-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest" [class.hidden]="!isSidebarExpanded()">
+        Workspace
+      </div>
+
       <a
         [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'dashboard']"
-        routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!"
+        routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors"
+        class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group"
         [class.justify-center]="!isSidebarExpanded()"
+        title="Overview"
       >
-        <i class="pi pi-home text-base w-4"></i>
-        <span [class.hidden]="!isSidebarExpanded()">Overview</span>
+        <i class="pi pi-home text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+        <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Overview</span>
       </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'documents']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-        <i class="pi pi-file text-base w-4"></i>
-        <span [class.hidden]="!isSidebarExpanded()">Documents</span>
+
+      <a 
+        [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'documents']" 
+        routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+        class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+        [class.justify-center]="!isSidebarExpanded()"
+        title="Documents"
+      >
+        <i class="pi pi-file text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+        <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Documents</span>
       </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'conversations']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-        <i class="pi pi-comments text-base w-4"></i>
-        <span [class.hidden]="!isSidebarExpanded()">Conversations</span>
+
+      <a 
+        [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'conversations']" 
+        routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+        class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+        [class.justify-center]="!isSidebarExpanded()"
+        title="Conversations"
+      >
+        <i class="pi pi-comments text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+        <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Conversations</span>
       </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'profile']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-        <i class="pi pi-user text-base w-4"></i>
-        <span [class.hidden]="!isSidebarExpanded()">Profile</span>
-      </a>
+
       @if (!activeWorkspace()?.isPersonal) {
-        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'employees']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-          <i class="pi pi-users text-base w-4"></i>
-          <span [class.hidden]="!isSidebarExpanded()">Employees</span>
+        <a 
+          [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'employees']" 
+          routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+          class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+          [class.justify-center]="!isSidebarExpanded()"
+          title="Employees"
+        >
+          <i class="pi pi-users text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+          <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Employees</span>
         </a>
 
-        <div class="mt-4 pt-4 border-t border-white/10">
-          <div class="px-3 mb-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center md:text-left" [class.px-0]="!isSidebarExpanded()">
-            <span [class.hidden]="!isSidebarExpanded()">Settings</span>
-            <span class="md:hidden text-center" [class.hidden]="isSidebarExpanded()">...</span>
+        <!-- Group: Organization & Settings -->
+        <div class="mt-4 pt-3 border-t border-white/10">
+          <div class="px-3 mb-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest" [class.hidden]="!isSidebarExpanded()">
+            Administration
           </div>
 
-          <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'departments']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-            <i class="pi pi-building text-base w-4"></i>
-            <span [class.hidden]="!isSidebarExpanded()">Departments</span>
+          <a 
+            [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'departments']" 
+            routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+            class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+            [class.justify-center]="!isSidebarExpanded()"
+            title="Departments"
+          >
+            <i class="pi pi-building text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+            <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Departments</span>
           </a>
-          <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'user-groups']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-            <i class="pi pi-users text-base w-4"></i>
-            <span [class.hidden]="!isSidebarExpanded()">User groups</span>
+
+          <a 
+            [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'user-groups']" 
+            routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+            class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+            [class.justify-center]="!isSidebarExpanded()"
+            title="User Groups"
+          >
+            <i class="pi pi-shield text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+            <span [class.hidden]="!isSidebarExpanded()" class="text-xs">User Groups</span>
           </a>
-          <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'branding']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-            <i class="pi pi-palette text-base w-4"></i>
-            <span [class.hidden]="!isSidebarExpanded()">Branding & Theme</span>
+
+          <a 
+            [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'branding']" 
+            routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+            class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+            [class.justify-center]="!isSidebarExpanded()"
+            title="Branding & Theme"
+          >
+            <i class="pi pi-palette text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+            <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Branding & Theme</span>
           </a>
-          <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'audit-logs']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-            <i class="pi pi-shield text-base w-4"></i>
-            <span [class.hidden]="!isSidebarExpanded()">Audit logs</span>
+
+          <a 
+            [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'audit-logs']" 
+            routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+            class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+            [class.justify-center]="!isSidebarExpanded()"
+            title="Audit Logs"
+          >
+            <i class="pi pi-list-check text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+            <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Audit Logs</span>
           </a>
-          <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'subscription']" routerLinkActive="bg-primary-900/40! text-white! border-l-primary-500!" class="flex items-center gap-3 min-h-11 p-3 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline flex-none md:flex-auto border-l-[3px] border-transparent transition-colors" [class.justify-center]="!isSidebarExpanded()">
-            <i class="pi pi-sparkles text-base w-4"></i>
-            <span [class.hidden]="!isSidebarExpanded()">Subscription & Plans</span>
+
+          <a 
+            [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'subscription']" 
+            routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+            class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+            [class.justify-center]="!isSidebarExpanded()"
+            title="Subscription & Plans"
+          >
+            <i class="pi pi-sparkles text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+            <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Subscription & Plans</span>
           </a>
         </div>
       }
+
+      <div class="mt-4 pt-3 border-t border-white/10">
+        <a 
+          [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'profile']" 
+          routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
+          class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+          [class.justify-center]="!isSidebarExpanded()"
+          title="Account Profile"
+        >
+          <i class="pi pi-user text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
+          <span [class.hidden]="!isSidebarExpanded()" class="text-xs">My Profile</span>
+        </a>
+      </div>
     </nav>
 
-
-
-
-
-    <!-- Profile & Actions -->
-    <div class="hidden md:flex flex-col gap-3.5 mt-auto pt-4 border-t border-white/10" [class.items-center]="!isSidebarExpanded()">
+    <!-- Bottom User Profile & Actions -->
+    <div class="hidden md:flex flex-col gap-3 mt-auto pt-4 border-t border-white/10 w-full" [class.items-center]="!isSidebarExpanded()">
       @if (userService.currentUser(); as user) {
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="flex items-center justify-center flex-none w-10 h-10 bg-primary-100 text-primary-800 font-extrabold rounded-full text-lg">
+        <div class="flex items-center gap-3 min-w-0 px-1">
+          <div class="flex items-center justify-center flex-none w-9 h-9 bg-linear-to-tr from-primary-600 to-indigo-500 text-white font-bold rounded-lg text-sm shadow-sm">
             {{ user.displayName.charAt(0) || 'U' }}
           </div>
-          <div class="min-w-0" [class.hidden]="!isSidebarExpanded()">
-            <div class="text-sm font-bold truncate text-white">{{ user.displayName }}</div>
-            <div class="text-xs text-slate-400 capitalize font-medium">{{ activeWorkspace()?.role || 'Admin' }}</div>
+          <div class="min-w-0 flex-1" [class.hidden]="!isSidebarExpanded()">
+            <div class="text-xs font-bold truncate text-white leading-tight">{{ user.displayName }}</div>
+            <div class="text-[10px] text-slate-400 truncate leading-none mt-0.5">{{ user.email }}</div>
           </div>
         </div>
       }
       <div class="flex gap-2 w-full" [class.flex-col]="!isSidebarExpanded()">
-        <button type="button" class="flex-none flex items-center justify-center w-10 h-10 rounded-lg bg-transparent border border-white/10 text-slate-300 hover:bg-white/5 hover:text-white hover:border-white/20 transition-colors" (click)="themeService.toggleTheme()" [title]="themeService.isDarkMode() ? 'Light mode' : 'Dark mode'">
-          <i [class]="themeService.isDarkMode() ? 'pi pi-moon text-base' : 'pi pi-sun text-base'"></i>
+        <button type="button" 
+                class="flex-none flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white transition-colors cursor-pointer" 
+                (click)="themeService.toggleTheme()" 
+                [title]="themeService.isDarkMode() ? 'Switch to Light mode' : 'Switch to Dark mode'">
+          <i [class]="themeService.isDarkMode() ? 'pi pi-moon text-xs' : 'pi pi-sun text-xs'"></i>
         </button>
-        <button type="button" class="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg bg-transparent border border-white/10 text-slate-300 hover:bg-white/5 hover:text-white hover:border-white/20 transition-colors" (click)="logout()" title="Sign out" [class.w-10]="!isSidebarExpanded()">
-          <i class="pi pi-sign-out text-base"></i>
-          <span [class.hidden]="!isSidebarExpanded()" class="text-sm font-medium">Sign out</span>
+        <button type="button" 
+                class="flex-1 flex items-center justify-center gap-2 h-8 px-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/30 transition-colors cursor-pointer" 
+                (click)="logout()" 
+                title="Sign out" 
+                [class.w-8]="!isSidebarExpanded()">
+          <i class="pi pi-sign-out text-xs"></i>
+          <span [class.hidden]="!isSidebarExpanded()" class="text-xs font-medium">Sign out</span>
         </button>
       </div>
     </div>
   </aside>
 
-  <!-- Mobile Top Bar (Visible only on small screens) -->
-  <div class="md:hidden flex items-center justify-between p-4 bg-slate-950 text-white border-b border-white/10">
-    <div class="flex items-center gap-2">
-      @if (themeService.isDarkMode() && brandingService.currentBranding()?.logoUrlDark) {
-        <img [src]="brandingService.currentBranding()?.logoUrlDark" alt="Logo" class="h-6 max-w-full object-contain">
-      } @else if (brandingService.currentBranding()?.logoUrl) {
-        <img [src]="brandingService.currentBranding()?.logoUrl" alt="Logo" class="h-6 max-w-full object-contain">
-      } @else {
-        <div class="flex items-center justify-center w-6 h-6 bg-primary-600 rounded font-extrabold text-sm">N</div>
-        <div class="text-sm font-extrabold">Normora</div>
-      }
+  <!-- Mobile Top Bar with Hamburger Trigger -->
+  <div class="md:hidden flex items-center justify-between p-3 px-4 bg-slate-950 text-white border-b border-white/10 z-20">
+    <div class="flex items-center gap-3">
+      <button type="button" 
+              class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white cursor-pointer transition-colors"
+              (click)="toggleMobileDrawer()"
+              aria-label="Toggle navigation drawer">
+        <i class="pi pi-bars text-base"></i>
+      </button>
+      <div class="flex items-center gap-2">
+        @if (themeService.isDarkMode() && brandingService.currentBranding()?.logoUrlDark) {
+          <img [src]="brandingService.currentBranding()?.logoUrlDark" alt="Logo" class="h-6 max-w-full object-contain">
+        } @else if (brandingService.currentBranding()?.logoUrl) {
+          <img [src]="brandingService.currentBranding()?.logoUrl" alt="Logo" class="h-6 max-w-full object-contain">
+        } @else {
+          <div class="flex items-center justify-center w-6 h-6 bg-primary-600 rounded font-extrabold text-xs text-white">N</div>
+          <span class="text-sm font-extrabold text-white">Normora</span>
+        }
+      </div>
     </div>
-    
-    <!-- Mobile Nav trigger could go here -->
-    <button type="button" class="w-8 h-8 flex items-center justify-center rounded bg-white/10 text-white" (click)="logout()">
-      <i class="pi pi-sign-out text-base"></i>
-    </button>
-  </div>
-  
-  <!-- Mobile Nav (Visible only on small screens) -->
-  <div class="md:hidden overflow-x-auto bg-slate-900 border-b border-white/10">
-    <nav class="flex px-2 py-2 gap-1 custom-scrollbar">
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'dashboard']" routerLinkActive="bg-primary-600/20! text-white!" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
-        <i class="pi pi-home"></i> Overview
-      </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'documents']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
-        <i class="pi pi-file"></i> Documents
-      </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'conversations']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
-        <i class="pi pi-comments"></i> Conversations
-      </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'audit-logs']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
-        <i class="pi pi-shield"></i> Audit logs
-      </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'subscription']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
-        <i class="pi pi-sparkles"></i> Plans
-      </a>
-      <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'profile']" routerLinkActive="bg-primary-600/20! text-white!" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 whitespace-nowrap text-sm font-medium">
-        <i class="pi pi-user"></i> Profile
-      </a>
-
-
-    </nav>
+    <div class="flex items-center gap-2">
+      <button type="button" 
+              class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-slate-300 hover:text-white"
+              (click)="themeService.toggleTheme()">
+        <i [class]="themeService.isDarkMode() ? 'pi pi-moon text-xs' : 'pi pi-sun text-xs'"></i>
+      </button>
+      <button type="button" 
+              class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white" 
+              (click)="logout()">
+        <i class="pi pi-sign-out text-xs"></i>
+      </button>
+    </div>
   </div>
 
-  <main class="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 custom-scrollbar page-enter">
-    @if (userService.currentUser()?.pendingInvitations; as invites) {
-      @if (invites.length > 0) {
-        <div class="bg-primary-600 rounded-lg p-3 mb-4 text-white flex items-center justify-between shadow-sm">
-          <div class="flex items-center gap-3">
-            <i class="pi pi-envelope text-xl"></i>
-            <div>
-              <div class="font-bold text-sm">You have pending workspace invitations</div>
-              <div class="text-xs text-primary-200">You've been invited to join {{ invites.length }} workspace(s).</div>
-            </div>
-          </div>
-          <div class="flex gap-2">
-            @for (invite of invites; track invite.token) {
-              <div class="flex gap-1">
-                <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-white dark:bg-slate-900 text-primary-600 hover:bg-primary-50 text-base font-bold rounded shadow-sm transition-colors disabled:opacity-50">
-                  Join {{ invite.tenantName }}
-                </button>
-                <button (click)="rejectInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1.5 bg-transparent border border-white/20 text-white hover:bg-white/10 text-base font-bold rounded transition-colors disabled:opacity-50">
-                  Decline
-                </button>
-              </div>
-            }
-          </div>
+  <!-- Mobile Slide-over Drawer Backdrop -->
+  @if (isMobileDrawerOpen()) {
+    <div class="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden" (click)="closeMobileDrawer()"></div>
+    <div class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 text-white p-5 flex flex-col shadow-2xl md:hidden animate-in slide-in-from-left duration-200">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-white/10">
+        <div class="flex items-center gap-2">
+          <div class="flex items-center justify-center w-7 h-7 bg-primary-600 rounded-lg font-bold text-white text-xs">N</div>
+          <span class="font-extrabold text-sm text-white">Normora</span>
+        </div>
+        <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-slate-400 hover:text-white" (click)="closeMobileDrawer()">
+          <i class="pi pi-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Mobile Workspace Switcher -->
+      @if (activeWorkspace()) {
+        <div class="p-3 my-4 bg-white/5 border border-white/10 rounded-xl">
+          <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Active Workspace</div>
+          <div class="text-xs font-bold text-white truncate">{{ activeWorkspace()?.tenantName }}</div>
+          <div class="text-[10px] text-primary-400 capitalize mt-0.5">{{ activeWorkspace()?.role || 'Admin' }}</div>
         </div>
       }
-    }
-    <router-outlet></router-outlet>
-  </main>
+
+      <!-- Mobile Nav Links -->
+      <nav class="flex-1 space-y-1 overflow-y-auto custom-scrollbar my-2" (click)="closeMobileDrawer()">
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'dashboard']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-home text-base"></i> Overview
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'documents']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-file text-base"></i> Documents
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'conversations']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-comments text-base"></i> Conversations
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'employees']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-users text-base"></i> Employees
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'departments']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-building text-base"></i> Departments
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'user-groups']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-shield text-base"></i> User Groups
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'branding']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-palette text-base"></i> Branding & Theme
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'audit-logs']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-list-check text-base"></i> Audit Logs
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'settings', 'subscription']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-sparkles text-base"></i> Subscription & Plans
+        </a>
+        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'profile']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
+          <i class="pi pi-user text-base"></i> Profile
+        </a>
+      </nav>
+
+      <div class="pt-4 border-t border-white/10">
+        <button type="button" class="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 text-sm transition-colors cursor-pointer" (click)="logout()">
+          <i class="pi pi-sign-out text-sm"></i> Sign out
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Main Work Area -->
+  <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+    
+    <!-- Desktop Top Header Bar (Atlassian / ClickUp Style) -->
+    <header class="hidden md:flex items-center justify-between px-6 py-3 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex-none z-10">
+      <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <i class="pi pi-building text-slate-400"></i>
+        <span class="font-bold text-slate-800 dark:text-slate-200">{{ activeWorkspace()?.tenantName }}</span>
+        <span>/</span>
+        <span class="text-primary-600 dark:text-primary-400 font-semibold">Admin Console</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Knowledge Engine Online
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Scrollable Area -->
+    <main class="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 custom-scrollbar page-enter">
+      @if (userService.currentUser()?.pendingInvitations; as invites) {
+        @if (invites.length > 0) {
+          <div class="bg-linear-to-r from-primary-600 to-indigo-700 rounded-xl p-3.5 mb-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md shadow-primary-500/20 border border-primary-500/40">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                <i class="pi pi-envelope text-white text-base"></i>
+              </div>
+              <div>
+                <div class="font-bold text-xs sm:text-sm">Pending Workspace Invitations</div>
+                <div class="text-[11px] text-white/80">You have been invited to join {{ invites.length }} workspace(s).</div>
+              </div>
+            </div>
+            <div class="flex gap-2 flex-wrap self-start sm:self-auto">
+              @for (invite of invites; track invite.token) {
+                <div class="flex gap-1.5">
+                  <button (click)="acceptInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1 bg-white dark:bg-slate-900 text-primary-600 hover:bg-primary-50 text-xs font-bold rounded-lg shadow-sm transition-colors disabled:opacity-50 cursor-pointer">
+                    Join {{ invite.tenantName }}
+                  </button>
+                  <button (click)="rejectInvite(invite.token)" [disabled]="isAccepting()" class="px-3 py-1 bg-transparent border border-white/30 text-white hover:bg-white/10 text-xs font-bold rounded-lg transition-colors disabled:opacity-50 cursor-pointer">
+                    Decline
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+      <router-outlet></router-outlet>
+    </main>
+  </div>
 </div>

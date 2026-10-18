@@ -7,6 +7,7 @@ import { ConversationDetailDto, MessageDto, ConversationService, SuggestedQuesti
 import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { DocumentService, DocumentChunkPreviewDto } from '@core/services/document.service';
 import { MessageService } from 'primeng/api';
+import { ApiMessages } from '@core/constants/api-messages';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
@@ -433,13 +434,13 @@ export class ConversationChatComponent implements OnInit {
         navigator.clipboard.writeText(shareUrl).then(() => {
           this.messageService.add({
             severity: 'success',
-            summary: 'Link Copied',
-            detail: 'Shareable conversation link copied to clipboard.'
+            summary: ApiMessages.ShareLinkCopied.summary,
+            detail: ApiMessages.ShareLinkCopied.detail
           });
         }).catch(() => {
           this.messageService.add({
             severity: 'info',
-            summary: 'Share Link',
+            summary: ApiMessages.ShareLinkCopied.summary,
             detail: shareUrl
           });
         });
@@ -448,8 +449,8 @@ export class ConversationChatComponent implements OnInit {
         this.isSharing.set(false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to generate share link.'
+          summary: ApiMessages.ShareLinkFailed.summary,
+          detail: ApiMessages.ShareLinkFailed.detail
         });
       }
     });
@@ -555,7 +556,7 @@ export class ConversationChatComponent implements OnInit {
   }
 
   showComingSoon() {
-    this.messageService.add({ severity: 'info', summary: 'Coming Soon', detail: 'This feature will be available in a future update.' });
+    this.messageService.add({ severity: 'info', summary: ApiMessages.ComingSoon.summary, detail: ApiMessages.ComingSoon.detail });
   }
 
   autoResize() {

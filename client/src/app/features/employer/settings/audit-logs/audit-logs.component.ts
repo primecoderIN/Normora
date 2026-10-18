@@ -7,6 +7,7 @@ import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
 import { SkeletonModule } from 'primeng/skeleton';
 import { AuditLogService, AuditLogDto } from '@core/services/audit-log.service';
+import { ApiMessages } from '@core/constants/api-messages';
 
 interface ActionOption {
   label: string;
@@ -114,7 +115,7 @@ export class AuditLogsComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to load audit logs. Please try again.');
+        this.errorMessage.set(ApiMessages.AuditLogsLoadFailed.detail);
         this.isLoading.set(false);
       }
     });

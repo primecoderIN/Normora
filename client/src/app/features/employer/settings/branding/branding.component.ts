@@ -138,7 +138,7 @@ export class BrandingComponent {
   }
 
   get userName(): string {
-    return this.userService.currentUser()?.displayName || 'Sanjeev';
+    return this.userService.currentUser()?.displayName || 'Workspace Admin';
   }
 
   save() {

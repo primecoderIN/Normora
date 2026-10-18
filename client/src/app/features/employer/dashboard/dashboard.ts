@@ -9,6 +9,7 @@ import { UserService } from '@core/services/user.service';
 import { DashboardService, DashboardSummaryDto } from '@core/services/dashboard.service';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageService } from 'primeng/api';
+import { ApiMessages } from '@core/constants/api-messages';
 
 @Component({
   selector: 'app-dashboard',
@@ -150,6 +151,6 @@ export class Dashboard implements OnInit {
   }
 
   showComingSoon() {
-    this.messageService.add({ severity: 'info', summary: 'Coming Soon', detail: 'This feature will be available in a future update.' });
+    this.messageService.add({ severity: 'info', summary: ApiMessages.ComingSoon.summary, detail: ApiMessages.ComingSoon.detail });
   }
 }

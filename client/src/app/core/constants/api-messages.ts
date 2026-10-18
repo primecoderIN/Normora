@@ -91,6 +91,58 @@ export const ApiMessages = {
   InvitationRejectFailed: {
     summary: 'Error',
     detail: 'Failed to reject invitation'
-  }
+  },
+  ComingSoon: {
+    summary: 'Coming Soon',
+    detail: 'This feature will be available in a future update.'
+  },
+  ExportStarted: {
+    summary: 'Export Started',
+    detail: 'Your export is being generated and will download shortly.'
+  },
+  ShareLinkCopied: {
+    summary: 'Link Copied',
+    detail: 'Shareable conversation link copied to clipboard.'
+  },
+  ShareLinkFailed: {
+    summary: 'Share Failed',
+    detail: 'Failed to generate share link.'
+  },
+  DocumentReady: {
+    summary: 'Document Ready',
+    detail: 'The document is now indexed and ready for search.'
+  },
+  DocumentProcessingFailed: {
+    summary: 'Processing Failed',
+    detail: 'The document could not be processed. Please check file format.'
+  },
+  UploadFailed: {
+    summary: 'Upload Error',
+    detail: 'Failed to upload document. Please verify file type and size.'
+  },
+  InvitationSent: {
+    summary: 'Invitation Sent',
+    detail: 'Invitation link has been sent successfully.'
+  },
+  InvitationSendFailed: {
+    summary: 'Invitation Failed',
+    detail: 'Failed to send invitation. Please try again.'
+  },
+  AuditLogsLoadFailed: {
+    summary: 'Error',
+    detail: 'Failed to load audit logs. Please try again.'
+  },
+  SavedAnswersLoadFailed: {
+    summary: 'Error',
+    detail: 'Failed to load saved answers. Please try again.'
+  },
+  ExportFailed: {
+    summary: 'Export Failed',
+    detail: 'Export failed. Please try again.'
+  },
+  InvalidShareToken: 'Invalid share link: no token provided.',
+  SharedConversationNotFound: 'This conversation link is either invalid, expired, or belongs to another workspace.',
+  ChunkMissing: 'This citation does not have an associated chunk ID.',
+  ChunkPreviewFailed: 'Failed to load document preview. You might not have permission to view it or it may have been deleted.'
 } as const;
 

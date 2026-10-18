@@ -7,6 +7,7 @@ import { DocumentService, DocumentChunkPreviewDto } from '@core/services/documen
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { DrawerModule } from 'primeng/drawer';
+import { ApiMessages } from '@core/constants/api-messages';
 
 interface ExportOption {
   format: ExportFormat;
@@ -88,20 +89,20 @@ interface ExportOption {
               <!-- Card Header -->
               <div class="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
                 <div class="flex items-center gap-2">
-                  <div class="flex items-center justify-center w-6 h-6 bg-primary-50 text-primary-500 rounded-md">
+                  <div class="flex items-center justify-center w-6 h-6 bg-primary-50 dark:bg-primary-950/60 border border-primary-100 dark:border-primary-800/40 text-primary-500 rounded-md">
                     <i class="pi pi-sparkles text-base"></i>
                   </div>
                   <span class="text-[0.72rem] text-slate-500 dark:text-slate-400 font-medium">{{ answer.savedAt | date:'MMM d, y · h:mm a' }}</span>
                 </div>
 
-                <!-- Action buttons — visible on hover -->
-                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <!-- Action buttons — visible on hover for desktop, always visible on mobile/tablet -->
+                <div class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
 
                   <!-- Export dropdown trigger -->
                   <div class="relative">
                     <button
                       id="export-btn-{{ answer.id }}"
-                      class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 transition-all cursor-pointer shadow-sm"
+                      class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 dark:hover:bg-slate-800 dark:hover:text-primary-400 dark:hover:border-slate-600 transition-all cursor-pointer shadow-xs"
                       (click)="toggleExportMenu($event, answer.id)"
                       pTooltip="Export answer"
                       tooltipPosition="top"
@@ -137,7 +138,7 @@ interface ExportOption {
 
                   <!-- Unsave button -->
                   <button
-                    class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-amber-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all cursor-pointer shadow-sm"
+                    class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-amber-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-800 transition-all cursor-pointer shadow-xs"
                     (click)="unsave(answer)"
                     pTooltip="Remove bookmark"
                     tooltipPosition="top"
@@ -152,7 +153,7 @@ interface ExportOption {
               @if (exportError() === answer.id) {
                 <div class="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-950/40 border-b border-red-100 dark:border-red-900 text-red-600 dark:text-red-400 text-xs font-medium">
                   <i class="pi pi-exclamation-circle text-base flex-none"></i>
-                  <span>Export failed. Please try again.</span>
+                  <span>{{ exportErrorMessage }}</span>
                 </div>
               }
 
@@ -160,7 +161,7 @@ interface ExportOption {
               <div class="flex-1 px-5 py-4 prose-normora text-[0.875rem] leading-relaxed text-slate-800 dark:text-slate-100 overflow-hidden max-h-48 relative">
                 <div [innerHTML]="renderMarkdown(answer.content)"></div>
                 <!-- Fade mask at bottom -->
-                <div class="absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-white to-transparent pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-white dark:from-slate-900 to-transparent pointer-events-none"></div>
               </div>
 
               <!-- Citations -->
@@ -268,6 +269,7 @@ export class SavedAnswers implements OnInit {
   openExportMenuId = signal<string | null>(null);
   exportingId = signal<string | null>(null);
   exportError = signal<string | null>(null);
+  exportErrorMessage = ApiMessages.ExportFailed.detail;
   private exportErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
   private limit = 20;
@@ -310,7 +312,7 @@ export class SavedAnswers implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        this.error.set('Something went wrong. Please try again.');
+        this.error.set(ApiMessages.SavedAnswersLoadFailed.detail);
         this.isLoading.set(false);
       }
     });

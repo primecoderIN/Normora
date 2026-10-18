@@ -62,11 +62,14 @@ import { AuthService } from '@core/services/auth.service';
                     </div>
                     <div class="flex flex-col">
                       <span class="text-[0.95rem] font-semibold text-slate-900 dark:text-white">{{ workspace.tenantName }}</span>
-                      <span class="text-xs text-slate-500 capitalize">{{ workspace.role }}</span>
+                      <span class="text-xs text-slate-500 dark:text-slate-400 capitalize">{{ workspace.role }}</span>
                     </div>
                   </div>
                   @if (workspace.tenantId === userService.activeTenant()?.tenantId) {
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[0.7rem] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-500 tracking-wide uppercase">Active</span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.68rem] font-semibold tracking-wide uppercase bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Active
+                    </span>
                   }
                 </div>
               }
@@ -75,11 +78,11 @@ import { AuthService } from '@core/services/auth.service';
           
           <!-- Actions -->
           <section class="flex flex-col gap-2 pt-2">
-            <button (click)="manageAccount()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-lg shadow-sm cursor-pointer transition-all self-start">
+            <button (click)="manageAccount()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-lg shadow-xs cursor-pointer transition-all self-start">
               <i class="pi pi-external-link text-xs opacity-70"></i>
               Manage Account settings
             </button>
-            <p class="text-[0.8rem] text-slate-500 mt-1 ml-1 max-w-lg">
+            <p class="text-[0.8rem] text-slate-500 dark:text-slate-400 mt-1 ml-1 max-w-lg">
               Update your password or configure multi-factor authentication securely through the identity provider.
             </p>
           </section>

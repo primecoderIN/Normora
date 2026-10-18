@@ -29,6 +29,15 @@ export class EmployeeLayout {
   private messageService = inject(MessageService);
   isAccepting = signal(false);
   isSidebarExpanded = signal(true);
+  isMobileDrawerOpen = signal(false);
+
+  toggleMobileDrawer() {
+    this.isMobileDrawerOpen.update(v => !v);
+  }
+
+  closeMobileDrawer() {
+    this.isMobileDrawerOpen.set(false);
+  }
 
   // Retrieve the currently active workspace, falling back to their first available workspace if none is explicitly selected
   activeWorkspace = computed(() => {

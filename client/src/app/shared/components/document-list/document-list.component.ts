@@ -3,11 +3,12 @@ import { CommonModule, DatePipe } from '@angular/common';
 
 import { Document, DocumentVersion } from '@core/services/document.service';
 import { Department } from '@core/services/department.service';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-document-list',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, TooltipModule],
   template: `
     <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
       <div class="overflow-x-auto custom-scrollbar">
@@ -71,41 +72,37 @@ import { Department } from '@core/services/department.service';
                   }
                 </td>
                 <td class="px-5 py-3.5 text-right">
-                  <div class="flex items-center justify-end gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors flex items-center justify-center"
-                      aria-label="Download document"
-                    >
-                      <i class="pi pi-download text-base"></i>
-                    </button>
+                  <div class="flex items-center justify-end gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                     <!-- Document Versioning (Phase 19): Action button to upload a new file for the existing Document.
                          This bypasses department assignment and inherits the document's original permissions. -->
                     <button
                       type="button"
-                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-center"
+                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-center cursor-pointer"
                       (click)="onUploadNewVersion.emit(doc.id)"
                       aria-label="Upload new version"
-                      [title]="'Upload new version'"
+                      pTooltip="Upload new version"
+                      tooltipPosition="top"
                     >
                       <i class="pi pi-upload text-base"></i>
                     </button>
                     <button
                       type="button"
-                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center justify-center"
+                      class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center justify-center cursor-pointer"
                       (click)="toggleExpand(doc.id)"
                       [attr.aria-expanded]="isExpanded(doc.id)"
                       aria-label="View history"
-                      [title]="'View history'"
+                      pTooltip="Version history"
+                      tooltipPosition="top"
                     >
                       <i class="pi pi-history text-base"></i>
                     </button>
                     <button
                       type="button"
-                      class="w-8 h-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex items-center justify-center"
+                      class="w-8 h-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex items-center justify-center cursor-pointer"
                       (click)="onConfirmDelete.emit(doc.id)"
                       aria-label="Delete document"
-                      [title]="'Delete document'"
+                      pTooltip="Delete document"
+                      tooltipPosition="top"
                     >
                       <i class="pi pi-trash text-base"></i>
                     </button>
@@ -166,7 +163,7 @@ import { Department } from '@core/services/department.service';
                                 <span class="text-sm font-medium text-slate-900 dark:text-white">
                                   {{ version.createdAt | date:'MMM d, y, h:mm a' }}
                                 </span>
-                                <span class="text-xs text-slate-500">
+                                <span class="text-xs text-slate-500 dark:text-slate-400">
                                   @if (version.isActive) {
                                     <span class="text-emerald-600 dark:text-emerald-400 font-medium">Active Version</span>
                                   } @else {

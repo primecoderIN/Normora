@@ -80,8 +80,7 @@ export class DocumentUploadModalComponent {
     
     // Add Tenant ID header (since p-fileupload bypasses Angular Interceptors)
     const activeTenantId = this.userService.activeTenantId();
-    const fallbackTenantId = this.userService.currentUser()?.memberships[0]?.tenantId;
-    const tenantId = activeTenantId || fallbackTenantId;
+    const tenantId = activeTenantId || this.userService.activeTenant()?.tenantId || this.userService.currentUser()?.memberships[0]?.tenantId;
     if (tenantId) {
       event.xhr.setRequestHeader('X-Tenant-Id', tenantId);
     }

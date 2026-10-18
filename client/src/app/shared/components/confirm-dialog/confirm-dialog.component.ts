@@ -16,7 +16,7 @@ import { CommonModule } from '@angular/common';
         [attr.aria-labelledby]="'confirm-dialog-title'"
       >
         <div
-          class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl shadow-slate-900/20 overflow-hidden flex flex-col animate-[fadeIn_0.15s_ease-out]"
+          class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-900/20 overflow-hidden flex flex-col animate-[fadeIn_0.15s_ease-out]"
           (click)="$event.stopPropagation()"
         >
           <!-- Header -->

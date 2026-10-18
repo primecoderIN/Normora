@@ -194,7 +194,7 @@ export class Conversations implements OnInit, AfterViewChecked {
       next: () => {
         this.conversations.update(list => list.filter(c => c.id !== id));
         if (this.activeId() === id) {
-          this.activeConversation.set(null);
+          this.startBlankConversation();
         }
         this.isDeletingId.set(null);
       },
@@ -253,8 +253,7 @@ export class Conversations implements OnInit, AfterViewChecked {
     this.shouldScrollToBottom = true;
 
     try {
-      const currentUser = this.userService.currentUser();
-      const tenantId = currentUser?.memberships?.[0]?.tenantId;
+      const tenantId = this.userService.activeTenantId() || this.userService.activeTenant()?.tenantId;
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',

@@ -11,6 +11,10 @@ export class AuthService {
   private authStatus = new BehaviorSubject<boolean | null>(null);
   public isAuthenticated$ = this.authStatus.asObservable();
 
+  public get isAuthenticated(): boolean {
+    return this.authStatus.value === true;
+  }
+
   // Duende BFF provides the logout URL (with the anti-forgery `sid` parameter)
   // as a claim in the /bff/user response. We store it here for use in logout().
   private logoutUrl: string | null = null;

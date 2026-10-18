@@ -37,41 +37,77 @@
 
   <!-- Stats -->
   <section class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label="Document status">
-    <app-stat-card title="Total" [value]="documents().length" icon="pi-file" colorClass="bg-primary-50 text-primary-600" trend="neutral" trendText="All uploaded files"></app-stat-card>
-    <app-stat-card title="Ready" [value]="readyCount()" icon="pi-check-circle" colorClass="bg-emerald-50 text-emerald-600" trend="up" trendText="Searchable now"></app-stat-card>
-    <app-stat-card title="Processing" [value]="processingCount()" icon="pi-spin pi-spinner" colorClass="bg-blue-50 text-blue-600" trend="neutral" trendText="Being indexed"></app-stat-card>
-    <app-stat-card title="Failed" [value]="failedCount()" icon="pi-exclamation-circle" colorClass="bg-red-50 text-red-600" trend="down" trendText="Needs attention"></app-stat-card>
+    <div class="cursor-pointer" (click)="selectStatus('All')" role="button" tabindex="0">
+      <app-stat-card
+        title="Total"
+        [value]="documents().length"
+        icon="pi-file"
+        colorClass="bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400"
+        trend="neutral"
+        trendText="All uploaded files">
+      </app-stat-card>
+    </div>
+    <div class="cursor-pointer" (click)="selectStatus('Ready')" role="button" tabindex="0">
+      <app-stat-card
+        title="Ready"
+        [value]="readyCount()"
+        icon="pi-check-circle"
+        colorClass="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+        trend="up"
+        trendText="Searchable now">
+      </app-stat-card>
+    </div>
+    <div class="cursor-pointer" (click)="selectStatus('Processing')" role="button" tabindex="0">
+      <app-stat-card
+        title="Processing"
+        [value]="processingCount()"
+        icon="pi-spin pi-spinner"
+        colorClass="bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400"
+        trend="neutral"
+        trendText="Being indexed">
+      </app-stat-card>
+    </div>
+    <div class="cursor-pointer" (click)="selectStatus('Failed')" role="button" tabindex="0">
+      <app-stat-card
+        title="Failed"
+        [value]="failedCount()"
+        icon="pi-exclamation-circle"
+        colorClass="bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400"
+        trend="down"
+        trendText="Needs attention">
+      </app-stat-card>
+    </div>
   </section>
 
   <!-- Filter Tabs -->
   <section
-    class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 overflow-x-auto custom-scrollbar"
+    class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5 overflow-x-auto custom-scrollbar"
     aria-label="Document filters"
   >
-    <div class="flex items-center gap-1 min-w-max">
+    <div class="flex items-center gap-1.5 min-w-max">
       <button type="button"
-        [class]="selectedStatus() === 'All' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
-        class="flex items-center gap-2 h-8 px-3.5 rounded-lg font-semibold text-sm transition-all"
+        [class]="selectedStatus() === 'All' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
+        class="flex items-center gap-2 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
         (click)="selectStatus('All')">
-        All <span class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums">{{ documents().length }}</span>
+        All <span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums">{{ documents().length }}</span>
       </button>
       <button type="button"
-        [class]="selectedStatus() === 'Ready' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
-        class="flex items-center gap-2 h-8 px-3.5 rounded-lg font-semibold text-sm transition-all"
+        [class]="selectedStatus() === 'Ready' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
+        class="flex items-center gap-2 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
         (click)="selectStatus('Ready')">
-        Ready <span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums">{{ readyCount() }}</span>
+        Ready <span class="bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums font-semibold">{{ readyCount() }}</span>
       </button>
       <button type="button"
-        [class]="selectedStatus() === 'Processing' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
-        class="flex items-center gap-2 h-8 px-3.5 rounded-lg font-semibold text-sm transition-all"
+        [class]="selectedStatus() === 'Processing' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
+        class="flex items-center gap-2 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
         (click)="selectStatus('Processing')">
-        Processing <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums">{{ processingCount() }}</span>
+        Processing <span class="bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums font-semibold">{{ processingCount() }}</span>
       </button>
       <button type="button"
-        [class]="selectedStatus() === 'Failed' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
-        class="flex items-center gap-2 h-8 px-3.5 rounded-lg font-semibold text-sm transition-all"
+        [class]="selectedStatus() === 'Failed' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold' : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 hover:text-slate-900 dark:hover:text-white'"
+        class="flex items-center gap-2 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
         (click)="selectStatus('Failed')">
-        Failed <span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums">{{ failedCount() }}</span>
+        Failed <span class="bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 px-1.5 py-0.5 rounded text-[0.65rem] min-w-5 text-center tabular-nums font-semibold">{{ failedCount() }}</span>
       </button>
     </div>
   </section>

@@ -20,16 +20,33 @@ export const roleGuard: CanActivateFn = (route) => {
   const validateRole = (user: CurrentUser | null) => {
     if (!user) return router.createUrlTree([AppRoutes.Login]);
     
-    const hasRole = user.memberships.some((m: UserTenantMembership) => {
-      const effectiveRole = m.role?.toLowerCase() === 'admin' ? 'employer' : 'employee';
-      return effectiveRole === requiredRole;
-    });
+    // SEC-11: Validate role scoped strictly to the current workspace to prevent BFLA
+    const activeTenantId = userService.activeTenantId();
+    const slug = route.parent?.paramMap.get('slug') || route.paramMap.get('slug');
+    
+    let membership: UserTenantMembership | undefined;
+    if (activeTenantId) {
+      membership = user.memberships.find(m => m.tenantId === activeTenantId);
+    }
+    if (!membership && slug) {
+      membership = user.memberships.find(m => m.tenantSlug === slug);
+    }
+    if (!membership && user.memberships.length > 0) {
+      membership = user.memberships[0];
+    }
 
-    if (hasRole) return true;
+    if (!membership) {
+      console.warn(`Access denied. No valid workspace membership found.`);
+      return router.createUrlTree([AppRoutes.AccessDenied]);
+    }
 
-    // SEC-11: User is authenticated but lacks the required role — redirect to a
-    // meaningful access-denied page instead of the confusing login screen.
-    console.warn(`Access denied. Missing role: ${requiredRole}`);
+    const effectiveRole = membership.role?.toLowerCase() === 'admin' ? 'employer' : 'employee';
+    if (effectiveRole === requiredRole) {
+      return true;
+    }
+
+    // SEC-11: User is authenticated but lacks the required role in this specific workspace
+    console.warn(`Access denied. Role in active workspace is '${effectiveRole}', required: '${requiredRole}'`);
     return router.createUrlTree([AppRoutes.AccessDenied]);
   };
 

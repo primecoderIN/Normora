@@ -29,6 +29,15 @@ export class EmployerLayout {
   private messageService = inject(MessageService);
   isAccepting = signal(false);
   isSidebarExpanded = signal(true);
+  isMobileDrawerOpen = signal(false);
+
+  toggleMobileDrawer() {
+    this.isMobileDrawerOpen.update(v => !v);
+  }
+
+  closeMobileDrawer() {
+    this.isMobileDrawerOpen.set(false);
+  }
 
   logout() {
     this.authService.logout();
