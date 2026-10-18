@@ -1,0 +1,153 @@
+<section class="flex flex-col flex-1 min-w-0 bg-white dark:bg-slate-900 overflow-hidden">
+  
+  @if (!conversation) {
+    <!-- Empty State -->
+    <div class="flex flex-col flex-1 items-center justify-center gap-6 p-8 text-center bg-slate-50 dark:bg-slate-950">
+      <div>
+        <div class="flex items-center justify-center w-20 h-20 bg-linear-to-br from-primary-100 to-purple-100 text-primary-600 text-3xl rounded-2xl mx-auto mb-4 shadow-sm">
+          <i class="pi pi-comments"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white m-0 mb-1">How can I help you today?</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto m-0">Ask anything about company policies, benefits, or your specific context.</p>
+      </div>
+      
+      <!-- Suggestion Cards -->
+      @if (isLoadingSuggestions()) {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-4">
+          @for (item of [1, 2, 3]; track item) {
+            <div class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl animate-pulse">
+              <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800"></div>
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mt-2"></div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-4">
+          @for (s of suggestions(); track s.question) {
+            <button
+              type="button"
+              class="flex flex-col text-left gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
+              (click)="selectSuggestion(s.question)"
+            >
+              <div class="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="pi text-lg" [ngClass]="s.iconClass || 'pi-file-edit'"></i>
+              </div>
+              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">{{ s.question }}</div>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Chat Header -->
+    <header class="flex items-center justify-between p-4 px-5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex-none gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          class="flex md:hidden items-center justify-center flex-none w-9 h-9 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 cursor-pointer transition-colors"
+          (click)="onToggleSidebar.emit()"
+          aria-label="Toggle sidebar"
+        >
+          <i class="pi pi-bars text-base"></i>
+        </button>
+        <div class="flex items-center justify-center flex-none w-9 h-9 bg-primary-50 dark:bg-primary-950/60 text-primary-600 rounded-lg text-sm">
+          <i class="pi pi-comments"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[0.95rem] font-bold text-slate-900 dark:text-white truncate">{{ conversation.title }}</div>
+          <div class="text-[0.75rem] text-slate-400">
+            {{ conversation.messages.length > 0 ? (conversation.messages.length + ' messages') : 'No messages yet' }}
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 text-xs font-medium cursor-pointer transition-colors"
+          (click)="shareConversation()"
+          [disabled]="isSharing()"
+          pTooltip="Share conversation"
+          tooltipPosition="bottom"
+        >
+          <i class="pi" [class.pi-spin]="isSharing()" [class.pi-spinner]="isSharing()" [class.pi-share-alt]="!isSharing()"></i>
+          <span>{{ isSharing() ? 'Sharing...' : 'Share' }}</span>
+        </button>
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-full text-green-600 dark:text-green-400 text-[0.68rem] font-bold tracking-widest uppercase whitespace-nowrap">
+          <span class="block w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_0_2px_rgba(34,197,94,0.2)]"></span> Knowledge base online
+        </div>
+      </div>
+    </header>
+
+    <!-- Messages Area -->
+    <div class="flex-1 min-h-0 overflow-y-auto p-5 md:p-6 flex flex-col gap-5 custom-scrollbar" aria-live="polite">
+      
+      @if (isLoading) {
+        <div class="flex flex-col gap-4">
+          @for (n of [1,2,3]; track n) {
+            <div class="flex" [class.justify-end]="n % 2 === 0">
+              <div class="w-7/12 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+            </div>
+          }
+        </div>
+      } @else if (conversation.messages.length === 0) {
+        <div class="flex flex-col flex-1 items-center justify-center gap-3 text-center text-slate-400">
+          <div class="w-16 h-16 flex items-center justify-center bg-linear-to-br from-primary-50 to-purple-50 rounded-2xl">
+            <i class="pi pi-sparkles text-3xl text-primary-300"></i>
+          </div>
+          <p class="text-sm m-0">Ask your first question below.</p>
+        </div>
+      } @else {
+        @for (msg of conversation.messages; track msg.id) {
+          <app-chat-message-bubble
+            [message]="msg"
+            [isSaved]="isSaved(msg.id)"
+            (onToggleSave)="toggleSave($event)"
+            (onToggleFeedback)="toggleFeedback($event)"
+            (onPreviewCitation)="openPreview($event)"
+          />
+        }
+      }
+
+      <!-- Typing Indicator -->
+      @if (isSending) {
+        <div class="flex items-end gap-2.5 max-w-[85%] self-start msg-enter">
+          <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-base shadow-sm">
+            <i class="pi pi-sparkles"></i>
+          </div>
+          <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-sm shadow-sm">
+            <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce animate-delay-none"></span>
+            <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+            <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+          </div>
+        </div>
+      }
+
+      @if (error) {
+        <div class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg text-red-600 dark:text-red-400 text-[0.82rem]" role="alert">
+          <i class="pi pi-exclamation-circle flex-none"></i>
+          <span class="flex-1">{{ error }}</span>
+          <button
+            type="button"
+            class="flex items-center gap-1 px-3 py-1.5 bg-red-100 dark:bg-red-900/60 hover:bg-red-200 text-red-700 dark:text-red-300 text-base font-semibold rounded-md border-none cursor-pointer transition-colors"
+            (click)="onRetry.emit()"
+          >
+            <i class="pi pi-refresh text-base"></i> Retry
+          </button>
+        </div>
+      }
+
+      <div #messagesEnd></div>
+    </div>
+
+    <!-- Input Bar -->
+    <app-chat-input-bar
+      #chatInputBar
+      [isSending]="isSending"
+      (onSendMessage)="onSendMessage.emit($event)"
+      (onAttachFile)="showComingSoon()"
+    />
+  }
+</section>
+
+<!-- Reusable Document Preview Drawer -->
+<app-chunk-preview-drawer #chunkDrawer />
