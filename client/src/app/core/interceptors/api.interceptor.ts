@@ -3,7 +3,7 @@ import { ApiMessages } from '@core/constants/api-messages';
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { DsToastService } from '@design-system';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { environment } from '@env/environment';
@@ -13,7 +13,7 @@ import { environment } from '@env/environment';
  * and provides global HTTP error handling (session redirects, quota notifications, BFLA toasts).
  */
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
-  const messageService = inject(MessageService, { optional: true });
+  const messageService = inject(DsToastService, { optional: true });
   const router = inject(Router);
 
   let apiReq = req;

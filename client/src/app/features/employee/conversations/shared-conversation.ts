@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { TooltipModule } from 'primeng/tooltip';
+import { DsTooltipDirective } from '@design-system';
 import { ConversationService, SharedConversationDetailDto } from '@core/services/conversation.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
 import { ChunkPreviewDrawerComponent } from '@shared/components/chunk-preview-drawer/chunk-preview-drawer.component';
@@ -17,7 +17,7 @@ import { AppRoutes } from '@core/constants/app-routes';
 @Component({
   selector: 'app-shared-conversation',
   standalone: true,
-  imports: [CommonModule, RouterModule, TooltipModule, DatePipe, ChunkPreviewDrawerComponent],
+  imports: [CommonModule, RouterModule, DsTooltipDirective, DatePipe, ChunkPreviewDrawerComponent],
   templateUrl: './shared-conversation.html',
 })
 export class SharedConversationComponent implements OnInit {

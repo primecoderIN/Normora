@@ -1,12 +1,10 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { SkeletonModule } from 'primeng/skeleton';
-import { MessageService } from 'primeng/api';
 import { SubscriptionService, SubscriptionUsageDto, PlanTierType } from '@core/services/subscription.service';
 import { UserService } from '@core/services/user.service';
 import { ApiMessages } from '@core/constants/api-messages';
+import { DsToastService } from '@design-system';
 
 interface PlanTierDefinition {
   tier: PlanTierType;
@@ -23,12 +21,12 @@ interface PlanTierDefinition {
 @Component({
   selector: 'app-subscription',
   standalone: true,
-  imports: [CommonModule, ButtonModule, SkeletonModule, DatePipe],
+  imports: [CommonModule, DatePipe],
   templateUrl: './subscription.component.html'
 })
 export class SubscriptionComponent implements OnInit {
   private subscriptionService = inject(SubscriptionService);
-  private messageService = inject(MessageService);
+  private messageService = inject(DsToastService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   public userService = inject(UserService);

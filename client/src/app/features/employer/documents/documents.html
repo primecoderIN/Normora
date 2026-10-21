@@ -1,6 +1,6 @@
 <!-- Documents Page -->
 <div class="flex flex-col gap-6 sm:gap-8">
-  <p-toast></p-toast>
+  <ds-toast></ds-toast>
 
   <!-- Header -->
   <header class="flex flex-col gap-4">
@@ -16,7 +16,6 @@
           <i class="pi pi-search text-slate-400 flex-none"></i>
           <input
             type="text"
-            pInputText
             placeholder="Search documents"
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event)"
@@ -118,13 +117,13 @@
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
         @for (_ of [1,2,3,4,5,6]; track $index) {
           <div class="flex items-center gap-4 px-5 py-4">
-            <p-skeleton width="2.5rem" height="2.5rem" borderRadius="10px" />
+            <ds-skeleton width="2.5rem" height="2.5rem" borderRadius="10px" />
             <div class="flex flex-col gap-2 flex-1">
-              <p-skeleton width="45%" height="1rem" borderRadius="6px" />
-              <p-skeleton width="30%" height="0.75rem" borderRadius="6px" />
+              <ds-skeleton width="45%" height="1rem" borderRadius="6px" />
+              <ds-skeleton width="30%" height="0.75rem" borderRadius="6px" />
             </div>
-            <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
-            <p-skeleton width="2rem" height="2rem" borderRadius="8px" />
+            <ds-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+            <ds-skeleton width="2rem" height="2rem" borderRadius="8px" />
           </div>
         }
       </div>

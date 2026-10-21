@@ -2,13 +2,13 @@
   <div class="grid gap-8">
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <p-skeleton width="10rem" height="1rem" styleClass="mb-2"></p-skeleton>
-        <p-skeleton width="15rem" height="2rem"></p-skeleton>
+        <ds-skeleton width="10rem" height="1rem" styleClass="mb-2"></ds-skeleton>
+        <ds-skeleton width="15rem" height="2rem"></ds-skeleton>
       </div>
     </header>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       @for (i of [1,2,3,4]; track i) {
-        <p-skeleton height="6rem"></p-skeleton>
+        <ds-skeleton height="6rem"></ds-skeleton>
       }
     </div>
   </div>
@@ -28,9 +28,9 @@
       <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
         <label class="flex items-center gap-2 h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
           <i class="pi pi-search text-slate-500 dark:text-slate-400"></i>
-          <input type="text" pInputText placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none! shadow-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! p-0 text-slate-900 dark:text-white placeholder:text-slate-400" />
+          <input type="text" placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none! shadow-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! p-0 text-slate-900 dark:text-white placeholder:text-slate-400" />
         </label>
-        <p-button icon="pi pi-bell" styleClass="w-10! h-10! p-0! flex items-center justify-center bg-white! dark:bg-slate-900 border-slate-200! dark:border-slate-700 text-slate-500! dark:text-slate-400 hover:bg-slate-50! dark:bg-slate-950 transition-colors" ariaLabel="Notifications"></p-button>
+        <ds-button variant="outline" icon="pi pi-bell" aria-label="Notifications" styleClass="w-10! h-10! p-0!"></ds-button>
       </div>
     </header>
 
@@ -79,15 +79,15 @@
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Document coverage</h2>
             <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Categories indexed for employee search.</p>
           </div>
-          <p-button label="View all" routerLink="../documents" styleClass="bg-white! dark:bg-slate-900 border-slate-200! dark:border-slate-700 text-slate-700! dark:text-slate-200 hover:bg-slate-50! dark:hover:bg-slate-800 text-xs! font-bold px-3! py-1.5! min-h-8! transition-colors"></p-button>
+          <a routerLink="../documents" class="inline-flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold px-3 py-1.5 min-h-8 rounded-lg transition-colors">View all</a>
         </div>
         <div class="relative h-62">
-          <p-chart
+          <ds-chart
             type="doughnut"
             [data]="documentChartData"
             [options]="documentChartOptions"
             class="block w-full h-full">
-          </p-chart>
+          </ds-chart>
           <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
             <strong class="text-2xl text-slate-900 dark:text-white font-bold">{{ data.stats.totalDocuments }}</strong>
             <span class="text-xs text-slate-500 dark:text-slate-400">Total</span>
@@ -101,7 +101,7 @@
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Recent documents</h2>
             <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Latest files added to the knowledge base.</p>
           </div>
-          <p-button label="View all" routerLink="../documents" styleClass="bg-white! dark:bg-slate-900 border-slate-200! dark:border-slate-700 text-slate-700! dark:text-slate-200 hover:bg-slate-50! dark:hover:bg-slate-800 text-xs! font-bold px-3! py-1.5! min-h-8! transition-colors"></p-button>
+          <a routerLink="../documents" class="inline-flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold px-3 py-1.5 min-h-8 rounded-lg transition-colors">View all</a>
         </div>
         <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
           @for (doc of data.recentDocuments; track doc.name) {
@@ -127,7 +127,7 @@
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Top questions</h2>
             <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Common employee asks this month.</p>
           </div>
-          <p-button label="Review" routerLink="../conversations" styleClass="bg-white! dark:bg-slate-900 border-slate-200! dark:border-slate-700 text-slate-700! dark:text-slate-200 hover:bg-slate-50! dark:hover:bg-slate-800 text-xs! font-bold px-3! py-1.5! min-h-8! transition-colors"></p-button>
+          <a routerLink="../conversations" class="inline-flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold px-3 py-1.5 min-h-8 rounded-lg transition-colors">Review</a>
         </div>
         <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
           @for (q of data.topQuestions; track q.question) {
@@ -146,15 +146,15 @@
             <h2 class="text-[0.95rem] text-slate-900 dark:text-white m-0 font-bold">Chat activity</h2>
             <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">Employee question volume over the last 7 days.</p>
           </div>
-          <p-button label="Last 7 days" iconPos="right" icon="pi pi-chevron-down" (onClick)="showComingSoon()" styleClass="bg-white! dark:bg-slate-900 border-slate-200! dark:border-slate-700 text-slate-700! dark:text-slate-200 hover:bg-slate-50! dark:hover:bg-slate-800 text-xs! font-bold px-3! py-1.5! min-h-8! transition-colors"></p-button>
+          <ds-button variant="outline" icon="pi pi-chevron-down" iconPos="right" (click)="showComingSoon()" size="sm">Last 7 days</ds-button>
         </div>
         <div class="relative h-62">
-          <p-chart
+          <ds-chart
             type="line"
             [data]="activityChartData"
             [options]="activityChartOptions"
             class="block w-full h-full">
-          </p-chart>
+          </ds-chart>
         </div>
       </article>
     </section>
@@ -164,7 +164,7 @@
         <strong class="text-slate-900 dark:text-white font-bold">{{ data.kbReview.title }}</strong>
         <p class="text-[0.9rem] text-slate-500 dark:text-slate-400 m-0 mt-1">{{ data.kbReview.description }}</p>
       </div>
-      <p-button label="Review suggestions" (onClick)="showComingSoon()" styleClass="bg-primary-600! border-primary-600! text-white! hover:bg-primary-700! font-bold px-4! py-2! min-h-10! whitespace-nowrap transition-colors"></p-button>
+      <ds-button variant="primary" (click)="showComingSoon()">Review suggestions</ds-button>
     </section>
   </div>
 } @else {
@@ -172,6 +172,6 @@
     <i class="pi pi-exclamation-circle text-5xl text-slate-300 mb-4"></i>
     <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Failed to load dashboard</h2>
     <p class="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">There was a problem retrieving your workspace overview data. This could be due to a network issue or a temporary server error.</p>
-    <p-button label="Try again" icon="pi pi-refresh" (onClick)="ngOnInit()" styleClass="bg-white! dark:bg-slate-900 text-slate-700! dark:text-slate-200 border-slate-300! hover:bg-slate-50! dark:bg-slate-950"></p-button>
+    <ds-button variant="outline" icon="pi pi-refresh" (click)="ngOnInit()">Try again</ds-button>
   </div>
 }

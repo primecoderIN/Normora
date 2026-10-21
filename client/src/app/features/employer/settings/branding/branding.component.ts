@@ -1,16 +1,15 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { ColorPicker } from 'primeng/colorpicker';
-import { Toast } from 'primeng/toast';
-import { TooltipModule } from 'primeng/tooltip';
-import { SharedModule, MessageService } from 'primeng/api';
-import { DividerModule } from 'primeng/divider';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
 import { UserService } from '@core/services/user.service';
 import { ApiMessages } from '@core/constants/api-messages';
+import {
+  DsButtonComponent,
+  DsColorPickerComponent,
+  DsToastComponent,
+  DsToastService,
+} from '@design-system';
 
 export interface ColorPalette {
   name: string;
@@ -26,23 +25,17 @@ export interface ColorPalette {
   selector: 'app-employer-branding-settings',
   standalone: true,
   imports: [
-
     CommonModule,
     FormsModule,
-    ButtonModule,
-    InputTextModule,
-    ColorPicker,
-    Toast,
-    TooltipModule,
-    SharedModule,
-    DividerModule,
+    DsButtonComponent,
+    DsColorPickerComponent,
+    DsToastComponent,
   ],
-  providers: [MessageService],
   templateUrl: './branding.component.html',
 })
 export class BrandingComponent {
   private brandingService = inject(TenantBrandingService);
-  private messageService = inject(MessageService);
+  private messageService = inject(DsToastService);
   public userService = inject(UserService);
 
   primaryColor = signal<string>('#6366F1');

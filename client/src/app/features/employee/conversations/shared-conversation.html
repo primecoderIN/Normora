@@ -7,8 +7,8 @@
         type="button"
         class="flex items-center justify-center w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
         (click)="goToConversations()"
-        pTooltip="Back to conversations"
-        tooltipPosition="bottom"
+        [dsTooltip]="'Back to conversations'"
+        dsTooltipPosition="bottom"
       >
         <i class="pi pi-arrow-left text-sm"></i>
       </button>

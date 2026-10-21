@@ -5,7 +5,14 @@
       <h1 class="text-2xl sm:text-[1.75rem] font-bold text-slate-900 dark:text-white leading-[1.15] m-0">Employees</h1>
       <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1.5">Invite employees and manage who can use company knowledge.</p>
     </div>
-    <p-button label="Export" icon="pi pi-download" (onClick)="exportEmployees()" styleClass="bg-white! dark:bg-slate-900 border-slate-200! dark:border-slate-700 text-slate-700! dark:text-slate-200 hover:bg-slate-50! dark:bg-slate-950 font-semibold! px-4! py-2! h-10! text-sm! transition-colors self-start"></p-button>
+    <ds-button
+      variant="outline"
+      icon="pi pi-download"
+      (click)="exportEmployees()"
+      styleClass="self-start"
+    >
+      Export
+    </ds-button>
   </header>
 
   <!-- Stat cards -->
@@ -80,13 +87,16 @@
             placeholder="employee@company.com"
           />
         </div>
-        <p-button
-          [label]="isInviting() ? 'Sending...' : 'Send invite'"
+        <ds-button
+          variant="primary"
           type="submit"
           [disabled]="inviteForm.invalid || isInviting()"
-          [icon]="isInviting() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
-          styleClass="bg-primary-600! border-primary-600! text-white! hover:bg-primary-700! disabled:bg-slate-200! disabled:border-slate-200! dark:border-slate-700 disabled:text-slate-400! font-bold px-4! h-10! transition-colors whitespace-nowrap">
-        </p-button>
+          [loading]="isInviting()"
+          icon="pi pi-send"
+          styleClass="whitespace-nowrap"
+        >
+          {{ isInviting() ? 'Sending...' : 'Send invite' }}
+        </ds-button>
       </form>
     </div>
   </section>
@@ -102,7 +112,7 @@
           <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="Search members" class="flex-1 min-w-0 bg-transparent border-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! text-sm text-slate-900 dark:text-white placeholder:text-slate-400 p-0" />
         </label>
         <!-- Department Filter -->
-        <p-select 
+        <ds-select 
           [options]="departments()" 
           optionLabel="name" 
           optionValue="id" 
@@ -111,7 +121,7 @@
           placeholder="All departments" 
           [showClear]="true"
           styleClass="h-9! w-full sm:w-48 text-sm!">
-        </p-select>
+        </ds-select>
       </div>
     </div>
     
@@ -225,12 +235,12 @@
       <!-- Paginator -->
       @if (totalPages() > 1) {
         <div class="border-t border-slate-100 dark:border-slate-800">
-          <p-paginator 
+          <ds-pagination 
             [rows]="pageSize()" 
             [totalRecords]="totalRecords()" 
             [first]="(currentPage() - 1) * pageSize()"
             (onPageChange)="onPageChange($event)">
-          </p-paginator>
+          </ds-pagination>
         </div>
       }
     } @else {
@@ -247,5 +257,5 @@
   </section>
 
   <!-- Action Menu Template -->
-  <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body"></p-menu>
+  <ds-menu #menu [model]="menuItems" [popup]="true"></ds-menu>
 </div>

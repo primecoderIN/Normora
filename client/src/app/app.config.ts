@@ -7,10 +7,7 @@ import {
   withPreloading,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeuix/themes/aura';
 import { routes } from './app.routes';
-import { environment } from '@env/environment';
 import { tenantInterceptor } from '@core/interceptors/tenant.interceptor';
 import { apiInterceptor } from '@core/interceptors/api.interceptor';
 import { csrfInterceptor } from '@core/interceptors/csrf.interceptor';
@@ -33,20 +30,6 @@ export const appConfig: ApplicationConfig = {
     // We attach our interceptors here to automatically attach the CSRF header and Tenant ID.
     provideHttpClient(withInterceptors([csrfInterceptor, tenantInterceptor, apiInterceptor])),
 
-    // Configures PrimeNG (our UI component library) with the Aura theme
-    providePrimeNG({
-      license: environment.primeNgLicense,
-      theme: {
-        preset: Aura,
-        options: {
-          darkModeSelector: '.app-dark',
-          cssLayer: {
-            name: 'primeng',
-            order: 'theme, base, primeng',
-          },
-        },
-      },
-    }),
     provideClientHydration(),
   ],
 };

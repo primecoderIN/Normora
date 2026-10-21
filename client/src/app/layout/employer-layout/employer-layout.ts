@@ -1,22 +1,20 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ButtonModule } from 'primeng/button';
-import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { DsSelectComponent, DsToastService } from '@design-system';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { InvitationService } from '@core/services/invitation.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
-import { MessageService } from 'primeng/api';
 import { ApiMessages } from '@core/constants/api-messages';
 
 @Component({
   selector: 'app-employer-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ButtonModule, SelectModule, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, DsSelectComponent, FormsModule],
   templateUrl: './employer-layout.html',
 })
 export class EmployerLayout {
@@ -26,7 +24,7 @@ export class EmployerLayout {
   private invitationService = inject(InvitationService);
   public themeService = inject(ThemeService);
   public brandingService = inject(TenantBrandingService);
-  private messageService = inject(MessageService);
+  private toastService = inject(DsToastService);
   isAccepting = signal(false);
   isSidebarExpanded = signal(true);
   isMobileDrawerOpen = signal(false);
@@ -86,7 +84,7 @@ export class EmployerLayout {
     this.invitationService.acceptInvitation(token).subscribe({
       next: () => window.location.reload(),
       error: (err: { error?: { message?: string } }) => {
-        this.messageService.add({ severity: 'error', summary: ApiMessages.InvitationAcceptFailed.summary, detail: err.error?.message || ApiMessages.InvitationAcceptFailed.detail });
+        this.toastService.add({ severity: 'error', summary: ApiMessages.InvitationAcceptFailed.summary, detail: err.error?.message || ApiMessages.InvitationAcceptFailed.detail });
         this.isAccepting.set(false);
       }
     });
@@ -98,7 +96,7 @@ export class EmployerLayout {
     this.invitationService.rejectInvitation(token).subscribe({
       next: () => window.location.reload(),
       error: (err: { error?: { message?: string } }) => {
-        this.messageService.add({ severity: 'error', summary: ApiMessages.InvitationRejectFailed.summary, detail: err.error?.message || ApiMessages.InvitationRejectFailed.detail });
+        this.toastService.add({ severity: 'error', summary: ApiMessages.InvitationRejectFailed.summary, detail: err.error?.message || ApiMessages.InvitationRejectFailed.detail });
         this.isAccepting.set(false);
       }
     });

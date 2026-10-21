@@ -1,11 +1,26 @@
 @import "tailwindcss";
-@import "tailwindcss-primeui";
+@import "./design-system/tokens/tokens.css";
 @import "primeicons/primeicons.css";
 
 @source "./app/**/*.{html,ts}";
+@source "./design-system/**/*.{html,ts}";
 @custom-variant dark (&:where(.app-dark, .app-dark *));
 
 @theme {
+  --color-primary: var(--primary, var(--brand-primary, #6366f1));
+  --color-primary-hover: var(--primary-hover, var(--brand-primary-hover, #4f46e5));
+  --color-primary-50: var(--primary-50, var(--p-primary-50, #eef2ff));
+  --color-primary-100: var(--primary-100, var(--p-primary-100, #e0e7ff));
+  --color-primary-200: var(--primary-200, var(--p-primary-200, #c7d2fe));
+  --color-primary-300: var(--primary-300, var(--p-primary-300, #a5b4fc));
+  --color-primary-400: var(--primary-400, var(--p-primary-400, #818cf8));
+  --color-primary-500: var(--primary-500, var(--p-primary-500, #6366f1));
+  --color-primary-600: var(--primary-600, var(--p-primary-600, #4f46e5));
+  --color-primary-700: var(--primary-700, var(--p-primary-700, #4338ca));
+  --color-primary-800: var(--primary-800, var(--p-primary-800, #3730a3));
+  --color-primary-900: var(--primary-900, var(--p-primary-900, #312e81));
+  --color-primary-950: var(--primary-950, var(--p-primary-950, #1e1b4b));
+
   --color-secondary: var(--brand-secondary, #10b981);
   
   /* Centralized Static Brand Colors for Landing Page / Auth */
@@ -14,6 +29,15 @@
   --color-normora-color-500: #6366f1;
   --color-normora-color-600: #4f46e5;
   --color-normora-color-700: #4338ca;
+
+  /* Centralized Layering & Z-Index */
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1200;
+  --z-modal: 1300;
+  --z-popover: 1400;
+  --z-tooltip: 1500;
+  --z-toast: 1600;
 }
 
 html,
@@ -51,12 +75,22 @@ a {
 }
 
 button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #4f46e5;
+a:focus-visible {
+  outline: 2px solid var(--primary, #4f46e5);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+input,
+textarea,
+select,
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none !important;
 }
 
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
@@ -81,12 +115,12 @@ textarea:focus-visible {
 
 /* ─── Page entrance animation ──────────────────────────────────────────────── */
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .page-enter {
-  animation: page-enter 0.22s ease-out both;
+  animation: page-enter 0.18s ease-out both;
 }
 
 /* ─── Chat message entrance animation ─────────────────────────────────────── */

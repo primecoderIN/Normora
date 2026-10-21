@@ -66,8 +66,8 @@
           class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 text-xs font-medium cursor-pointer transition-colors"
           (click)="shareConversation()"
           [disabled]="isSharing()"
-          pTooltip="Share conversation"
-          tooltipPosition="bottom"
+          [dsTooltip]="'Share conversation'"
+          dsTooltipPosition="bottom"
         >
           <i class="pi" [class.pi-spin]="isSharing()" [class.pi-spinner]="isSharing()" [class.pi-share-alt]="!isSharing()"></i>
           <span>{{ isSharing() ? 'Sharing...' : 'Share' }}</span>

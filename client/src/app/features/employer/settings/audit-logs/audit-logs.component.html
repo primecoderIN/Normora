@@ -46,7 +46,7 @@
 
       <!-- Action Type Filter -->
       <div>
-        <p-select
+        <ds-select
           [options]="actionOptions"
           [ngModel]="selectedAction()"
           (ngModelChange)="selectedAction.set($event); onFilterChange()"
@@ -58,7 +58,7 @@
 
       <!-- Date Range Filter -->
       <div>
-        <p-select
+        <ds-select
           [options]="dateRangeOptions"
           [ngModel]="selectedDateRange()"
           (ngModelChange)="selectedDateRange.set($event); onFilterChange()"
@@ -235,25 +235,22 @@
     <!-- Paginator Footer -->
     @if (!isLoading() && totalRecords() > 0) {
       <div class="border-t border-slate-200 dark:border-slate-800 p-2 sm:p-3 bg-slate-50/50 dark:bg-slate-900">
-        <p-paginator
+        <ds-pagination
           [rows]="pageSize()"
           [totalRecords]="totalRecords()"
           [rowsPerPageOptions]="[10, 20, 50]"
-          (onPageChange)="onPageChange($event)"
-          styleClass="bg-transparent border-none text-xs sm:text-sm" />
+          (onPageChange)="onPageChange($event)" />
       </div>
     }
   </div>
 
   <!-- Detail Inspection Dialog -->
-  <p-dialog
-    [(visible)]="isDetailDialogOpen"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [dismissableMask]="true"
-    header="Audit Event Details"
-    styleClass="w-full max-w-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+  <ds-dialog
+    [visible]="isDetailDialogOpen()"
+    (visibleChange)="isDetailDialogOpen.set($event)"
+    title="Audit Event Details"
+    widthClass="w-full max-w-2xl"
+  >
     @if (selectedLog(); as log) {
       <div class="space-y-4 pt-2">
         <!-- Top Banner -->
@@ -305,14 +302,14 @@
 
         <!-- Footer Action -->
         <div class="flex justify-end pt-2">
-          <button
-            type="button"
+          <ds-button
+            variant="outline"
             (click)="closeDetails()"
-            class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors">
+          >
             Close
-          </button>
+          </ds-button>
         </div>
       </div>
     }
-  </p-dialog>
+  </ds-dialog>
 </div>

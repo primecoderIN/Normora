@@ -4,12 +4,16 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } 
 import { InvitationService } from '@core/services/invitation.service';
 import { TenantService, TenantEmployeeDto } from '@core/services/tenant.service';
 import { DepartmentService, Department } from '@core/services/department.service';
-import { ButtonModule } from 'primeng/button';
-import { MenuModule } from 'primeng/menu';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { SelectModule } from 'primeng/select';
-import { MenuItem, MessageService } from 'primeng/api';
 import { ApiMessages } from '@core/constants/api-messages';
+import {
+  DsButtonComponent,
+  DsMenuComponent,
+  DsMenuItem,
+  DsPaginationComponent,
+  DsPageState,
+  DsSelectComponent,
+  DsToastService,
+} from '@design-system';
 
 @Component({
   selector: 'app-employees',
@@ -18,11 +22,11 @@ import { ApiMessages } from '@core/constants/api-messages';
     CommonModule, 
     ReactiveFormsModule, 
     FormsModule,
-    ButtonModule, 
     DatePipe,
-    MenuModule,
-    PaginatorModule,
-    SelectModule
+    DsButtonComponent,
+    DsMenuComponent,
+    DsPaginationComponent,
+    DsSelectComponent,
   ],
   templateUrl: './employees.html',
 })
@@ -31,7 +35,7 @@ export class Employees implements OnInit {
   private invitationService = inject(InvitationService);
   private tenantService = inject(TenantService);
   private departmentService = inject(DepartmentService);
-  private messageService = inject(MessageService);
+  private messageService = inject(DsToastService);
 
   inviteForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -62,7 +66,7 @@ export class Employees implements OnInit {
   selectedDepartmentId = signal<string | null>(null);
 
   // Actions
-  menuItems: MenuItem[] = [];
+  menuItems: DsMenuItem[] = [];
   targetEmployee = signal<TenantEmployeeDto | null>(null);
   
   employeeToRemoveId = signal<string | null>(null);
@@ -159,7 +163,7 @@ export class Employees implements OnInit {
     });
   }
 
-  onPageChange(event: PaginatorState) {
+  onPageChange(event: DsPageState) {
     const first = event.first ?? 0;
     const rows = event.rows ?? 10;
     this.currentPage.set(Math.floor(first / rows) + 1);

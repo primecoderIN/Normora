@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TooltipModule } from 'primeng/tooltip';
+import { DsTooltipDirective } from '@design-system';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { ConversationDto } from '@core/services/conversation.service';
@@ -9,7 +9,7 @@ import { ConversationDto } from '@core/services/conversation.service';
 @Component({
   selector: 'app-conversation-sidebar',
   standalone: true,
-  imports: [CommonModule, FormsModule, TooltipModule, ScrollingModule, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, DsTooltipDirective, ScrollingModule, ConfirmDialogComponent],
   template: `
     <aside class="flex flex-col flex-none w-72 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-700 overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.02)]">
       <!-- Header -->
@@ -22,8 +22,8 @@ import { ConversationDto } from '@core/services/conversation.service';
           <button
             type="button"
             class="flex items-center justify-center flex-none w-9 h-9 bg-primary-600 hover:bg-primary-700 rounded-xl text-white shadow-[0_2px_8px_rgba(79,70,229,0.3)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 transition-all border-none cursor-pointer"
-            pTooltip="New conversation"
-            tooltipPosition="bottom"
+            [dsTooltip]="'New conversation'"
+            dsTooltipPosition="bottom"
             (click)="onNewConversation.emit()"
             aria-label="Start new conversation"
           >
@@ -114,8 +114,8 @@ import { ConversationDto } from '@core/services/conversation.service';
                 type="button"
                 class="flex items-center justify-center flex-none w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-sm z-10"
                 (click)="confirmDelete(conv.id, $event)"
-                pTooltip="Delete"
-                tooltipPosition="left"
+                [dsTooltip]="'Delete'"
+                dsTooltipPosition="left"
                 aria-label="Delete conversation"
               >
                 <i class="pi text-base" [class.pi-spin]="deletingId === conv.id" [class.pi-spinner]="deletingId === conv.id" [class.pi-trash]="deletingId !== conv.id"></i>

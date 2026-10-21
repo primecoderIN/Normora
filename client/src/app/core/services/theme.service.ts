@@ -36,11 +36,9 @@ export class ThemeService {
 
     const html = document.documentElement;
     if (isDark) {
-      html.classList.add('app-dark');
-      html.classList.add('p-dark'); // PrimeNG v18+ default dark mode class
+      html.classList.add('app-dark', 'dark', 'p-dark');
     } else {
-      html.classList.remove('app-dark');
-      html.classList.remove('p-dark');
+      html.classList.remove('app-dark', 'dark', 'p-dark');
     }
   }
 }

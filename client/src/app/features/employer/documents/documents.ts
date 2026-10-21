@@ -2,9 +2,6 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Toast } from 'primeng/toast';
-import { InputText } from 'primeng/inputtext';
-import { MessageService } from 'primeng/api';
 import { DocumentService, Document } from '@core/services/document.service';
 import { AuthService } from '@core/services/auth.service';
 import { environment } from '@env/environment';
@@ -18,8 +15,7 @@ import { UserService } from '@core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '@core/services/document-realtime.service';
 import { DepartmentService, Department } from '@core/services/department.service';
 import { ApiMessages } from '@core/constants/api-messages';
-import { ButtonModule } from 'primeng/button';
-import { SkeletonModule } from 'primeng/skeleton';
+import { DsSkeletonComponent, DsToastComponent, DsToastService } from '@design-system';
 
 @Component({
   selector: 'app-documents',
@@ -27,23 +23,19 @@ import { SkeletonModule } from 'primeng/skeleton';
   imports: [
     CommonModule,
     FormsModule,
-    Toast,
-    InputText,
     StatCardComponent,
     DocumentListComponent,
     EmptyStateComponent,
-    ButtonModule,
     DocumentUploadModalComponent,
-    SkeletonModule,
+    DsSkeletonComponent,
+    DsToastComponent,
   ],
-  providers: [MessageService],
   templateUrl: './documents.html',
-
 })
 export class Documents implements OnInit, OnDestroy {
   private documentService = inject(DocumentService);
   private documentRealtimeService = inject(DocumentRealtimeService);
-  private messageService = inject(MessageService);
+  private messageService = inject(DsToastService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private departmentService = inject(DepartmentService);

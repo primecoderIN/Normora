@@ -6,7 +6,7 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { DepartmentListComponent } from './components/department-list.component';
 import { DepartmentFormComponent } from './components/department-form.component';
-import { SkeletonModule } from 'primeng/skeleton';
+import { DsSkeletonComponent } from '@design-system';
 
 /**
  * Employer department management feature view.
@@ -15,7 +15,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 @Component({
   selector: 'app-departments',
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent, SkeletonModule],
+  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent, DsSkeletonComponent],
   templateUrl: './departments.html',
 })
 export class Departments implements OnInit {

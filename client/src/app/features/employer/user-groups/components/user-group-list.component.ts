@@ -1,8 +1,6 @@
 import { Component, ViewChild, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
-import { Menu } from 'primeng/menu';
+import { DsMenuComponent, DsMenuItem } from '@design-system';
 import { UserGroup } from '@core/services/user-group.service';
 
 /**
@@ -11,10 +9,10 @@ import { UserGroup } from '@core/services/user-group.service';
 @Component({
   selector: 'app-user-group-list',
   standalone: true,
-  imports: [CommonModule, DatePipe, MenuModule],
+  imports: [CommonModule, DatePipe, DsMenuComponent],
   template: `
 
-    <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="text-sm! min-w-[160px]!"></p-menu>
+    <ds-menu #menu [popup]="true" [model]="menuItems" styleClass="text-sm min-w-[160px]"></ds-menu>
 
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm border-collapse">
@@ -85,14 +83,14 @@ import { UserGroup } from '@core/services/user-group.service';
   `
 })
 export class UserGroupListComponent {
-  @ViewChild('menu') menu!: Menu;
+  @ViewChild('menu') menu!: DsMenuComponent;
 
   groups = input.required<UserGroup[]>();
   manage = output<UserGroup>();
   edit = output<UserGroup>();
   delete = output<UserGroup>();
 
-  menuItems: MenuItem[] = [];
+  menuItems: DsMenuItem[] = [];
 
   private readonly avatarColors = [
     '#e11d48', '#db2777', '#9333ea', '#7c3aed',

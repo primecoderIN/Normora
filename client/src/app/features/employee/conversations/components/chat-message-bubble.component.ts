@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { TooltipModule } from 'primeng/tooltip';
+import { DsTooltipDirective } from '@design-system';
 import { MessageDto } from '@core/services/conversation.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
 
@@ -11,7 +11,7 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
 @Component({
   selector: 'app-chat-message-bubble',
   standalone: true,
-  imports: [CommonModule, TooltipModule, DatePipe],
+  imports: [CommonModule, DsTooltipDirective, DatePipe],
   template: `
     <div
       class="flex items-end gap-2.5 max-w-[85%] md:max-w-[75%] msg-enter"
@@ -57,8 +57,8 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
                 type="button"
                 class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-amber-500 transition-all cursor-pointer"
                 (click)="onToggleSave.emit(message.id)"
-                [pTooltip]="isSaved ? 'Unsave' : 'Save answer'"
-                tooltipPosition="top"
+                [dsTooltip]="isSaved ? 'Unsave' : 'Save answer'"
+                dsTooltipPosition="top"
                 [attr.aria-label]="isSaved ? 'Unsave answer' : 'Save answer'"
               >
                 <i
@@ -74,8 +74,8 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
                 type="button"
                 class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-green-500 transition-all cursor-pointer"
                 (click)="onToggleFeedback.emit({ message, rating: 1 })"
-                pTooltip="Helpful"
-                tooltipPosition="top"
+                [dsTooltip]="'Helpful'"
+                dsTooltipPosition="top"
                 aria-label="Mark helpful"
               >
                 <i
@@ -91,8 +91,8 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
                 type="button"
                 class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-red-500 transition-all cursor-pointer"
                 (click)="onToggleFeedback.emit({ message, rating: 2 })"
-                pTooltip="Not helpful"
-                tooltipPosition="top"
+                [dsTooltip]="'Not helpful'"
+                dsTooltipPosition="top"
                 aria-label="Mark not helpful"
               >
                 <i
@@ -108,8 +108,8 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
                 type="button"
                 class="flex items-center justify-center w-7 h-7 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
                 (click)="copyToClipboard()"
-                [pTooltip]="copied() ? 'Copied!' : 'Copy'"
-                tooltipPosition="top"
+                [dsTooltip]="copied() ? 'Copied!' : 'Copy'"
+                dsTooltipPosition="top"
                 aria-label="Copy message"
               >
                 <i
@@ -143,8 +143,8 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
                   [class.dark:border-amber-900]="cite.isOutdated"
                   [class.text-amber-700]="cite.isOutdated"
                   [class.dark:text-amber-500]="cite.isOutdated"
-                  [pTooltip]="cite.fileName"
-                  tooltipPosition="top"
+                  [dsTooltip]="cite.fileName"
+                  dsTooltipPosition="top"
                   (click)="onPreviewCitation.emit(cite.documentChunkId)"
                 >
                   <i

@@ -63,16 +63,16 @@
         @for (_ of [1,2,3,4,5]; track $index) {
           <div class="flex items-center justify-between gap-4 px-4 sm:px-5 py-4">
             <div class="flex items-center gap-3 flex-1">
-              <p-skeleton width="2rem" height="2rem" borderRadius="8px" />
+              <ds-skeleton width="2rem" height="2rem" borderRadius="8px" />
               <div class="flex flex-col gap-2 flex-1">
-                <p-skeleton width="35%" height="1rem" borderRadius="6px" />
-                <p-skeleton width="55%" height="0.75rem" borderRadius="6px" />
+                <ds-skeleton width="35%" height="1rem" borderRadius="6px" />
+                <ds-skeleton width="55%" height="0.75rem" borderRadius="6px" />
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <p-skeleton width="5rem" height="2rem" borderRadius="8px" />
-              <p-skeleton width="2rem" height="2rem" borderRadius="8px" />
-              <p-skeleton width="2rem" height="2rem" borderRadius="8px" />
+              <ds-skeleton width="5rem" height="2rem" borderRadius="8px" />
+              <ds-skeleton width="2rem" height="2rem" borderRadius="8px" />
+              <ds-skeleton width="2rem" height="2rem" borderRadius="8px" />
             </div>
           </div>
         }
@@ -123,10 +123,6 @@
         (save)="onSaveAssignments($event)"
         (cancel)="closeAssignmentsModal()">
       </app-user-group-assignments>
-    } @placeholder {
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-        <div class="w-10 h-10 border-[3px] border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
-      </div>
     }
   }
 

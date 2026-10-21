@@ -3,8 +3,7 @@ import { RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { UserService } from './core/services/user.service';
 import { TenantBrandingService } from './core/services/tenant-branding.service';
-import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { DsToastComponent, DsToastService } from '@design-system';
 import { NotificationRealtimeService } from './core/services/notification-realtime.service';
 import { TenantRoles } from './core/constants/tenant-roles';
 import { AppRoutes } from '@core/constants/app-routes';
@@ -14,8 +13,7 @@ import { AppRoutes } from '@core/constants/app-routes';
 @Component({
   // The 'imports' array allows us to use other standalone components/directives in this component.
   // We need RouterOutlet so Angular knows where to render the page content based on the URL.
-  imports: [RouterOutlet, ToastModule],
-  providers: [MessageService],
+  imports: [RouterOutlet, DsToastComponent],
   selector: 'app-root',
 
   templateUrl: './app.html',
@@ -29,7 +27,7 @@ export class App implements OnInit, OnDestroy {
   private router = inject(Router);
   private userService = inject(UserService);
   private brandingService = inject(TenantBrandingService);
-  private messageService = inject(MessageService);
+  private messageService = inject(DsToastService);
   private notificationService = inject(NotificationRealtimeService);
 
   protected readonly authInitializing = signal(true);

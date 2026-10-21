@@ -81,8 +81,8 @@
                   id="export-btn-{{ answer.id }}"
                   class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 dark:hover:bg-slate-800 dark:hover:text-primary-400 dark:hover:border-slate-600 transition-all cursor-pointer shadow-xs"
                   (click)="toggleExportMenu($event, answer.id)"
-                  pTooltip="Export answer"
-                  tooltipPosition="top"
+                  [dsTooltip]="'Export answer'"
+                  dsTooltipPosition="top"
                   aria-label="Export answer"
                   [attr.aria-expanded]="openExportMenuId() === answer.id"
                 >
@@ -117,8 +117,8 @@
               <button
                 class="flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-amber-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-800 transition-all cursor-pointer shadow-xs"
                 (click)="unsave(answer)"
-                pTooltip="Remove bookmark"
-                tooltipPosition="top"
+                [dsTooltip]="'Remove bookmark'"
+                dsTooltipPosition="top"
                 aria-label="Remove saved answer"
               >
                 <i class="pi pi-bookmark-fill text-base"></i>
@@ -150,7 +150,7 @@
                   <div class="inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-full text-[0.7rem] font-medium max-w-36 cursor-pointer hover:border-primary-300 hover:shadow-sm transition-all"
                        [class.bg-slate-50]="!cite.isOutdated" [class.dark:bg-slate-950]="!cite.isOutdated" [class.border-slate-200]="!cite.isOutdated" [class.dark:border-slate-700]="!cite.isOutdated" [class.text-slate-600]="!cite.isOutdated" [class.dark:text-slate-300]="!cite.isOutdated"
                        [class.bg-amber-50]="cite.isOutdated" [class.dark:bg-amber-950/50]="cite.isOutdated" [class.border-amber-200]="cite.isOutdated" [class.dark:border-amber-900]="cite.isOutdated" [class.text-amber-700]="cite.isOutdated" [class.dark:text-amber-500]="cite.isOutdated"
-                       [pTooltip]="cite.fileName" tooltipPosition="top"
+                       [dsTooltip]="cite.fileName" dsTooltipPosition="top"
                        (click)="openPreview(cite.documentChunkId)">
                     <i class="pi pi-file-pdf text-base flex-none" [class.text-slate-400]="!cite.isOutdated" [class.text-amber-500]="cite.isOutdated"></i>
                     <span class="truncate">{{ cite.fileName }}</span>

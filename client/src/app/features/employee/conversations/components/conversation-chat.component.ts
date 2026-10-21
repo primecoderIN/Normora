@@ -1,9 +1,8 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TooltipModule } from 'primeng/tooltip';
+import { DsTooltipDirective, DsToastService } from '@design-system';
 import { ConversationDetailDto, MessageDto, ConversationService, SuggestedQuestionDto } from '@core/services/conversation.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
-import { MessageService } from 'primeng/api';
 import { ApiMessages } from '@core/constants/api-messages';
 import { ChatMessageBubbleComponent } from './chat-message-bubble.component';
 import { ChatInputBarComponent } from './chat-input-bar.component';
@@ -19,7 +18,7 @@ import { ChunkPreviewDrawerComponent } from '@shared/components/chunk-preview-dr
   standalone: true,
   imports: [
     CommonModule,
-    TooltipModule,
+    DsTooltipDirective,
     ChatMessageBubbleComponent,
     ChatInputBarComponent,
     ChunkPreviewDrawerComponent,
@@ -29,7 +28,7 @@ import { ChunkPreviewDrawerComponent } from '@shared/components/chunk-preview-dr
 export class ConversationChatComponent implements OnInit {
   private savedAnswerService = inject(SavedAnswerService);
   private conversationService = inject(ConversationService);
-  private messageService = inject(MessageService);
+  private messageService = inject(DsToastService);
 
   @Input({ required: true }) conversation: ConversationDetailDto | null = null;
   @Input({ required: true }) isLoading = false;

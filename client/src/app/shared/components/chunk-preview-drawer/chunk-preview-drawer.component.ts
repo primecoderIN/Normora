@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DrawerModule } from 'primeng/drawer';
+import { DsDrawerComponent } from '@design-system';
 import { DocumentService, DocumentChunkPreviewDto } from '@core/services/document.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
 import { ApiMessages } from '@core/constants/api-messages';
@@ -12,24 +12,16 @@ import { ApiMessages } from '@core/constants/api-messages';
 @Component({
   selector: 'app-chunk-preview-drawer',
   standalone: true,
-  imports: [CommonModule, DrawerModule],
+  imports: [CommonModule, DsDrawerComponent],
   template: `
-    <p-drawer
-      [(visible)]="visible"
-      (onHide)="onDrawerHide()"
+    <ds-drawer
+      [visible]="visible"
+      (visibleChange)="setVisible($event)"
+      (closed)="onDrawerHide()"
       position="right"
-      appendTo="body"
-      [blockScroll]="false"
-      styleClass="w-full md:w-[450px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700"
-      [showCloseIcon]="true"
+      title="Document Preview"
+      widthClass="max-w-[450px] w-full"
     >
-      <ng-template pTemplate="header">
-        <div class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white">
-          <i class="pi pi-file-pdf text-primary-600"></i>
-          <span>Document Preview</span>
-        </div>
-      </ng-template>
-
       @if (isLoading()) {
         <div class="flex flex-col gap-4 animate-pulse p-4">
           <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
@@ -60,7 +52,7 @@ import { ApiMessages } from '@core/constants/api-messages';
           ></div>
         </div>
       }
-    </p-drawer>
+    </ds-drawer>
   `
 })
 export class ChunkPreviewDrawerComponent {
@@ -115,7 +107,7 @@ export class ChunkPreviewDrawerComponent {
     this.setVisible(false);
   }
 
-  private setVisible(val: boolean): void {
+  setVisible(val: boolean): void {
     this.visible = val;
     this.visibleChange.emit(val);
   }

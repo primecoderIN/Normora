@@ -1,15 +1,17 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
-import { InputText } from 'primeng/inputtext';
-import { ChartModule } from 'primeng/chart';
-import { ButtonModule } from 'primeng/button';
 import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
 import { UserService } from '@core/services/user.service';
 import { DashboardService, DashboardSummaryDto } from '@core/services/dashboard.service';
-import { SkeletonModule } from 'primeng/skeleton';
-import { MessageService } from 'primeng/api';
 import { ApiMessages } from '@core/constants/api-messages';
+import {
+  DsChartComponent,
+  DsButtonComponent,
+  DsSkeletonComponent,
+  DsToastService,
+} from '@design-system';
 
 /**
  * Dashboard component displaying high-level tenant metrics:
@@ -19,13 +21,21 @@ import { ApiMessages } from '@core/constants/api-messages';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, DatePipe, InputText, ChartModule, StatCardComponent, ButtonModule, SkeletonModule],
+  imports: [
+    CommonModule,
+    DatePipe,
+    RouterLink,
+    DsChartComponent,
+    StatCardComponent,
+    DsButtonComponent,
+    DsSkeletonComponent,
+  ],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
   public userService = inject(UserService);
   private dashboardService = inject(DashboardService);
-  private messageService = inject(MessageService);
+  private messageService = inject(DsToastService);
   
   summary = signal<DashboardSummaryDto | null>(null);
   isLoading = signal(true);

@@ -1,8 +1,6 @@
 import { Component, ViewChild, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
-import { Menu } from 'primeng/menu';
+import { DsMenuComponent, DsMenuItem } from '@design-system';
 import { Department } from '@core/services/department.service';
 
 /**
@@ -11,10 +9,10 @@ import { Department } from '@core/services/department.service';
 @Component({
   selector: 'app-department-list',
   standalone: true,
-  imports: [CommonModule, DatePipe, MenuModule],
+  imports: [CommonModule, DatePipe, DsMenuComponent],
   template: `
 
-    <p-menu #menu [popup]="true" [model]="menuItems" appendTo="body" styleClass="text-sm! min-w-[150px]!"></p-menu>
+    <ds-menu #menu [popup]="true" [model]="menuItems" styleClass="text-sm min-w-[150px]"></ds-menu>
 
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm border-collapse">
@@ -79,13 +77,13 @@ import { Department } from '@core/services/department.service';
   `
 })
 export class DepartmentListComponent {
-  @ViewChild('menu') menu!: Menu;
+  @ViewChild('menu') menu!: DsMenuComponent;
 
   departments = input.required<Department[]>();
   edit = output<Department>();
   delete = output<Department>();
 
-  menuItems: MenuItem[] = [];
+  menuItems: DsMenuItem[] = [];
 
   private readonly avatarColors = [
     '#e11d48', '#db2777', '#9333ea', '#7c3aed',

@@ -1,13 +1,15 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { SelectModule } from 'primeng/select';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { DialogModule } from 'primeng/dialog';
-import { SkeletonModule } from 'primeng/skeleton';
 import { AuditLogService, AuditLogDto } from '@core/services/audit-log.service';
 import { ApiMessages } from '@core/constants/api-messages';
+import {
+  DsButtonComponent,
+  DsSelectComponent,
+  DsPaginationComponent,
+  DsPageState,
+  DsDialogComponent,
+} from '@design-system';
 
 interface ActionOption {
   label: string;
@@ -26,11 +28,10 @@ interface DateFilterOption {
     CommonModule,
     DatePipe,
     FormsModule,
-    ButtonModule,
-    SelectModule,
-    PaginatorModule,
-    DialogModule,
-    SkeletonModule
+    DsButtonComponent,
+    DsSelectComponent,
+    DsPaginationComponent,
+    DsDialogComponent,
   ],
   templateUrl: './audit-logs.component.html'
 })
@@ -131,9 +132,11 @@ export class AuditLogsComponent implements OnInit {
     this.loadLogs();
   }
 
-  onPageChange(event: PaginatorState): void {
-    this.currentPage.set((event.page ?? 0) + 1);
-    this.pageSize.set(event.rows ?? 20);
+  onPageChange(event: DsPageState): void {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? 20;
+    this.currentPage.set(Math.floor(first / rows) + 1);
+    this.pageSize.set(rows);
     this.loadLogs();
   }
 

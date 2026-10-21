@@ -78,26 +78,32 @@ export class TenantBrandingService {
 
     if (branding.primaryColor) {
       root.style.setProperty('--brand-primary', branding.primaryColor);
+      root.style.setProperty('--primary', branding.primaryColor);
+      root.style.setProperty('--ds-color-primary', branding.primaryColor);
 
       const palette = this.generatePalette(branding.primaryColor);
 
-      // Populate PrimeNG Aura primary CSS variables
-      root.style.setProperty('--p-primary-50',  palette[50]);
-      root.style.setProperty('--p-primary-100', palette[100]);
-      root.style.setProperty('--p-primary-200', palette[200]);
-      root.style.setProperty('--p-primary-300', palette[300]);
-      root.style.setProperty('--p-primary-400', palette[400]);
-      root.style.setProperty('--p-primary-500', palette[500]);
-      root.style.setProperty('--p-primary-600', palette[600]);
-      root.style.setProperty('--p-primary-700', palette[700]);
-      root.style.setProperty('--p-primary-800', palette[800]);
-      root.style.setProperty('--p-primary-900', palette[900]);
-      root.style.setProperty('--p-primary-950', palette[950]);
+      // Populate both modern design tokens and backwards-compatible palette variables
+      for (const [shade, value] of Object.entries(palette)) {
+        root.style.setProperty(`--primary-${shade}`, value);
+        root.style.setProperty(`--p-primary-${shade}`, value);
+      }
       root.style.setProperty('--p-primary-color', branding.primaryColor);
+
+      if (palette[700]) {
+        root.style.setProperty('--primary-hover', palette[700]);
+        root.style.setProperty('--brand-primary-hover', palette[700]);
+        root.style.setProperty('--ds-color-primary-hover', palette[700]);
+      }
+      if (palette[50]) {
+        root.style.setProperty('--ds-color-primary-light', palette[50]);
+      }
     }
 
     if (branding.secondaryColor) {
       root.style.setProperty('--brand-secondary', branding.secondaryColor);
+      root.style.setProperty('--secondary', branding.secondaryColor);
+      root.style.setProperty('--ds-color-secondary', branding.secondaryColor);
     }
 
     if (branding.faviconUrl) {

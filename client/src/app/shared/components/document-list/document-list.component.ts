@@ -3,12 +3,12 @@ import { CommonModule, DatePipe } from '@angular/common';
 
 import { Document, DocumentVersion } from '@core/services/document.service';
 import { Department } from '@core/services/department.service';
-import { TooltipModule } from 'primeng/tooltip';
+import { DsTooltipDirective } from '@design-system';
 
 @Component({
   selector: 'app-document-list',
   standalone: true,
-  imports: [CommonModule, DatePipe, TooltipModule],
+  imports: [CommonModule, DatePipe, DsTooltipDirective],
   template: `
     <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
       <div class="overflow-x-auto custom-scrollbar">
@@ -80,8 +80,8 @@ import { TooltipModule } from 'primeng/tooltip';
                       class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-center cursor-pointer"
                       (click)="onUploadNewVersion.emit(doc.id)"
                       aria-label="Upload new version"
-                      pTooltip="Upload new version"
-                      tooltipPosition="top"
+                      [dsTooltip]="'Upload new version'"
+                      dsTooltipPosition="top"
                     >
                       <i class="pi pi-upload text-base"></i>
                     </button>
@@ -91,8 +91,8 @@ import { TooltipModule } from 'primeng/tooltip';
                       (click)="toggleExpand(doc.id)"
                       [attr.aria-expanded]="isExpanded(doc.id)"
                       aria-label="View history"
-                      pTooltip="Version history"
-                      tooltipPosition="top"
+                      [dsTooltip]="'Version history'"
+                      dsTooltipPosition="top"
                     >
                       <i class="pi pi-history text-base"></i>
                     </button>
@@ -101,8 +101,8 @@ import { TooltipModule } from 'primeng/tooltip';
                       class="w-8 h-8 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex items-center justify-center cursor-pointer"
                       (click)="onConfirmDelete.emit(doc.id)"
                       aria-label="Delete document"
-                      pTooltip="Delete document"
-                      tooltipPosition="top"
+                      [dsTooltip]="'Delete document'"
+                      dsTooltipPosition="top"
                     >
                       <i class="pi pi-trash text-base"></i>
                     </button>

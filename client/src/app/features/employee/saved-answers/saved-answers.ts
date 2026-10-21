@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, HostListener, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { TooltipModule } from 'primeng/tooltip';
+import { DsTooltipDirective } from '@design-system';
 import { SavedAnswerService, SavedAnswerDto, ExportFormat } from '@core/services/saved-answer.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
 import { ChunkPreviewDrawerComponent } from '@shared/components/chunk-preview-drawer/chunk-preview-drawer.component';
@@ -22,7 +22,7 @@ interface ExportOption {
 @Component({
   selector: 'app-saved-answers',
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterModule, TooltipModule, ChunkPreviewDrawerComponent],
+  imports: [CommonModule, DatePipe, RouterModule, DsTooltipDirective, ChunkPreviewDrawerComponent],
   templateUrl: './saved-answers.html',
 })
 export class SavedAnswers implements OnInit {

@@ -19,8 +19,8 @@
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Customize the look and feel of your tenant workspace. Changes are applied instantly for all users in your organization.</p>
     </div>
     <div class="flex items-center gap-2 flex-none pt-1">
-      <p-button label="Reset to default" icon="pi pi-refresh" [outlined]="true" severity="secondary" size="small" (onClick)="resetToDefault()"></p-button>
-      <p-button label="Save changes" icon="pi pi-check" size="small" [loading]="isSaving()" (onClick)="save()"></p-button>
+      <ds-button variant="outline" icon="pi pi-refresh" size="sm" (click)="resetToDefault()">Reset to default</ds-button>
+      <ds-button variant="primary" icon="pi pi-check" size="sm" [loading]="isSaving()" (click)="save()">Save changes</ds-button>
     </div>
   </div>
 
@@ -49,48 +49,20 @@
           <div>
             <div class="font-medium text-slate-700 dark:text-slate-200 text-sm mb-1">Primary Color</div>
             <div class="text-xs text-slate-400 mb-3">Used for primary buttons, focus rings, and active states.</div>
-            <div class="flex items-center gap-2">
-              <div class="w-10 h-10 rounded-lg border-2 border-slate-200 dark:border-slate-700 flex-none shadow-sm cursor-pointer transition-transform hover:scale-105"
-                   [style.background]="primaryColor()"></div>
-              <div class="flex-1 flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 focus-within:ring-2 focus-within:ring-primary-300 focus-within:border-primary-400">
-                <input type="text"
-                       class="flex-1 px-3 py-2 text-base font-mono text-slate-700 dark:text-slate-200 outline-none! border-none! focus:outline-none! focus:border-transparent! focus:ring-0! bg-transparent"
-                       [value]="primaryColor()"
-                       (input)="primaryColor.set(($any($event.target)).value)">
-                <div class="px-2 border-l border-slate-200 dark:border-slate-700">
-                  <p-colorpicker
-                    [ngModel]="primaryColor()"
-                    (ngModelChange)="primaryColor.set($event)"
-                    appendTo="body"
-                    format="hex">
-                  </p-colorpicker>
-                </div>
-              </div>
-            </div>
+            <ds-color-picker
+              [ngModel]="primaryColor()"
+              (ngModelChange)="primaryColor.set($event)"
+            />
           </div>
 
           <!-- Secondary Color -->
           <div>
             <div class="font-medium text-slate-700 dark:text-slate-200 text-sm mb-1">Secondary Color</div>
             <div class="text-xs text-slate-400 mb-3">Used for secondary accents and illustrations.</div>
-            <div class="flex items-center gap-2">
-              <div class="w-10 h-10 rounded-lg border-2 border-slate-200 dark:border-slate-700 flex-none shadow-sm cursor-pointer transition-transform hover:scale-105"
-                   [style.background]="secondaryColor()"></div>
-              <div class="flex-1 flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 focus-within:ring-2 focus-within:ring-primary-300 focus-within:border-primary-400">
-                <input type="text"
-                       class="flex-1 px-3 py-2 text-base font-mono text-slate-700 dark:text-slate-200 outline-none! border-none! focus:outline-none! focus:border-transparent! focus:ring-0! bg-transparent"
-                       [value]="secondaryColor()"
-                       (input)="secondaryColor.set(($any($event.target)).value)">
-                <div class="px-2 border-l border-slate-200 dark:border-slate-700">
-                  <p-colorpicker
-                    [ngModel]="secondaryColor()"
-                    (ngModelChange)="secondaryColor.set($event)"
-                    appendTo="body"
-                    format="hex">
-                  </p-colorpicker>
-                </div>
-              </div>
-            </div>
+            <ds-color-picker
+              [ngModel]="secondaryColor()"
+              (ngModelChange)="secondaryColor.set($event)"
+            />
           </div>
 
         </div>
@@ -142,9 +114,9 @@
             </div>
             <div class="text-xs text-slate-400 mb-3">Recommended size: 200×50px PNG or SVG</div>
             <div class="flex items-center gap-2">
-              <p-button label="Change" icon="pi pi-upload" size="small" [outlined]="true" styleClass="flex-1" (onClick)="triggerLogoUpload()"></p-button>
+              <ds-button variant="outline" icon="pi pi-upload" size="sm" styleClass="flex-1" (click)="triggerLogoUpload()">Change</ds-button>
               @if (logoPreviewUrl()) {
-                <p-button icon="pi pi-trash" size="small" severity="danger" [outlined]="true" (onClick)="removeLogo()"></p-button>
+                <ds-button variant="danger" icon="pi pi-trash" size="sm" (click)="removeLogo()"></ds-button>
               }
             </div>
           </div>
@@ -164,9 +136,9 @@
             </div>
             <div class="text-xs text-slate-400 mb-3">Used when users switch to dark mode.</div>
             <div class="flex items-center gap-2">
-              <p-button label="Change" icon="pi pi-upload" size="small" [outlined]="true" styleClass="flex-1" (onClick)="triggerLogoDarkUpload()"></p-button>
+              <ds-button variant="outline" icon="pi pi-upload" size="sm" styleClass="flex-1" (click)="triggerLogoDarkUpload()">Change</ds-button>
               @if (logoDarkPreviewUrl()) {
-                <p-button icon="pi pi-trash" size="small" severity="danger" [outlined]="true" (onClick)="removeLogoDark()"></p-button>
+                <ds-button variant="danger" icon="pi pi-trash" size="sm" (click)="removeLogoDark()"></ds-button>
               }
             </div>
           </div>
@@ -179,9 +151,9 @@
             </div>
             <div class="text-xs text-slate-400 mb-3">Recommended size: 32×32px ICO or PNG</div>
             <div class="flex items-center gap-2">
-              <p-button label="Change" icon="pi pi-upload" size="small" [outlined]="true" styleClass="flex-1" (onClick)="triggerFaviconUpload()"></p-button>
+              <ds-button variant="outline" icon="pi pi-upload" size="sm" styleClass="flex-1" (click)="triggerFaviconUpload()">Change</ds-button>
               @if (faviconFile()) {
-                <p-button icon="pi pi-trash" size="small" severity="danger" [outlined]="true" (onClick)="removeFavicon()"></p-button>
+                <ds-button variant="danger" icon="pi pi-trash" size="sm" (click)="removeFavicon()"></ds-button>
               }
             </div>
           </div>
@@ -375,4 +347,4 @@
   </div>
 </div>
 
-<p-toast position="bottom-right" appendTo="body"></p-toast>
+<ds-toast></ds-toast>
