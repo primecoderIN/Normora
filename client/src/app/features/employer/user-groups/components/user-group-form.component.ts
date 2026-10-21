@@ -1,7 +1,12 @@
 import { Component, input, output, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DsButtonComponent, DsDialogComponent } from '@design-system';
+import {
+  DsButtonComponent,
+  DsDialogComponent,
+  DsInputComponent,
+  DsTextareaComponent,
+} from '@design-system';
 import { UserGroup } from '@core/services/user-group.service';
 import { FormErrorComponent } from '@shared/components/form-error/form-error.component';
 
@@ -11,7 +16,15 @@ import { FormErrorComponent } from '@shared/components/form-error/form-error.com
 @Component({
   selector: 'app-user-group-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DsButtonComponent, DsDialogComponent, FormErrorComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DsButtonComponent,
+    DsDialogComponent,
+    DsInputComponent,
+    DsTextareaComponent,
+    FormErrorComponent,
+  ],
   template: `
     <ds-dialog
       [visible]="true"
@@ -20,29 +33,22 @@ import { FormErrorComponent } from '@shared/components/form-error/form-error.com
       maxWidthClass="max-w-md"
     >
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-        <label class="flex flex-col gap-1.5">
-          <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Name <span class="text-red-500">*</span></span>
-          <input
-            type="text"
-            formControlName="name"
-            class="w-full h-10 px-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm outline-none! focus:outline-none! focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
-            placeholder="e.g. Engineering Team"
-            id="group-name"
-          />
-          @if (form.get('name')?.invalid && form.get('name')?.touched) {
-            <span class="text-xs font-medium text-red-500 mt-1">Group name is required.</span>
-          }
-        </label>
-        <label class="flex flex-col gap-1.5">
-          <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Description</span>
-          <textarea
-            formControlName="description"
-            class="w-full p-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm outline-none! focus:outline-none! resize-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all custom-scrollbar"
-            rows="3"
-            placeholder="Optional description…"
-            id="group-description"
-          ></textarea>
-        </label>
+        <ds-input
+          label="Name"
+          [required]="true"
+          formControlName="name"
+          placeholder="e.g. Engineering Team"
+          id="group-name"
+          [errorMessage]="form.get('name')?.invalid && form.get('name')?.touched ? 'Group name is required.' : undefined"
+        />
+
+        <ds-textarea
+          label="Description"
+          formControlName="description"
+          placeholder="Optional description…"
+          id="group-description"
+          [rows]="3"
+        />
         
         <app-form-error [error]="error()"></app-form-error>
 

@@ -38,6 +38,9 @@ export class DsTooltipDirective implements OnDestroy {
   @HostListener('focusin')
   onMouseEnter(): void {
     if (this.tooltipDisabled() || !this.dsTooltip()) return;
+    if (this.showTimeout) {
+      clearTimeout(this.showTimeout);
+    }
     this.showTimeout = setTimeout(() => {
       this.show();
     }, 150);
@@ -63,7 +66,7 @@ export class DsTooltipDirective implements OnDestroy {
     this.renderer.setAttribute(tooltip, 'id', this.tooltipId);
     this.renderer.setAttribute(tooltip, 'role', 'tooltip');
     tooltip.className =
-      'fixed z-1500 px-2.5 py-1 text-[11px] font-medium text-white bg-slate-900 dark:bg-slate-800 border border-slate-700/50 rounded-md shadow-lg pointer-events-none transition-opacity duration-150 opacity-0 whitespace-nowrap leading-tight';
+      'fixed z-[1500] z-tooltip px-2.5 py-1 text-[11px] font-medium text-white bg-slate-900 dark:bg-slate-800 border border-slate-700/50 rounded-md shadow-lg pointer-events-none transition-opacity duration-150 opacity-0 whitespace-nowrap leading-tight';
     tooltip.innerText = this.dsTooltip()!;
 
     this.renderer.appendChild(document.body, tooltip);

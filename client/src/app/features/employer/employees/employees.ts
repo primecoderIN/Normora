@@ -7,6 +7,7 @@ import { DepartmentService, Department } from '@core/services/department.service
 import { ApiMessages } from '@core/constants/api-messages';
 import {
   DsButtonComponent,
+  DsInputComponent,
   DsMenuComponent,
   DsMenuItem,
   DsPaginationComponent,
@@ -24,6 +25,7 @@ import {
     FormsModule,
     DatePipe,
     DsButtonComponent,
+    DsInputComponent,
     DsMenuComponent,
     DsPaginationComponent,
     DsSelectComponent,

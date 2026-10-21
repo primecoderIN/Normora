@@ -33,15 +33,14 @@
   <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <!-- Search -->
-      <div class="relative">
-        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-        <input
-          type="text"
+      <div>
+        <ds-input
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
           (keyup.enter)="onSearch()"
+          prefixIcon="pi pi-search"
           placeholder="Search actor, target, metadata..."
-          class="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-800/70 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-400" />
+        />
       </div>
 
       <!-- Action Type Filter -->

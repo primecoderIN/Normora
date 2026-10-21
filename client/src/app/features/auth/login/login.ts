@@ -50,7 +50,7 @@ export class Login implements OnInit {
     }
   }
 
-  login() {
+  login(): void {
     this.authService.login();
   }
 }

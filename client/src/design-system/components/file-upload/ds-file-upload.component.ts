@@ -33,12 +33,12 @@ export interface DsFileSelectEvent {
         (dragover)="handleDragOver($event)"
         (dragleave)="handleDragLeave($event)"
         (drop)="handleDrop($event)"
-        (click)="fileInput.click()"
+        (click)="triggerFileInput(fileInput)"
         [class]="computedDropzoneClasses()"
         role="button"
-        tabindex="0"
-        (keydown.enter)="fileInput.click()"
-        (keydown.space)="fileInput.click()"
+        [attr.tabindex]="disabled() ? -1 : 0"
+        (keydown.enter)="triggerFileInput(fileInput)"
+        (keydown.space)="triggerFileInput(fileInput)"
       >
         <input
           #fileInput
@@ -122,21 +122,31 @@ export class DsFileUploadComponent {
   protected readonly isDragOver = signal<boolean>(false);
   protected readonly selectedFiles = signal<File[]>([]);
 
+  protected triggerFileInput(inputEl: HTMLInputElement): void {
+    if (!this.disabled()) {
+      inputEl.click();
+    }
+  }
+
   protected readonly computedDropzoneClasses = computed(() => {
     const classes = [
       'w-full border-2 border-dashed rounded-(--ds-control-radius) transition-all duration-150',
-      'cursor-pointer bg-white dark:bg-slate-900/40',
       'focus:outline-none focus:ring-2 focus:ring-(--ds-focus-ring-color)',
     ];
 
-    if (this.isDragOver()) {
-      classes.push(
-        'border-(--ds-color-primary) bg-primary-50/40 dark:bg-primary-950/30'
-      );
+    if (this.disabled()) {
+      classes.push('cursor-not-allowed opacity-60 bg-slate-100 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800');
     } else {
-      classes.push(
-        'border-(--ds-input-border) hover:border-(--ds-color-primary) hover:bg-slate-50/50 dark:hover:bg-slate-800/30'
-      );
+      classes.push('cursor-pointer bg-white dark:bg-slate-900/40');
+      if (this.isDragOver()) {
+        classes.push(
+          'border-(--ds-color-primary) bg-primary-50/40 dark:bg-primary-950/30'
+        );
+      } else {
+        classes.push(
+          'border-(--ds-input-border) hover:border-(--ds-color-primary) hover:bg-slate-50/50 dark:hover:bg-slate-800/30'
+        );
+      }
     }
 
     if (this.styleClass()) {

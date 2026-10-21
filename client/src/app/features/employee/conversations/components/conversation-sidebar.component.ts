@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DsTooltipDirective } from '@design-system';
+import { DsTooltipDirective, DsInputComponent } from '@design-system';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { ConversationDto } from '@core/services/conversation.service';
@@ -9,7 +9,7 @@ import { ConversationDto } from '@core/services/conversation.service';
 @Component({
   selector: 'app-conversation-sidebar',
   standalone: true,
-  imports: [CommonModule, FormsModule, DsTooltipDirective, ScrollingModule, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, DsTooltipDirective, DsInputComponent, ScrollingModule, ConfirmDialogComponent],
   template: `
     <aside class="flex flex-col flex-none w-72 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-700 overflow-hidden shadow-[inset_-1px_0_0_rgba(0,0,0,0.02)]">
       <!-- Header -->
@@ -32,25 +32,14 @@ import { ConversationDto } from '@core/services/conversation.service';
         </div>
 
         <!-- Search Bar -->
-        <div class="relative group">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base group-focus-within:text-primary-500 transition-colors"></i>
-          <input 
-            type="text" 
-            [(ngModel)]="searchQuery" 
-            (ngModelChange)="onSearchChange()"
-            placeholder="Search history..." 
-            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-base rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-400 block pl-8 p-2 transition-all outline-none"
-          />
-          @if (searchQuery()) {
-            <button 
-              type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full hover:bg-slate-200 text-slate-400 border-none cursor-pointer transition-colors"
-              (click)="clearSearch()"
-            >
-              <i class="pi pi-times text-base"></i>
-            </button>
-          }
-        </div>
+        <ds-input
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          prefixIcon="pi pi-search"
+          [clearable]="true"
+          size="sm"
+          placeholder="Search history..."
+        />
       </div>
 
       <!-- List -->

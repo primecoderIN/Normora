@@ -25,11 +25,16 @@
         }
       </div>
 
-      <div class="flex items-stretch sm:items-center gap-3 flex-wrap">
-        <label class="flex items-center gap-2 h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg w-full sm:w-[min(22rem,38vw)] focus-within:border-primary-500 transition-colors">
-          <i class="pi pi-search text-slate-500 dark:text-slate-400"></i>
-          <input type="text" placeholder="Search workspace" class="flex-1 min-w-0 bg-transparent border-none! shadow-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! p-0 text-slate-900 dark:text-white placeholder:text-slate-400" />
-        </label>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="w-full sm:w-[min(22rem,38vw)]">
+          <ds-input
+            type="search"
+            placeholder="Search workspace"
+            prefixIcon="pi pi-search"
+            [clearable]="true"
+            aria-label="Search workspace"
+          />
+        </div>
         <ds-button variant="outline" icon="pi pi-bell" aria-label="Notifications" styleClass="w-10! h-10! p-0!"></ds-button>
       </div>
     </header>

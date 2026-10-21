@@ -64,7 +64,7 @@ export class DsToastComponent {
   readonly position = input<DsToastPosition>('bottom-right');
 
   protected readonly containerClasses = computed(() => {
-    const base = 'fixed z-1600 pointer-events-none flex flex-col gap-2 p-4 max-w-full';
+    const base = 'fixed z-[1600] z-toast pointer-events-none flex flex-col gap-2 p-4 max-w-full';
     switch (this.position()) {
       case 'top-left':
         return `${base} top-0 left-0`;

@@ -3,6 +3,7 @@ import {
   input,
   model,
   output,
+  computed,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -41,14 +42,14 @@ import {
         <div
           rdxDialogBackdrop
           (click)="close()"
-          class="fixed inset-0 z-1300 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          class="fixed inset-0 z-modal bg-slate-950/75 backdrop-blur-xs transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         ></div>
 
-        <div class="fixed inset-0 z-1300 flex items-center justify-center p-4 pointer-events-none">
+        <div class="fixed inset-0 z-modal flex items-center justify-center p-4 pointer-events-none">
           <div
             rdxDialogPopup
             class="pointer-events-auto w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-(--border) flex flex-col max-h-[90vh] overflow-hidden transition-all duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-            [class]="maxWidthClass()"
+            [class]="computedWidthClass()"
           >
             <!-- Header -->
             <div
@@ -106,8 +107,11 @@ export class DsDialogComponent {
   readonly description = input<string | undefined>(undefined);
   readonly closable = input<boolean>(true);
   readonly maxWidthClass = input<string>('max-w-lg');
+  readonly widthClass = input<string | undefined>(undefined);
 
   readonly closed = output<void>();
+
+  protected readonly computedWidthClass = computed(() => this.widthClass() || this.maxWidthClass());
 
   protected onOpenChange(open: boolean): void {
     this.visible.set(open);

@@ -40,11 +40,11 @@ export type DsDrawerPosition = 'right' | 'left' | 'top' | 'bottom';
         <div
           rdxDrawerBackdrop
           (click)="close()"
-          class="fixed inset-0 z-1200 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          class="fixed inset-0 z-overlay bg-slate-950/75 backdrop-blur-xs transition-opacity duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         ></div>
 
         <div
-          class="fixed inset-0 z-1200 flex pointer-events-none"
+          class="fixed inset-0 z-overlay flex pointer-events-none"
           [class]="containerPlacementClasses()"
         >
           <div

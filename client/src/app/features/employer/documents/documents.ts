@@ -15,7 +15,7 @@ import { UserService } from '@core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '@core/services/document-realtime.service';
 import { DepartmentService, Department } from '@core/services/department.service';
 import { ApiMessages } from '@core/constants/api-messages';
-import { DsSkeletonComponent, DsToastComponent, DsToastService } from '@design-system';
+import { DsSkeletonComponent, DsToastComponent, DsToastService, DsInputComponent } from '@design-system';
 
 @Component({
   selector: 'app-documents',
@@ -29,6 +29,7 @@ import { DsSkeletonComponent, DsToastComponent, DsToastService } from '@design-s
     DocumentUploadModalComponent,
     DsSkeletonComponent,
     DsToastComponent,
+    DsInputComponent,
   ],
   templateUrl: './documents.html',
 })

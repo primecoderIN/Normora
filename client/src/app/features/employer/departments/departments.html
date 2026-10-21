@@ -46,16 +46,17 @@
         <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white m-0">All departments</h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 m-0 mt-0.5">Manage membership and document access.</p>
       </div>
-      <label class="flex items-center gap-2 h-9 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg w-full sm:w-52 focus-within:border-primary-400 transition-colors shrink-0">
-        <i class="pi pi-search text-slate-400 text-base flex-none"></i>
-        <input
+      <div class="w-full sm:w-56 shrink-0">
+        <ds-input
           type="search"
-          class="flex-1 min-w-0 bg-transparent border-none! outline-none! focus:outline-none! focus:ring-0! text-sm text-slate-900 dark:text-white placeholder:text-slate-400 p-0"
           placeholder="Search departments…"
-          [value]="searchTerm()"
-          (input)="searchTerm.set($any($event.target).value)"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          prefixIcon="pi pi-search"
+          [clearable]="true"
+          size="sm"
         />
-      </label>
+      </div>
     </div>
 
     @if (isLoading()) {

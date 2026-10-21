@@ -5,10 +5,11 @@ import { AuditLogService, AuditLogDto } from '@core/services/audit-log.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import {
   DsButtonComponent,
-  DsSelectComponent,
+  DsDialogComponent,
+  DsInputComponent,
   DsPaginationComponent,
   DsPageState,
-  DsDialogComponent,
+  DsSelectComponent,
 } from '@design-system';
 
 interface ActionOption {
@@ -29,9 +30,10 @@ interface DateFilterOption {
     DatePipe,
     FormsModule,
     DsButtonComponent,
-    DsSelectComponent,
-    DsPaginationComponent,
     DsDialogComponent,
+    DsInputComponent,
+    DsPaginationComponent,
+    DsSelectComponent,
   ],
   templateUrl: './audit-logs.component.html'
 })

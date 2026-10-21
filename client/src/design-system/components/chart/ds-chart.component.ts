@@ -6,8 +6,10 @@ import {
   effect,
   OnDestroy,
   ChangeDetectionStrategy,
+  inject,
+  PLATFORM_ID,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   Chart,
   ChartConfiguration,
@@ -41,10 +43,13 @@ export class DsChartComponent implements OnDestroy {
   readonly styleClass = input<string>('w-full h-full');
 
   private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('chartCanvas');
+  private readonly platformId = inject(PLATFORM_ID);
   private chartInstance: Chart | null = null;
 
   constructor() {
     effect(() => {
+      if (!isPlatformBrowser(this.platformId)) return;
+
       const canvas = this.canvasRef()?.nativeElement;
       const type = this.type();
       const data = this.data();

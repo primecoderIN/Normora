@@ -1,8 +1,11 @@
 import {
   Component,
   input,
-  output,
+  Input,
+  Output,
+  EventEmitter,
   signal,
+  computed,
   forwardRef,
   ChangeDetectionStrategy,
 } from '@angular/core';
@@ -45,13 +48,13 @@ import { RdxLabelDirective } from '@radix-ng/primitives/label';
     <label
       rdxLabel
       class="inline-flex items-center gap-2.5 cursor-pointer select-none"
-      [class.opacity-50]="disabled()"
-      [class.cursor-not-allowed]="disabled()"
+      [class.opacity-50]="isDisabled()"
+      [class.cursor-not-allowed]="isDisabled()"
     >
       <span
         rdxCheckboxRoot
-        [checked]="checked()"
-        [disabled]="disabled()"
+        [checked]="checkedState()"
+        [disabled]="isDisabled()"
         (checkedChange)="onRadixCheckedChange($event)"
         class="inline-flex items-center justify-center relative"
       >
@@ -88,15 +91,25 @@ import { RdxLabelDirective } from '@radix-ng/primitives/label';
 export class DsCheckboxComponent implements ControlValueAccessor {
   readonly label = input<string | undefined>(undefined);
   readonly disabled = input<boolean>(false);
+  readonly binary = input<boolean>(true); // PrimeNG compatibility alias
 
-  readonly checkedChange = output<boolean>();
-  readonly onChange = output<boolean>(); // PrimeNG compatibility alias
+  @Input()
+  set checked(val: boolean) {
+    this.checkedState.set(!!val);
+  }
+  get checked(): boolean {
+    return this.checkedState();
+  }
 
-  protected readonly checked = signal<boolean>(false);
+  @Output() readonly checkedChange = new EventEmitter<boolean>();
+  @Output() readonly onChange = new EventEmitter<boolean>(); // PrimeNG compatibility alias
+
+  protected readonly checkedState = signal<boolean>(false);
   private readonly formDisabled = signal<boolean>(false);
+  protected readonly isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   protected onRadixCheckedChange(val: boolean): void {
-    this.checked.set(val);
+    this.checkedState.set(val);
     this.onChangeCallback(val);
     this.onTouchedCallback();
     this.checkedChange.emit(val);
@@ -107,7 +120,7 @@ export class DsCheckboxComponent implements ControlValueAccessor {
   private onTouchedCallback: () => void = () => {};
 
   writeValue(val: boolean): void {
-    this.checked.set(!!val);
+    this.checkedState.set(!!val);
   }
 
   registerOnChange(fn: (val: boolean) => void): void {

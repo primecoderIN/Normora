@@ -12,16 +12,16 @@
       </div>
 
       <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:shrink-0">
-        <label class="flex items-center gap-2 h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg flex-1 sm:w-56 sm:flex-none focus-within:border-primary-500 transition-colors">
-          <i class="pi pi-search text-slate-400 flex-none"></i>
-          <input
-            type="text"
+        <div class="flex-1 sm:w-56 sm:flex-none">
+          <ds-input
+            type="search"
             placeholder="Search documents"
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event)"
-            class="flex-1 min-w-0 bg-transparent border-none! shadow-none! outline-none! focus:outline-none! focus:border-transparent! focus:ring-0! p-0 text-slate-900 dark:text-white placeholder:text-slate-400"
+            prefixIcon="pi pi-search"
+            [clearable]="true"
           />
-        </label>
+        </div>
         <button
           type="button"
           class="flex items-center justify-center gap-2 h-10 px-4 bg-primary-600 text-white rounded-lg font-semibold text-sm hover:bg-primary-700 active:scale-95 transition-all whitespace-nowrap shadow-sm shadow-primary-500/20 flex-none"

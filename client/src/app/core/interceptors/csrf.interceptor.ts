@@ -1,4 +1,5 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { environment } from '@env/environment';
 
 export const csrfInterceptor: HttpInterceptorFn = (req, next) => {
   // Duende BFF uses 'X-CSRF: 1' as the anti-forgery token.
@@ -7,7 +8,8 @@ export const csrfInterceptor: HttpInterceptorFn = (req, next) => {
   // AND for ALL requests to API endpoints protected by AsBffApiEndpoint() (like GET /api/users/me)
   const isMutatingRequest = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method.toUpperCase());
   const isBffEndpoint = req.url.startsWith('/bff/');
-  const isApiEndpoint = req.url.startsWith('/api/');
+  const isApiEndpoint = req.url.startsWith('/api/') || 
+                       (Boolean(environment.apiUrl) && req.url.startsWith(environment.apiUrl));
 
   if (isMutatingRequest || isBffEndpoint || isApiEndpoint) {
     const csrfReq = req.clone({

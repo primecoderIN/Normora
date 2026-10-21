@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { UserGroupService, UserGroup, UserGroupDetail } from '@core/services/user-group.service';
 import { DepartmentService, Department } from '@core/services/department.service';
 import { TenantService, TenantEmployeeDto } from '@core/services/tenant.service';
@@ -9,12 +10,12 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
 import { UserGroupListComponent } from './components/user-group-list.component';
 import { UserGroupFormComponent } from './components/user-group-form.component';
 import { UserGroupAssignmentsComponent } from './components/user-group-assignments.component';
-import { DsSkeletonComponent } from '@design-system';
+import { DsSkeletonComponent, DsInputComponent } from '@design-system';
 
 @Component({
   selector: 'app-user-groups',
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, UserGroupListComponent, UserGroupFormComponent, UserGroupAssignmentsComponent, DsSkeletonComponent],
+  imports: [CommonModule, FormsModule, PageHeaderComponent, ConfirmDialogComponent, UserGroupListComponent, UserGroupFormComponent, UserGroupAssignmentsComponent, DsSkeletonComponent, DsInputComponent],
   templateUrl: './user-groups.html',
 })
 export class UserGroups implements OnInit {

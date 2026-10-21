@@ -51,11 +51,11 @@ export interface DsMenuItem {
           side="bottom"
           align="end"
           [sideOffset]="4"
-          class="z-1000 invisible data-[side]:visible"
+          class="z-dropdown invisible data-side:visible"
         >
           <div
             rdxMenuPopup
-            class="min-w-40 rounded-(--radius) bg-white dark:bg-slate-900 border border-(--border) shadow-xl py-1.5 data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 duration-150 select-none"
+            class="min-w-40 rounded-(--radius) bg-white dark:bg-slate-900 border border-(--border) shadow-xl py-1.5 select-none"
             [class]="styleClass()"
           >
             @for (item of model(); track $index) {

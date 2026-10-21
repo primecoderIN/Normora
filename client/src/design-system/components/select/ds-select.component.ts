@@ -108,8 +108,10 @@ import {
             rdxSelectValue
             [placeholder]="placeholder() || 'Select an option'"
             class="truncate font-normal"
+            [class.text-slate-400]="!selectedLabel()"
+            [class.dark:text-slate-500]="!selectedLabel()"
           >
-            {{ selectedLabel() }}
+            {{ selectedLabel() || placeholder() || 'Select an option' }}
           </span>
 
           <div class="flex items-center gap-1.5 shrink-0 ml-2">
@@ -137,11 +139,11 @@ import {
             side="bottom"
             align="start"
             [sideOffset]="4"
-            class="z-1000 invisible data-[side]:visible"
+            class="z-dropdown invisible data-side:visible"
           >
             <div
               rdxSelectPopup
-              class="w-full min-w-45 max-h-60 overflow-y-auto custom-scrollbar rounded-(--ds-control-radius) bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1 data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 duration-150 select-none"
+              class="w-full min-w-(--radix-popper-anchor-width,11.25rem) max-h-60 overflow-y-auto custom-scrollbar rounded-(--ds-control-radius) bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1 select-none"
             >
               @if (options().length === 0) {
                 <div class="px-3.5 py-2.5 text-xs text-slate-400 dark:text-slate-500 italic">

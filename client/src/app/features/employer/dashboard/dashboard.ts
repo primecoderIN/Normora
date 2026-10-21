@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -11,6 +11,7 @@ import {
   DsButtonComponent,
   DsSkeletonComponent,
   DsToastService,
+  DsInputComponent,
 } from '@design-system';
 
 /**
@@ -21,6 +22,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     DatePipe,
@@ -29,6 +31,7 @@ import {
     StatCardComponent,
     DsButtonComponent,
     DsSkeletonComponent,
+    DsInputComponent,
   ],
   templateUrl: './dashboard.html',
 })

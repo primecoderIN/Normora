@@ -4,7 +4,7 @@
 
 @source "./app/**/*.{html,ts}";
 @source "./design-system/**/*.{html,ts}";
-@custom-variant dark (&:where(.app-dark, .app-dark *));
+@custom-variant dark (&:where(.dark, .dark *, .app-dark, .app-dark *));
 
 @theme {
   --color-primary: var(--primary, var(--brand-primary, #6366f1));
@@ -30,14 +30,22 @@
   --color-normora-color-600: #4f46e5;
   --color-normora-color-700: #4338ca;
 
-  /* Centralized Layering & Z-Index */
-  --z-dropdown: 1000;
-  --z-sticky: 1100;
-  --z-overlay: 1200;
-  --z-modal: 1300;
-  --z-popover: 1400;
-  --z-tooltip: 1500;
-  --z-toast: 1600;
+  /* Centralized Layering & Z-Index (Tailwind v4 theme variables must use --z-index-*) */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1100;
+  --z-index-overlay: 1200;
+  --z-index-modal: 1300;
+  --z-index-popover: 1400;
+  --z-index-tooltip: 1500;
+  --z-index-toast: 1600;
+
+  --z-index-1000: 1000;
+  --z-index-1100: 1100;
+  --z-index-1200: 1200;
+  --z-index-1300: 1300;
+  --z-index-1400: 1400;
+  --z-index-1500: 1500;
+  --z-index-1600: 1600;
 }
 
 html,

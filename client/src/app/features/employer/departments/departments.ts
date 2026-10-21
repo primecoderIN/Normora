@@ -1,12 +1,13 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DepartmentService, Department } from '@core/services/department.service';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { DepartmentListComponent } from './components/department-list.component';
 import { DepartmentFormComponent } from './components/department-form.component';
-import { DsSkeletonComponent } from '@design-system';
+import { DsSkeletonComponent, DsInputComponent } from '@design-system';
 
 /**
  * Employer department management feature view.
@@ -15,7 +16,7 @@ import { DsSkeletonComponent } from '@design-system';
 @Component({
   selector: 'app-departments',
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent, DsSkeletonComponent],
+  imports: [CommonModule, FormsModule, PageHeaderComponent, ConfirmDialogComponent, DepartmentListComponent, DepartmentFormComponent, DsSkeletonComponent, DsInputComponent],
   templateUrl: './departments.html',
 })
 export class Departments implements OnInit {

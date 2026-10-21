@@ -3,6 +3,7 @@ import {
   input,
   output,
   signal,
+  computed,
   forwardRef,
   ChangeDetectionStrategy,
 } from '@angular/core';
@@ -28,15 +29,24 @@ import { RdxInputDirective } from '@radix-ng/primitives/input';
     },
   ],
   template: `
-    <div class="flex items-center gap-2 select-none">
+    <div
+      class="flex items-center gap-2 select-none"
+      [class.opacity-50]="isDisabled()"
+      [class.pointer-events-none]="isDisabled()"
+    >
       <!-- Color swatch trigger with native color picker -->
-      <div class="relative w-9 h-9 rounded-lg border border-(--ds-input-border) p-0.5 bg-white dark:bg-slate-900 shadow-xs cursor-pointer overflow-hidden flex items-center justify-center hover:border-(--ds-input-border-hover) transition-colors">
+      <div
+        class="relative w-9 h-9 rounded-lg border border-(--ds-input-border) p-0.5 bg-white dark:bg-slate-900 shadow-xs overflow-hidden flex items-center justify-center transition-colors"
+        [class.cursor-pointer]="!isDisabled()"
+        [class.hover:border-(--ds-input-border-hover)]="!isDisabled()"
+      >
         <input
           type="color"
           [value]="normalizedHex()"
-          [disabled]="disabled()"
+          [disabled]="isDisabled()"
           (input)="handleColorInput($event)"
-          class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+          class="absolute inset-0 opacity-0 w-full h-full"
+          [class.cursor-pointer]="!isDisabled()"
           aria-label="Pick color"
         />
         <div
@@ -51,11 +61,11 @@ import { RdxInputDirective } from '@radix-ng/primitives/input';
           rdxInput
           type="text"
           [value]="colorValue()"
-          [disabled]="disabled()"
+          [disabled]="isDisabled()"
           (input)="handleTextInput($event)"
           maxlength="7"
           placeholder="#4f46e5"
-          class="w-full h-9 px-2.5 font-mono text-xs uppercase rounded-lg border border-(--ds-input-border) bg-(--ds-input-bg) text-(--ds-input-text) focus:outline-none focus:border-(--ds-input-border-focus) focus:ring-2 focus:ring-(--ds-focus-ring-color)"
+          class="w-full h-9 px-2.5 font-mono text-xs uppercase rounded-lg border border-(--ds-input-border) bg-(--ds-input-bg) text-(--ds-input-text) focus:outline-none focus:border-(--ds-input-border-focus) focus:ring-2 focus:ring-(--ds-focus-ring-color) disabled:bg-(--muted) disabled:cursor-not-allowed"
         />
       </div>
     </div>
@@ -69,6 +79,8 @@ export class DsColorPickerComponent implements ControlValueAccessor {
   readonly onChange = output<any>(); // PrimeNG compatibility alias
 
   protected readonly colorValue = signal<string>('#4f46e5');
+  private readonly formDisabled = signal<boolean>(false);
+  protected readonly isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   protected normalizedHex(): string {
     let val = this.colorValue() || '#4f46e5';
@@ -103,8 +115,9 @@ export class DsColorPickerComponent implements ControlValueAccessor {
   private onTouchedCallback: () => void = () => {};
 
   writeValue(val: any): void {
-    if (val) {
-      this.colorValue.set(String(val));
+    if (val != null) {
+      const hex = typeof val === 'object' && val.value ? val.value : String(val);
+      this.colorValue.set(hex);
     }
   }
 
@@ -116,5 +129,7 @@ export class DsColorPickerComponent implements ControlValueAccessor {
     this.onTouchedCallback = fn;
   }
 
-  setDisabledState?(isDisabled: boolean): void {}
+  setDisabledState(isDisabled: boolean): void {
+    this.formDisabled.set(isDisabled);
+  }
 }

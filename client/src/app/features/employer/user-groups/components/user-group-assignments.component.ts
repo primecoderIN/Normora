@@ -1,6 +1,6 @@
 import { Component, input, output, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DsButtonComponent, DsDialogComponent } from '@design-system';
+import { DsButtonComponent, DsCheckboxComponent, DsDialogComponent } from '@design-system';
 import { FormErrorComponent } from '@shared/components/form-error/form-error.component';
 import { UserGroup, UserGroupDetail } from '@core/services/user-group.service';
 import { Department } from '@core/services/department.service';
@@ -11,7 +11,7 @@ import { Department } from '@core/services/department.service';
 @Component({
   selector: 'app-user-group-assignments',
   standalone: true,
-  imports: [CommonModule, DsButtonComponent, DsDialogComponent, FormErrorComponent],
+  imports: [CommonModule, DsButtonComponent, DsCheckboxComponent, DsDialogComponent, FormErrorComponent],
   template: `
     <ds-dialog
       [visible]="true"
@@ -37,12 +37,11 @@ import { Department } from '@core/services/department.service';
                 
                 <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                   @for (emp of allEmployees(); track emp.userId) {
-                    <label class="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-primary-50/50 dark:hover:bg-slate-800 hover:border-primary-200 dark:hover:border-slate-700 transition-colors">
-                      <input
-                        type="checkbox"
+                    <div class="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-primary-50/50 dark:hover:bg-slate-800 hover:border-primary-200 dark:hover:border-slate-700 transition-colors" (click)="toggleUser(emp.userId)">
+                      <ds-checkbox
                         [checked]="selectedUserIds().includes(emp.userId)"
-                        (change)="toggleUser(emp.userId)"
-                        class="w-4 h-4 text-primary-600 border-slate-300 dark:border-slate-700 rounded focus:ring-primary-500 accent-indigo-600 cursor-pointer flex-none"
+                        (click)="$event.stopPropagation()"
+                        (checkedChange)="toggleUser(emp.userId)"
                       />
                       <div class="flex items-center gap-3 min-w-0">
                         <div class="flex-none w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-950/70 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800/50 flex items-center justify-center font-bold text-xs">
@@ -53,7 +52,7 @@ import { Department } from '@core/services/department.service';
                           <p class="text-slate-500 dark:text-slate-400 text-xs m-0 mt-0.5 truncate">{{ emp.email }}</p>
                         </div>
                       </div>
-                    </label>
+                    </div>
                   }
                   @if (allEmployees().length === 0) {
                     <p class="text-sm text-slate-500 dark:text-slate-400 italic col-span-full">No employees available.</p>
@@ -70,15 +69,14 @@ import { Department } from '@core/services/department.service';
                 
                 <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                   @for (dept of allDepartments(); track dept.id) {
-                    <label class="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-primary-50/50 dark:hover:bg-slate-800 hover:border-primary-200 dark:hover:border-slate-700 transition-colors">
-                      <input
-                        type="checkbox"
+                    <div class="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-primary-50/50 dark:hover:bg-slate-800 hover:border-primary-200 dark:hover:border-slate-700 transition-colors" (click)="toggleDept(dept.id)">
+                      <ds-checkbox
                         [checked]="selectedDeptIds().includes(dept.id)"
-                        (change)="toggleDept(dept.id)"
-                        class="w-4 h-4 text-primary-600 border-slate-300 dark:border-slate-700 rounded focus:ring-primary-500 accent-indigo-600 cursor-pointer"
+                        (click)="$event.stopPropagation()"
+                        (checkedChange)="toggleDept(dept.id)"
+                        [label]="dept.name"
                       />
-                      <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ dept.name }}</span>
-                    </label>
+                    </div>
                   }
                   @if (allDepartments().length === 0) {
                     <p class="text-sm text-slate-500 dark:text-slate-400 italic col-span-full">No departments created yet.</p>

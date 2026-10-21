@@ -3,6 +3,7 @@ import { RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { UserService } from './core/services/user.service';
 import { TenantBrandingService } from './core/services/tenant-branding.service';
+import { ThemeService } from './core/services/theme.service';
 import { DsToastComponent, DsToastService } from '@design-system';
 import { NotificationRealtimeService } from './core/services/notification-realtime.service';
 import { TenantRoles } from './core/constants/tenant-roles';
@@ -27,6 +28,7 @@ export class App implements OnInit, OnDestroy {
   private router = inject(Router);
   private userService = inject(UserService);
   private brandingService = inject(TenantBrandingService);
+  private themeService = inject(ThemeService);
   private messageService = inject(DsToastService);
   private notificationService = inject(NotificationRealtimeService);
 

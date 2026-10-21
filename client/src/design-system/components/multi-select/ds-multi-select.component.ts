@@ -141,11 +141,11 @@ import {
             side="bottom"
             align="start"
             [sideOffset]="4"
-            class="z-1000 invisible data-[side]:visible"
+            class="z-dropdown invisible data-side:visible"
           >
             <div
               rdxSelectPopup
-              class="w-full min-w-50 max-h-64 overflow-y-auto custom-scrollbar rounded-(--ds-control-radius) bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1.5 data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 duration-150 select-none"
+              class="w-full min-w-(--radix-popper-anchor-width,12.5rem) max-h-64 overflow-y-auto custom-scrollbar rounded-(--ds-control-radius) bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1.5 select-none"
             >
               <!-- Search Header -->
               @if (options().length > 5) {
