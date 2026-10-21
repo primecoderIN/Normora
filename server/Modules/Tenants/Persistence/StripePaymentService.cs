@@ -130,7 +130,9 @@ public class StripePaymentService(
         var sessionOptions = new Stripe.Checkout.SessionCreateOptions
         {
             Mode = "subscription",
-            PaymentMethodTypes = ["card"],
+            // Omitting PaymentMethodTypes enables Stripe Dynamic / Automatic Payment Methods
+            // (Cards, Apple Pay, Google Pay, Link, US Bank Account / ACH, SEPA, etc.)
+            // as configured in the merchant's Stripe Dashboard.
             LineItems = lineItems,
             SuccessUrl = successUrl,
             CancelUrl = cancelUrl,
@@ -242,9 +244,17 @@ public class StripePaymentService(
         switch (stripeEvent.Type)
         {
             case EventTypes.CheckoutSessionCompleted:
+            case EventTypes.CheckoutSessionAsyncPaymentSucceeded:
                 if (stripeEvent.Data.Object is Stripe.Checkout.Session checkoutSession)
                 {
                     await HandleCheckoutSessionCompletedAsync(checkoutSession, cancellationToken);
+                }
+                break;
+
+            case EventTypes.CheckoutSessionAsyncPaymentFailed:
+                if (stripeEvent.Data.Object is Stripe.Checkout.Session asyncFailedSession)
+                {
+                    logger.LogWarning("Stripe asynchronous payment failed for checkout session {SessionId}.", asyncFailedSession.Id);
                 }
                 break;
 
