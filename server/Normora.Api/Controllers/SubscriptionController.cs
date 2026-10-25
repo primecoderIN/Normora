@@ -86,18 +86,38 @@ public class SubscriptionController(
         var form = await Request.ReadFormAsync(cancellationToken);
         var result = await payUPaymentService.ProcessCallbackAsync(form, cancellationToken);
 
-        var baseUrl = appOptions.Value.BaseUrl;
-        var destination = !string.IsNullOrWhiteSpace(result.TenantSlug)
-            ? $"{baseUrl}/app/workspaces/{result.TenantSlug}/employer/settings/subscription"
-            : $"{baseUrl}/settings/subscription";
+        var baseUri = new Uri(appOptions.Value.BaseUrl, UriKind.Absolute);
+        var destinationPath = !string.IsNullOrWhiteSpace(result.TenantSlug)
+            ? $"app/workspaces/{Uri.EscapeDataString(result.TenantSlug)}/employer/settings/subscription"
+            : "settings/subscription";
+        var destination = new UriBuilder(baseUri)
+        {
+            Path = $"{baseUri.AbsolutePath.TrimEnd('/')}/{destinationPath}"
+        };
 
         if (result.Success)
         {
-            return Redirect($"{destination}?status=success&txnid={Uri.EscapeDataString(result.TransactionId)}&tier={result.Tier}");
+            destination.Query = $"status=success&txnid={Uri.EscapeDataString(result.TransactionId)}&tier={result.Tier}";
+        }
+        else
+        {
+            var error = Uri.EscapeDataString(result.ErrorMessage ?? ApiMessages.PayUPaymentFailed);
+            destination.Query = $"status=failed&error={error}";
         }
 
-        var error = Uri.EscapeDataString(result.ErrorMessage ?? ApiMessages.PayUPaymentFailed);
-        return Redirect($"{destination}?status=failed&error={error}");
+        var destinationUri = destination.Uri;
+        if (!string.Equals(destinationUri.Scheme, baseUri.Scheme, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(destinationUri.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase)
+            || destinationUri.Port != baseUri.Port)
+        {
+            destinationUri = new UriBuilder(baseUri)
+            {
+                Path = $"{baseUri.AbsolutePath.TrimEnd('/')}/settings/subscription",
+                Query = destination.Query
+            }.Uri;
+        }
+
+        return Redirect(destinationUri.ToString());
     }
 
     /// <summary>

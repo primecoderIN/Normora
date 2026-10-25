@@ -141,7 +141,7 @@ public class PayUPaymentService(
 
         if (!Guid.TryParse(udf1, out var tenantId))
         {
-            logger.LogWarning("PayU callback received without valid tenantId in udf1: {Udf1}", udf1);
+            logger.LogWarning("PayU callback received without valid tenantId in udf1: {Udf1}", SanitizeLogValue(udf1));
             return new PayUCallbackResultDto(false, Guid.Empty, udf4, PlanTier.Free, txnid, ApiMessages.NotFound);
         }
 
@@ -171,7 +171,7 @@ public class PayUPaymentService(
         if (!isHashValid)
         {
             logger.LogError("PayU callback hash mismatch for Txn {TxnId}. Calculated: {Calculated}, Received: {Received}",
-                txnid, calculatedHash, receivedHash);
+                SanitizeLogValue(txnid), SanitizeLogValue(calculatedHash), SanitizeLogValue(receivedHash));
             return new PayUCallbackResultDto(false, tenantId, udf4, tier, txnid, ApiMessages.PayUHashMismatch);
         }
 
@@ -179,7 +179,7 @@ public class PayUPaymentService(
         {
             var errorMessage = form["error_Message"].ToString();
             logger.LogWarning("PayU transaction {TxnId} was not successful. Status: {Status}, Error: {Error}",
-                txnid, status, errorMessage);
+                SanitizeLogValue(txnid), SanitizeLogValue(status), SanitizeLogValue(errorMessage));
             return new PayUCallbackResultDto(false, tenantId, udf4, tier, txnid, string.IsNullOrWhiteSpace(errorMessage) ? ApiMessages.PayUPaymentFailed : errorMessage);
         }
 
@@ -235,7 +235,8 @@ public class PayUPaymentService(
         });
 
         await context.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Tenant {TenantId} successfully upgraded to {Tier} via PayU payment {TxnId}", tenantId, tier, txnid);
+        logger.LogInformation("Tenant {TenantId} successfully upgraded to {Tier} via PayU payment {TxnId}",
+            tenantId, tier, SanitizeLogValue(txnid));
 
         return new PayUCallbackResultDto(true, tenantId, udf4, tier, txnid, null);
     }
@@ -246,4 +247,8 @@ public class PayUPaymentService(
         var hashBytes = SHA512.HashData(bytes);
         return Convert.ToHexStringLower(hashBytes);
     }
+
+    private static string SanitizeLogValue(string value) =>
+        value.Replace("\r", string.Empty, StringComparison.Ordinal)
+            .Replace("\n", string.Empty, StringComparison.Ordinal);
 }
