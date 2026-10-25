@@ -11,7 +11,7 @@ using Normora.Shared.Constants;
 namespace Normora.Api.Controllers;
 
 public record UpdatePlanTierRequest(PlanTier Tier);
-public record CreateCheckoutRequest(PlanTier Tier);
+public record CreateCheckoutRequest(PlanTier Tier, string? Currency = null);
 public record CreatePortalRequest(string? ReturnUrl = null);
 
 /// <summary>
@@ -22,12 +22,11 @@ public record CreatePortalRequest(string? ReturnUrl = null);
 [Produces("application/json")]
 public class SubscriptionController(
     IMediator mediator,
-    IStripePaymentService stripePaymentService) : ControllerBase
+    IPayUPaymentService payUPaymentService,
+    Microsoft.Extensions.Options.IOptions<Normora.Shared.Options.AppOptions> appOptions) : ControllerBase
 {
     /// <summary>
     /// Retrieves current resource usage and subscription boundaries for the active tenant.
-    /// Dual-fulfillment: if sessionId is passed (from Checkout return redirect), it synchronously
-    /// verifies payment status with Stripe and updates quotas immediately before returning usage metrics.
     /// </summary>
     [HttpGet("usage")]
     [Authorize]
@@ -35,15 +34,14 @@ public class SubscriptionController(
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<SubscriptionUsageDto>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> GetUsage([FromQuery] string? sessionId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUsage(CancellationToken cancellationToken)
     {
-        // Dispatches query to Tenant module; handles both standard usage queries and synchronous post-checkout fulfillment
-        var result = await mediator.Send(new GetTenantSubscriptionUsageQuery(sessionId), cancellationToken);
+        var result = await mediator.Send(new GetTenantSubscriptionUsageQuery(), cancellationToken);
         return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result));
     }
 
     /// <summary>
-    /// Creates a Stripe Hosted Checkout Session for upgrading to a paid tier (Pro / Enterprise).
+    /// Generates PayU checkout parameters and cryptographic SHA-512 signature for upgrading to a paid tier.
     /// BFLA: restricted strictly to tenant administrators.
     /// </summary>
     [HttpPost("checkout")]
@@ -55,13 +53,12 @@ public class SubscriptionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreateCheckout([FromBody] CreateCheckoutRequest request, CancellationToken cancellationToken)
     {
-        // Builds Stripe checkout session embedding tenant_id metadata and returns hosted redirect URL
-        var result = await mediator.Send(new CreateCheckoutSessionCommand(request.Tier), cancellationToken);
+        var result = await mediator.Send(new CreateCheckoutSessionCommand(request.Tier, request.Currency), cancellationToken);
         return Ok(ApiResponse<CheckoutSessionResultDto>.Ok(result, ApiMessages.CheckoutSessionCreated));
     }
 
     /// <summary>
-    /// Creates a Stripe Billing Customer Portal session for managing invoices, payment methods, and subscriptions.
+    /// Directs user to workspace subscription and billing management overview.
     /// BFLA: restricted strictly to tenant administrators.
     /// </summary>
     [HttpPost("portal")]
@@ -73,33 +70,34 @@ public class SubscriptionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreatePortal([FromBody] CreatePortalRequest? request, CancellationToken cancellationToken)
     {
-        // Generates self-service billing portal session URL with workspace return URL
         var result = await mediator.Send(new CreateCustomerPortalSessionCommand(request?.ReturnUrl), cancellationToken);
         return Ok(ApiResponse<CustomerPortalResultDto>.Ok(result, ApiMessages.CustomerPortalCreated));
     }
 
     /// <summary>
-    /// Receives asynchronous Stripe Webhook notifications with HMAC signature validation.
-    /// Public endpoint (AllowAnonymous + IgnoreAntiforgeryToken) secured solely via cryptographic HMAC Stripe-Signature.
+    /// Handles PayU payment response (surl/furl) with reverse SHA-512 cryptographic verification.
+    /// Public return endpoint called by PayU upon completion of checkout.
     /// </summary>
-    [HttpPost("webhook")]
+    [HttpPost("payu-callback")]
     [AllowAnonymous]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> HandleWebhook(CancellationToken cancellationToken)
+    public async Task<IActionResult> HandlePayUCallback(CancellationToken cancellationToken)
     {
-        // Extract Stripe signature header for cryptographic HMAC-SHA256 validation
-        var signature = Request.Headers["Stripe-Signature"].FirstOrDefault() ?? string.Empty;
-        using var reader = new StreamReader(Request.Body);
-        var json = await reader.ReadToEndAsync(cancellationToken);
+        var form = await Request.ReadFormAsync(cancellationToken);
+        var result = await payUPaymentService.ProcessCallbackAsync(form, cancellationToken);
 
-        // Verify payload integrity and dispatch lifecycle events (checkout completed, subscription updated, etc.)
-        var success = await stripePaymentService.HandleWebhookAsync(json, signature, cancellationToken);
-        if (!success)
+        var baseUrl = appOptions.Value.BaseUrl;
+        var destination = !string.IsNullOrWhiteSpace(result.TenantSlug)
+            ? $"{baseUrl}/app/workspaces/{result.TenantSlug}/employer/settings/subscription"
+            : $"{baseUrl}/settings/subscription";
+
+        if (result.Success)
         {
-            return BadRequest();
+            return Redirect($"{destination}?status=success&txnid={Uri.EscapeDataString(result.TransactionId)}&tier={result.Tier}");
         }
 
-        return Ok();
+        var error = Uri.EscapeDataString(result.ErrorMessage ?? ApiMessages.PayUPaymentFailed);
+        return Redirect($"{destination}?status=failed&error={error}");
     }
 
     /// <summary>

@@ -45,7 +45,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IAuditService, Normora.Modules.Tenants.Application.Audit.AuditService>();
-        services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IStripePaymentService, Normora.Modules.Tenants.Persistence.StripePaymentService>();
+        services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IPayUPaymentService, Normora.Modules.Tenants.Persistence.PayUPaymentService>();
         // Email Services (Resend + Hangfire Background Delivery)
         services.AddHttpClient<ResendEmailSender>();
         services.AddTransient<ResendEmailSender>();
