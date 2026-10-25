@@ -136,7 +136,7 @@
             <i class="pi pi-verified text-xl"></i>
           </div>
           <div>
-            <div class="text-sm font-bold text-slate-900 dark:text-white">Active Stripe Subscription</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white">Active Subscription</div>
             <div class="text-xs text-slate-500 dark:text-slate-400">
               Current billing period renews on <span class="font-semibold text-slate-700 dark:text-slate-200">{{ u.currentPeriodEndUtc | date:'longDate' }}</span>.
             </div>
@@ -267,8 +267,53 @@
       </p>
     </div>
 
+    <!-- Currency Selector Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs mb-8">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center flex-none">
+          <i class="pi pi-globe text-base"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Billing Currency</span>
+            @if (isWorkspaceCurrency()) {
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 flex items-center gap-1">
+                <i class="pi pi-building text-[10px]"></i>
+                <span>Workspace Default ({{ activeCurrencyConfig().code }})</span>
+              </span>
+            } @else if (isDetectedCurrency()) {
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Auto-detected for your region ({{ activeCurrencyConfig().code }})</span>
+              </span>
+            }
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+            Select your preferred currency. Prices and PayU Checkout automatically update in real-time.
+          </p>
+        </div>
+      </div>
+
+      <!-- Currency Pills -->
+      <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
+        @for (curr of currencies; track curr.code) {
+          <button
+            type="button"
+            (click)="setCurrency(curr.code)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer whitespace-nowrap"
+            [ngClass]="selectedCurrency() === curr.code
+              ? 'bg-primary-600 text-white border-primary-600 shadow-xs scale-105'
+              : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'">
+            <span>{{ curr.flag }}</span>
+            <span>{{ curr.code }}</span>
+            <span class="opacity-75">({{ curr.symbol }})</span>
+          </button>
+        }
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      @for (plan of planDefinitions; track plan.tier) {
+      @for (plan of planDefinitions(); track plan.tier) {
         <div
           class="rounded-3xl p-6 sm:p-8 flex flex-col justify-between border transition-all duration-300 relative"
           [ngClass]="[
@@ -372,50 +417,46 @@
     </div>
 
     <!-- Accepted Payment Methods & Security Section -->
+    <!-- Accepted Payment Methods & Security Section -->
     <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div class="space-y-1.5 max-w-xl">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Flexible Payment Options</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Accepted Payment Methods</span>
           </div>
           <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Supported Payment Methods</h2>
           <p class="text-xs text-slate-500 dark:text-slate-400 m-0 leading-relaxed">
-            All subscriptions are processed securely via Stripe. We automatically present the most optimal local payment methods for your region and currency.
+            All subscriptions are processed securely via PayU. We support UPI for local Indian payments (INR) and Credit &amp; Debit Cards for international and domestic payments.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-none lg:w-[60%]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-none lg:w-[50%]">
+          <!-- UPI -->
+          <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-none">
+              <i class="pi pi-qrcode text-sm"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <p class="text-xs font-bold text-slate-900 dark:text-white m-0">UPI</p>
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Local (INR)</span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Google Pay, PhonePe, Paytm, BHIM, QR code</p>
+            </div>
+          </div>
+
           <!-- Cards -->
           <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
             <div class="w-8 h-8 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center flex-none">
               <i class="pi pi-credit-card text-sm"></i>
             </div>
             <div>
-              <p class="text-xs font-bold text-slate-900 dark:text-white m-0">Credit & Debit Cards</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Visa, Mastercard, Amex, Discover</p>
-            </div>
-          </div>
-
-          <!-- Wallets -->
-          <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-none">
-              <i class="pi pi-wallet text-sm"></i>
-            </div>
-            <div>
-              <p class="text-xs font-bold text-slate-900 dark:text-white m-0">Digital Wallets</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Apple Pay, Google Pay, Link 1-click</p>
-            </div>
-          </div>
-
-          <!-- Bank Debit -->
-          <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
-            <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-none">
-              <i class="pi pi-building text-sm"></i>
-            </div>
-            <div>
-              <p class="text-xs font-bold text-slate-900 dark:text-white m-0">Bank Debits & Transfers</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">US ACH, SEPA Direct Debit, iDEAL</p>
+              <div class="flex items-center gap-2">
+                <p class="text-xs font-bold text-slate-900 dark:text-white m-0">Credit &amp; Debit Cards</p>
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">International &amp; Domestic</span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Visa, Mastercard, RuPay, American Express, Diners</p>
             </div>
           </div>
         </div>
@@ -426,7 +467,7 @@
         <div class="flex items-center gap-6 flex-wrap">
           <div class="flex items-center gap-2">
             <i class="pi pi-lock text-emerald-500 text-xs"></i>
-            <span>256-Bit TLS Encryption</span>
+            <span>SHA-512 &amp; 256-Bit TLS Encryption</span>
           </div>
           <div class="flex items-center gap-2">
             <i class="pi pi-shield text-primary-500 text-xs"></i>
@@ -438,7 +479,7 @@
           </div>
         </div>
         <div class="text-[11px] text-slate-400">
-          Powered by <strong class="text-slate-700 dark:text-slate-300 font-semibold">Stripe Checkout</strong>
+          Powered by <strong class="text-slate-700 dark:text-slate-300 font-semibold">PayU Checkout</strong>
         </div>
       </div>
     </div>

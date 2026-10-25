@@ -23,10 +23,12 @@ export interface SubscriptionUsageDto {
   subscriptionStatus: string | null;
   currentPeriodEndUtc: string | null;
   cancelAtPeriodEnd: boolean;
+  currency?: string;
 }
 
 export interface CheckoutSessionResult {
-  checkoutUrl: string;
+  actionUrl: string;
+  params: Record<string, string>;
 }
 
 export interface CustomerPortalResult {
@@ -40,21 +42,18 @@ export class SubscriptionService {
 
   /**
    * Retrieves current workspace usage metrics and quota thresholds.
-   * If sessionId is provided (upon redirect return from Stripe Checkout),
-   * the backend performs synchronous verification and instant quota provisioning.
    */
-  getUsage(sessionId?: string): Observable<SubscriptionUsageDto> {
-    const params = sessionId ? { sessionId } : undefined;
+  getUsage(): Observable<SubscriptionUsageDto> {
     return this.http
-      .get<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/usage`, { params })
+      .get<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/usage`)
       .pipe(map(res => res.data));
   }
 
   /**
-   * Initiates a Stripe-hosted checkout session for upgrading to a paid tier.
-   * Returns the hosted checkout URL to which the browser will redirect.
+   * Initiates a PayU hosted checkout session for upgrading to a paid tier in specified currency.
+   * Returns action URL and parameters signed with SHA-512 cryptographic hash.
    */
-  createCheckoutSession(tier: PlanTierType): Observable<CheckoutSessionResult> {
+  createCheckoutSession(tier: PlanTierType, currency: string = 'inr'): Observable<CheckoutSessionResult> {
     const tierEnumMap: Record<PlanTierType, number> = {
       Free: 0,
       Pro: 1,
@@ -62,8 +61,36 @@ export class SubscriptionService {
     };
 
     return this.http
-      .post<ApiResponse<CheckoutSessionResult>>(`${this.apiUrl}/checkout`, { tier: tierEnumMap[tier] })
+      .post<ApiResponse<CheckoutSessionResult>>(`${this.apiUrl}/checkout`, {
+        tier: tierEnumMap[tier],
+        currency: currency.toLowerCase()
+      })
       .pipe(map(res => res.data));
+  }
+
+  /**
+   * Automatically creates and submits a hidden HTML form to redirect to PayU hosted checkout.
+   */
+  submitPayUForm(session: CheckoutSessionResult): void {
+    if (!session?.actionUrl) return;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = session.actionUrl;
+    form.style.display = 'none';
+
+    if (session.params) {
+      for (const [key, value] of Object.entries(session.params)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+    }
+
+    document.body.appendChild(form);
+    form.submit();
   }
 
   /**

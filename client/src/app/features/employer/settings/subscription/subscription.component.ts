@@ -18,6 +18,26 @@ interface PlanTierDefinition {
   isPopular?: boolean;
 }
 
+export interface CurrencyConfig {
+  code: string;
+  symbol: string;
+  label: string;
+  flag: string;
+  proPrice: string;
+  enterprisePrice: string;
+}
+
+export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
+  { code: 'USD', symbol: '$', label: 'USD ($)', flag: '🇺🇸', proPrice: '$49', enterprisePrice: '$249' },
+  { code: 'EUR', symbol: '€', label: 'EUR (€)', flag: '🇪🇺', proPrice: '€45', enterprisePrice: '€229' },
+  { code: 'GBP', symbol: '£', label: 'GBP (£)', flag: '🇬🇧', proPrice: '£39', enterprisePrice: '£199' },
+  { code: 'INR', symbol: '₹', label: 'INR (₹)', flag: '🇮🇳', proPrice: '₹3,999', enterprisePrice: '₹19,999' },
+  { code: 'CAD', symbol: 'C$', label: 'CAD (C$)', flag: '🇨🇦', proPrice: 'C$65', enterprisePrice: 'C$329' },
+  { code: 'AUD', symbol: 'A$', label: 'AUD (A$)', flag: '🇦🇺', proPrice: 'A$75', enterprisePrice: 'A$379' },
+  { code: 'JPY', symbol: '¥', label: 'JPY (¥)', flag: '🇯🇵', proPrice: '¥7,500', enterprisePrice: '¥38,000' },
+  { code: 'SGD', symbol: 'S$', label: 'SGD (S$)', flag: '🇸🇬', proPrice: 'S$65', enterprisePrice: 'S$329' },
+];
+
 @Component({
   selector: 'app-subscription',
   standalone: true,
@@ -38,56 +58,124 @@ export class SubscriptionComponent implements OnInit {
   selectedTierLoading = signal<PlanTierType | null>(null);
   errorMessage = signal<string | null>(null);
 
-  planDefinitions: PlanTierDefinition[] = [
-    {
-      tier: 'Free',
-      name: 'Starter / Free',
-      price: '$0',
-      description: 'Essential AI knowledge base for small teams getting started.',
-      maxDocs: '10 Documents',
-      maxMembers: '5 Team Members',
-      maxStorage: '50 MB Storage',
-      features: [
-        'Gemini Grounded RAG Answering',
-        'Source Citations & Chunk Previews',
-        'Company-wide Knowledge Base',
-        'Standard Ingestion Pipeline'
-      ]
-    },
-    {
-      tier: 'Pro',
-      name: 'Pro Workspace',
-      price: '$49',
-      description: 'Expanded capacity with department scoping for growing organizations.',
-      maxDocs: '100 Documents',
-      maxMembers: '50 Team Members',
-      maxStorage: '5 GB Storage',
-      isPopular: true,
-      features: [
-        'Everything in Starter',
-        'Department & User Group Scoping',
-        'Document Version History & Outdated Alerts',
-        'Markdown, PDF & Word Export',
-        'Priority Hangfire Ingestion'
-      ]
-    },
-    {
-      tier: 'Enterprise',
-      name: 'Enterprise',
-      price: '$249',
-      description: 'Maximum scale, custom quotas, and enterprise-grade compliance governance.',
-      maxDocs: '10,000 Documents',
-      maxMembers: '5,000 Team Members',
-      maxStorage: '500 GB Storage',
-      features: [
-        'Everything in Pro',
-        'Full Compliance Audit Logging',
-        'White-Label Branding & Custom Subdomains',
-        'Dedicated pgvector Search Indexing',
-        '99.9% Uptime SLA & Priority Support'
-      ]
+  readonly currencies = SUPPORTED_CURRENCIES;
+  readonly selectedCurrency = signal<string>(this.detectLocalCurrency());
+  readonly isDetectedCurrency = signal<boolean>(true);
+  readonly isWorkspaceCurrency = signal<boolean>(false);
+
+  readonly activeCurrencyConfig = computed<CurrencyConfig>(() => {
+    return this.currencies.find(c => c.code === this.selectedCurrency()) || this.currencies[0];
+  });
+
+  readonly planDefinitions = computed<PlanTierDefinition[]>(() => {
+    const curr = this.activeCurrencyConfig();
+    return [
+      {
+        tier: 'Free',
+        name: 'Starter / Free',
+        price: `${curr.symbol}0`,
+        description: 'Essential AI knowledge base for small teams getting started.',
+        maxDocs: '10 Documents',
+        maxMembers: '5 Team Members',
+        maxStorage: '50 MB Storage',
+        features: [
+          'Gemini Grounded RAG Answering',
+          'Source Citations & Chunk Previews',
+          'Company-wide Knowledge Base',
+          'Standard Ingestion Pipeline'
+        ]
+      },
+      {
+        tier: 'Pro',
+        name: 'Pro Workspace',
+        price: curr.proPrice,
+        description: 'Expanded capacity with department scoping for growing organizations.',
+        maxDocs: '100 Documents',
+        maxMembers: '50 Team Members',
+        maxStorage: '5 GB Storage',
+        isPopular: true,
+        features: [
+          'Everything in Starter',
+          'Department & User Group Scoping',
+          'Document Version History & Outdated Alerts',
+          'Markdown, PDF & Word Export',
+          'Priority Hangfire Ingestion'
+        ]
+      },
+      {
+        tier: 'Enterprise',
+        name: 'Enterprise',
+        price: curr.enterprisePrice,
+        description: 'Maximum scale, custom quotas, and enterprise-grade compliance governance.',
+        maxDocs: '10,000 Documents',
+        maxMembers: '5,000 Team Members',
+        maxStorage: '500 GB Storage',
+        features: [
+          'Everything in Pro',
+          'Full Compliance Audit Logging',
+          'White-Label Branding & Custom Subdomains',
+          'Dedicated pgvector Search Indexing',
+          '99.9% Uptime SLA & Priority Support'
+        ]
+      }
+    ];
+  });
+
+  setCurrency(code: string): void {
+    this.selectedCurrency.set(code);
+    this.isDetectedCurrency.set(false);
+    this.isWorkspaceCurrency.set(false);
+  }
+
+  private detectLocalCurrency(): string {
+    try {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      const tzLower = timeZone.toLowerCase();
+      const lang = (typeof navigator !== 'undefined' ? navigator.language : '').toLowerCase();
+
+      if (tzLower.includes('calcutta') || tzLower.includes('kolkata') || lang.includes('en-in') || lang.includes('hi')) {
+        return 'INR';
+      }
+      if (tzLower.includes('london') || lang.includes('en-gb')) {
+        return 'GBP';
+      }
+      if (
+        tzLower.includes('paris') ||
+        tzLower.includes('berlin') ||
+        tzLower.includes('rome') ||
+        tzLower.includes('madrid') ||
+        tzLower.includes('amsterdam') ||
+        tzLower.includes('dublin') ||
+        tzLower.includes('brussels') ||
+        tzLower.includes('vienna') ||
+        tzLower.includes('lisbon') ||
+        tzLower.includes('helsinki') ||
+        tzLower.includes('athens') ||
+        lang.includes('de') ||
+        lang.includes('fr') ||
+        lang.includes('it') ||
+        lang.includes('es') ||
+        lang.includes('nl')
+      ) {
+        return 'EUR';
+      }
+      if (tzLower.includes('toronto') || tzLower.includes('vancouver') || tzLower.includes('montreal') || lang.includes('en-ca') || lang.includes('fr-ca')) {
+        return 'CAD';
+      }
+      if (tzLower.includes('sydney') || tzLower.includes('melbourne') || tzLower.includes('brisbane') || tzLower.includes('perth') || lang.includes('en-au')) {
+        return 'AUD';
+      }
+      if (tzLower.includes('tokyo') || lang.includes('ja')) {
+        return 'JPY';
+      }
+      if (tzLower.includes('singapore') || lang.includes('en-sg')) {
+        return 'SGD';
+      }
+    } catch {
+      // fallback
     }
-  ];
+    return 'USD';
+  }
 
   docPercent = computed(() => {
     const u = this.usage();
@@ -145,14 +233,13 @@ export class SubscriptionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Read optional session_id from query params upon return from Stripe Checkout
-    const sessionId = this.route.snapshot.queryParamMap.get('session_id') || undefined;
     this.handleRouteParams();
-    this.loadUsage(sessionId);
+    this.loadUsage();
   }
 
   private handleRouteParams(): void {
     const status = this.route.snapshot.queryParamMap.get('status');
+    const error = this.route.snapshot.queryParamMap.get('error');
     if (status === 'success') {
       this.messageService.add({
         severity: 'success',
@@ -160,11 +247,12 @@ export class SubscriptionComponent implements OnInit {
         detail: ApiMessages.CheckoutSuccess.detail
       });
       this.clearQueryParams();
-    } else if (status === 'cancelled') {
+      this.loadUsage();
+    } else if (status === 'cancelled' || status === 'failed') {
       this.messageService.add({
-        severity: 'warn',
-        summary: ApiMessages.CheckoutCancelled.summary,
-        detail: ApiMessages.CheckoutCancelled.detail
+        severity: 'error',
+        summary: ApiMessages.CheckoutFailed.summary,
+        detail: error ? decodeURIComponent(error) : ApiMessages.CheckoutCancelled.detail
       });
       this.clearQueryParams();
     }
@@ -180,15 +268,23 @@ export class SubscriptionComponent implements OnInit {
 
   /**
    * Loads resource usage and quota metrics for the active workspace.
-   * If a Stripe checkout sessionId is supplied, dual fulfillment activates instantly.
    */
-  loadUsage(sessionId?: string): void {
+  loadUsage(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.subscriptionService.getUsage(sessionId).subscribe({
+    this.subscriptionService.getUsage().subscribe({
       next: (data) => {
         this.usage.set(data);
+        if (data.currency) {
+          const upper = data.currency.toUpperCase();
+          const match = this.currencies.find(c => c.code === upper);
+          if (match) {
+            this.selectedCurrency.set(upper);
+            this.isWorkspaceCurrency.set(true);
+            this.isDetectedCurrency.set(false);
+          }
+        }
         this.isLoading.set(false);
       },
       error: () => {
@@ -204,14 +300,14 @@ export class SubscriptionComponent implements OnInit {
       return;
     }
 
-    // For paid tiers (Pro, Enterprise), initiate Stripe Hosted Checkout Session
+    // For paid tiers (Pro, Enterprise), initiate PayU Hosted Checkout Session
     this.isUpdating.set(true);
     this.selectedTierLoading.set(tier);
 
-    this.subscriptionService.createCheckoutSession(tier).subscribe({
+    this.subscriptionService.createCheckoutSession(tier, this.selectedCurrency().toLowerCase()).subscribe({
       next: (session) => {
-        if (session.checkoutUrl) {
-          window.location.href = session.checkoutUrl;
+        if (session && session.actionUrl) {
+          this.subscriptionService.submitPayUForm(session);
         } else {
           this.isUpdating.set(false);
           this.selectedTierLoading.set(null);
