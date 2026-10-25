@@ -142,7 +142,7 @@ public class PayUPaymentService(
         if (!Guid.TryParse(udf1, out var tenantId))
         {
             logger.LogWarning("PayU callback received without valid tenantId in udf1: {Udf1}", SanitizeLogValue(udf1));
-            return new PayUCallbackResultDto(false, Guid.Empty, udf4, PlanTier.Free, txnid, ApiMessages.NotFound);
+            return new PayUCallbackResultDto(false, Guid.Empty, string.Empty, PlanTier.Free, txnid, ApiMessages.NotFound);
         }
 
         if (!Enum.TryParse<PlanTier>(udf2, true, out var tier))
@@ -172,7 +172,17 @@ public class PayUPaymentService(
         {
             logger.LogError("PayU callback hash mismatch for Txn {TxnId}. Calculated: {Calculated}, Received: {Received}",
                 SanitizeLogValue(txnid), SanitizeLogValue(calculatedHash), SanitizeLogValue(receivedHash));
-            return new PayUCallbackResultDto(false, tenantId, udf4, tier, txnid, ApiMessages.PayUHashMismatch);
+            return new PayUCallbackResultDto(false, tenantId, string.Empty, tier, txnid, ApiMessages.PayUHashMismatch);
+        }
+
+        var tenantSlug = await context.Tenants
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => tenant.Slug)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tenantSlug is null)
+        {
+            return new PayUCallbackResultDto(false, tenantId, string.Empty, tier, txnid, ApiMessages.NotFound);
         }
 
         if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
@@ -180,7 +190,7 @@ public class PayUPaymentService(
             var errorMessage = form["error_Message"].ToString();
             logger.LogWarning("PayU transaction {TxnId} was not successful. Status: {Status}, Error: {Error}",
                 SanitizeLogValue(txnid), SanitizeLogValue(status), SanitizeLogValue(errorMessage));
-            return new PayUCallbackResultDto(false, tenantId, udf4, tier, txnid, string.IsNullOrWhiteSpace(errorMessage) ? ApiMessages.PayUPaymentFailed : errorMessage);
+            return new PayUCallbackResultDto(false, tenantId, tenantSlug, tier, txnid, string.IsNullOrWhiteSpace(errorMessage) ? ApiMessages.PayUPaymentFailed : errorMessage);
         }
 
         // Fulfillment: update TenantPlan in database
@@ -238,7 +248,7 @@ public class PayUPaymentService(
         logger.LogInformation("Tenant {TenantId} successfully upgraded to {Tier} via PayU payment {TxnId}",
             tenantId, tier, SanitizeLogValue(txnid));
 
-        return new PayUCallbackResultDto(true, tenantId, udf4, tier, txnid, null);
+        return new PayUCallbackResultDto(true, tenantId, tenantSlug, tier, txnid, null);
     }
 
     private static string ComputeSha512(string input)
