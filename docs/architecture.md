@@ -455,31 +455,31 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
 - The Angular frontend interceptor handles 402 responses and surfaces clear, actionable upgrade guidance rather than generic failure toasts.
 - The `SubscriptionComponent` provides real-time resource meters (visual progress bars indicating document, seat, and storage utilization percentages) alongside tier cards for one-click plan upgrades.
 
-### 4. Secure Payment Processing (Stripe Integration & Dual Fulfillment)
+### 4. Secure Payment Processing (PayU Gateway Integration & SHA-512 Verification)
 - **Hosted Checkout Sessions (`POST /api/subscription/checkout`)**:
-  - Eliminates PCI-DSS compliance surface by using Stripe-hosted Checkout Sessions.
-  - Server securely generates checkout sessions with workspace metadata (`tenant_id`, `plan_tier`) and redirects the user to Stripe.
-  - Supports both pre-configured Price IDs and dynamic line items for zero-config onboarding.
-  - When keys are omitted, gracefully defaults to simulated sandbox activation for frictionless local dev.
-- **Dual Fulfillment Pattern (`FulfillSessionAsync`)**:
-  - In addition to asynchronous webhooks, Normora supports **synchronous fulfillment** upon redirect return (`?status=success&session_id={CHECKOUT_SESSION_ID}`).
-  - When the browser returns to the workspace subscription settings, the frontend automatically forwards `sessionId` to `GET /api/subscription/usage?sessionId=...`.
-  - The backend calls `FulfillSessionAsync`, directly queries the Stripe API for session status (`paid` or `complete`), cryptographically validates tenant metadata against the active `ITenantContext` (preventing BOLA / cross-tenant ID spoofing), and immediately provisions the upgraded plan limits in PostgreSQL.
-  - Includes an **idempotency guard** to ensure that subsequent webhook deliveries or page refreshes do not duplicate database mutations or audit logs.
-- **Asynchronous Webhook Fulfillment (`POST /api/subscription/webhook`)**:
-  - Securely receives webhook events without exposing public authorization flaws (`[AllowAnonymous]` + `[IgnoreAntiforgeryToken]`).
-  - Verifies cryptographic authenticity using Stripe's HMAC-SHA256 signature (`Stripe-Signature` header + Webhook Secret).
-  - Handles key lifecycle events:
-    - `checkout.session.completed`: Upgrades workspace quotas, attaches `StripeCustomerId` and `StripeSubscriptionId`, and records an immutable audit log entry.
-    - `customer.subscription.updated`: Synchronizes subscription status (`active`, `past_due`, `canceled`), renewal date (`CurrentPeriodEndUtc`), and scheduled cancellations (`CancelAtPeriodEnd`).
-    - `customer.subscription.deleted`: Gracefully reverts the workspace to the `Free` tier quotas and marks status as `canceled`.
-    - `invoice.payment_failed`: Marks workspace subscription status as `past_due` without abrupt lockout, notifying admins.
-- **Stripe Billing Customer Portal (`POST /api/subscription/portal`)**:
-  - Enables self-service invoice downloading, payment method management, and plan cancellations directly through Stripe's hosted portal, reducing custom billing UI overhead and maximizing security.
+  - Eliminates PCI-DSS compliance scope by utilizing PayU India hosted checkout (`https://test.payu.in/_payment` in development, `https://secure.payu.in/_payment` in production).
+  - The server securely determines plan pricing based on the selected tier and workspace currency, assigns a unique transaction ID (`txnid`), and attaches User Defined Fields (`udf1` = tenantId, `udf2` = tier, `udf3` = currency, `udf4` = tenantSlug, `udf5` = userEmail).
+  - Computes a tamper-proof SHA-512 request hash:
+    `sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT)`
+  - The frontend dynamically constructs and automatically submits a signed hidden HTML form (`submitPayUForm`) to hand off to PayU.
+- **Local vs International Payment Support**:
+  - **UPI (Local)**: Full UPI support (Google Pay, PhonePe, Paytm, BHIM, and QR code) for Indian Rupee (`inr`) transactions.
+  - **Credit & Debit Cards (Global & Domestic)**: Cards (Visa, Mastercard, RuPay, American Express, Diners Club) supporting international payments in major currencies (`inr`, `usd`, `eur`, `gbp`, `cad`, `aud`, `jpy`, `sgd`) as well as domestic card payments.
+- **Workspace Currency Persistence**:
+  - The workspace billing currency is persisted in `TenantPlan.Currency` (defaulting to `"inr"`).
+  - When users travel abroad, the application retains the workspace's configured INR currency, preventing accidental foreign transaction markups and preserving local UPI options.
+- **Cryptographic Callback Verification (`POST /api/subscription/payu-callback`)**:
+  - Public return endpoint (`[AllowAnonymous]` + `[IgnoreAntiforgeryToken]`) securely receives the browser postback from PayU (`surl` / `furl`).
+  - Recomputes the reverse SHA-512 hash against the server's private `MerchantSalt`:
+    - With additional charges: `sha512(additionalCharges|SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
+    - Standard: `sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
+  - Rejects hash mismatches immediately with `ApiMessages.PayUHashMismatch`.
+  - On verified `success`, updates workspace quota limits to the purchased tier, records `PayUTransactionId` and `PayUPaymentId` (`payuMoneyId`), updates `SubscriptionStatus = 'active'`, and records an immutable audit log entry.
+  - Redirects the user back to the tenant-scoped subscription settings with `?status=success` or `?status=failed&error=...`.
 - **Tier Hierarchy & Action Locking**:
   - The UI models a strict tier hierarchy: `Free` (0) < `Pro` (1) < `Enterprise` (2).
   - When a workspace is subscribed to a tier (e.g., Enterprise), all lower/previous tier buttons are permanently disabled (`cursor-not-allowed`) and indicate `"Included in {Plan}"`.
-  - Only upgrade pathways to strictly higher tiers are selectable. Downgrades and plan cancellations are securely directed through the Stripe Billing Customer Portal to avoid orphan Stripe subscriptions.
+  - Only upgrade pathways to strictly higher tiers are selectable.
 
 ---
 

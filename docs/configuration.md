@@ -87,18 +87,14 @@ The following options classes are defined in the `Normora.Shared` project. All p
   * `FromName` (string): Friendly display name for the sender. Defaults to `Normora`.
   * `DevOverrideRecipient` (string): Optional developer email address to intercept and redirect all outbound emails during local development and testing. Particularly useful with sandbox providers like Resend's free tier, which restricts delivery strictly to the registered account owner. Injected via `DEV_OVERRIDE_EMAIL`.
 
-### `StripeOptions`
-* **Section:** `Stripe`
+### `PayUOptions`
+* **Section:** `PayU`
 * **Owner:** `Normora.Shared`
 * **Properties:**
-  * `SecretKey` (string): Sensitive. The Stripe secret API key (`sk_test_...` or `sk_live_...`).
-  * `PublishableKey` (string): The Stripe publishable API key (`pk_test_...` or `pk_live_...`).
-  * `WebhookSecret` (string): Sensitive. HMAC signature verification secret for Stripe webhooks (`whsec_...`).
-  * `ProPriceId` (string): Optional pre-created Stripe Price ID for Pro plan monthly subscription.
-  * `EnterprisePriceId` (string): Optional pre-created Stripe Price ID for Enterprise plan monthly subscription.
-  * `SuccessUrl` (string): Return URL pattern on successful checkout.
-  * `CancelUrl` (string): Return URL pattern when checkout is cancelled.
-  * `IsConfigured` (bool, computed): Evaluates whether valid secret keys are present. When false, the application automatically falls back to an offline simulated sandbox mode for frictionless local testing.
+  * `MerchantKey` (string): PayU Merchant Key identifier (`gtKFFx` in test sandbox). Injected via environment variable `PAYU_MERCHANT_KEY`.
+  * `MerchantSalt` (string): Sensitive. PayU Merchant Salt used for generating and verifying SHA-512 cryptographic request and callback signatures. Injected via `PAYU_MERCHANT_SALT`.
+  * `IsProduction` (bool): Toggles between PayU sandbox environment (`https://test.payu.in/_payment`) and live production (`https://secure.payu.in/_payment`). Injected via `PAYU_IS_PRODUCTION`. Defaults to `false`.
+  * `PaymentUrl` (string, computed): Resolves the active hosted checkout redirect endpoint based on `IsProduction`.
 
 ---
 
@@ -128,7 +124,7 @@ Notice the **double underscore (`__`)** is used to represent the section hierarc
 * **Keycloak Memory Setting**: On Windows Docker Desktop, Keycloak is configured with `JAVA_OPTS_APPEND: "-Xms256m -Xmx512m"` to restrict heap usage and prevent unexpected exit code 137 (OOM killed) during concurrent builds.
 
 ### Production
-* Use Environment Variables for sensitive keys: `Gemini__ApiKey`, `Minio__SecretKey`, `Email__ResendApiKey`, `Stripe__SecretKey`.
+* Use Environment Variables for sensitive keys: `Gemini__ApiKey`, `Minio__SecretKey`, `Email__ResendApiKey`, `PayU__MerchantSalt`.
 * Ensure `App__BaseUrl` points to the actual HTTPS public domain.
 * All HTTP internal endpoints (like Tika/MinIO) are fine, but Keycloak external URLs must be HTTPS.
 
@@ -160,7 +156,7 @@ When you need to introduce new configuration settings, follow these steps:
    public class PaymentOptions
    {
        public const string SectionName = "Payments";
-       public string GatewayUrl { get; set; } = "https://api.stripe.com";
+       public string GatewayUrl { get; set; } = "https://test.payu.in/_payment";
        public string? SecretKey { get; set; }
    }
    ```

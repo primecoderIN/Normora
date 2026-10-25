@@ -104,10 +104,10 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `GET` | `/subscription/usage` | RequireTenant | Fetch tenant resource usage (documents, member seats, storage bytes, Stripe status) compared against current plan limits. Supports optional `?sessionId={id}` query parameter to synchronously verify and fulfill completed Stripe checkout sessions upon return. |
-| `POST` | `/subscription/checkout` | RequireTenant(Admin) | Create a Stripe Hosted Checkout Session to upgrade to a paid tier (`Pro`, `Enterprise`). |
-| `POST` | `/subscription/portal` | RequireTenant(Admin) | Create a Stripe Billing Customer Portal session to manage invoices, payment methods, or subscriptions. |
-| `POST` | `/subscription/webhook` | AllowAnonymous | Securely receive and fulfill asynchronous Stripe billing webhooks verified by HMAC signature. |
+| `GET` | `/subscription/usage` | RequireTenant | Fetch tenant resource usage (documents, member seats, storage bytes, subscription status, currency) compared against current plan limits. |
+| `POST` | `/subscription/checkout` | RequireTenant(Admin) | Generate PayU hosted checkout action URL and parameters signed with a SHA-512 cryptographic hash for upgrading to a paid tier (`Pro`, `Enterprise`) in specified currency. |
+| `POST` | `/subscription/portal` | RequireTenant(Admin) | Direct user to workspace subscription and billing management overview. |
+| `POST` | `/subscription/payu-callback` | AllowAnonymous | Securely handle PayU hosted checkout return (`surl`/`furl`) with reverse SHA-512 hash verification, quota provisioning, and browser redirection. |
 | `POST` | `/subscription/tier` | RequireTenant(Admin) | Upgrade or downgrade tenant subscription tier directly (free tier fallback). |
 
 ---

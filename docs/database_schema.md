@@ -112,23 +112,24 @@ Records all critical administrative and domain events executed within the tenant
 ---
 
 ### `TenantPlans`
-Defines subscription tiers, quota boundaries, and Stripe Billing integration metadata for multi-tenant resource governance.
+Defines subscription tiers, quota boundaries, workspace billing currency, and PayU payment integration metadata for multi-tenant resource governance.
 
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
 | `Id` | `uniqueidentifier` | ❌ | PK |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `Tenants.Id` (`Cascade`), **Unique** |
-| `PlanTier` | `int` | ❌ | Enum: `Free=0`, `Pro=1`, `Enterprise=2` |
+| `PlanTier` | `varchar(20)` | ❌ | Enum string: `Free`, `Pro`, `Enterprise` |
+| `Currency` | `varchar(10)` | ❌ | Workspace billing currency (e.g., `inr`, `usd`). Default: `inr` |
 | `MaxDocuments` | `int` | ❌ | Limit on active documents (Free: 10, Pro: 100, Enterprise: 10,000) |
 | `MaxEmployees` | `int` | ❌ | Limit on team member seats (Free: 5, Pro: 50, Enterprise: 5,000) |
 | `MaxStorageBytes` | `bigint` | ❌ | Storage cap in bytes (Free: 50MB, Pro: 5GB, Enterprise: 500GB) |
 | `ValidUntil` | `datetime2` | ✅ | Optional expiration timestamp |
 | `CreatedAt` | `datetime2` | ❌ | UTC creation timestamp |
 | `UpdatedAt` | `datetime2` | ✅ | UTC last update timestamp |
-| `StripeCustomerId` | `varchar(255)` | ✅ | Stripe Customer ID (`cus_...`) |
-| `StripeSubscriptionId` | `varchar(255)` | ✅ | Stripe Subscription ID (`sub_...`) |
-| `SubscriptionStatus` | `varchar(50)` | ✅ | Subscription status (`active`, `trialing`, `past_due`, `canceled`) |
-| `CurrentPeriodEndUtc` | `datetime2` | ✅ | Stripe billing cycle renewal date |
+| `PayUTransactionId` | `varchar(100)` | ✅ | PayU Transaction ID (`txnid`) |
+| `PayUPaymentId` | `varchar(100)` | ✅ | PayU Gateway Payment ID (`payuMoneyId`) |
+| `SubscriptionStatus` | `varchar(50)` | ✅ | Subscription status (`active`, `past_due`, `canceled`) |
+| `CurrentPeriodEndUtc` | `datetime2` | ✅ | Billing cycle renewal date |
 | `CancelAtPeriodEnd` | `boolean` | ❌ | True if cancellation is scheduled at end of current billing period |
 
 **Indexes:** `UX_TenantPlans_TenantId` (Unique)
