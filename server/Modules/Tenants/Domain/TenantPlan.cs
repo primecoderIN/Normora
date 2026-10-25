@@ -22,16 +22,19 @@ public class TenantPlan
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
-    // Stripe Billing integration
-    public string? StripeCustomerId { get; set; }
-    public string? StripeSubscriptionId { get; set; }
+    // Billing currency (e.g. "inr", "usd", "eur") - defaults to Indian Rupees
+    public string Currency { get; set; } = "inr";
+
+    // PayU Payment integration
+    public string? PayUTransactionId { get; set; }
+    public string? PayUPaymentId { get; set; }
     public string? SubscriptionStatus { get; set; } // "active", "trialing", "past_due", "canceled"
     public DateTime? CurrentPeriodEndUtc { get; set; }
     public bool CancelAtPeriodEnd { get; set; }
 
     public Tenant? Tenant { get; set; }
 
-    public static TenantPlan CreateDefault(Guid tenantId, PlanTier tier = PlanTier.Free) => tier switch
+    public static TenantPlan CreateDefault(Guid tenantId, PlanTier tier = PlanTier.Free, string currency = "inr") => tier switch
     {
         PlanTier.Pro => new TenantPlan
         {
@@ -39,7 +42,8 @@ public class TenantPlan
             PlanTier = PlanTier.Pro,
             MaxDocuments = 100,
             MaxEmployees = 50,
-            MaxStorageBytes = 5_368_709_120 // 5 GB
+            MaxStorageBytes = 5_368_709_120, // 5 GB
+            Currency = string.IsNullOrWhiteSpace(currency) ? "inr" : currency.ToLowerInvariant()
         },
         PlanTier.Enterprise => new TenantPlan
         {
@@ -47,7 +51,8 @@ public class TenantPlan
             PlanTier = PlanTier.Enterprise,
             MaxDocuments = 10_000,
             MaxEmployees = 5_000,
-            MaxStorageBytes = 536_870_912_000 // 500 GB
+            MaxStorageBytes = 536_870_912_000, // 500 GB
+            Currency = string.IsNullOrWhiteSpace(currency) ? "inr" : currency.ToLowerInvariant()
         },
         _ => new TenantPlan
         {
@@ -55,7 +60,8 @@ public class TenantPlan
             PlanTier = PlanTier.Free,
             MaxDocuments = 10,
             MaxEmployees = 5,
-            MaxStorageBytes = 52_428_800 // 50 MB
+            MaxStorageBytes = 52_428_800, // 50 MB
+            Currency = string.IsNullOrWhiteSpace(currency) ? "inr" : currency.ToLowerInvariant()
         }
     };
 }

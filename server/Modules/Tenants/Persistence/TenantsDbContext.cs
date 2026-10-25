@@ -217,8 +217,9 @@ public class TenantsDbContext(DbContextOptions<TenantsDbContext> options) : DbCo
             entity.HasKey(p => p.Id);
             entity.HasIndex(p => p.TenantId).IsUnique();
             entity.Property(p => p.PlanTier).HasConversion<string>().HasMaxLength(20);
-            entity.Property(p => p.StripeCustomerId).HasMaxLength(100);
-            entity.Property(p => p.StripeSubscriptionId).HasMaxLength(100);
+            entity.Property(p => p.Currency).HasMaxLength(10).HasDefaultValue("inr");
+            entity.Property(p => p.PayUTransactionId).HasMaxLength(100);
+            entity.Property(p => p.PayUPaymentId).HasMaxLength(100);
             entity.Property(p => p.SubscriptionStatus).HasMaxLength(50);
 
             entity.HasOne(p => p.Tenant)

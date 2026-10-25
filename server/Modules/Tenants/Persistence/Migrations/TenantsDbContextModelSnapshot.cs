@@ -281,6 +281,13 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("inr");
+
                     b.Property<DateTime?>("CurrentPeriodEndUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -293,18 +300,18 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.Property<long>("MaxStorageBytes")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("PayUPaymentId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PayUTransactionId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("PlanTier")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<string>("StripeCustomerId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("StripeSubscriptionId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("SubscriptionStatus")
                         .HasMaxLength(50)
