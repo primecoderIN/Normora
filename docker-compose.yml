@@ -120,11 +120,9 @@ services:
       - Email__DevOverrideRecipient=${DEV_OVERRIDE_EMAIL:-}
       - Tika__Endpoint=http://tika:9998/
       - Gemini__ApiKey=${GEMINI_API_KEY:-}
-      - Stripe__SecretKey=${STRIPE_SECRET_KEY:-}
-      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE_KEY:-}
-      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET:-}
-      - Stripe__ProPriceId=${STRIPE_PRO_PRICE_ID:-}
-      - Stripe__EnterprisePriceId=${STRIPE_ENTERPRISE_PRICE_ID:-}
+      - PayU__MerchantKey=${PAYU_MERCHANT_KEY:-gtKFFx}
+      - PayU__MerchantSalt=${PAYU_MERCHANT_SALT:-eCwWELxi}
+      - PayU__IsProduction=${PAYU_IS_PRODUCTION:-false}
     depends_on:
       postgres:
         condition: service_healthy

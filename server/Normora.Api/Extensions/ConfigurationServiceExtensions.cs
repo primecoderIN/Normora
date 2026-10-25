@@ -44,9 +44,9 @@ public static class ConfigurationServiceExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
             
-        // Stripe billing and subscription options
-        services.AddOptions<StripeOptions>()
-            .Bind(configuration.GetSection(StripeOptions.SectionName));
+        // PayU billing and subscription options
+        services.AddOptions<PayUOptions>()
+            .Bind(configuration.GetSection(PayUOptions.SectionName));
 
         // SMTP and transactional email settings
         services.AddOptions<EmailOptions>()

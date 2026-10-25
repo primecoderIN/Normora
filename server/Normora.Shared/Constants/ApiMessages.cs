@@ -84,7 +84,8 @@ public static class ApiMessages
     public const string CheckoutSessionCreated = "Checkout session created successfully.";
     public const string CustomerPortalCreated = "Billing portal session created successfully.";
     public const string FreeTierCannotCheckout = "Free tier does not require payment processing.";
-    public const string StripeBillingAccountNotFound = "No Stripe billing account found for this workspace. Please subscribe to a plan first.";
+    public const string PayUPaymentFailed = "PayU payment processing failed or was cancelled.";
+    public const string PayUHashMismatch = "Security error: PayU response signature mismatch.";
     public const string AnswerSaved = "Answer saved successfully.";
 }
 
