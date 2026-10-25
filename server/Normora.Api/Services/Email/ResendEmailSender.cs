@@ -64,11 +64,11 @@ public class ResendEmailSender(
                 response.EnsureSuccessStatusCode();
             }
 
-            logger.LogInformation("Resend successfully dispatched email to {To} with subject '{Subject}'", to, subject);
+            logger.LogInformation("Resend successfully dispatched email with subject '{Subject}'", subject);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to transmit email via Resend to {To}", to);
+            logger.LogError(ex, "Failed to transmit email via Resend");
             throw;
         }
     }

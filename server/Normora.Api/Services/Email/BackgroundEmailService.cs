@@ -15,7 +15,7 @@ public class BackgroundEmailService(
 {
     public Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Enqueuing background email job to {To} with subject '{Subject}'", to, subject);
+        logger.LogInformation("Enqueuing background email job with subject '{Subject}'", subject);
 
         backgroundJobs.Enqueue<SendEmailJob>(job => job.ExecuteAsync(to, subject, body));
 

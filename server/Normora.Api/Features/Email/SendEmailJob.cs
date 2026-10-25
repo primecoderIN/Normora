@@ -15,10 +15,10 @@ public class SendEmailJob(
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = [10, 30, 60])]
     public async Task ExecuteAsync(string to, string subject, string htmlBody)
     {
-        logger.LogInformation("Hangfire processing SendEmailJob for {To} with subject '{Subject}'", to, subject);
+        logger.LogInformation("Hangfire processing SendEmailJob with subject '{Subject}'", subject);
 
         await emailSender.SendAsync(to, subject, htmlBody);
 
-        logger.LogInformation("Hangfire successfully completed SendEmailJob for {To}", to);
+        logger.LogInformation("Hangfire successfully completed SendEmailJob");
     }
 }
