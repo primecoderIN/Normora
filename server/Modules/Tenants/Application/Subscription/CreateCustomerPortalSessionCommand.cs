@@ -22,7 +22,6 @@ public record CreateCustomerPortalSessionCommand(string? ReturnUrl = null) : IRe
 public class CreateCustomerPortalSessionCommandHandler(
     TenantsDbContext context,
     ITenantContext tenantContext,
-    IStripePaymentService stripeService,
     IOptions<AppOptions> appOptions) : IRequestHandler<CreateCustomerPortalSessionCommand, CustomerPortalResultDto>
 {
     public async Task<CustomerPortalResultDto> Handle(CreateCustomerPortalSessionCommand request, CancellationToken cancellationToken)
@@ -35,19 +34,13 @@ public class CreateCustomerPortalSessionCommandHandler(
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
-        // 3. Fallback to standard subscription settings route if no explicit returnUrl was provided
+        // 3. Direct to subscription settings view for invoice and billing overview
         var returnUrl = !string.IsNullOrWhiteSpace(request.ReturnUrl)
             ? request.ReturnUrl
             : (tenant != null
                 ? $"{appOptions.Value.BaseUrl}/app/workspaces/{tenant.Slug}/employer/settings/subscription"
                 : $"{appOptions.Value.BaseUrl}/settings/subscription");
 
-        // 4. Create hosted Stripe Customer Portal session for billing management
-        var portalUrl = await stripeService.CreateCustomerPortalSessionAsync(
-            tenantId,
-            returnUrl,
-            cancellationToken);
-
-        return new CustomerPortalResultDto(portalUrl);
+        return new CustomerPortalResultDto(returnUrl);
     }
 }

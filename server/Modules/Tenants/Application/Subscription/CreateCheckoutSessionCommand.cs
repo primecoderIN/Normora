@@ -7,28 +7,28 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Subscription;
 
-public record CheckoutSessionResultDto(string CheckoutUrl);
+public record CheckoutSessionResultDto(string ActionUrl, Dictionary<string, string> Params);
 
-public record CreateCheckoutSessionCommand(PlanTier Tier) : IRequest<CheckoutSessionResultDto>, IAuditableRequest
+public record CreateCheckoutSessionCommand(PlanTier Tier, string? Currency = "inr") : IRequest<CheckoutSessionResultDto>, IAuditableRequest
 {
     public string Action => "Subscription.CheckoutInitiated";
     public string TargetType => "TenantPlan";
     public string? GetTargetId(object? response) => null;
-    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { tier = Tier.ToString() });
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { tier = Tier.ToString(), currency = Currency });
 }
 
 public class CreateCheckoutSessionCommandHandler(
     TenantsDbContext context,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    IStripePaymentService stripeService) : IRequestHandler<CreateCheckoutSessionCommand, CheckoutSessionResultDto>
+    IPayUPaymentService payUService) : IRequestHandler<CreateCheckoutSessionCommand, CheckoutSessionResultDto>
 {
     public async Task<CheckoutSessionResultDto> Handle(CreateCheckoutSessionCommand request, CancellationToken cancellationToken)
     {
         // 1. Resolve current active tenant from scoped ambient context
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // 2. Fetch workspace details (name and slug) for dynamic return URLs and Stripe customer receipts
+        // 2. Fetch workspace details (name and slug) for return URLs and customer details
         var tenant = await context.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
@@ -36,15 +36,16 @@ public class CreateCheckoutSessionCommandHandler(
 
         var userEmail = currentUser.Email ?? string.Empty;
 
-        // 3. Request Stripe service to build hosted checkout session with tenant metadata
-        var checkoutUrl = await stripeService.CreateCheckoutSessionAsync(
+        // 3. Request PayU service to generate hosted checkout parameters with SHA-512 signature
+        var session = await payUService.CreatePaymentSessionAsync(
             tenantId,
             tenant.Name,
             tenant.Slug,
             userEmail,
             request.Tier,
+            request.Currency,
             cancellationToken);
 
-        return new CheckoutSessionResultDto(checkoutUrl);
+        return new CheckoutSessionResultDto(session.ActionUrl, session.Params);
     }
 }

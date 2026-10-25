@@ -23,29 +23,23 @@ public record SubscriptionUsageDto(
     bool HasActiveSubscription,
     string? SubscriptionStatus,
     DateTime? CurrentPeriodEndUtc,
-    bool CancelAtPeriodEnd
+    bool CancelAtPeriodEnd,
+    string Currency
 );
 
-public record GetTenantSubscriptionUsageQuery(string? SessionId = null) : IRequest<SubscriptionUsageDto>;
+public record GetTenantSubscriptionUsageQuery() : IRequest<SubscriptionUsageDto>;
 
 public class GetTenantSubscriptionUsageQueryHandler(
     TenantsDbContext context,
     ITenantContext tenantContext,
-    IMediator mediator,
-    IStripePaymentService stripePaymentService) : IRequestHandler<GetTenantSubscriptionUsageQuery, SubscriptionUsageDto>
+    IMediator mediator) : IRequestHandler<GetTenantSubscriptionUsageQuery, SubscriptionUsageDto>
 {
     public async Task<SubscriptionUsageDto> Handle(GetTenantSubscriptionUsageQuery request, CancellationToken cancellationToken)
     {
         // 1. Resolve active tenant from ambient context
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // 2. Dual Fulfillment: If coming from Stripe redirect with sessionId, synchronously fulfill plan before returning usage
-        if (!string.IsNullOrWhiteSpace(request.SessionId))
-        {
-            await stripePaymentService.FulfillSessionAsync(request.SessionId, tenantId, cancellationToken);
-        }
-
-        // 3. Retrieve tenant's active plan limits or fallback to default Starter/Free plan
+        // 2. Retrieve tenant's active plan limits or fallback to default Starter/Free plan
         var plan = await context.TenantPlans
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
@@ -55,18 +49,18 @@ public class GetTenantSubscriptionUsageQueryHandler(
             plan = TenantPlan.CreateDefault(tenantId);
         }
 
-        // 4. Calculate active team members count (ignoring soft-deleted memberships)
+        // 3. Calculate active team members count (ignoring soft-deleted memberships)
         var currentEmployees = await context.TenantMemberships
             .CountAsync(m => m.TenantId == tenantId && m.RemovedAt == null, cancellationToken);
 
-        // 5. Query Documents module via cross-module MediatR contract for current document count and storage bytes
+        // 4. Query Documents module via cross-module MediatR contract for current document count and storage bytes
         var docUsage = await mediator.Send(new GetTenantDocumentUsageQuery(tenantId), cancellationToken);
 
-        // 6. Evaluate boundary thresholds for UI quota progress bars and warnings
+        // 5. Evaluate boundary thresholds for UI quota progress bars and warnings
         var isDocLimitReached = docUsage.DocumentCount >= plan.MaxDocuments;
         var isEmpLimitReached = currentEmployees >= plan.MaxEmployees;
         var isStorageLimitReached = docUsage.TotalStorageBytes >= plan.MaxStorageBytes;
-        var hasActiveSubscription = !string.IsNullOrWhiteSpace(plan.StripeSubscriptionId) && plan.PlanTier != PlanTier.Free;
+        var hasActiveSubscription = !string.IsNullOrWhiteSpace(plan.PayUTransactionId) && plan.PlanTier != PlanTier.Free;
 
         return new SubscriptionUsageDto(
             plan.PlanTier.ToString(),
@@ -83,7 +77,8 @@ public class GetTenantSubscriptionUsageQueryHandler(
             hasActiveSubscription,
             plan.SubscriptionStatus,
             plan.CurrentPeriodEndUtc,
-            plan.CancelAtPeriodEnd
+            plan.CancelAtPeriodEnd,
+            string.IsNullOrWhiteSpace(plan.Currency) ? "inr" : plan.Currency.ToLowerInvariant()
         );
     }
 }
