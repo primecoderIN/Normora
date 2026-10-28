@@ -26,7 +26,7 @@ public sealed class DocumentHub(
             .Include(membership => membership.User)
             .AnyAsync(membership =>
                 membership.TenantId == tenantId &&
-                membership.User.KeycloakUserId == currentUser.KeycloakUserId);
+                membership.User.ExternalUserId == currentUser.ExternalUserId);
 
         if (!isMember)
         {

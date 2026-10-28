@@ -32,13 +32,13 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
         {
             // Check if this Keycloak user already has a local profile in our database, and create one if they don't
             var user = await dbContext.Users
-                .FirstOrDefaultAsync(u => u.KeycloakUserId == keycloakId, cancellationToken);
+                .FirstOrDefaultAsync(u => u.ExternalUserId == keycloakId, cancellationToken);
 
             if (user == null)
             {
                 user = new User
                 {
-                    KeycloakUserId = keycloakId,
+                    ExternalUserId = keycloakId,
                     Email = currentUser.Email,
                     DisplayName = currentUser.DisplayName
                 };

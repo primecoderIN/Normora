@@ -46,13 +46,13 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
 
         // Get or create the local user profile for the invitee if this is their first time logging in
         var user = await context.Users
-            .FirstOrDefaultAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
+            .FirstOrDefaultAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
 
         if (user == null)
         {
             user = new User
             {
-                KeycloakUserId = currentUser.KeycloakUserId,
+                ExternalUserId = currentUser.ExternalUserId,
                 Email = currentUser.Email,
                 DisplayName = currentUser.DisplayName ?? string.Empty
             };

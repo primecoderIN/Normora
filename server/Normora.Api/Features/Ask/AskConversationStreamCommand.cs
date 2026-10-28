@@ -99,7 +99,7 @@ public sealed class AskConversationStreamCommandHandler(
         // Find the user's personal tenant so we can include it in the retrieval
         var userMemberships = await tenantsContext.TenantMemberships
             .Include(m => m.Tenant)
-            .Where(m => m.User.KeycloakUserId == currentUser.KeycloakUserId)
+            .Where(m => m.User.ExternalUserId == currentUser.ExternalUserId)
             .ToListAsync(cancellationToken);
             
         var personalTenantId = userMemberships.FirstOrDefault(m => m.Tenant.IsPersonal)?.TenantId;

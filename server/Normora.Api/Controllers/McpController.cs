@@ -159,7 +159,7 @@ public sealed class McpController(
         // Build authenticated user & tenant context
         var personalTenantId = await tenantsContext.TenantMemberships
             .AsNoTracking()
-            .Where(m => m.User.KeycloakUserId == currentUser.KeycloakUserId && m.Tenant.IsPersonal)
+            .Where(m => m.User.ExternalUserId == currentUser.ExternalUserId && m.Tenant.IsPersonal)
             .Select(m => (Guid?)m.TenantId)
             .FirstOrDefaultAsync(cancellationToken);
 

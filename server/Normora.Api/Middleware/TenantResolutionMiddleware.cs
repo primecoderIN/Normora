@@ -35,7 +35,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
                         .Include(m => m.UserGroupMemberships)
                             .ThenInclude(ugm => ugm.UserGroup)
                                 .ThenInclude(ug => ug.UserGroupDepartments)
-                        .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.KeycloakUserId == currentUser.KeycloakUserId);
+                        .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.ExternalUserId == currentUser.ExternalUserId);
 
                     if (membership != null)
                     {
