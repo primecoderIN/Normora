@@ -60,7 +60,7 @@ public class GetTenantSubscriptionUsageQueryHandler(
         var isDocLimitReached = docUsage.DocumentCount >= plan.MaxDocuments;
         var isEmpLimitReached = currentEmployees >= plan.MaxEmployees;
         var isStorageLimitReached = docUsage.TotalStorageBytes >= plan.MaxStorageBytes;
-        var hasActiveSubscription = !string.IsNullOrWhiteSpace(plan.PayUTransactionId) && plan.PlanTier != PlanTier.Free;
+        var hasActiveSubscription = !string.IsNullOrWhiteSpace(plan.PaymentTransactionId) && plan.PlanTier != PlanTier.Free;
 
         return new SubscriptionUsageDto(
             plan.PlanTier.ToString(),

@@ -84,8 +84,10 @@ public static class ApiMessages
     public const string CheckoutSessionCreated = "Checkout session created successfully.";
     public const string CustomerPortalCreated = "Billing portal session created successfully.";
     public const string FreeTierCannotCheckout = "Free tier does not require payment processing.";
-    public const string PayUPaymentFailed = "PayU payment processing failed or was cancelled.";
-    public const string PayUHashMismatch = "Security error: PayU response signature mismatch.";
+    public const string PaymentProcessingFailed = "Payment processing failed or was cancelled.";
+    public const string PaymentSignatureMismatch = "Security error: Payment provider response signature mismatch.";
+    public const string PayUPaymentFailed = PaymentProcessingFailed;
+    public const string PayUHashMismatch = PaymentSignatureMismatch;
     public const string AnswerSaved = "Answer saved successfully.";
 }
 

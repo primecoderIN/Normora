@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Normora.Modules.Tenants.Domain;
 
 public enum PlanTier
@@ -25,9 +27,24 @@ public class TenantPlan
     // Billing currency (e.g. "inr", "usd", "eur") - defaults to Indian Rupees
     public string Currency { get; set; } = "inr";
 
-    // PayU Payment integration
-    public string? PayUTransactionId { get; set; }
-    public string? PayUPaymentId { get; set; }
+    // Payment Gateway integration
+    public string? PaymentTransactionId { get; set; }
+    public string? PaymentReferenceId { get; set; }
+
+    [NotMapped]
+    public string? PayUTransactionId
+    {
+        get => PaymentTransactionId;
+        set => PaymentTransactionId = value;
+    }
+
+    [NotMapped]
+    public string? PayUPaymentId
+    {
+        get => PaymentReferenceId;
+        set => PaymentReferenceId = value;
+    }
+
     public string? SubscriptionStatus { get; set; } // "active", "trialing", "past_due", "canceled"
     public DateTime? CurrentPeriodEndUtc { get; set; }
     public bool CancelAtPeriodEnd { get; set; }

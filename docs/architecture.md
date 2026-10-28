@@ -474,7 +474,7 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
     - With additional charges: `sha512(additionalCharges|SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
     - Standard: `sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
   - Rejects hash mismatches immediately with `ApiMessages.PayUHashMismatch`.
-  - On verified `success`, updates workspace quota limits to the purchased tier, records `PayUTransactionId` and `PayUPaymentId` (`payuMoneyId`), updates `SubscriptionStatus = 'active'`, and records an immutable audit log entry.
+  - On verified `success`, updates workspace quota limits to the purchased tier, records `PaymentTransactionId` and `PaymentReferenceId` (`payuMoneyId`), updates `SubscriptionStatus = 'active'`, and records an immutable audit log entry.
   - Redirects the user back to the tenant-scoped subscription settings with `?status=success` or `?status=failed&error=...`.
 - **Tier Hierarchy & Action Locking**:
   - The UI models a strict tier hierarchy: `Free` (0) < `Pro` (1) < `Enterprise` (2).

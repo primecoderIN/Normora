@@ -307,7 +307,7 @@ export class SubscriptionComponent implements OnInit {
     this.subscriptionService.createCheckoutSession(tier, this.selectedCurrency().toLowerCase()).subscribe({
       next: (session) => {
         if (session && session.actionUrl) {
-          this.subscriptionService.submitPayUForm(session);
+          this.subscriptionService.submitPaymentForm(session);
         } else {
           this.isUpdating.set(false);
           this.selectedTierLoading.set(null);

@@ -21,7 +21,7 @@ public class CreateCheckoutSessionCommandHandler(
     TenantsDbContext context,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    IPayUPaymentService payUService) : IRequestHandler<CreateCheckoutSessionCommand, CheckoutSessionResultDto>
+    IPaymentService paymentService) : IRequestHandler<CreateCheckoutSessionCommand, CheckoutSessionResultDto>
 {
     public async Task<CheckoutSessionResultDto> Handle(CreateCheckoutSessionCommand request, CancellationToken cancellationToken)
     {
@@ -36,8 +36,8 @@ public class CreateCheckoutSessionCommandHandler(
 
         var userEmail = currentUser.Email ?? string.Empty;
 
-        // 3. Request PayU service to generate hosted checkout parameters with SHA-512 signature
-        var session = await payUService.CreatePaymentSessionAsync(
+        // 3. Request payment service to generate hosted checkout parameters with signature
+        var session = await paymentService.CreatePaymentSessionAsync(
             tenantId,
             tenant.Name,
             tenant.Slug,

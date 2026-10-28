@@ -300,11 +300,11 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.Property<long>("MaxStorageBytes")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("PayUPaymentId")
+                    b.Property<string>("PaymentReferenceId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("PayUTransactionId")
+                    b.Property<string>("PaymentTransactionId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 

@@ -126,8 +126,8 @@ Defines subscription tiers, quota boundaries, workspace billing currency, and Pa
 | `ValidUntil` | `datetime2` | ✅ | Optional expiration timestamp |
 | `CreatedAt` | `datetime2` | ❌ | UTC creation timestamp |
 | `UpdatedAt` | `datetime2` | ✅ | UTC last update timestamp |
-| `PayUTransactionId` | `varchar(100)` | ✅ | PayU Transaction ID (`txnid`) |
-| `PayUPaymentId` | `varchar(100)` | ✅ | PayU Gateway Payment ID (`payuMoneyId`) |
+| `PaymentTransactionId` | `varchar(100)` | ✅ | Payment gateway transaction ID |
+| `PaymentReferenceId` | `varchar(100)` | ✅ | Payment gateway reference / payment ID |
 | `SubscriptionStatus` | `varchar(50)` | ✅ | Subscription status (`active`, `past_due`, `canceled`) |
 | `CurrentPeriodEndUtc` | `datetime2` | ✅ | Billing cycle renewal date |
 | `CancelAtPeriodEnd` | `boolean` | ❌ | True if cancellation is scheduled at end of current billing period |

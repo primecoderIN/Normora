@@ -69,9 +69,9 @@ export class SubscriptionService {
   }
 
   /**
-   * Automatically creates and submits a hidden HTML form to redirect to PayU hosted checkout.
+   * Automatically creates and submits a hidden HTML form to redirect to the hosted checkout gateway.
    */
-  submitPayUForm(session: CheckoutSessionResult): void {
+  submitPaymentForm(session: CheckoutSessionResult): void {
     if (!session?.actionUrl) return;
 
     const form = document.createElement('form');
@@ -91,6 +91,13 @@ export class SubscriptionService {
 
     document.body.appendChild(form);
     form.submit();
+  }
+
+  /**
+   * Backward-compatibility alias for submitPaymentForm.
+   */
+  submitPayUForm(session: CheckoutSessionResult): void {
+    this.submitPaymentForm(session);
   }
 
   /**

@@ -22,7 +22,7 @@ public record CreatePortalRequest(string? ReturnUrl = null);
 [Produces("application/json")]
 public class SubscriptionController(
     IMediator mediator,
-    IPayUPaymentService payUPaymentService,
+    IPaymentService paymentService,
     Microsoft.Extensions.Options.IOptions<Normora.Shared.Options.AppOptions> appOptions) : ControllerBase
 {
     /// <summary>
@@ -75,16 +75,17 @@ public class SubscriptionController(
     }
 
     /// <summary>
-    /// Handles PayU payment response (surl/furl) with reverse SHA-512 cryptographic verification.
-    /// Public return endpoint called by PayU upon completion of checkout.
+    /// Handles payment provider callback response (e.g. PayU surl/furl) with cryptographic verification.
+    /// Public return endpoint called by payment gateway upon completion of checkout.
     /// </summary>
+    [HttpPost("callback")]
     [HttpPost("payu-callback")]
     [AllowAnonymous]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> HandlePayUCallback(CancellationToken cancellationToken)
+    public async Task<IActionResult> HandlePaymentCallback(CancellationToken cancellationToken)
     {
         var form = await Request.ReadFormAsync(cancellationToken);
-        var result = await payUPaymentService.ProcessCallbackAsync(form, cancellationToken);
+        var result = await paymentService.ProcessCallbackAsync(form, cancellationToken);
 
         var baseUri = new Uri(appOptions.Value.BaseUrl, UriKind.Absolute);
         var destinationPath = !string.IsNullOrWhiteSpace(result.TenantSlug)
@@ -101,7 +102,7 @@ public class SubscriptionController(
         }
         else
         {
-            var error = Uri.EscapeDataString(result.ErrorMessage ?? ApiMessages.PayUPaymentFailed);
+            var error = Uri.EscapeDataString(result.ErrorMessage ?? ApiMessages.PaymentProcessingFailed);
             destination.Query = $"status=failed&error={error}";
         }
 

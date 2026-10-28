@@ -17,12 +17,12 @@ public class PayUPaymentService(
     TenantsDbContext context,
     IOptions<PayUOptions> payUOptions,
     IOptions<AppOptions> appOptions,
-    ILogger<PayUPaymentService> logger) : IPayUPaymentService
+    ILogger<PayUPaymentService> logger) : IPaymentService, IPayUPaymentService
 {
     private readonly PayUOptions _options = payUOptions.Value;
     private readonly AppOptions _app = appOptions.Value;
 
-    public async Task<PayUCheckoutDto> CreatePaymentSessionAsync(
+    public async Task<PaymentCheckoutDto> CreatePaymentSessionAsync(
         Guid tenantId,
         string tenantName,
         string tenantSlug,
@@ -116,10 +116,10 @@ public class PayUPaymentService(
         logger.LogInformation("Generated PayU checkout session for Tenant {TenantId}, Tier {Tier}, TxnId {TxnId}, Amount {Amount} {Currency}",
             tenantId, tier, txnid, amountString, normalizedCurrency);
 
-        return new PayUCheckoutDto(_options.PaymentUrl, paramDict);
+        return new PaymentCheckoutDto(_options.PaymentUrl, paramDict);
     }
 
-    public async Task<PayUCallbackResultDto> ProcessCallbackAsync(
+    public async Task<PaymentCallbackResultDto> ProcessCallbackAsync(
         IFormCollection form,
         CancellationToken cancellationToken = default)
     {
@@ -142,7 +142,7 @@ public class PayUPaymentService(
         if (!Guid.TryParse(udf1, out var tenantId))
         {
             logger.LogWarning("PayU callback received without valid tenantId in udf1: {Udf1}", SanitizeLogValue(udf1));
-            return new PayUCallbackResultDto(false, Guid.Empty, string.Empty, PlanTier.Free, txnid, ApiMessages.NotFound);
+            return new PaymentCallbackResultDto(false, Guid.Empty, string.Empty, PlanTier.Free, txnid, ApiMessages.NotFound);
         }
 
         if (!Enum.TryParse<PlanTier>(udf2, true, out var tier))
@@ -172,7 +172,7 @@ public class PayUPaymentService(
         {
             logger.LogError("PayU callback hash mismatch for Txn {TxnId}. Calculated: {Calculated}, Received: {Received}",
                 SanitizeLogValue(txnid), SanitizeLogValue(calculatedHash), SanitizeLogValue(receivedHash));
-            return new PayUCallbackResultDto(false, tenantId, string.Empty, tier, txnid, ApiMessages.PayUHashMismatch);
+            return new PaymentCallbackResultDto(false, tenantId, string.Empty, tier, txnid, ApiMessages.PaymentSignatureMismatch);
         }
 
         var tenantSlug = await context.Tenants
@@ -182,7 +182,7 @@ public class PayUPaymentService(
 
         if (tenantSlug is null)
         {
-            return new PayUCallbackResultDto(false, tenantId, string.Empty, tier, txnid, ApiMessages.NotFound);
+            return new PaymentCallbackResultDto(false, tenantId, string.Empty, tier, txnid, ApiMessages.NotFound);
         }
 
         if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
@@ -190,7 +190,7 @@ public class PayUPaymentService(
             var errorMessage = form["error_Message"].ToString();
             logger.LogWarning("PayU transaction {TxnId} was not successful. Status: {Status}, Error: {Error}",
                 SanitizeLogValue(txnid), SanitizeLogValue(status), SanitizeLogValue(errorMessage));
-            return new PayUCallbackResultDto(false, tenantId, tenantSlug, tier, txnid, string.IsNullOrWhiteSpace(errorMessage) ? ApiMessages.PayUPaymentFailed : errorMessage);
+            return new PaymentCallbackResultDto(false, tenantId, tenantSlug, tier, txnid, string.IsNullOrWhiteSpace(errorMessage) ? ApiMessages.PaymentProcessingFailed : errorMessage);
         }
 
         // Fulfillment: update TenantPlan in database
@@ -202,8 +202,8 @@ public class PayUPaymentService(
         if (plan == null)
         {
             plan = template;
-            plan.PayUTransactionId = txnid;
-            plan.PayUPaymentId = payuMoneyId;
+            plan.PaymentTransactionId = txnid;
+            plan.PaymentReferenceId = payuMoneyId;
             plan.SubscriptionStatus = "active";
             plan.Currency = string.IsNullOrWhiteSpace(udf3) ? "inr" : udf3.ToLowerInvariant();
             plan.CurrentPeriodEndUtc = DateTime.UtcNow.AddMonths(1);
@@ -216,8 +216,8 @@ public class PayUPaymentService(
             plan.MaxDocuments = template.MaxDocuments;
             plan.MaxEmployees = template.MaxEmployees;
             plan.MaxStorageBytes = template.MaxStorageBytes;
-            plan.PayUTransactionId = txnid;
-            plan.PayUPaymentId = payuMoneyId;
+            plan.PaymentTransactionId = txnid;
+            plan.PaymentReferenceId = payuMoneyId;
             plan.SubscriptionStatus = "active";
             plan.CurrentPeriodEndUtc = DateTime.UtcNow.AddMonths(1);
             plan.UpdatedAt = DateTime.UtcNow;
@@ -248,7 +248,7 @@ public class PayUPaymentService(
         logger.LogInformation("Tenant {TenantId} successfully upgraded to {Tier} via PayU payment {TxnId}",
             tenantId, tier, SanitizeLogValue(txnid));
 
-        return new PayUCallbackResultDto(true, tenantId, tenantSlug, tier, txnid, null);
+        return new PaymentCallbackResultDto(true, tenantId, tenantSlug, tier, txnid, null);
     }
 
     private static string ComputeSha512(string input)
