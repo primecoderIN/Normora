@@ -158,7 +158,7 @@ public sealed class UploadDocumentCommandHandler(
                 DocumentId = document.Id,
                 TenantId = request.TenantId,
                 VersionNumber = nextVersionNumber,
-                MinioObjectName = objectName,
+                StorageObjectName = objectName,
                 Status = DocumentStatus.Uploaded,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow

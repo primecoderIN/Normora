@@ -18,9 +18,9 @@ public class DocumentVersion
     public int VersionNumber { get; set; }
 
     /// <summary>
-    /// The unique object key used to store and retrieve the physical file from the MinIO S3 bucket.
+    /// The unique object key used to store and retrieve the physical file from the underlying object storage.
     /// </summary>
-    public string MinioObjectName { get; set; } = string.Empty;
+    public string StorageObjectName { get; set; } = string.Empty;
 
     /// <summary>
     /// Text extracted from the original file by the ingestion pipeline.

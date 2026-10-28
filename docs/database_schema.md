@@ -167,7 +167,7 @@ A single document can have multiple versions. RAG uses the one with `IsActive = 
 | `DocumentId` | `uniqueidentifier` | ❌ | FK → `Documents.Id` (`Cascade`) |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
 | `VersionNumber` | `int` | ❌ | Sequential version number |
-| `MinioObjectName` | `varchar(500)` | ❌ | S3 Object reference |
+| `StorageObjectName` | `varchar(500)` | ❌ | S3/Object storage reference |
 | `ExtractedText` | `text` | ✅ | |
 | `Status` | `int` | ❌ | Enum: `Uploaded`, `Processing`, `Ready`, `Failed` |
 | `IsActive` | `boolean` | ❌ | Only active version is queried by RAG |

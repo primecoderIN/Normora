@@ -57,7 +57,7 @@ namespace Normora.Modules.Documents.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId");
+                    b.HasIndex("TenantId", "DeletedAt");
 
                     b.ToTable("Documents");
                 });
@@ -96,6 +96,11 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DocumentVersionId");
+
+                    b.HasIndex("Embedding");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
 
                     b.HasIndex("SearchVector");
 
@@ -141,13 +146,13 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("MinioObjectName")
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StorageObjectName")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");

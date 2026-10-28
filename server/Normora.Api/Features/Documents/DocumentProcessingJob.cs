@@ -60,7 +60,7 @@ public sealed class DocumentProcessingJob(
             await context.SaveChangesAsync();
             await PublishStatusAsync(version.Document, version.Status);
 
-            await using var documentStream = await storageService.DownloadDocumentAsync(version.MinioObjectName);
+            await using var documentStream = await storageService.DownloadDocumentAsync(version.StorageObjectName);
             version.ExtractedText = await textExtractor.ExtractAsync(documentStream, version.Document.FileName);
 
             await using var transaction = await context.Database.BeginTransactionAsync();

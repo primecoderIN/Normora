@@ -41,12 +41,12 @@ public sealed class PurgeDeletedDocumentsJob(
         {
             try
             {
-                // Delete physical objects from MinIO for all versions of this document
+                // Delete physical objects from storage for all versions of this document
                 foreach (var version in document.Versions)
                 {
-                    if (!string.IsNullOrWhiteSpace(version.MinioObjectName))
+                    if (!string.IsNullOrWhiteSpace(version.StorageObjectName))
                     {
-                        await storageService.DeleteDocumentAsync(version.MinioObjectName);
+                        await storageService.DeleteDocumentAsync(version.StorageObjectName);
                     }
                 }
 

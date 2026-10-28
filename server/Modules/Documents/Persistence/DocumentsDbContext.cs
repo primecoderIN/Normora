@@ -47,7 +47,7 @@ public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, IT
         modelBuilder.Entity<DocumentVersion>(entity => 
         {
             entity.HasKey(v => v.Id);
-            entity.Property(v => v.MinioObjectName).IsRequired().HasMaxLength(500);
+            entity.Property(v => v.StorageObjectName).IsRequired().HasMaxLength(500);
             entity.Property(v => v.ExtractedText).HasColumnType("text");
             
             entity.HasOne(v => v.Document)
