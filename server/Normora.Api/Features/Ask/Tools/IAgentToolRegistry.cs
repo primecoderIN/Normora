@@ -17,9 +17,10 @@ public interface IAgentToolRegistry
     IAgentTool? FindTool(string name);
 
     /// <summary>
-    /// Returns the Gemini-compatible tools declaration object to attach to Gemini generateContent requests.
+    /// Returns the provider-agnostic tool declarations object used when attaching tools to an LLM generate request.
+    /// The concrete shape depends on the registered <see cref="ITextGenerationService"/> implementation.
     /// </summary>
-    object GetGeminiToolsDeclaration();
+    object GetToolDeclarations();
 
     /// <summary>
     /// Executes the specified tool safely by name.

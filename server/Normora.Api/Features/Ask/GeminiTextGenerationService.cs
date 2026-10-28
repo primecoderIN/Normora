@@ -121,7 +121,7 @@ public sealed class GeminiTextGenerationService(
 
         var toolsPayload = new List<object>
         {
-            toolRegistry.GetGeminiToolsDeclaration()
+            toolRegistry.GetToolDeclarations()
         };
 
         const int maxTurns = 3;

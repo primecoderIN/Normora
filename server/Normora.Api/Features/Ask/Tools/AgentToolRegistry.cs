@@ -12,7 +12,7 @@ public sealed class AgentToolRegistry(IEnumerable<IAgentTool> tools) : IAgentToo
     public IAgentTool? FindTool(string name) =>
         _toolsList.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase));
 
-    public object GetGeminiToolsDeclaration()
+    public object GetToolDeclarations()
     {
         return new
         {
