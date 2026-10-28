@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Minio;
 using Minio.DataModel.Args;
 using Minio.Exceptions;
@@ -12,7 +13,7 @@ namespace Normora.Modules.Documents.Persistence;
 /// A storage service implementation that interacts with a MinIO S3-compatible object storage server.
 /// MinIO is used to physically store the uploaded documents, keeping large binary data out of the PostgreSQL database.
 /// </summary>
-public class MinioDocumentStorageService(IMinioClient minioClient) : IDocumentStorageService
+public class MinioDocumentStorageService(IMinioClient minioClient, ILogger<MinioDocumentStorageService> logger) : IDocumentStorageService
 {
     private const string BucketName = "normora-documents";
     private static volatile bool _bucketEnsured;
@@ -38,7 +39,7 @@ public class MinioDocumentStorageService(IMinioClient minioClient) : IDocumentSt
         }
         catch (MinioException e)
         {
-            Console.WriteLine($"Error occurred: {e}");
+            logger.LogError(e, "Error ensuring bucket {BucketName} exists in MinIO", BucketName);
         }
         finally
         {

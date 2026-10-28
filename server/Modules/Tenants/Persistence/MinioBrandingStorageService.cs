@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Minio;
 using Minio.DataModel.Args;
 using Minio.Exceptions;
@@ -12,7 +13,7 @@ namespace Normora.Modules.Tenants.Persistence;
 /// A storage service implementation that interacts with a MinIO S3-compatible object storage server.
 /// MinIO is used to physically store the tenant branding assets.
 /// </summary>
-public class MinioBrandingStorageService(IMinioClient minioClient) : IBrandingStorageService
+public class MinioBrandingStorageService(IMinioClient minioClient, ILogger<MinioBrandingStorageService> logger) : IBrandingStorageService
 {
     private const string BucketName = "normora-branding";
     private static volatile bool _bucketEnsured;
@@ -38,7 +39,7 @@ public class MinioBrandingStorageService(IMinioClient minioClient) : IBrandingSt
         }
         catch (MinioException e)
         {
-            Console.WriteLine($"Error occurred: {e}");
+            logger.LogError(e, "Error ensuring bucket {BucketName} exists in MinIO", BucketName);
         }
         finally
         {
