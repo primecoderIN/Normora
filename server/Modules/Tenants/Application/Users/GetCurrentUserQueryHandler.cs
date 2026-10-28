@@ -21,7 +21,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
         var user = await context.Users
             .Include(u => u.Memberships)
             .ThenInclude(m => m.Tenant)
-            .FirstOrDefaultAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
+            .FirstOrDefaultAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
 
         // Check if there are any pending invitations for the user's email address so we can show them on the dashboard
         var pendingInvitations = new List<PendingInvitationDto>();
@@ -43,7 +43,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             var newUser = new Normora.Modules.Tenants.Domain.User
             {
                 Id = Guid.NewGuid(),
-                KeycloakUserId = currentUser.KeycloakUserId,
+                ExternalUserId = currentUser.ExternalUserId,
                 Email = currentUser.Email ?? string.Empty,
                 DisplayName = currentUser.DisplayName ?? string.Empty,
                 CreatedAt = DateTime.UtcNow
@@ -86,7 +86,7 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             user = await context.Users
                 .Include(u => u.Memberships)
                 .ThenInclude(m => m.Tenant)
-                .FirstAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
+                .FirstAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
         }
 
 

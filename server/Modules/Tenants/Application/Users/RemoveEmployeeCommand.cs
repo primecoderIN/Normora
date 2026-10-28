@@ -44,7 +44,7 @@ public class RemoveEmployeeCommandHandler(
         }
 
         // BFLA: Prevent removing the last admin or oneself? (optional, but good practice)
-        if (membership.User.KeycloakUserId == currentUser.KeycloakUserId)
+        if (membership.User.ExternalUserId == currentUser.ExternalUserId)
         {
             throw new BflaException(); // Cannot remove yourself this way
         }
@@ -61,7 +61,7 @@ public class RemoveEmployeeCommandHandler(
 
         // 1. Soft-delete the membership locally
         // We get the current user's DB ID to populate RemovedByUserId
-        var currentDbUser = await context.Users.FirstOrDefaultAsync(u => u.KeycloakUserId == currentUser.KeycloakUserId, cancellationToken);
+        var currentDbUser = await context.Users.FirstOrDefaultAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
         
         membership.RemovedAt = DateTime.UtcNow;
         membership.RemovedByUserId = currentDbUser?.Id;

@@ -46,12 +46,13 @@ public class TenantsDbContext(DbContextOptions<TenantsDbContext> options) : DbCo
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(u => u.Id);
-            entity.Property(u => u.KeycloakUserId).IsRequired().HasMaxLength(100);
+            entity.Property(u => u.ExternalUserId).IsRequired().HasMaxLength(100);
+            entity.Ignore(u => u.KeycloakUserId);
             entity.Property(u => u.Email).HasMaxLength(255);
             entity.Property(u => u.DisplayName).HasMaxLength(100);
 
-            // TENANT-05: User.KeycloakUserId → UNIQUE
-            entity.HasIndex(u => u.KeycloakUserId).IsUnique();
+            // TENANT-05: User.ExternalUserId → UNIQUE
+            entity.HasIndex(u => u.ExternalUserId).IsUnique();
         });
 
         // TenantMembership Configuration

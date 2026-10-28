@@ -13,9 +13,12 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUse
     private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     /// <inheritdoc />
-    // When DefaultMapInboundClaims = false, Keycloak's raw 'sub' claim is NOT mapped
-    // to the long Microsoft ClaimTypes.NameIdentifier URI. We must use the raw name.
-    public string KeycloakUserId => User?.FindFirst("sub")?.Value ?? User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    // When DefaultMapInboundClaims = false, the raw 'sub' claim is NOT mapped
+    // to the long Microsoft ClaimTypes.NameIdentifier URI. We check both.
+    public string ExternalUserId => User?.FindFirst("sub")?.Value ?? User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+    /// <inheritdoc />
+    public string KeycloakUserId => ExternalUserId;
 
     /// <inheritdoc />
     // Same as above: raw 'email' claim instead of the long Microsoft URI.

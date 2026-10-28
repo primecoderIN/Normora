@@ -1,7 +1,9 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Normora.Modules.Tenants.Domain;
 
 /// <summary>
-/// Represents a user identity synchronized from the external Identity Provider (Keycloak).
+/// Represents a user identity synchronized from an external Identity Provider (OIDC / Keycloak / etc.).
 /// This is a shadow record used to establish relationships with tenants in this database.
 /// </summary>
 public class User
@@ -9,9 +11,16 @@ public class User
     public Guid Id { get; set; }
 
     /// <summary>
-    /// The unique 'sub' identifier from Keycloak. Used to link incoming JWT tokens to this user.
+    /// The unique 'sub' identifier from the identity provider. Used to link incoming JWT tokens to this user.
     /// </summary>
-    public string KeycloakUserId { get; set; } = string.Empty;
+    public string ExternalUserId { get; set; } = string.Empty;
+
+    [NotMapped]
+    public string KeycloakUserId
+    {
+        get => ExternalUserId;
+        set => ExternalUserId = value;
+    }
 
     public string? Email { get; set; }
     public string? DisplayName { get; set; }

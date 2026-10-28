@@ -6,9 +6,14 @@ namespace Normora.Shared.Interfaces;
 public interface ICurrentUser
 {
     /// <summary>
-    /// The unique 'sub' identifier provided by Keycloak.
+    /// The unique 'sub' identifier provided by the external identity provider.
     /// </summary>
-    string KeycloakUserId { get; }
+    string ExternalUserId { get; }
+
+    /// <summary>
+    /// Backwards compatibility alias for ExternalUserId.
+    /// </summary>
+    string KeycloakUserId => ExternalUserId;
 
     /// <summary>
     /// The user's email address, sourced from the JWT claims.

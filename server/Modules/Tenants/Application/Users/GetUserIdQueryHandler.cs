@@ -12,10 +12,10 @@ public class GetUserIdQueryHandler(TenantsDbContext context) : IRequestHandler<G
 {
     public async Task<Guid?> Handle(GetUserIdQuery request, CancellationToken cancellationToken)
     {
-        // Query internal database Guid mapped to Keycloak subject ID
+        // Query internal database Guid mapped to external subject ID
         return await context.Users
             .AsNoTracking()
-            .Where(u => u.KeycloakUserId == request.KeycloakUserId)
+            .Where(u => u.ExternalUserId == request.ExternalUserId)
             .Select(u => (Guid?)u.Id)
             .FirstOrDefaultAsync(cancellationToken);
     }

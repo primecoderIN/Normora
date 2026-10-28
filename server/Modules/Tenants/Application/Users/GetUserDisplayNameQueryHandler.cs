@@ -16,7 +16,7 @@ public class GetUserDisplayNameQueryHandler(TenantsDbContext context)
         // Query user metadata projected to display name or email fallback
         var user = await context.Users
             .AsNoTracking()
-            .Where(u => u.KeycloakUserId == request.KeycloakUserId)
+            .Where(u => u.ExternalUserId == request.ExternalUserId)
             .Select(u => new { u.DisplayName, u.Email })
             .FirstOrDefaultAsync(cancellationToken);
 

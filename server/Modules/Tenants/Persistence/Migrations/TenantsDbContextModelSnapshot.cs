@@ -351,7 +351,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("KeycloakUserId")
+                    b.Property<string>("ExternalUserId")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -361,7 +361,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("KeycloakUserId")
+                    b.HasIndex("ExternalUserId")
                         .IsUnique();
 
                     b.ToTable("Users");
