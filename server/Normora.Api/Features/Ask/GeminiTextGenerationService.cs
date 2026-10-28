@@ -257,7 +257,7 @@ public sealed class GeminiTextGenerationService(
     private void EnsureConfigured()
     {
         if (!IsConfigured)
-            throw new InvalidOperationException(ApiMessages.AskGeminiNotConfigured);
+            throw new InvalidOperationException(ApiMessages.LlmGenerationNotConfigured);
     }
 
     private async IAsyncEnumerable<string> StreamGeminiAsync(

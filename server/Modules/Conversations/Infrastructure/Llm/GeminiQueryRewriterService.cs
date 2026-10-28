@@ -24,7 +24,7 @@ public class GeminiQueryRewriterService(
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            throw new InvalidOperationException(ApiMessages.AskGeminiNotConfigured);
+            throw new InvalidOperationException(ApiMessages.LlmGenerationNotConfigured);
         }
 
         // Skip rewriting if this is the very first question in the conversation since there's no context yet

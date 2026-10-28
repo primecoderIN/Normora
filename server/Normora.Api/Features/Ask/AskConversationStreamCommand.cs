@@ -43,7 +43,7 @@ public sealed class AskConversationStreamCommandHandler(
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (!generationService.IsConfigured)
-            throw new InvalidOperationException(ApiMessages.AskGeminiNotConfigured);
+            throw new InvalidOperationException(ApiMessages.LlmGenerationNotConfigured);
 
         var stopwatch = Stopwatch.StartNew();
         try

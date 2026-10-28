@@ -21,7 +21,7 @@ public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<Gemin
     {
         if (!IsConfigured)
         {
-            throw new InvalidOperationException(ApiMessages.GeminiEmbeddingNotConfigured);
+            throw new InvalidOperationException(ApiMessages.EmbeddingServiceNotConfigured);
         }
 
         // Convert the input text into a high-dimensional vector array so we can perform semantic similarity searches against it later
@@ -39,7 +39,7 @@ public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<Gemin
         var values = result?.Embedding?.Values;
         if (values is null || values.Count != EmbeddingDimensions)
         {
-            throw new InvalidOperationException(ApiMessages.GeminiInvalidEmbeddingVector);
+            throw new InvalidOperationException(ApiMessages.InvalidEmbeddingVector);
         }
 
         return values.ToArray();

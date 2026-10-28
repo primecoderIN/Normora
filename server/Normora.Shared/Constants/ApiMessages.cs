@@ -24,7 +24,7 @@ public static class ApiMessages
 
     // Server Errors
     public const string InternalServerError = "An unexpected error occurred. Please try again later.";
-    public const string AskGeminiNotConfigured = "Ask Normora requires Gemini generation to be configured.";
+    public const string LlmGenerationNotConfigured = "Ask Normora requires AI text generation to be configured.";
     public const string ResendApiKeyNotConfigured = "Resend API Key is not configured. Set RESEND_API_KEY in your environment or .env file.";
     public const string McpInvalidRequest = "Invalid MCP JSON-RPC request.";
     public const string McpMethodNotFound = "The requested MCP method was not found.";
@@ -60,8 +60,8 @@ public static class ApiMessages
     public const string TenantSlugTaken = "This workspace URL slug is already taken.";
     public const string TenantContextAlreadySet = "Tenant context is already set for this request.";
     public const string HubTenantAccessDenied = "You do not have access to this tenant.";
-    public const string GeminiEmbeddingNotConfigured = "Gemini embedding is not configured.";
-    public const string GeminiInvalidEmbeddingVector = "Gemini returned an invalid embedding vector.";
+    public const string EmbeddingServiceNotConfigured = "Document search requires an embedding service to be configured.";
+    public const string InvalidEmbeddingVector = "The embedding service returned an invalid vector.";
 
     // Success Messages
     public const string TenantCreated = "Tenant created successfully.";
