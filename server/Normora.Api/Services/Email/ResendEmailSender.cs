@@ -22,9 +22,9 @@ public class ResendEmailSender(
     public async Task SendAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default)
     {
         var emailOptions = options.Value;
-        if (string.IsNullOrWhiteSpace(emailOptions.ResendApiKey))
+        if (string.IsNullOrWhiteSpace(emailOptions.ApiKey))
         {
-            throw new InvalidOperationException(ApiMessages.ResendApiKeyNotConfigured);
+            throw new InvalidOperationException(ApiMessages.EmailServiceNotConfigured);
         }
 
         var formattedFrom = !string.IsNullOrWhiteSpace(emailOptions.FromName)
@@ -52,7 +52,7 @@ public class ResendEmailSender(
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", emailOptions.ResendApiKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", emailOptions.ApiKey);
 
         try
         {

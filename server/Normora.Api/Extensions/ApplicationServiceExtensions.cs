@@ -61,12 +61,12 @@ public static class ApplicationServiceExtensions
                 return sp.GetRequiredService<NullEmailSender>();
             }
 
-            if (!string.IsNullOrWhiteSpace(emailOptions.ResendApiKey))
+            if (!string.IsNullOrWhiteSpace(emailOptions.ApiKey))
             {
                 return sp.GetRequiredService<ResendEmailSender>();
             }
 
-            logger.LogWarning("No RESEND_API_KEY detected in configuration. Falling back to NullEmailSender (emails will be logged to console instead of dispatched).");
+            logger.LogWarning("No email API key detected in configuration. Falling back to NullEmailSender (emails will be logged to console instead of dispatched).");
             return sp.GetRequiredService<NullEmailSender>();
         });
 

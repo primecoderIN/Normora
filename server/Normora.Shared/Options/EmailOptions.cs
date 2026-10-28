@@ -13,10 +13,18 @@ public class EmailOptions
     public string Provider { get; set; } = "Resend";
 
     /// <summary>
-    /// The API key for Resend (maps to environment variable RESEND_API_KEY).
-    /// Starts with "re_".
+    /// API key for the transactional email provider (e.g. Resend, SendGrid, etc.).
     /// </summary>
-    public string? ResendApiKey { get; set; }
+    public string? ApiKey { get; set; }
+
+    /// <summary>
+    /// Alias for backwards compatibility with configuration keys named ResendApiKey or RESEND_API_KEY.
+    /// </summary>
+    public string? ResendApiKey
+    {
+        get => ApiKey;
+        set => ApiKey = value;
+    }
 
     /// <summary>
     /// Default sender email address (e.g. "onboarding@resend.dev" or your verified domain address).

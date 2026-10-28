@@ -25,7 +25,7 @@ public static class ApiMessages
     // Server Errors
     public const string InternalServerError = "An unexpected error occurred. Please try again later.";
     public const string LlmGenerationNotConfigured = "Ask Normora requires AI text generation to be configured.";
-    public const string ResendApiKeyNotConfigured = "Resend API Key is not configured. Set RESEND_API_KEY in your environment or .env file.";
+    public const string EmailServiceNotConfigured = "Transactional email delivery is not configured. Set the email API key in your environment or configuration.";
     public const string McpInvalidRequest = "Invalid MCP JSON-RPC request.";
     public const string McpMethodNotFound = "The requested MCP method was not found.";
     public const string McpToolNotFound = "The requested MCP tool was not found.";
