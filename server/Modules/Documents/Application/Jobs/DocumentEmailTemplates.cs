@@ -78,3 +78,4 @@ public static class DocumentEmailTemplates
         return EmailLayout.Wrap($"New document ready: {safeFile}", content);
     }
 }
+

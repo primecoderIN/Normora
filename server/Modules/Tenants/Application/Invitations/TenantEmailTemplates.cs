@@ -42,3 +42,4 @@ public static class TenantEmailTemplates
         return EmailLayout.Wrap($"Join {safeTenant} on Normora", content);
     }
 }
+

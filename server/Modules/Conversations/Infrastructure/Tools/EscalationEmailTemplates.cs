@@ -62,3 +62,4 @@ public static class EscalationEmailTemplates
         return EmailLayout.Wrap($"Inquiry Escalation: {safeTenant}", content);
     }
 }
+
