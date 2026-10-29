@@ -11,7 +11,10 @@ Normora is deployed as a single API process, but internally it is strictly divid
 **Rules of the Modular Monolith:**
 1. **No Shared Database**: Each module (`Tenants`, `Documents`, `Conversations`, `Users`) has its own `DbContext` and its own schema in PostgreSQL.
 2. **No Direct Joins**: You cannot write a LINQ query that joins a `Document` with a `Tenant`. You must query by IDs across boundaries.
-3. **Cross-Module Communication**: If the `Documents` module needs to know if a user has access, it doesn't query the `TenantsDbContext`. It sends a MediatR query to the `Tenants` module's API contract.
+3. **Cross-Module Communication**: If the `Documents` module needs to know if a user has access, it doesn't query the `TenantsDbContext`. It sends a MediatR query to the `Tenants` module's API contract in `Normora.Shared.Contracts.Tenants`.
+4. **100% DbContext Encapsulation**: DbContexts are strictly private to their owning module. API controllers, middleware, and SignalR hubs must **never** inject a module `DbContext`.
+5. **Feature Slices Live in Modules**: All commands, queries, domain entities, background ingestion jobs, and services live in `server/Modules/<ModuleName>/Application/`. `Normora.Api` contains only protocol adapters (controllers, SignalR hubs, middleware, program startup).
+6. **Decoupled Boundary Interfaces**: When infrastructure or middleware requires module operations, expose an abstraction in `Normora.Shared.Interfaces` (e.g. `ITenantResolutionService`, `IDocumentNotificationService`, `IEmailSender`, `IPaymentService`).
 
 ### Module Directory & Assembly Conventions
 Modules live in `server/Modules/<ModuleName>/<ModuleName>.csproj` (e.g., `server/Modules/Tenants/Tenants.csproj`).

@@ -10,22 +10,27 @@ Normora follows a **Strict Modular Monolith** architecture on the backend and a 
 - **Object Storage**: MinIO
 - **Infrastructure**: Docker & Docker Compose
 
-## Backend Architecture (Modular Monolith)
+## Backend Architecture (Strict Modular Monolith)
 The backend is structured into distinct modules to enforce separation of concerns while keeping deployment simple as a single API process. 
 
-Crucially, there is no shared "Infrastructure" layer. Each module completely encapsulates its own persistence logic, DbContexts, and external service integrations to guarantee true decoupling.
+Crucially, there is no shared "Infrastructure" layer, and **no cross-module DbContext leakage is permitted**. Each module completely encapsulates its own persistence logic, DbContexts, domain entities, background workers, and external service integrations:
 
-- **Normora.Api**: The main entry point (Host). Orchestrates middleware and dependency injection for all modules.
-- **Normora.Shared**: Common utilities, MediatR pipeline behaviors, and cross-cutting abstractions.
+- **Normora.Api**: A lightweight orchestration host. It contains API controllers, middleware (`TenantResolutionMiddleware`), SignalR hubs (`DocumentHub`), background worker scheduling, and dependency injection composition. It owns zero domain entities or database contexts.
+- **Normora.Shared**: Shared contracts (`Normora.Shared.Contracts.*`), cross-cutting abstractions, MediatR pipeline behaviors (`AuditBehavior`), constants (`ApiMessages`, `TenantRoles`), and provider-neutral interfaces (`ITenantResolutionService`, `IDocumentNotificationService`, `IAgentTool`, `IAgentToolRegistry`, `IEmailSender`, `IPaymentService`).
 - **Modules** (`server/Modules/`):
   Each module resides in a clean directory named after its bounded context with a matching `.csproj` file. Inside each `.csproj`, `<AssemblyName>` and `<RootNamespace>` are explicitly specified as `Normora.Modules.<ModuleName>` to maintain binary stability for migration snapshots and job serializers while keeping directory structures concise:
-  - `server/Modules/Auth/Auth.csproj` (`Normora.Modules.Auth`): Authentication and authorization flows.
-  - `server/Modules/Tenants/Tenants.csproj` (`Normora.Modules.Tenants`): Multi-tenancy logic, membership validation, isolated tenant data (`TenantsDbContext`), and invitation workflows (with 48-hour expiration).
-  - `server/Modules/Users/Users.csproj` (`Normora.Modules.Users`): User profiles and management.
-  - `server/Modules/Documents/Documents.csproj` (`Normora.Modules.Documents`): File metadata, isolated data storage (`DocumentsDbContext`), and object storage integration via MinIO.
-  - `server/Modules/Conversations/Conversations.csproj` (`Normora.Modules.Conversations`): Conversational RAG pipeline, chat history persistence (`ConversationsDbContext`), AI generation (Gemini), and token budget management.
+  - `server/Modules/Auth/Auth.csproj` (`Normora.Modules.Auth`): Authentication and authorization flows, claims transformation, and BFF endpoint integrations.
+  - `server/Modules/Tenants/Tenants.csproj` (`Normora.Modules.Tenants`): Multi-tenancy lifecycle, membership validation, departments, user groups, white-label branding, invitations, subscription plans, and isolated tenant persistence (`TenantsDbContext`). Encapsulates `TenantResolutionService` via `IDbContextFactory<TenantsDbContext>`.
+  - `server/Modules/Users/Users.csproj` (`Normora.Modules.Users`): User profiles, OIDC shadow identity management, and current user context.
+  - `server/Modules/Documents/Documents.csproj` (`Normora.Modules.Documents`): Document upload/management vertical slices (`UploadDocumentCommand`, `DeleteDocumentCommand`, `GetEmployerDocumentsQuery`, `SearchDocumentsQuery`, `GetDocumentChunkQuery`), background ingestion (`DocumentProcessingJob`, `PurgeDeletedDocumentsJob`), text extraction (Apache Tika), chunk embedding generation (`GeminiEmbeddingService`), hybrid retrieval (`RetrievalService`), and isolated data storage (`DocumentsDbContext`).
+  - `server/Modules/Conversations/Conversations.csproj` (`Normora.Modules.Conversations`): Multi-turn conversational RAG pipeline (`AskConversationCommand`, `AskConversationStreamCommand`), generative text models (`GeminiTextGenerationService`), autonomous agent tool calling (`AgentToolRegistry`, `CalculatePolicyLimitTool`, `EscalateInquiryTool`, `SearchCompanyDocumentsTool`), auto-titling, conversation metrics, saved answer exports (Markdown, QuestPDF, Docx), and chat history persistence (`ConversationsDbContext`).
 
-Modules communicate with each other exclusively through explicitly defined contracts (e.g., MediatR CQRS commands/queries or shared interfaces) rather than directly interacting with each other's databases.
+### Boundary Enforcement Rules
+1. **100% DbContext Encapsulation**: Module DbContexts (`TenantsDbContext`, `DocumentsDbContext`, `ConversationsDbContext`) are strictly private to their owning module. Under no circumstance may a DbContext be injected into an API controller, middleware, hub, or another module.
+2. **Contract-Driven Cross-Module Queries**: When one module or the host requires data owned by another module, it dispatches a lightweight MediatR query contract residing in `Normora.Shared.Contracts.*` (e.g. `GetTenantDashboardMetricsQuery`, `GetDocumentDashboardMetricsQuery`, `GetConversationDashboardMetricsQuery`, `GetAccessibleDocumentFileNamesQuery`, `GetTenantAdminRecipientsQuery`).
+3. **Boundary Interfaces**: Cross-cutting infrastructure hooks are decoupled using shared interfaces. 
+   - `ITenantResolutionService`: Allows `TenantResolutionMiddleware`, `DocumentHub`, and `McpController` to validate memberships and resolve tenant slugs without direct access to `TenantsDbContext`.
+   - `IDocumentNotificationService`: Enables background workers (`DocumentProcessingJob`) in the Documents module to push real-time WebSocket progress updates without coupling the module to SignalR hub dependencies.
 
 ## Identity & Access Management (IAM)
 Normora uses the **Backend-For-Frontend (BFF)** pattern powered by `Duende.BFF` to eliminate token exposure to the browser entirely.
@@ -427,6 +432,31 @@ Employers access audit logs via `GET /api/audit-logs` (`GetAuditLogsQuery`). The
 
 ---
 
+## Transactional Email Architecture (Provider-Agnostic)
+
+Normora provides transactional email notifications (employee invitations, document processing failure alerts, document-ready notifications, and HR escalation tickets) built on a provider-agnostic abstraction.
+
+### 1. Transport Abstraction (`IEmailSender`)
+Email delivery logic does not couple to third-party SDKs:
+- **`IEmailSender`** (`Normora.Shared.Interfaces`): Core interface declaring `SendEmailAsync(string to, string subject, string htmlBody, CancellationToken ct)`.
+- **`ResendEmailSender`**: Production implementation using Resend REST API via `IHttpClientFactory` (`https://api.resend.com/emails`).
+- **`NullEmailSender`**: Safe fallback implementation for automated tests or local setups where `RESEND_API_KEY` is omitted, avoiding unhandled crashes.
+
+### 2. Configuration & Options
+Configured in `Normora.Shared.Options.EmailOptions`:
+- `Provider`: `"Resend"` or `"Null"`
+- `ApiKey`: Provider API key (`RESEND_API_KEY`)
+- `FromEmail`: Verified sender address (`RESEND_FROM_EMAIL`)
+- `FromName`: Sender display name (defaults to `"Normora"`)
+- `DevOverrideRecipient`: Development interceptor (`DEV_OVERRIDE_EMAIL`) that redirects all outbound emails to the developer's verified sandbox inbox.
+
+### 3. Asynchronous Worker Execution
+Email dispatch is fully non-blocking:
+- Handlers invoke `IEmailService.SendAsync(...)`.
+- The request is serialized and enqueued into **Hangfire** (`SendEmailJob`) with automatic retry policies (10s, 30s, 60s), ensuring transient provider rate limits or network blips never fail the originating HTTP request.
+
+---
+
 ## Subscription & Plan Limits Architecture
 
 Multi-tenant SaaS scalability requires strict governance over shared compute, storage, and AI resource consumption. Normora implements tier-based quota management directly in the core application pipeline.
@@ -455,7 +485,14 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
 - The Angular frontend interceptor handles 402 responses and surfaces clear, actionable upgrade guidance rather than generic failure toasts.
 - The `SubscriptionComponent` provides real-time resource meters (visual progress bars indicating document, seat, and storage utilization percentages) alongside tier cards for one-click plan upgrades.
 
-### 4. Secure Payment Processing (PayU Gateway Integration & SHA-512 Verification)
+### 4. Decoupled Payment Gateway Architecture (`IPaymentService`)
+To eliminate vendor lock-in, payment processing is decoupled behind the `IPaymentService` abstraction:
+- **Provider-Agnostic Interface**: `IPaymentService` defines contracts for generating hosted checkout parameters (`CreateCheckoutSessionAsync`), processing cryptographic return callbacks (`ProcessCallbackAsync`), and generating billing portal links (`CreatePortalSessionAsync`).
+- **Agnostic Database Schema**: Workspace payment state in `TenantPlan` stores vendor-neutral columns `PaymentTransactionId` and `PaymentReferenceId` rather than provider-branded columns.
+- **Configurable Provider**: Configured in `appsettings.json` via `Payment:Provider` (e.g. `PayU`).
+
+### 5. PayU Hosted Checkout & Cryptographic SHA-512 Verification
+The initial implementation `PayUPaymentService` integrates PayU India:
 - **Hosted Checkout Sessions (`POST /api/subscription/checkout`)**:
   - Eliminates PCI-DSS compliance scope by utilizing PayU India hosted checkout (`https://test.payu.in/_payment` in development, `https://secure.payu.in/_payment` in production).
   - The server securely determines plan pricing based on the selected tier and workspace currency, assigns a unique transaction ID (`txnid`), and attaches User Defined Fields (`udf1` = tenantId, `udf2` = tier, `udf3` = currency, `udf4` = tenantSlug, `udf5` = userEmail).
@@ -474,7 +511,7 @@ Because `Documents` and `Tenants` are separate modules with isolated DbContexts:
     - With additional charges: `sha512(additionalCharges|SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
     - Standard: `sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
   - Rejects hash mismatches immediately with `ApiMessages.PayUHashMismatch`.
-  - On verified `success`, updates workspace quota limits to the purchased tier, records `PaymentTransactionId` and `PaymentReferenceId` (`payuMoneyId`), updates `SubscriptionStatus = 'active'`, and records an immutable audit log entry.
+  - On verified `success`, updates workspace quota limits to the purchased tier, records `PaymentTransactionId` and `PaymentReferenceId`, updates `SubscriptionStatus = 'active'`, and records an immutable audit log entry.
   - Redirects the user back to the tenant-scoped subscription settings with `?status=success` or `?status=failed&error=...`.
 - **Tier Hierarchy & Action Locking**:
   - The UI models a strict tier hierarchy: `Free` (0) < `Pro` (1) < `Enterprise` (2).
@@ -511,8 +548,18 @@ Following a comprehensive senior architectural audit, the codebase implements st
   - Just-in-Time user auto-provisioning catches `DbUpdateException` to safely handle concurrent parallel requests on initial authentication without race conditions.
 
 ### 3. Clean Architecture & Decoupling
-- **Cross-Module CQRS Contracts**:
-  - Cross-module database context leakage is forbidden. For example, `DocumentsController` resolves user identity via the MediatR contract `GetUserIdQuery` / `GetUserIdQueryHandler` rather than directly referencing `TenantsDbContext`.
+- **Zero Cross-Module DbContext Leakage**:
+  - Direct cross-module DbContext injection is forbidden across the entire codebase. API controllers, middleware, and hubs never inject `TenantsDbContext`, `DocumentsDbContext`, or `ConversationsDbContext`.
+  - The legacy God Aggregator `GetDashboardSummary` (which previously injected 3 DbContexts simultaneously) was refactored into a pure MediatR orchestrator dispatching lightweight, decoupled contracts: `GetTenantDashboardMetricsQuery`, `GetDocumentDashboardMetricsQuery`, and `GetConversationDashboardMetricsQuery`.
+  - `McpController` queries the Documents module through `GetMcpResourceDocumentsQuery` and `GetMcpDocumentContentQuery`, and validates tenants using `ITenantResolutionService`.
+- **Feature Slices Re-Homed into Modules**:
+  - All command and query handlers, background ingestion workers, and embedding services were migrated from the API project directly into their respective modules (`server/Modules/Documents/Application/` and `server/Modules/Conversations/Application/`).
+  - `Normora.Api` contains no business logic or feature handlers; it serves exclusively as a protocol host for controllers, hubs, middleware, and startup configuration.
+- **Decoupled External Identity (`ExternalUserId`)**:
+  - The domain entity `User` maps external OIDC identity provider subject IDs to the database column `ExternalUserId` rather than vendor-specific names like `KeycloakUserId`. LINQ queries and junction tables operate against `ExternalUserId`, guaranteeing that swapping or federating identity providers requires zero schema or query alterations.
+- **Provider-Neutral Storage & AI Naming**:
+  - Storage references use `StorageObjectName` instead of vendor-specific names (`MinioObjectName`).
+  - LLM errors and tool registry contracts use vendor-neutral terminology (`ITextGenerationService`, `IAgentToolRegistry`, `ApiMessages.AiQuotaExceeded`, `ApiMessages.AiServiceUnavailable`).
 - **Modern Primary Constructors**:
   - All dependency injection across `DbContext`s, controllers, handlers, and background services utilizes C# primary constructors rather than verbose private fields and constructor boilerplate.
 - **Query Optimization**:

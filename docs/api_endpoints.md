@@ -77,10 +77,28 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 | `GET` | `/conversations/{id}` | RequireTenant(Employee) | Get full message history for a specific conversation. |
 | `POST` | `/conversations` | RequireTenant(Employee) | Start a new conversation with an initial prompt. Returns grounded answer and citations. |
 | `POST` | `/conversations/{id}/messages` | RequireTenant(Employee) | Send a follow-up message in an existing conversation (Multi-turn RAG). |
+| `POST` | `/conversations/{id}/messages/stream` | RequireTenant(Employee) | Stream a grounded AI response using Server-Sent Events (SSE). |
 | `POST` | `/conversations/{id}/messages/{messageId}/feedback` | RequireTenant(Employee) | Submit a Positive (1) or Negative (2) rating for an AI message. |
 | `DELETE` | `/conversations/{id}` | RequireTenant(Employee) | Delete a conversation history. |
 | `POST` | `/conversations/{id}/share` | RequireTenant(Employee) | Create or retrieve a shareable read-only link token for a conversation. |
 | `GET` | `/conversations/shared/{token}` | Authenticated | Fetch a read-only snapshot of a shared conversation by token. |
+
+---
+
+## 📊 Dashboard
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/dashboard/summary` | RequireTenant(Employer) | Fetch aggregated workspace dashboard metrics (total documents, members, storage utilization, and conversation volume). MediatR aggregator querying decoupled modules. |
+
+---
+
+## 🤖 Model Context Protocol (MCP)
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/mcp` | RequireTenant(Employee) | Discovery manifest returning MCP server capabilities, protocol version, and tool inventory. |
+| `POST` | `/mcp` | RequireTenant(Employee) | JSON-RPC 2.0 endpoint handling `initialize`, `tools/list`, `tools/call`, `resources/list`, and `resources/read`. |
 
 ---
 

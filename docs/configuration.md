@@ -27,11 +27,12 @@ We employ data annotations (e.g., `[Required]`, `[Url]`, `[EmailAddress]`) on ou
 These are validated at application startup using `.ValidateDataAnnotations().ValidateOnStart()`. This fail-fast mechanism ensures that missing API keys or invalid endpoints crash the application immediately during startup rather than throwing a null reference exception mid-request in production.
 
 ### Modular Ownership and the Shared Project
-Currently, infrastructure options (like `GeminiOptions` and `AppOptions`) reside in `Normora.Shared`. This is a deliberate design choice because these dependencies are currently cross-cutting:
-* `GeminiOptions` is utilized by both the `Conversations` module (for query rewriting) and the `Normora.Api` host (for embedding and text generation).
-* `AppOptions` is used by the `Tenants` module (for invite links) and the `Normora.Api` host.
+Shared options (such as `GeminiOptions`, `AppOptions`, and `EmailOptions`) reside in `Normora.Shared` to declare cross-cutting schemas across modules. 
 
-If strict modular ownership is required in the future, the next architectural refactoring step would involve pushing those API-level service registrations (like `GeminiEmbeddingService` and MinIO/Tika HTTP clients) down into their respective modules (e.g., `Documents` and `Conversations`). Once those features are fully encapsulated within the modules, we can safely migrate the Options classes out of `Normora.Shared` and into their specific module infrastructures.
+All infrastructure service implementations have been pushed down into their respective modules:
+* `GeminiEmbeddingService` and Apache Tika client are encapsulated inside `Normora.Modules.Documents`.
+* `GeminiTextGenerationService`, `AgentToolRegistry`, and Agent Tools are encapsulated inside `Normora.Modules.Conversations`.
+* `PayUPaymentService` and `TenantResolutionService` are encapsulated inside `Normora.Modules.Tenants`.
 
 ---
 
@@ -82,7 +83,8 @@ The following options classes are defined in the `Normora.Shared` project. All p
 * **Owner:** `Normora.Shared`
 * **Properties:**
   * `Provider` (string): Transactional email delivery provider (`Resend` or `Null`). Defaults to `Resend`.
-  * `ResendApiKey` (string): Sensitive. The API key for Resend (`re_...`). Injected via environment variable `RESEND_API_KEY`.
+  * `ApiKey` (string): Sensitive. API key for the transactional email provider. Injected via `RESEND_API_KEY` or `Email__ApiKey`.
+  * `ResendApiKey` (string): Alias for backwards compatibility with legacy configuration keys named `ResendApiKey` or `RESEND_API_KEY`.
   * `FromEmail` (string): Sender email address (e.g., `normora@resend.dev` or a verified domain address). Injected via `RESEND_FROM_EMAIL`. Defaults to `onboarding@resend.dev`.
   * `FromName` (string): Friendly display name for the sender. Defaults to `Normora`.
   * `DevOverrideRecipient` (string): Optional developer email address to intercept and redirect all outbound emails during local development and testing. Particularly useful with sandbox providers like Resend's free tier, which restricts delivery strictly to the registered account owner. Injected via `DEV_OVERRIDE_EMAIL`.

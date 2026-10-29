@@ -54,10 +54,8 @@ Here is exactly what happens in milliseconds:
 4. **Reranking**:
    The retrieved candidate text chunks are scored and reranked to ensure the absolute most relevant paragraphs are pushed to the top.
 
-5. **LLM Generation**:
-   The system builds a prompt for the main LLM that looks like this:
-   *“You are a helpful assistant. Answer the user's question using ONLY the provided authoritative documents. If the answer isn't in the documents, say you don't know.”*
-   It injects the secure text chunks below this instruction.
+5. **LLM Generation & Agent Tool Calling**:
+   The system builds a grounded prompt injecting authoritative document chunks. If the question requires deterministic calculations or actions beyond static text (e.g., computing travel allowances or escalating an unanswered policy inquiry to HR admins), Gemini autonomously executes registered workspace tools (`calculate_policy_limit`, `escalate_hr_inquiry`, `search_company_documents`) across a multi-turn function calling loop within the user's authorized tenant context.
 
 6. **Streaming & Citations**:
    The LLM generates the answer and streams it back to the user's screen in real-time. Alongside the answer, the backend returns **Message Citations**—a list of the exact documents and chunks that were used to generate the answer, which the UI renders as clickable references.

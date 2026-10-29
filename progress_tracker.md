@@ -225,21 +225,21 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Frontend: Built modern `AuditLogsComponent` with responsive filters, color-coded action badges, pagination, skeleton loaders, and JSON detail inspection modal.
 - [x] Frontend: Added "Audit logs" navigation item in employer layout and registered routes in `app.routes.ts`.
 
-## ✅ Completed Subscription & Stripe Billing Integration
+## ✅ Completed Subscription & Decoupled Payment Integration
 - [x] Backend: Added `TenantPlan` domain entity (`Free`, `Pro`, `Enterprise` tiers with `MaxDocuments`, `MaxEmployees`, `MaxStorageBytes`), `TenantsDbContext` configuration, and EF Core migration `AddTenantPlans`.
 - [x] Backend: Added `PlanLimitExceededException` mapped globally to HTTP 402 Payment Required in `GlobalExceptionHandler`.
 - [x] Backend: Added quota enforcement in `UploadDocumentCommandHandler` (checking document count and storage bytes) and `InviteEmployeeCommandHandler` (checking seat limits).
 - [x] Backend: Added `GetTenantDocumentUsageQuery` and `CheckTenantUploadLimitQuery` contracts for cross-module quota checks.
 - [x] Backend: Added `GetTenantSubscriptionUsageQuery`, `UpdateTenantPlanTierCommand`, and `SubscriptionController` (`GET /api/subscription/usage`, `POST /api/subscription/tier`).
-- [x] Backend: Integrated Stripe Hosted Checkout (`POST /api/subscription/checkout`, `CreateCheckoutSessionCommand`, `IStripePaymentService`).
-- [x] Backend: Integrated Stripe HMAC-SHA256 Webhook verification (`POST /api/subscription/webhook`) handling `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, and `invoice.payment_failed`.
-- [x] Backend: Integrated Stripe Billing Customer Portal (`POST /api/subscription/portal`, `CreateCustomerPortalSessionCommand`) for self-service invoice and payment method management.
-- [x] Backend: Implemented **Synchronous Dual-Fulfillment** (`FulfillSessionAsync`) in `GetTenantSubscriptionUsageQuery` to immediately verify and provision quotas on Checkout redirect return without relying on local webhooks.
+- [x] Backend: Created provider-agnostic `IPaymentService` abstraction with `PayUPaymentService` implementation for hosted checkout and cryptographic callback handling.
+- [x] Backend: Integrated PayU India Hosted Checkout (`POST /api/subscription/checkout`, `CreateCheckoutSessionCommand`, `IPaymentService`) with SHA-512 cryptographic request signature generation.
+- [x] Backend: Integrated PayU Callback verification (`POST /api/subscription/payu-callback`) with reverse SHA-512 hash verification, quota provisioning, audit logging, and redirect return.
+- [x] Backend: Persisted workspace billing currency in `TenantPlan.Currency` (defaulting to `"inr"`) supporting domestic UPI and cards, and global credit/debit cards in major currencies.
 - [x] Backend: Added BOLA metadata validation and idempotency guards to prevent duplicate mutations or audit logs.
-- [x] Frontend: Added `SubscriptionService` with usage, checkout session, customer portal, and tier update API methods.
+- [x] Frontend: Added `SubscriptionService` with usage, checkout session, and tier update API methods.
 - [x] Frontend: Built `SubscriptionComponent` with real-time usage meters for documents, member seats, and storage, warning alerts when limits approach/exceed, and interactive plan tier selection cards.
-- [x] Frontend: Implemented **Tier Hierarchy Action Locking**: when on a higher tier (e.g. Enterprise), previous tiers are locked and disabled with `"Included in {Plan}"`, directing all downgrades/cancellations safely through the Customer Portal.
-- [x] Frontend: Created `SubscriptionRedirectComponent` handling top-level `/settings/subscription` return redirects from Stripe and routing seamlessly to `/app/workspaces/:slug/employer/settings/subscription` with preserved query parameters.
+- [x] Frontend: Implemented **Tier Hierarchy Action Locking**: when on a higher tier (e.g. Enterprise), previous tiers are locked and disabled with `"Included in {Plan}"`.
+- [x] Frontend: Created `submitPayUForm` helper for seamless browser hand-off to hosted checkout.
 - [x] Frontend: Added "Subscription & Plans" navigation link to employer layout and registered routes in `app.routes.ts`.
 
 ## ✅ Completed Email Notifications (Phase 23)
@@ -287,4 +287,32 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - `resources/list`: Lists verified corporate documents scoped to the user's effective department permissions.
   - `resources/read`: Reads document chunks via `normora://documents/{id}` with strict BOLA checks.
   - `GET /api/mcp`: Discovery manifest endpoint returning workspace server status and tool inventory.
+
+## ✅ Completed Provider-Agnostic Infrastructure & Identity Decoupling
+- [x] Backend: Decoupled transactional email from Resend via `IEmailSender` abstraction (`ResendEmailSender`, `NullEmailSender`) and provider-agnostic `EmailOptions` (`Provider`, `ApiKey`, `FromEmail`, `FromName`) (`1cfec0c`).
+- [x] Backend: Decoupled payment gateway via `IPaymentService` abstraction (`PayUPaymentService`) and database schema migration `RenamePayUColumnsToPaymentColumns` (`PaymentTransactionId`, `PaymentReferenceId`) (`8e1e9cf`).
+- [x] Backend: Decoupled Keycloak OIDC identity from domain entities and cross-module queries via database migration `RenameKeycloakUserIdToExternalUserId` and mapped property `ExternalUserId` (`7fc8c03`, `eeb7eaf`).
+- [x] Backend: Decoupled object storage vendor naming via database migration `RenameMinioObjectNameToStorageObjectName` (`ad0562e`).
+- [x] Backend: Standardized AI error constants in `ApiMessages` to be vendor-neutral (`5d6578d`) and removed vendor naming from `IAgentToolRegistry` (`7bfba4a`).
+
+## ✅ Completed Strict Modular Monolith Refactoring & 100% DbContext Encapsulation (Phase 27)
+- [x] Backend: Enforced 100% DbContext encapsulation across all modules. Eliminated all direct references to `TenantsDbContext`, `DocumentsDbContext`, and `ConversationsDbContext` from middleware, hubs, and controllers.
+- [x] Backend: Created `ITenantResolutionService` in `Normora.Shared.Interfaces` and implemented it in `Normora.Modules.Tenants.Persistence` using `IDbContextFactory<TenantsDbContext>`, decoupling `TenantResolutionMiddleware`, `DocumentHub`, and `McpController`.
+- [x] Backend: Refactored legacy God Aggregator `GetDashboardSummary` (which previously injected 3 DbContexts simultaneously) into a clean MediatR orchestrator querying decoupled cross-module contracts: `GetTenantDashboardMetricsQuery`, `GetDocumentDashboardMetricsQuery`, and `GetConversationDashboardMetricsQuery`.
+- [x] Backend: Decoupled real-time WebSocket notifications from Documents module via `IDocumentNotificationService` interface and `SignalRDocumentNotificationService` in API host, eliminating direct SignalR hub couplings from background jobs.
+- [x] Backend: Decoupled `McpController` document queries via `GetMcpResourceDocumentsQuery` and `GetMcpDocumentContentQuery` MediatR contracts.
+- [x] Backend: Re-homed Documents feature vertical slices to `server/Modules/Documents/Application/`:
+  - Commands: `UploadDocumentCommand`, `DeleteDocumentCommand`
+  - Queries: `GetEmployerDocumentsQuery`, `SearchDocumentsQuery`, `GetDocumentChunkQuery`, `GetAccessibleDocumentFileNamesQuery`, `GetOutdatedChunkIdsQuery`, `GetTenantDocumentUsageQuery`
+  - Jobs: `DocumentProcessingJob`, `PurgeDeletedDocumentsJob`
+  - Services: `RetrievalService`, `GeminiEmbeddingService`
+  - DTOs: `DocumentDto`
+- [x] Backend: Re-homed Conversations feature vertical slices to `server/Modules/Conversations/Application/` and `Infrastructure/`:
+  - Commands: `AskConversationCommand`, `AskConversationStreamCommand`, `UpdateConversationTitleCommand`
+  - Services: `AskHelpers`, `AutoTitleService`, `ConversationMetrics`, `ITextGenerationService`, `IAutoTitleService`
+  - Infrastructure LLM: `GeminiTextGenerationService`
+  - Infrastructure Tools: `AgentToolRegistry`, `CalculatePolicyLimitTool`, `EscalateInquiryTool`, `SearchCompanyDocumentsTool`
+- [x] Backend: Standardized shared agent tool contracts in `Normora.Shared.Interfaces` (`IAgentTool`, `IAgentToolRegistry`, `AgentToolResult`, `ToolExecutionContext`, `McpToolDefinition`).
+- [x] Backend: Cleaned up legacy directories `server/Normora.Api/Features/Documents/` and `server/Normora.Api/Features/Ask/`.
+- [x] Backend: Validated solution build with `dotnet build server/Normora.slnx` — 0 warnings, 0 errors.
 

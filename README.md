@@ -24,15 +24,16 @@
 ## 🌟 Why Normora?
 Normora is architected from the ground up to deliver a resilient and performant modern web experience:
 
-- **Strict Modular Monolith Backend**: Built on **.NET 10**, the backend gracefully enforces strict domain boundaries. Independent modules (such as Tenants, Documents, Auth) own their isolated persistence layers and infrastructure concerns. This allows for seamless vertical scaling today and effortless extraction into microservices in the future.
+- **Strict Modular Monolith Backend**: Built on **.NET 10**, the backend strictly enforces 100% DbContext encapsulation across bounded contexts (`Tenants`, `Documents`, `Conversations`, `Users`). Feature vertical slices reside directly in their owning modules, and the API host communicates solely via MediatR query contracts and boundary interfaces.
 - **Modern SPA Frontend**: Powered by **Angular**, providing a lightning-fast, reactive, and strictly-typed user experience.
 - **Enterprise-Ready Infrastructure**:
-  - **Identity & Access Management**: Fully integrated with **Keycloak** via OAuth2/OpenID Connect to handle secure authentication and robust role-based access control.
+  - **Identity & Access Management**: Fully integrated with **Keycloak** via OAuth2/OpenID Connect to handle secure authentication and robust role-based access control, decoupled from domain models via `ExternalUserId`.
   - **Object Storage**: Leverages **MinIO** for S3-compatible, highly performant, and horizontally scalable file storage.
   - **Relational Data**: Powered by **PostgreSQL** for reliable ACID-compliant transactions across isolated module schemas.
-- **Conversational AI & RAG**: Features an advanced Retrieval-Augmented Generation pipeline. Uses **pgvector** for hybrid vector-keyword retrieval (RRF scoring) and the **Gemini 1.5 Flash API** to answer complex queries strictly grounded in secure company documentation.
+- **Conversational AI & RAG**: Features an advanced Retrieval-Augmented Generation pipeline. Uses **pgvector** for hybrid vector-keyword retrieval (RRF scoring) and the **Gemini 2.0 Flash API** to answer complex queries strictly grounded in secure company documentation.
+- **Autonomous Agent Tools & MCP**: Native multi-turn function calling for deterministic corporate expense calculations, automated HR email escalations, and targeted document searches, coupled with a JSON-RPC 2.0 **Model Context Protocol (MCP)** server (`/api/mcp`) for external agent tooling.
 - **Enterprise Governance & Auditability**: Automatically tracks all sensitive business operations (document lifecycle, employee invitations/removals, permissions, branding) through open MediatR pipeline behaviors into immutable audit logs.
-- **Subscription Tiers & Stripe Billing Governance**: Built-in plan tier management (`Free`, `Pro`, `Enterprise`) that proactively enforces limits on employee seats, document counts, and storage allocations. Integrated with Stripe Hosted Checkout, synchronous dual fulfillment on redirect return, Stripe Customer Billing Portal, and tier hierarchy action locking.
+- **Subscription Tiers & Decoupled Billing**: Built-in plan tier management (`Free`, `Pro`, `Enterprise`) that proactively enforces limits on employee seats, document counts, and storage allocations. Built on an `IPaymentService` abstraction supporting PayU India Hosted Checkout, SHA-512 cryptographic verification, UPI (Google Pay, PhonePe, Paytm, QR), credit/debit cards, and tier hierarchy action locking.
 - **Observability**: Fully instrumented with **OpenTelemetry (OTLP)** for distributed tracing and granular metrics (e.g. tracking LLM token consumption and DB query latencies).
 - **Containerization & DevOps**: The entire application and its complex dependencies are thoroughly Dockerized. It highlights a focus on developer experience (DX)—a single script provisions the database, IAM server, object storage, API, and the Web Client from scratch.
 

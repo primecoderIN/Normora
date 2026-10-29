@@ -518,26 +518,66 @@ Model names should remain configurable via abstractions (e.g., `IQueryRewriterSe
 
 ## 24. Backend Module Structure
 
-Create a dedicated module:
+The Conversations module (`server/Modules/Conversations/Conversations.csproj`) completely encapsulates all conversational RAG logic, agent tools, text generation, and persistence:
 ```
-server/
-└── Modules/
-    └── Conversations/
-        ├── Application/
-        │   ├── Commands/
-        │   ├── Queries/
-        │   └── Services/
-        ├── Domain/
-        │   ├── Conversation.cs
-        │   ├── Message.cs
-        │   └── MessageCitation.cs
-        ├── Infrastructure/
-        │   ├── Persistence/
-        │   │   └── ConversationsDbContext.cs
-        │   └── Llm/
-        └── Controllers/
-            └── ConversationsController.cs
+server/Modules/Conversations/
+├── Application/
+│   ├── Commands/
+│   │   ├── AskConversationCommand.cs
+│   │   ├── AskConversationStreamCommand.cs
+│   │   ├── CreateConversationCommand.cs
+│   │   ├── DeleteConversationCommand.cs
+│   │   ├── ShareConversationCommand.cs
+│   │   ├── SubmitFeedbackCommand.cs
+│   │   └── UpdateConversationTitleCommand.cs
+│   ├── Queries/
+│   │   ├── GetConversationsQuery.cs
+│   │   ├── GetConversationQuery.cs
+│   │   ├── GetSharedConversationQuery.cs
+│   │   └── GetConversationDashboardMetricsQueryHandler.cs
+│   ├── Dtos/
+│   │   ├── AskConversationStreamEvent.cs
+│   │   └── ConversationDto.cs
+│   ├── Feedback/
+│   │   └── SubmitFeedbackCommandHandler.cs
+│   ├── Sharing/
+│   │   └── ShareConversationCommandHandler.cs
+│   └── Services/
+│       ├── AskHelpers.cs
+│       ├── AutoTitleService.cs
+│       ├── ConversationMetrics.cs
+│       ├── IAutoTitleService.cs
+│       └── ITextGenerationService.cs
+├── Domain/
+│   ├── Conversation.cs
+│   ├── ConversationShare.cs
+│   ├── Message.cs
+│   ├── MessageCitation.cs
+│   ├── MessageFeedback.cs
+│   └── SavedAnswer.cs
+├── Infrastructure/
+│   ├── Llm/
+│   │   └── GeminiTextGenerationService.cs
+│   ├── Tools/
+│   │   ├── AgentToolRegistry.cs
+│   │   ├── CalculatePolicyLimitTool.cs
+│   │   ├── EscalateInquiryTool.cs
+│   │   └── SearchCompanyDocumentsTool.cs
+│   └── Persistence/
+│       ├── ConversationsDbContext.cs
+│       └── Migrations/
+└── Export/
+    ├── DocxAnswerExporter.cs
+    ├── MarkdownAnswerExporter.cs
+    └── PdfAnswerExporter.cs
 ```
+
+### Shared Tool Abstractions
+Shared tool calling contracts reside in `Normora.Shared.Interfaces`:
+- `IAgentTool`: Interface declaring tool metadata (`Name`, `Description`, `ParametersSchema`) and async execution (`ExecuteAsync`).
+- `IAgentToolRegistry`: Registry providing tool lookup, execution dispatch, and OpenAPI/Gemini function declaration mapping.
+- `ToolExecutionContext`: Tenant-aware context holding `TenantId`, `TenantSlug`, `UserId`, `UserEmail`, and user department IDs.
+- `McpToolDefinition`: Model Context Protocol schema representation for external tool exposure via `McpController`.
 
 ## 25. Main Application Pipeline
 

@@ -25,6 +25,22 @@ Manages multi-tenancy, white-label branding, invitations, and hierarchical Role-
 
 ---
 
+### `Users`
+Shadow user identity records synchronized from the external OpenID Connect Identity Provider during login / JIT auto-provisioning. Decoupled from any vendor-specific schema.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uniqueidentifier` | ❌ | PK |
+| `ExternalUserId` | `nvarchar(450)` | ❌ | **Unique** (`IX_Users_ExternalUserId`). The external OIDC `sub` subject identifier. |
+| `Email` | `nvarchar(256)` | ✅ | Synchronized from OIDC `email` claim |
+| `DisplayName` | `nvarchar(256)` | ✅ | Synchronized from OIDC `name` / `preferred_username` claim |
+| `CreatedAt` | `datetime2` | ❌ | UTC timestamp |
+| `UpdatedAt` | `datetime2` | ✅ | UTC timestamp of last profile sync |
+
+**Indexes:** `IX_Users_ExternalUserId` (Unique)
+
+---
+
 ### `TenantMemberships`
 The junction table linking physical `Users` to `Tenants` with a context-specific role.
 
@@ -32,7 +48,7 @@ The junction table linking physical `Users` to `Tenants` with a context-specific
 |---|---|---|---|
 | `Id` | `uniqueidentifier` | ❌ | PK |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `Tenants.Id` (`Cascade`) |
-| `UserId` | `uniqueidentifier` | ❌ | FK → `users.Users.Id` (By convention) |
+| `UserId` | `uniqueidentifier` | ❌ | FK → `tenants.Users.Id` (`Cascade`) |
 | `Role` | `int` | ❌ | Enum: `Employer`, `Employee` |
 | `CreatedAt` | `datetime2` | ❌ | |
 | `RemovedAt` | `datetime2` | ✅ | Soft-delete timestamp (Phase 21) |
@@ -245,7 +261,7 @@ Allows users to bookmark/save assistant messages for later retrieval.
 |---|---|---|---|
 | `Id` | `uniqueidentifier` | ❌ | PK |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
-| `UserId` | `nvarchar(max)` | ❌ | Keycloak Subject ID |
+| `UserId` | `nvarchar(max)` | ❌ | External OIDC User Identifier (`sub`) |
 | `MessageId` | `uniqueidentifier` | ❌ | FK → `Messages.Id` (`Cascade`) |
 | `ConversationId` | `uniqueidentifier` | ❌ | FK → `Conversations.Id` |
 
@@ -260,7 +276,7 @@ Stores thumbs-up/thumbs-down ratings from users on assistant messages.
 |---|---|---|---|
 | `Id` | `uniqueidentifier` | ❌ | PK |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
-| `UserId` | `nvarchar(max)` | ❌ | Keycloak Subject ID |
+| `UserId` | `nvarchar(max)` | ❌ | External OIDC User Identifier (`sub`) |
 | `MessageId` | `uniqueidentifier` | ❌ | FK → `Messages.Id` (`Cascade`) |
 | `Rating` | `int` | ❌ | Enum: `Positive=1`, `Negative=2` |
 | `Comment` | `nvarchar(500)` | ✅ | Optional feedback text |
@@ -278,7 +294,7 @@ Enables secure snapshot sharing of assistant conversations via unique cryptograp
 | `ConversationId` | `uniqueidentifier` | ❌ | FK → `Conversations.Id` (`Cascade`) |
 | `TenantId` | `uniqueidentifier` | ❌ | FK → `tenants.Tenants.Id` |
 | `ShareToken` | `varchar(64)` | ❌ | Base62 unique cryptographic token |
-| `CreatedByUserId` | `nvarchar(max)` | ❌ | Keycloak Subject ID of the owner |
+| `CreatedByUserId` | `nvarchar(max)` | ❌ | External OIDC User Identifier (`sub`) of the owner |
 | `CreatedAtUtc` | `datetime2` | ❌ | UTC timestamp |
 | `ExpiresAtUtc` | `datetime2` | ✅ | Optional expiration timestamp |
 | `RevokedAtUtc` | `datetime2` | ✅ | Soft revocation timestamp |
