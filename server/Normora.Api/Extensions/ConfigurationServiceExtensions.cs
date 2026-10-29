@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Normora.Modules.Documents.Options;
+using Normora.Modules.Tenants.Options;
 using Normora.Shared.Options;
 
 namespace Normora.Api.Extensions;

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Normora.Shared.Options;
+namespace Normora.Modules.Documents.Options;
 
 /// <summary>
 /// Configuration for Apache Tika document text extraction service.
@@ -14,4 +14,3 @@ public class TikaOptions
     [Url]
     public string Endpoint { get; set; } = "http://localhost:9998/";
 }
-

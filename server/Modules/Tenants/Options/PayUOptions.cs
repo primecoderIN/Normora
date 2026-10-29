@@ -1,4 +1,4 @@
-namespace Normora.Shared.Options;
+namespace Normora.Modules.Tenants.Options;
 
 public class PayUOptions
 {

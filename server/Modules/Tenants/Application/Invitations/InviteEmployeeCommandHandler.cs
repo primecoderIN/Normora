@@ -73,7 +73,7 @@ public class InviteEmployeeCommandHandler(
 
         // Dispatch the branded invitation email containing the secure acceptance link
         var acceptLink = $"{baseUrl}/accept-invite?token={invitation.Token}";
-        var body = Normora.Shared.Templates.EmailTemplates.InvitationEmail(tenantName, acceptLink);
+        var body = TenantEmailTemplates.InvitationEmail(tenantName, acceptLink);
         await emailService.SendEmailAsync(request.Email, $"Invitation to join {tenantName}", body, cancellationToken);
 
         // Push a real-time notification to the user if they happen to already be logged in to the platform

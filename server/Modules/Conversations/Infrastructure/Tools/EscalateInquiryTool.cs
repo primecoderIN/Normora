@@ -87,7 +87,7 @@ public sealed class EscalateInquiryTool(
                 ? $"Urgency: {urgency}. Category: {category}."
                 : $"Urgency: {urgency}. Category: {category}. Additional Notes: {notes}";
 
-            var emailBody = EmailTemplates.EscalationInquiryEmail(
+            var emailBody = EscalationEmailTemplates.EscalationInquiryEmail(
                 context.TenantName,
                 employeeName,
                 employeeEmail,

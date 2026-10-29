@@ -151,7 +151,7 @@ public sealed class DocumentProcessingJob(
                 return;
             }
 
-            var html = Normora.Shared.Templates.EmailTemplates.DocumentProcessingFailedEmail(tenantName, document.FileName, errorMessage);
+            var html = DocumentEmailTemplates.DocumentProcessingFailedEmail(tenantName, document.FileName, errorMessage);
             var subject = $"[Action Required] Processing failed: {document.FileName}";
 
             foreach (var email in adminEmails)
@@ -179,7 +179,7 @@ public sealed class DocumentProcessingJob(
 
             string scopeDescription = departments.Count == 0 ? "Company-Wide" : $"{departments.Count} Department(s)";
 
-            var html = Normora.Shared.Templates.EmailTemplates.DocumentReadyEmail(tenantName, document.FileName, scopeDescription);
+            var html = DocumentEmailTemplates.DocumentReadyEmail(tenantName, document.FileName, scopeDescription);
             var subject = $"New document available: {document.FileName}";
 
             foreach (var email in employerEmails)

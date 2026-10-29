@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Normora.Modules.Tenants.Application.Subscription;
 using Normora.Modules.Tenants.Domain;
 using Normora.Shared.Constants;
+using Normora.Modules.Tenants.Options;
 using Normora.Shared.Options;
 
 namespace Normora.Modules.Tenants.Persistence;
