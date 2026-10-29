@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -33,11 +33,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Normora.Shared\Normora.Shared.csproj" />
-    <ProjectReference Include="..\Modules\Auth\Auth.csproj" />
     <ProjectReference Include="..\Modules\Conversations\Conversations.csproj" />
     <ProjectReference Include="..\Modules\Tenants\Tenants.csproj" />
-    <ProjectReference Include="..\Modules\Users\Users.csproj" />
     <ProjectReference Include="..\Modules\Documents\Documents.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Normora.Modules.Documents.Domain" />
   </ItemGroup>
 
 </Project>

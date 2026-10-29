@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Normora.Shared;
+namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
 /// Represents a specific version of a document.

@@ -1,12 +1,14 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Normora.Modules.Conversations.Application.Commands;
 
 namespace Normora.Modules.Conversations.Application.Services;
 
 public sealed class AutoTitleService(
     IServiceScopeFactory scopeFactory,
-    ConversationMetrics metrics) : IAutoTitleService
+    ConversationMetrics metrics,
+    ILogger<AutoTitleService> logger) : IAutoTitleService
 {
     public void AutoTitleConversationAsync(Guid conversationId, string firstQuestion)
     {
@@ -28,9 +30,9 @@ public sealed class AutoTitleService(
                     metrics.AutoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "success"));
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Titles are best-effort — never surface auto-title failures to the caller
+                logger.LogWarning(ex, "Failed to auto-title conversation {ConversationId}", conversationId);
                 metrics.AutoTitleOperations.Add(1, new KeyValuePair<string, object?>("status", "failure"));
             }
         });

@@ -2,10 +2,8 @@
   <Project Path="Normora.Api/Normora.Api.csproj" />
   <Project Path="Normora.Shared/Normora.Shared.csproj" />
   <Folder Name="/Modules/">
-    <Project Path="Modules/Auth/Auth.csproj" />
     <Project Path="Modules/Conversations/Conversations.csproj" />
     <Project Path="Modules/Documents/Documents.csproj" />
     <Project Path="Modules/Tenants/Tenants.csproj" />
-    <Project Path="Modules/Users/Users.csproj" />
   </Folder>
 </Solution>

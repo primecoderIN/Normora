@@ -1,4 +1,4 @@
-namespace Normora.Shared;
+namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
 /// Junction entity that scopes a Document to a specific Department.

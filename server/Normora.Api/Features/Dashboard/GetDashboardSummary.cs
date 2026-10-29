@@ -21,15 +21,19 @@ public class GetDashboardSummaryQueryHandler(
 
         return await cache.GetOrCreateAsync(cacheKey, async ct =>
         {
-            // 1. Retrieve document metrics and recent uploads via Documents contract
-            var docMetrics = await mediator.Send(new GetDocumentDashboardMetricsQuery(tenantGuid), ct);
+            // Start independent metrics queries concurrently
+            var docMetricsTask = mediator.Send(new GetDocumentDashboardMetricsQuery(tenantGuid), ct);
+            var convMetricsTask = mediator.Send(new GetConversationDashboardMetricsQuery(tenantGuid), ct);
+
+            // 1. Await document metrics and resolve department IDs
+            var docMetrics = await docMetricsTask;
+            var deptIds = docMetrics.RecentDocuments.SelectMany(d => d.DepartmentIds).Distinct().ToList();
 
             // 2. Resolve department names for recent documents via Tenants contract
-            var deptIds = docMetrics.RecentDocuments.SelectMany(d => d.DepartmentIds).Distinct().ToList();
             var tenantMetrics = await mediator.Send(new GetTenantDashboardMetricsQuery(tenantGuid, deptIds), ct);
 
-            // 3. Retrieve conversation statistics and inquiry trends via Conversations contract
-            var convMetrics = await mediator.Send(new GetConversationDashboardMetricsQuery(tenantGuid), ct);
+            // 3. Await conversation metrics
+            var convMetrics = await convMetricsTask;
 
             var recentDocumentsDto = docMetrics.RecentDocuments.Select(d => new RecentDocumentDto
             {

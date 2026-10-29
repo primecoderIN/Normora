@@ -1,4 +1,4 @@
-namespace Normora.Shared;
+namespace Normora.Modules.Documents.Domain;
 
 using Pgvector;
 

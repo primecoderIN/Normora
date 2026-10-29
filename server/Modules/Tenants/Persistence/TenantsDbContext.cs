@@ -221,8 +221,6 @@ public class TenantsDbContext(DbContextOptions<TenantsDbContext> options) : DbCo
             entity.Property(p => p.Currency).HasMaxLength(10).HasDefaultValue("inr");
             entity.Property(p => p.PaymentTransactionId).HasMaxLength(100);
             entity.Property(p => p.PaymentReferenceId).HasMaxLength(100);
-            entity.Ignore(p => p.PayUTransactionId);
-            entity.Ignore(p => p.PayUPaymentId);
             entity.Property(p => p.SubscriptionStatus).HasMaxLength(50);
 
             entity.HasOne(p => p.Tenant)

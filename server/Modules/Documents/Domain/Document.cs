@@ -1,6 +1,6 @@
 using System;
 
-namespace Normora.Shared;
+namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
 /// Represents an uploaded document within the system.

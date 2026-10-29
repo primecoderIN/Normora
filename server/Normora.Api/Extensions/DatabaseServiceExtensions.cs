@@ -1,21 +1,19 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Hangfire;
 using Hangfire.PostgreSql;
-using Normora.Modules.Tenants.Persistence;
-using Normora.Modules.Documents.Persistence;
-using Normora.Shared.Interfaces;
-using Normora.Modules.Documents.Application.Services;
-using Normora.Modules.Conversations.Application.Services;
-using Normora.Modules.Conversations.Infrastructure.Llm;
 using Minio;
+using Normora.Modules.Conversations;
+using Normora.Modules.Documents;
+using Normora.Modules.Tenants;
+using Normora.Shared.Interfaces;
+using Normora.Shared.Options;
 
 namespace Normora.Api.Extensions;
 
 /// <summary>
-/// Registers the PostgreSQL database contexts and MinIO object storage services.
-/// Note that under a Modular Monolith architecture, each module manages its own distinct DbContext.
+/// Registers shared database and infrastructure services, delegating module-specific
+/// data and external service configurations to each module's composition root.
 /// </summary>
 public static class DatabaseServiceExtensions
 {
@@ -23,70 +21,23 @@ public static class DatabaseServiceExtensions
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-        services.AddDbContext<TenantsDbContext>(options =>
-            options.UseNpgsql(connectionString)
-                   .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-
-        services.AddDbContext<DocumentsDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector())
-                   .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-
-        services.AddDbContext<Normora.Modules.Conversations.Persistence.ConversationsDbContext>(options =>
-            options.UseNpgsql(connectionString)
-                   .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-
-        services.AddHangfire(configuration => configuration
+        // Hangfire Distributed Job Storage
+        services.AddHangfire(config => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(connectionString)));
         services.AddHangfireServer();
 
-        // Configure MinIO S3-compatible storage
-        var minioOptions = configuration.GetSection(Normora.Shared.Options.MinioOptions.SectionName).Get<Normora.Shared.Options.MinioOptions>() ?? new Normora.Shared.Options.MinioOptions();
-
+        // MinIO S3-compatible object storage client
+        var minioOptions = configuration.GetSection(MinioOptions.SectionName).Get<MinioOptions>() ?? new MinioOptions();
         services.AddMinio(configureClient => configureClient
             .WithEndpoint(minioOptions.Endpoint)
             .WithCredentials(minioOptions.AccessKey, minioOptions.SecretKey)
             .WithSSL(false)
             .Build());
 
-        services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>();
-        services.AddScoped<IBrandingStorageService, MinioBrandingStorageService>();
-        
-        var tikaOptions = configuration.GetSection(Normora.Shared.Options.TikaOptions.SectionName).Get<Normora.Shared.Options.TikaOptions>() ?? new Normora.Shared.Options.TikaOptions();
-        services.AddHttpClient<IDocumentTextExtractor, TikaDocumentTextExtractor>(client =>
-        {
-            client.BaseAddress = new Uri(tikaOptions.Endpoint);
-            client.Timeout = TimeSpan.FromMinutes(5);
-        });
-
-        var geminiOptions = configuration.GetSection(Normora.Shared.Options.GeminiOptions.SectionName).Get<Normora.Shared.Options.GeminiOptions>() ?? new Normora.Shared.Options.GeminiOptions();
-        services.AddHttpClient<ITextEmbeddingService, GeminiEmbeddingService>(client =>
-        {
-            client.BaseAddress = new Uri(geminiOptions.Endpoint);
-            client.Timeout = TimeSpan.FromMinutes(2);
-        });
-        services.AddHttpClient<ITextGenerationService, GeminiTextGenerationService>(client =>
-        {
-            client.BaseAddress = new Uri(geminiOptions.Endpoint);
-            client.Timeout = TimeSpan.FromMinutes(2);
-        });
-        
-        services.AddHttpClient<Normora.Modules.Conversations.Application.Services.IQueryRewriterService, Normora.Modules.Conversations.Infrastructure.Llm.GeminiQueryRewriterService>(client =>
-        {
-            client.BaseAddress = new Uri(geminiOptions.Endpoint);
-            client.Timeout = TimeSpan.FromMinutes(2);
-        });
-
-        // Suggested Questions (Phase 24): lightweight Gemini generation call, no embedding pipeline.
-        services.AddHttpClient<Normora.Modules.Conversations.Application.Services.ISuggestionsService, Normora.Modules.Conversations.Infrastructure.Llm.GeminiSuggestionsService>(client =>
-        {
-            client.BaseAddress = new Uri(geminiOptions.Endpoint);
-            client.Timeout = TimeSpan.FromSeconds(30); // Shorter timeout — this is a UX-enhancing call, not critical path
-        });
-
-        // Configure Distributed Cache (Redis with in-memory fallback for local dev / tests without Redis)
+        // Distributed Cache (Redis with in-memory fallback for local dev / tests without Redis)
         var redisConnectionString = configuration.GetConnectionString("Redis")
             ?? configuration["REDIS_CONNECTION"];
 
@@ -103,7 +54,12 @@ public static class DatabaseServiceExtensions
             services.AddDistributedMemoryCache();
         }
 
-        services.AddSingleton<Normora.Shared.Interfaces.ICacheService, Normora.Api.Services.Caching.DistributedCacheService>();
+        services.AddSingleton<ICacheService, Services.Caching.DistributedCacheService>();
+
+        // Delegate to Module Composition Roots
+        services.AddTenantsModule(configuration);
+        services.AddDocumentsModule(configuration);
+        services.AddConversationsModule(configuration);
 
         return services;
     }

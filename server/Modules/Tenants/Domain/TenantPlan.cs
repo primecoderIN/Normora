@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Normora.Modules.Tenants.Domain;
 
 public enum PlanTier
@@ -30,20 +28,6 @@ public class TenantPlan
     // Payment Gateway integration
     public string? PaymentTransactionId { get; set; }
     public string? PaymentReferenceId { get; set; }
-
-    [NotMapped]
-    public string? PayUTransactionId
-    {
-        get => PaymentTransactionId;
-        set => PaymentTransactionId = value;
-    }
-
-    [NotMapped]
-    public string? PayUPaymentId
-    {
-        get => PaymentReferenceId;
-        set => PaymentReferenceId = value;
-    }
 
     public string? SubscriptionStatus { get; set; } // "active", "trialing", "past_due", "canceled"
     public DateTime? CurrentPeriodEndUtc { get; set; }

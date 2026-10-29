@@ -1,20 +1,21 @@
 using FluentValidation;
-using Hangfire;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using Normora.Shared.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Normora.Api.Features.Email;
 using Normora.Api.Services;
 using Normora.Api.Services.Email;
-using Normora.Shared;
+using Normora.Shared.Audit;
+using Normora.Shared.Interfaces;
+using Normora.Shared.Options;
 using Normora.Shared.Validation;
-using Normora.Modules.Conversations.Application.Exports;
-using System.Reflection;
 
 namespace Normora.Api.Extensions;
 
 /// <summary>
 /// Registers application-layer services, including MediatR CQRS pipelines, FluentValidation validators,
-/// and core cross-cutting shared abstractions (CurrentUser, Email, TenantContext).
+/// and core cross-cutting host abstractions (CurrentUser, Email, TenantContext).
 /// </summary>
 public static class ApplicationServiceExtensions
 {
@@ -22,31 +23,27 @@ public static class ApplicationServiceExtensions
     {
         var assemblies = new[]
         {
-            typeof(IApiMarker).Assembly, // Register Normora.Api assemblies (Documents module commands)
-            typeof(Normora.Modules.Tenants.ITenantsModuleMarker).Assembly, // Register Tenants module commands
-            typeof(Normora.Modules.Auth.IAuthModuleMarker).Assembly, // Register Auth module commands
-            typeof(Normora.Modules.Users.IUsersModuleMarker).Assembly, // Register Users module commands
-            typeof(Normora.Modules.Documents.IDocumentsModuleMarker).Assembly, // Register Documents module commands
-            typeof(Normora.Modules.Conversations.IConversationsModuleMarker).Assembly // Register Conversations module commands
+            typeof(IApiMarker).Assembly,                                            // Normora.Api (Dashboard, Email)
+            typeof(Normora.Modules.Tenants.ITenantsModuleMarker).Assembly,          // Tenants module
+            typeof(Normora.Modules.Documents.IDocumentsModuleMarker).Assembly,      // Documents module
+            typeof(Normora.Modules.Conversations.IConversationsModuleMarker).Assembly // Conversations module
         };
 
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblies(assemblies);
-            // Injects the ValidationBehavior into the MediatR pipeline to automatically validate commands.
+            // Validation pipeline behavior
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
-            // Injects the AuditBehavior into the MediatR pipeline to record auditable actions.
-            cfg.AddOpenBehavior(typeof(Normora.Shared.Audit.AuditBehavior<,>));
+            // Audit pipeline behavior
+            cfg.AddOpenBehavior(typeof(AuditBehavior<,>));
         });
-        
+
         services.AddValidatorsFromAssemblies(assemblies);
 
-        // Core Abstractions
+        // Core Host Abstractions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
-        services.AddScoped<ITenantResolutionService, Normora.Modules.Tenants.Persistence.TenantResolutionService>();
-        services.AddScoped<IAuditService, Normora.Modules.Tenants.Application.Audit.AuditService>();
-        services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IPaymentService, Normora.Modules.Tenants.Persistence.PayUPaymentService>();
-        services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IPayUPaymentService>(sp => (Normora.Modules.Tenants.Application.Subscription.IPayUPaymentService)sp.GetRequiredService<Normora.Modules.Tenants.Application.Subscription.IPaymentService>());
+
         // Email Services (Resend + Hangfire Background Delivery)
         services.AddHttpClient<ResendEmailSender>();
         services.AddTransient<ResendEmailSender>();
@@ -54,8 +51,8 @@ public static class ApplicationServiceExtensions
 
         services.AddTransient<IEmailSender>(sp =>
         {
-            var emailOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Normora.Shared.Options.EmailOptions>>().Value;
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResendEmailSender>>();
+            var emailOptions = sp.GetRequiredService<IOptions<EmailOptions>>().Value;
+            var logger = sp.GetRequiredService<ILogger<ResendEmailSender>>();
 
             if (string.Equals(emailOptions.Provider, "Null", StringComparison.OrdinalIgnoreCase))
             {
@@ -71,32 +68,10 @@ public static class ApplicationServiceExtensions
             return sp.GetRequiredService<NullEmailSender>();
         });
 
-        services.AddScoped<Normora.Api.Features.Email.SendEmailJob>();
+        services.AddScoped<SendEmailJob>();
         services.AddScoped<IEmailService, BackgroundEmailService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IDocumentNotificationService, SignalRDocumentNotificationService>();
-
-        services.AddScoped<Normora.Modules.Documents.Application.Jobs.DocumentProcessingJob>();
-
-        services.AddScoped<Normora.Modules.Conversations.Application.Services.IContextResolver, Normora.Modules.Conversations.Application.Services.ContextResolver>();
-        services.AddSingleton<Normora.Modules.Conversations.Application.Services.ITokenBudgetService, Normora.Modules.Conversations.Application.Services.TokenBudgetService>();
-
-        services.AddScoped<IRetrievalService, Normora.Modules.Documents.Application.Services.RetrievalService>();
-        services.AddSingleton<Normora.Modules.Conversations.Application.Services.IAutoTitleService, Normora.Modules.Conversations.Application.Services.AutoTitleService>();
-        services.AddSingleton<Normora.Modules.Conversations.Application.Services.ConversationMetrics>();
-
-        // Answer exporters — stateless singletons registered against IAnswerExporter.
-        // ExportSavedAnswerQueryHandler resolves the correct implementation via IEnumerable<IAnswerExporter>.
-        // QuestPDF community licence is set in PdfAnswerExporter's static constructor.
-        services.AddSingleton<IAnswerExporter, MarkdownAnswerExporter>();
-        services.AddSingleton<IAnswerExporter, PdfAnswerExporter>();
-        services.AddSingleton<IAnswerExporter, DocxAnswerExporter>();
-
-        // Agent Tools & Tool Registry (Gemini Tool Calling + MCP)
-        services.AddScoped<IAgentTool, Normora.Modules.Conversations.Infrastructure.Tools.CalculatePolicyLimitTool>();
-        services.AddScoped<IAgentTool, Normora.Modules.Conversations.Infrastructure.Tools.EscalateInquiryTool>();
-        services.AddScoped<IAgentTool, Normora.Modules.Conversations.Infrastructure.Tools.SearchCompanyDocumentsTool>();
-        services.AddScoped<IAgentToolRegistry, Normora.Modules.Conversations.Infrastructure.Tools.AgentToolRegistry>();
 
         return services;
     }

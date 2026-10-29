@@ -5,15 +5,25 @@ namespace Normora.Modules.Tenants.Persistence;
 
 /// <summary>
 /// Implements tenant resolution and membership validation by querying the Tenants persistence store.
-/// Encapsulates direct database access within the Tenants module boundary.
+/// Encapsulates direct database access within the Tenants module boundary and caches resolved access
+/// to optimize the high-throughput request authentication pipeline.
 /// </summary>
-public sealed class TenantResolutionService(TenantsDbContext dbContext) : ITenantResolutionService
+public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheService cache) : ITenantResolutionService
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(2);
+
     public async Task<ResolvedTenantAccess?> ResolveTenantAccessAsync(
         Guid tenantId,
         string externalUserId,
         CancellationToken cancellationToken = default)
     {
+        var cacheKey = $"tenant-access:{tenantId}:{externalUserId}";
+        var cached = await cache.GetAsync<ResolvedTenantAccess>(cacheKey, cancellationToken);
+        if (cached is not null)
+        {
+            return cached;
+        }
+
         var membership = await dbContext.TenantMemberships
             .AsNoTracking()
             .Include(m => m.User)
@@ -37,7 +47,9 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext) : ITenan
 
         var effectiveDepartments = directDepartments.Concat(inheritedDepartments).Distinct().ToList();
 
-        return new ResolvedTenantAccess(tenantId, membership.Role.ToString(), effectiveDepartments);
+        var resolved = new ResolvedTenantAccess(tenantId, membership.Role.ToString(), effectiveDepartments);
+        await cache.SetAsync(cacheKey, resolved, CacheTtl, cancellationToken);
+        return resolved;
     }
 
     public async Task<bool> HasTenantAccessAsync(
@@ -45,11 +57,7 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext) : ITenan
         string externalUserId,
         CancellationToken cancellationToken = default)
     {
-        return await dbContext.TenantMemberships
-            .AsNoTracking()
-            .Include(membership => membership.User)
-            .AnyAsync(
-                membership => membership.TenantId == tenantId && membership.User.ExternalUserId == externalUserId,
-                cancellationToken);
+        var resolved = await ResolveTenantAccessAsync(tenantId, externalUserId, cancellationToken);
+        return resolved is not null;
     }
 }

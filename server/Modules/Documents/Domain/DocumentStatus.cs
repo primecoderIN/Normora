@@ -1,4 +1,4 @@
-namespace Normora.Shared;
+namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
 /// Represents the processing lifecycle state of a document within the system.

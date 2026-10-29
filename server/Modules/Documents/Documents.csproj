@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Using Include="Normora.Modules.Documents.Domain" />
   </ItemGroup>
 
 </Project>

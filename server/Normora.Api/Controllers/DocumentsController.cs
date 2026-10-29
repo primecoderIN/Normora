@@ -22,7 +22,7 @@ namespace Normora.Api.Controllers;
 [Route("api/[controller]")]
 [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
 [Produces("application/json")]
-public class DocumentsController(IMediator mediator, ITenantContext tenantContext) : ControllerBase
+public class DocumentsController(IMediator mediator, ITenantContext tenantContext, ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>
     /// Retrieves all documents for the currently authenticated tenant.
@@ -121,7 +121,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     {
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        var keycloakId = User.FindFirst("sub")?.Value ?? string.Empty;
+        var keycloakId = currentUser.ExternalUserId;
         var userId = await mediator.Send(new GetUserIdQuery(keycloakId), cancellationToken);
         var deletedByUserId = userId ?? Guid.Empty;
 
