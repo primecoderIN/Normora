@@ -7,6 +7,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Application.Queries;
 
+/// <summary>Resolves a public share token while enforcing its expiration and visibility rules.</summary>
 public record GetSharedConversationQuery(string Token) : IRequest<SharedConversationDto>;
 
 public record SharedConversationDto(

@@ -5,6 +5,7 @@ using Normora.Modules.Conversations.Application.Commands;
 
 namespace Normora.Modules.Conversations.Application.Services;
 
+/// <summary>Generates and persists conversation titles in a separate scope off the response path.</summary>
 public sealed class AutoTitleService(
     IServiceScopeFactory scopeFactory,
     ConversationMetrics metrics,

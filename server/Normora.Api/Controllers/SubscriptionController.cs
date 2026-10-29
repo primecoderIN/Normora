@@ -10,12 +10,13 @@ using Normora.Shared.Constants;
 
 namespace Normora.Api.Controllers;
 
+/// <summary>Describes the requested subscription tier change.</summary>
 public record UpdatePlanTierRequest(PlanTier Tier);
 public record CreateCheckoutRequest(PlanTier Tier, string? Currency = null);
 public record CreatePortalRequest(string? ReturnUrl = null);
 
 /// <summary>
-/// Handles subscription plan limits, quota metrics, and tier management.
+/// Exposes tenant subscription usage, plan, checkout, callback, and billing portal endpoints.
 /// </summary>
 [ApiController]
 [Route("api/subscription")]

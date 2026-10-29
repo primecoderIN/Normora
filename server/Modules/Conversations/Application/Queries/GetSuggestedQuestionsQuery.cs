@@ -6,6 +6,7 @@ namespace Normora.Modules.Conversations.Application.Queries;
 
 // ─── Query & DTO ──────────────────────────────────────────────────────────────
 
+/// <summary>Requests tenant-aware suggested questions for the conversation empty state.</summary>
 public record GetSuggestedQuestionsQuery : IRequest<IReadOnlyList<SuggestedQuestionDto>>;
 
 /// <summary>

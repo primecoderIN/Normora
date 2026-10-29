@@ -7,6 +7,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Application.Queries;
 
+/// <summary>Loads one tenant-scoped conversation with its ordered messages and citations.</summary>
 public record GetConversationQuery(Guid Id) : IRequest<ConversationDetailDto?>;
 
 public record ConversationDetailDto(

@@ -3,6 +3,7 @@ using Normora.Modules.Tenants.Domain;
 
 namespace Normora.Modules.Tenants.Application.Subscription;
 
+/// <summary>Defines provider-neutral hosted checkout and payment callback operations.</summary>
 public record PaymentCheckoutDto(
     string ActionUrl,
     Dictionary<string, string> Params

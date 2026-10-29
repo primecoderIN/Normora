@@ -62,6 +62,7 @@ The following options classes are defined in the `Normora.Shared` project. All p
   * `Endpoint` (string): Host and port for MinIO/S3 API. Defaults to `localhost:9000`.
   * `AccessKey` (string): Sensitive. 
   * `SecretKey` (string): Sensitive.
+  * `UseSsl` (bool): Enables TLS to MinIO. Must be `true` outside Development.
 
 ### `GeminiOptions`
 * **Section:** `Gemini`
@@ -118,6 +119,8 @@ Notice the **double underscore (`__`)** is used to represent the section hierarc
 * For MinIO: `Minio__Endpoint=minio:9000`
 * For Tika: `Tika__Endpoint=http://tika:9998/`
 * For Redis: `ConnectionStrings__Redis=redis:6379`
+* The local API trusts only the pinned client proxy at `172.30.0.10` (`ReverseProxy__KnownProxies__0`). Do not clear the trusted proxy lists.
+* `Minio__UseSsl=false` is for the local Compose network only.
 * For Resend Email:
   * `Email__ResendApiKey=${RESEND_API_KEY}`
   * `Email__FromEmail=${RESEND_FROM_EMAIL:-normora@resend.dev}`
@@ -128,7 +131,12 @@ Notice the **double underscore (`__`)** is used to represent the section hierarc
 ### Production
 * Use Environment Variables for sensitive keys: `Gemini__ApiKey`, `Minio__SecretKey`, `Email__ResendApiKey`, `PayU__MerchantSalt`.
 * Ensure `App__BaseUrl` points to the actual HTTPS public domain.
+* Set `ReverseProxy__KnownProxies__0`, `ReverseProxy__KnownProxies__1`, etc. to the exact ingress proxy IP addresses.
+* Configure `Minio__UseSsl=true` and a Redis connection. API startup fails when these production requirements are missing.
 * All HTTP internal endpoints (like Tika/MinIO) are fine, but Keycloak external URLs must be HTTPS.
+
+### Database Migrations
+Run `dotnet Normora.Api.dll --migrate` once as a serialized release step before starting or rolling out API and worker instances. Normal API startup does not apply schema changes.
 
 ### Diagnosing Startup Failures
 If you see DI resolution errors for `IOptions<T>`, ensure the class is registered in `ConfigurationServiceExtensions.cs`. If values are missing, check if `appsettings.json` is malformed or if environment variables are misspelled.

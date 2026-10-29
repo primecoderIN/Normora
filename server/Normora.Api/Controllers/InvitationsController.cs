@@ -9,6 +9,7 @@ using Normora.Shared;
 
 namespace Normora.Api.Controllers;
 
+/// <summary>Exposes invitation creation and authenticated acceptance or rejection endpoints.</summary>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]

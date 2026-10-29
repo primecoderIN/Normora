@@ -23,8 +23,8 @@ public static class ConversationsModuleExtensions
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<ConversationsDbContext>(options =>
-            options.UseNpgsql(connectionString)
-                   .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+            options.UseNpgsql(connectionString));
+        services.AddScoped<IDatabaseMigrator, ConversationsDatabaseMigrator>();
 
         var geminiOptions = configuration.GetSection(GeminiOptions.SectionName).Get<GeminiOptions>() ?? new GeminiOptions();
 
@@ -66,4 +66,3 @@ public static class ConversationsModuleExtensions
         return services;
     }
 }
-

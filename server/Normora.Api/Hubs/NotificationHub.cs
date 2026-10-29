@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Normora.Api.Hubs;
 
+/// <summary>Groups authenticated SignalR connections by user identity for private notifications.</summary>
 [Authorize]
 public class NotificationHub : Hub
 {

@@ -3,15 +3,14 @@ using Normora.Api.Middleware;
 using Normora.Api.Hubs;
 using Hangfire;
 using Scalar.AspNetCore;
-using Microsoft.EntityFrameworkCore;
-using Normora.Modules.Tenants.Persistence;
-using Normora.Modules.Documents.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Duende.Bff;
-using Normora.Modules.Documents.Application.Jobs;
+using System.Net;
+using Normora.Shared.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
+var isMigrationRun = args.Contains("--migrate", StringComparer.OrdinalIgnoreCase);
 
 // Prevent Kestrel from broadcasting "Server: Kestrel" in HTTP response headers
 builder.WebHost.ConfigureKestrel(options =>
@@ -22,7 +21,10 @@ builder.WebHost.ConfigureKestrel(options =>
 // 1. Dependency Injection Configuration
 // Separated into extension methods by architectural layer to keep Program.cs clean.
 builder.Services.AddConfigurationServices(builder.Configuration); // Options pattern and typed configs
-builder.Services.AddDatabaseServices(builder.Configuration); // EF Core, MinIO
+builder.Services.AddDatabaseServices(
+    builder.Configuration,
+    builder.Environment,
+    migrationMode: isMigrationRun); // EF Core, MinIO
 builder.Services.AddApplicationServices();                   // MediatR, FluentValidation, Scoped Services
 builder.Services.AddApiServices(builder.Configuration);      // Controllers, CORS, OpenAPI, Exception Handling
 builder.Services.AddIdentityServices(builder.Configuration, builder.Environment); // Keycloak JWT Authentication
@@ -45,20 +47,15 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(); // API documentation UI
 }
 
-// Automatically apply EF Core Migrations on startup
-using (var scope = app.Services.CreateScope())
+// Migrations run only in a dedicated one-off deployment process:
+// dotnet Normora.Api.dll --migrate
+if (isMigrationRun)
 {
-    var documentsDbContext = scope.ServiceProvider.GetRequiredService<DocumentsDbContext>();
-    documentsDbContext.Database.Migrate();
-
-    var tenantsDbContext = scope.ServiceProvider.GetRequiredService<TenantsDbContext>();
-    tenantsDbContext.Database.Migrate();
-
-    var conversationsDbContext = scope.ServiceProvider.GetRequiredService<Normora.Modules.Conversations.Persistence.ConversationsDbContext>();
-    conversationsDbContext.Database.Migrate();
-
-    var sessionDbContext = scope.ServiceProvider.GetRequiredService<Duende.Bff.EntityFramework.SessionDbContext>();
-    sessionDbContext.Database.Migrate();
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider
+        .GetRequiredService<Normora.Api.Services.DatabaseMigrationRunner>()
+        .MigrateAsync();
+    return;
 }
 
 // Global Exception Handler interceptor (returns ProblemDetails JSON instead of crashing)
@@ -69,17 +66,30 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
 }
 
-// Trust the X-Forwarded-* headers from nginx so the API knows the public-facing
-// host/scheme (localhost:4200) and can build correct OIDC redirect URIs.
-// NOTE: KnownNetworks and KnownProxies must be cleared because by default ASP.NET Core
-// only trusts loopback proxies. In Docker, nginx runs on an internal network (172.x.x.x),
-// which is not loopback and would otherwise be silently ignored.
+// Trust forwarded headers only from explicitly configured reverse proxies.
+var trustedProxyAddresses = builder.Configuration
+    .GetSection("ReverseProxy:KnownProxies")
+    .Get<string[]>() ?? [];
+if (!app.Environment.IsDevelopment() && trustedProxyAddresses.Length == 0)
+{
+    throw new InvalidOperationException(ApiMessages.TrustedProxyRequired);
+}
+
 var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto,
+    ForwardLimit = 1
 };
-forwardedHeadersOptions.KnownIPNetworks.Clear();
-forwardedHeadersOptions.KnownProxies.Clear();
+foreach (var trustedProxyAddress in trustedProxyAddresses)
+{
+    if (!IPAddress.TryParse(trustedProxyAddress, out var address))
+    {
+        throw new InvalidOperationException(ApiMessages.InvalidTrustedProxy);
+    }
+
+    forwardedHeadersOptions.KnownProxies.Add(address);
+}
+
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.UseCors("CorsPolicy");
@@ -101,10 +111,5 @@ app.MapControllers().AsBffApiEndpoint(); // Enforces CSRF protection
 app.MapBffManagementEndpoints(); // Adds /bff/login, /bff/logout, /bff/user
 app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint().SkipAntiforgery();
 app.MapHub<NotificationHub>("/hubs/notifications").AsBffApiEndpoint().SkipAntiforgery();
-
-RecurringJob.AddOrUpdate<PurgeDeletedDocumentsJob>(
-    "purge-deleted-documents",
-    job => job.ExecuteAsync(CancellationToken.None),
-    Cron.Daily(3, 0)); // 3:00 AM UTC
 
 app.Run();

@@ -14,6 +14,7 @@ using Normora.Shared.Options;
 
 namespace Normora.Modules.Tenants.Persistence;
 
+/// <summary>Creates hosted PayU payments and verifies callbacks before subscription fulfillment.</summary>
 public class PayUPaymentService(
     TenantsDbContext context,
     IOptions<PayUOptions> payUOptions,

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Owns document lifecycle, ingestion, retrieval, storage adapters, and document persistence. -->
   <ItemGroup>
     <ProjectReference Include="..\..\Normora.Shared\Normora.Shared.csproj" />
   </ItemGroup>

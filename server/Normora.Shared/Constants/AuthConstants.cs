@@ -1,5 +1,6 @@
 namespace Normora.Shared.Constants;
 
+/// <summary>Centralizes authentication scheme, cookie, scope, and identity-provider claim names.</summary>
 public static class AuthConstants
 {
     // Cookies

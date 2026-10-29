@@ -3,6 +3,7 @@ using Normora.Modules.Conversations.Domain;
 
 namespace Normora.Modules.Conversations.Application.Services;
 
+/// <summary>Builds valid user-assistant turns from chronological conversation history.</summary>
 public static class AskHelpers
 {
     /// <summary>

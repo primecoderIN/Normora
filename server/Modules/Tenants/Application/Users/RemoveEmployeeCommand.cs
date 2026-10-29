@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Normora.Modules.Tenants.Application.Users;
 
+/// <summary>Soft-removes a tenant membership while retaining identity and removal audit data.</summary>
 public record RemoveEmployeeCommand(Guid MembershipId) : IRequest<bool>, IAuditableRequest
 {
     public string Action => "Employee.Removed";

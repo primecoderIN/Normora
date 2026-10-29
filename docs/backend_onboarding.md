@@ -6,15 +6,18 @@ Welcome to the Normora backend! This guide is tailored for developers who might 
 
 ## 1. The Modular Monolith Architecture
 
-Normora is deployed as a single API process, but internally it is strictly divided into bounded contexts (Modules) in the `server/Modules/` directory.
+Normora is deployed as an API host, a separate Hangfire worker, and a one-off migration process. Business capabilities are divided into bounded contexts (Modules) in the `server/Modules/` directory.
 
 **Rules of the Modular Monolith:**
-1. **No Shared Database**: Each module (`Tenants`, `Documents`, `Conversations`, `Users`) has its own `DbContext` and its own schema in PostgreSQL.
+1. **Module-Owned Persistence**: The `Tenants`, `Documents`, and `Conversations` modules each own a `DbContext` and a PostgreSQL schema. User profiles and tenant memberships currently belong to the Tenants module.
 2. **No Direct Joins**: You cannot write a LINQ query that joins a `Document` with a `Tenant`. You must query by IDs across boundaries.
 3. **Cross-Module Communication**: If the `Documents` module needs to know if a user has access, it doesn't query the `TenantsDbContext`. It sends a MediatR query to the `Tenants` module's API contract in `Normora.Shared.Contracts.Tenants`.
 4. **100% DbContext Encapsulation**: DbContexts are strictly private to their owning module. API controllers, middleware, and SignalR hubs must **never** inject a module `DbContext`.
 5. **Feature Slices Live in Modules**: All commands, queries, domain entities, background ingestion jobs, and services live in `server/Modules/<ModuleName>/Application/`. `Normora.Api` contains only protocol adapters (controllers, SignalR hubs, middleware, program startup).
 6. **Decoupled Boundary Interfaces**: When infrastructure or middleware requires module operations, expose an abstraction in `Normora.Shared.Interfaces` (e.g. `ITenantResolutionService`, `IDocumentNotificationService`, `IEmailSender`, `IPaymentService`).
+
+### Source Documentation Convention
+Each hand-written source file documents its primary type with a concise XML summary. Add inline comments only for non-obvious business rules, security boundaries, retry behavior, or lifecycle decisions; generated EF migrations and snapshots remain generated and unedited.
 
 ### Module Directory & Assembly Conventions
 Modules live in `server/Modules/<ModuleName>/<ModuleName>.csproj` (e.g., `server/Modules/Tenants/Tenants.csproj`).
@@ -146,7 +149,7 @@ When running in Docker, the API sits behind an nginx reverse proxy. The API cont
 
 If not corrected, the OIDC middleware will build an `redirect_uri` pointing to `api:8080/signin-oidc`, which Keycloak will reject as an unregistered URI.
 
-**Fix**: `UseForwardedHeaders` is registered early in `Program.cs`:
+**Fix**: `UseForwardedHeaders` is registered early in `Program.cs`. Configure the exact reverse-proxy IPs in `ReverseProxy:KnownProxies`:
 ```csharp
 var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
@@ -154,18 +157,14 @@ var forwardedHeadersOptions = new ForwardedHeadersOptions
                      | ForwardedHeaders.XForwardedHost 
                      | ForwardedHeaders.XForwardedProto
 };
-// IMPORTANT: By default, ASP.NET Core only trusts loopback proxies (127.0.0.1).
-// In Docker, nginx runs on an internal bridge network (172.x.x.x) which is NOT loopback.
-// Without clearing these lists, the X-Forwarded-Host header is silently ignored
-// and redirect_uri is built from the internal Docker hostname (api:8080), not localhost:4200.
-forwardedHeadersOptions.KnownNetworks.Clear();
-forwardedHeadersOptions.KnownProxies.Clear();
+forwardedHeadersOptions.ForwardLimit = 1;
+forwardedHeadersOptions.KnownProxies.Add(IPAddress.Parse(trustedProxyIp));
 app.UseForwardedHeaders(forwardedHeadersOptions);
 ```
 
-nginx injects `proxy_set_header X-Forwarded-Host $host;` so the API correctly reads `localhost:4200` as the public host when building OIDC URLs.
+The local Compose network pins the Nginx container IP and configures it as trusted. Production must configure the actual proxy IPs; the API rejects startup if the list is empty or malformed. Never clear the trusted proxy lists or trust an entire broad network.
 
-> **Rule of thumb**: Always register `UseForwardedHeaders` **before** `UseAuthentication` and `UseBff` in any Docker/reverse-proxy deployment. Always clear `KnownNetworks` and `KnownProxies` when nginx is in a Docker network.
+> **Rule of thumb**: Always register `UseForwardedHeaders` **before** `UseAuthentication` and `UseBff`, and trust only known ingress proxy addresses.
 
 ---
 
@@ -203,16 +202,12 @@ dotnet ef migrations add AddUserGroups --context TenantsDbContext --project Modu
 dotnet ef database update --context TenantsDbContext
 ```
 
-### Startup Automatic Migrations & `PendingModelChangesWarning`
-On startup, `Normora.Api` invokes `Database.Migrate()` across all module `DbContexts` (see `Program.cs`).
-
-In EF Core 9 / 10 (.NET 10), EF Core checks for differences between the compiled migration snapshot and the current model during `Migrate()`. When using provider-level dynamic extensions such as PostgreSQL vector support (`npgsql => npgsql.UseVector()` in `DocumentsDbContext`), the model comparer generates a `RelationalEventId.PendingModelChangesWarning`.
-
-In development, EF Core promotes warnings to fatal exceptions, which crashes the API on boot and produces an Nginx `502 Bad Gateway`. To prevent false-positive startup crashes while preserving migration capability, each `DbContext` configuration suppresses this warning in `DatabaseServiceExtensions.cs`:
-```csharp
-options.UseNpgsql(connectionString)
-       .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+### Controlled Migrations
+The API does not modify the schema during normal startup. Run migrations as a one-off release step, and wait for success before rolling out API or worker instances:
+```powershell
+dotnet .\server\Normora.Api\bin\Release\net10.0\Normora.Api.dll --migrate
 ```
+The local Compose stack runs the same migration mode as a one-shot `migrator` service before starting the API and worker. Each module registers its own `IDatabaseMigrator`; the API does not directly resolve module `DbContext` types. Pending-model-change warnings remain visible and should be fixed rather than suppressed.
 
 ---
 

@@ -6,6 +6,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Features.Dashboard;
 
+/// <summary>Aggregates dashboard metrics through contracts owned by the respective modules.</summary>
 public record GetDashboardSummaryQuery() : IRequest<DashboardSummaryDto>;
 
 public class GetDashboardSummaryQueryHandler(

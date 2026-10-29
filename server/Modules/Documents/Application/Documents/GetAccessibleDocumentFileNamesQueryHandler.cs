@@ -6,6 +6,7 @@ using Normora.Shared.Contracts.Documents;
 
 namespace Normora.Modules.Documents.Application.Documents;
 
+/// <summary>Lists document names available to a tenant under its department access scope.</summary>
 public class GetAccessibleDocumentFileNamesQueryHandler(DocumentsDbContext context)
     : IRequestHandler<GetAccessibleDocumentFileNamesQuery, IReadOnlyList<string>>
 {

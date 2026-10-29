@@ -20,5 +20,7 @@ public class MinioOptions
     /// <summary>Secret access key for S3 API authentication.</summary>
     [Required]
     public string SecretKey { get; set; } = "password";
-}
 
+    /// <summary>Whether to use TLS when connecting to object storage.</summary>
+    public bool UseSsl { get; set; }
+}

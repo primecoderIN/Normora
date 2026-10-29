@@ -24,13 +24,13 @@
 ## 🌟 Why Normora?
 Normora is architected from the ground up to deliver a resilient and performant modern web experience:
 
-- **Strict Modular Monolith Backend**: Built on **.NET 10**, the backend strictly enforces 100% DbContext encapsulation across bounded contexts (`Tenants`, `Documents`, `Conversations`, `Users`). Feature vertical slices reside directly in their owning modules, and the API host communicates solely via MediatR query contracts and boundary interfaces.
+- **Modular Monolith Backend**: Built on **.NET 10**, the backend keeps persistence and feature slices inside the `Tenants`, `Documents`, and `Conversations` modules. The API, Hangfire worker, and one-off migration runner are separate hosts; cross-module reads use MediatR contracts and boundary interfaces.
 - **Modern SPA Frontend**: Powered by **Angular**, providing a lightning-fast, reactive, and strictly-typed user experience.
 - **Enterprise-Ready Infrastructure**:
   - **Identity & Access Management**: Fully integrated with **Keycloak** via OAuth2/OpenID Connect to handle secure authentication and robust role-based access control, decoupled from domain models via `ExternalUserId`.
   - **Object Storage**: Leverages **MinIO** for S3-compatible, highly performant, and horizontally scalable file storage.
   - **Relational Data**: Powered by **PostgreSQL** for reliable ACID-compliant transactions across isolated module schemas.
-- **Conversational AI & RAG**: Features an advanced Retrieval-Augmented Generation pipeline. Uses **pgvector** for hybrid vector-keyword retrieval (RRF scoring) and the **Gemini 2.0 Flash API** to answer complex queries strictly grounded in secure company documentation.
+- **Conversational AI & RAG**: Features an advanced Retrieval-Augmented Generation pipeline. Uses **pgvector** for hybrid vector-keyword retrieval (RRF scoring) and the **Gemini Flash API** to answer queries grounded in secure company documentation.
 - **Autonomous Agent Tools & MCP**: Native multi-turn function calling for deterministic corporate expense calculations, automated HR email escalations, and targeted document searches, coupled with a JSON-RPC 2.0 **Model Context Protocol (MCP)** server (`/api/mcp`) for external agent tooling.
 - **Enterprise Governance & Auditability**: Automatically tracks all sensitive business operations (document lifecycle, employee invitations/removals, permissions, branding) through open MediatR pipeline behaviors into immutable audit logs.
 - **Subscription Tiers & Decoupled Billing**: Built-in plan tier management (`Free`, `Pro`, `Enterprise`) that proactively enforces limits on employee seats, document counts, and storage allocations. Built on an `IPaymentService` abstraction supporting PayU India Hosted Checkout, SHA-512 cryptographic verification, UPI (Google Pay, PhonePe, Paytm, QR), credit/debit cards, and tier hierarchy action locking.
@@ -43,6 +43,7 @@ For a deeper dive into the architectural decisions, database schema, and API con
 
 - [**General Onboarding & Setup**](./docs/getting_started.md) — Quick-start guide, local environment configuration, and test account credentials.
 - [**Project Overview & Features**](./docs/overview.md) — High-level summary of features, use cases, and multi-tenant capabilities.
+- [**Engineering Timeline**](./docs/architecture.md#engineering-timeline) — Dated project milestones from the initial commit, architecture evolution, and deployment verification.
 - [**Backend Architecture & Patterns**](./docs/architecture.md) — MediatR request lifecycles, modular monolith design, and project dependency rules.
 - [**Authorization & Security Guide**](./docs/architecture.md#application-security-bola--bfla) — Comprehensive guide to BOLA and BFLA mitigation and the tenant-level RBAC enforcement.
 - [**Backend Onboarding & .NET Course**](./docs/backend_onboarding.md) — In-depth C#/.NET crash course tailored for developers transitioning from JS/Go/Python.

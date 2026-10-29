@@ -7,6 +7,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Subscription;
 
+/// <summary>Creates a hosted checkout session for an eligible tenant plan change.</summary>
 public record CheckoutSessionResultDto(string ActionUrl, Dictionary<string, string> Params);
 
 public record CreateCheckoutSessionCommand(PlanTier Tier, string? Currency = "inr") : IRequest<CheckoutSessionResultDto>, IAuditableRequest

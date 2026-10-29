@@ -4,14 +4,18 @@ using OpenTelemetry.Trace;
 
 namespace Normora.Api.Extensions;
 
+/// <summary>Registers application tracing and metrics with environment-specific exporters.</summary>
 public static class OpenTelemetryExtensions
 {
-    public static IServiceCollection AddNormoraTelemetry(this IServiceCollection services, IWebHostEnvironment environment)
+    public static IServiceCollection AddNormoraTelemetry(
+        this IServiceCollection services,
+        IHostEnvironment environment,
+        string serviceName = "Normora.Api")
     {
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
                 .AddService(
-                    serviceName: "Normora.Api",
+                    serviceName: serviceName,
                     serviceVersion: "1.0.0")
                 .AddAttributes(new Dictionary<string, object>
                 {

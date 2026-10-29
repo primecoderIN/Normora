@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 
 using Normora.Shared.Constants;
 using Normora.Shared.Options;
+using Normora.Shared.Interfaces;
+using Normora.Api.Services;
 
 namespace Normora.Api.Extensions;
 
@@ -61,6 +63,7 @@ public static class IdentityServiceExtensions
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), sql => sql.MigrationsAssembly("Normora.Api"));
         })
         .AddSessionCleanupBackgroundProcess();
+        services.AddScoped<IDatabaseMigrator, SessionDatabaseMigrator>();
 
         services.AddAuthentication(options =>
             {

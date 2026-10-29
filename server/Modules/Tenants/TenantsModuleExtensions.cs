@@ -19,11 +19,11 @@ public static class TenantsModuleExtensions
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<TenantsDbContext>(options =>
-            options.UseNpgsql(connectionString)
-                   .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+            options.UseNpgsql(connectionString));
 
         services.AddScoped<IBrandingStorageService, MinioBrandingStorageService>();
         services.AddScoped<ITenantResolutionService, TenantResolutionService>();
+        services.AddScoped<IDatabaseMigrator, TenantsDatabaseMigrator>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IPaymentService, PayUPaymentService>();
         services.AddScoped<IPayUPaymentService>(sp => (IPayUPaymentService)sp.GetRequiredService<IPaymentService>());
@@ -31,4 +31,3 @@ public static class TenantsModuleExtensions
         return services;
     }
 }
-

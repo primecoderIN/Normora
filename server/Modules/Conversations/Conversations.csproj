@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Owns conversational RAG use cases, conversation persistence, LLM adapters, and answer exports. -->
   <ItemGroup>
     <ProjectReference Include="..\..\Normora.Shared\Normora.Shared.csproj" />
   </ItemGroup>

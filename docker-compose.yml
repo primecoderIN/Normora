@@ -115,6 +115,8 @@ services:
       - Minio__Endpoint=minio:9000
       - Minio__AccessKey=${MINIO_ROOT_USER:-admin}
       - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
+      - Minio__UseSsl=false
+      - ReverseProxy__KnownProxies__0=172.30.0.10
       - Email__ResendApiKey=${RESEND_API_KEY:-}
       - Email__FromEmail=${RESEND_FROM_EMAIL:-onboarding@resend.dev}
       - Email__DevOverrideRecipient=${DEV_OVERRIDE_EMAIL:-}
@@ -132,8 +134,67 @@ services:
         condition: service_healthy
       tika:
         condition: service_started
+      migrator:
+        condition: service_completed_successfully
     volumes:
       - data_protection_keys:/root/.aspnet/DataProtection-Keys
+
+  migrator:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: normora_migrator
+    command: ["--migrate"]
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-postgres};******
+      - ConnectionStrings__Redis=redis:6379
+      - Keycloak__Authority=http://keycloak:8080/realms/normora
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
+      - Minio__Endpoint=minio:9000
+      - Minio__AccessKey=${MINIO_ROOT_USER:-admin}
+      - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
+      - Minio__UseSsl=false
+      - Tika__Endpoint=http://tika:9998/
+      - Gemini__ApiKey=${GEMINI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: normora_worker
+    entrypoint: ["dotnet", "Normora.Worker.dll"]
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-postgres};******
+      - ConnectionStrings__Redis=redis:6379
+      - Keycloak__Authority=http://keycloak:8080/realms/normora
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
+      - Minio__Endpoint=minio:9000
+      - Minio__AccessKey=${MINIO_ROOT_USER:-admin}
+      - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
+      - Minio__UseSsl=false
+      - Email__ResendApiKey=${RESEND_API_KEY:-}
+      - Email__FromEmail=${RESEND_FROM_EMAIL:-onboarding@resend.dev}
+      - Email__DevOverrideRecipient=${DEV_OVERRIDE_EMAIL:-}
+      - Tika__Endpoint=http://tika:9998/
+      - Gemini__ApiKey=${GEMINI_API_KEY:-}
+      - PayU__MerchantKey=${PAYU_MERCHANT_KEY:-gtKFFx}
+      - PayU__MerchantSalt=${PAYU_MERCHANT_SALT:-eCwWELxi}
+      - PayU__IsProduction=${PAYU_IS_PRODUCTION:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+      tika:
+        condition: service_started
 
   client:
     build:
@@ -142,6 +203,9 @@ services:
     container_name: normora_client
     ports:
       - "4200:80"
+    networks:
+      default:
+        ipv4_address: 172.30.0.10
     depends_on:
       - api
 
@@ -149,3 +213,9 @@ volumes:
   postgres_data:
   minio_data:
   data_protection_keys:
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

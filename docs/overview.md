@@ -9,8 +9,8 @@ Normora is an enterprise-grade full-stack web application. It is designed to be 
 - **White-Label Branding**: Supports dynamic, per-tenant white-label branding applied seamlessly at runtime via path-based workspace routing and CSS custom properties.
 - **Identity & Security First**: Integrated deeply with Keycloak for industry-standard identity, authentication, and access management.
 - **Reliable Storage Ecosystem**: Uses PostgreSQL for relational data across isolated schema boundaries, and MinIO for highly scalable S3-compatible object storage.
-- **Document Lifecycle Visibility**: Uploaded documents expose a clear `Uploaded`, `Processing`, `Ready`, or `Failed` state. Background extraction and indexing will advance documents beyond the initial upload state in the next ingestion slice.
-- **Background Processing Boundary**: Hangfire persists document-processing jobs in PostgreSQL and runs them in the API worker after upload metadata is saved.
+- **Document Lifecycle Visibility**: Uploaded documents expose a clear `Uploaded`, `Processing`, `Ready`, or `Failed` state as background extraction and indexing progresses.
+- **Background Processing Boundary**: Hangfire persists document-processing jobs in PostgreSQL and runs them in an independently deployable worker process after upload metadata is saved.
 - **Text Extraction**: Apache Tika extracts text from tenant-owned PDF, DOCX, and TXT objects before later normalization, chunking, and embedding stages.
 - **Document Chunks**: Extracted text is normalized into bounded, tenant-owned chunks ready for future embeddings and retrieval.
 - **Realtime Processing Updates**: SignalR broadcasts tenant-scoped document status changes so the employer UI can show processing progress immediately.
@@ -24,7 +24,7 @@ Normora is an enterprise-grade full-stack web application. It is designed to be 
 - **Subscription & Plan Limits**: Strict resource quota enforcement across plan tiers (`Free`, `Pro`, `Enterprise`) governing document counts, member seats, and storage bytes. Built on a provider-agnostic `IPaymentService` abstraction with PayU Hosted Checkout, SHA-512 cryptographic signing, UPI support for local Indian payments (INR), Credit/Debit Cards for international and domestic payments, reverse hash callback verification, multi-currency support with workspace currency persistence, and tier hierarchy action locking.
 - **Provider-Agnostic Infrastructure**: Clean interface abstractions for transactional emails (`IEmailSender` with Resend and Null implementations), payment gateways (`IPaymentService`), external identity (`ExternalUserId` mapping), and storage references (`StorageObjectName`).
 - **Autonomous Agent Tools & MCP**: Multi-turn agentic function calling for deterministic policy calculations, automated HR email escalations, and targeted document search, exposed externally via standard JSON-RPC 2.0 Model Context Protocol (MCP) endpoints (`/api/mcp`).
-- **Strict Modular Monolith & DbContext Encapsulation**: 100% encapsulation of `TenantsDbContext`, `DocumentsDbContext`, and `ConversationsDbContext`. Host controllers, middleware, and hubs communicate exclusively via MediatR query contracts (`Normora.Shared.Contracts.*`) and boundary interfaces (`ITenantResolutionService`, `IDocumentNotificationService`).
+- **Modular Monolith & DbContext Encapsulation**: `TenantsDbContext`, `DocumentsDbContext`, and `ConversationsDbContext` stay inside their owning modules. The API requests schema updates through module-owned migrator interfaces; controllers, middleware, and hubs communicate via MediatR contracts and boundary interfaces.
 - **Deferred Physical Data Purge**: Soft-deleted resources undergo physical cleanup (e.g., permanent deletion of MinIO objects and vector chunks) via scheduled Hangfire background jobs to comply with data retention policies while maintaining UI responsiveness.
 
 ## Target Audience

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Normora.Modules.Tenants.Application.Subscription;
 
+/// <summary>Creates a return URL for the active tenant's payment-provider billing portal.</summary>
 public record CustomerPortalResultDto(string PortalUrl);
 
 public record CreateCustomerPortalSessionCommand(string? ReturnUrl = null) : IRequest<CustomerPortalResultDto>, IAuditableRequest

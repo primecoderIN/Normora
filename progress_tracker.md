@@ -113,7 +113,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 ## ✅ Completed Saved Answers
 - [x] `SavedAnswer` domain entity (`TenantId`, `UserId`, `MessageId`, `ConversationId`)
 - [x] Registered `SavedAnswer` in `ConversationsDbContext` with tenant global query filter and unique index `(UserId, MessageId)`
-- [x] `AddSavedAnswers` EF Core migration generated (applied automatically on API startup)
+- [x] `AddSavedAnswers` EF Core migration generated and applied in the original development workflow; deployments now use the one-off migration runner.
 - [x] `SaveAnswerCommand` — idempotent save of any assistant message
 - [x] `UnsaveAnswerCommand` — idempotent removal by MessageId
 - [x] `GetSavedAnswersQuery` — paginated list with message content + citations joined
@@ -147,7 +147,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] `MessageFeedback` domain entity with `TenantId`, `UserId`, `MessageId`, `Rating` (enum), and `Comment`
 - [x] `MessageFeedbacks` `DbSet` and unique constraint on `(UserId, MessageId)` in `ConversationsDbContext`
 - [x] Added `Feedbacks` navigation property to `Message`
-- [x] EF Core migration `AddMessageFeedbacksEntity` created and applied automatically on API startup
+- [x] EF Core migration `AddMessageFeedbacksEntity` created and applied in the original development workflow; deployments now use the one-off migration runner.
 - [x] `SubmitFeedbackCommand` + handler (validates Assistant role and user identity)
 - [x] `POST /api/conversations/{id}/messages/{messageId}/feedback` endpoint
 - [x] `MessageDto` updated with `Feedback` rating mapping inside `GetConversationQueryHandler`
@@ -261,7 +261,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Backend: Created `ICacheService` abstraction in `Normora.Shared.Interfaces` with `GetAsync`, `SetAsync`, `GetOrCreateAsync`, and `RemoveAsync`.
 - [x] Backend: Installed `Microsoft.Extensions.Caching.StackExchangeRedis` 10.0.13 and implemented `DistributedCacheService`.
 - [x] Backend: Added fault-tolerant resilience: wraps cache operations in safe exception handling to prevent cache failures from breaking user requests.
-- [x] Backend: Added automatic in-memory fallback (`AddDistributedMemoryCache`) when Redis is not running or unconfigured.
+- [x] Backend: Added in-memory fallback (`AddDistributedMemoryCache`) for local Development when Redis is not configured; non-Development hosts now require Redis.
 - [x] Backend: Dockerized Redis (`redis:7-alpine`) on port `6379` in `docker-compose.yml`.
 - [x] Backend: Cached tenant branding (`branding:{slug}`) with 5-minute TTL in `GetTenantBrandingQueryHandler`.
 - [x] Backend: Implemented instant branding cache eviction upon `UpdateTenantBrandingCommand`.
@@ -297,7 +297,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 
 ## ✅ Completed Strict Modular Monolith Refactoring & 100% DbContext Encapsulation (Phase 27)
 - [x] Backend: Enforced 100% DbContext encapsulation across all modules. Eliminated all direct references to `TenantsDbContext`, `DocumentsDbContext`, and `ConversationsDbContext` from middleware, hubs, and controllers.
-- [x] Backend: Created `ITenantResolutionService` in `Normora.Shared.Interfaces` and implemented it in `Normora.Modules.Tenants.Persistence` using `IDbContextFactory<TenantsDbContext>`, decoupling `TenantResolutionMiddleware`, `DocumentHub`, and `McpController`.
+- [x] Backend: Created `ITenantResolutionService` in `Normora.Shared.Interfaces` and implemented it in `Normora.Modules.Tenants.Persistence`, decoupling `TenantResolutionMiddleware`, `DocumentHub`, and `McpController`. The current implementation uses the module-owned scoped `TenantsDbContext` and resolves authorization state on each request.
 - [x] Backend: Refactored legacy God Aggregator `GetDashboardSummary` (which previously injected 3 DbContexts simultaneously) into a clean MediatR orchestrator querying decoupled cross-module contracts: `GetTenantDashboardMetricsQuery`, `GetDocumentDashboardMetricsQuery`, and `GetConversationDashboardMetricsQuery`.
 - [x] Backend: Decoupled real-time WebSocket notifications from Documents module via `IDocumentNotificationService` interface and `SignalRDocumentNotificationService` in API host, eliminating direct SignalR hub couplings from background jobs.
 - [x] Backend: Decoupled `McpController` document queries via `GetMcpResourceDocumentsQuery` and `GetMcpDocumentContentQuery` MediatR contracts.
@@ -315,4 +315,3 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Backend: Standardized shared agent tool contracts in `Normora.Shared.Interfaces` (`IAgentTool`, `IAgentToolRegistry`, `AgentToolResult`, `ToolExecutionContext`, `McpToolDefinition`).
 - [x] Backend: Cleaned up legacy directories `server/Normora.Api/Features/Documents/` and `server/Normora.Api/Features/Ask/`.
 - [x] Backend: Validated solution build with `dotnet build server/Normora.slnx` — 0 warnings, 0 errors.
-

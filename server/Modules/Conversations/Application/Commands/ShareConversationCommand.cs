@@ -8,6 +8,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Application.Commands;
 
+/// <summary>Creates or reuses a secure public share token for a conversation owned by the caller.</summary>
 public record ShareConversationCommand(Guid ConversationId) : IRequest<ConversationShareDto>;
 
 public record ConversationShareDto(string Token, DateTimeOffset? ExpiresAt);

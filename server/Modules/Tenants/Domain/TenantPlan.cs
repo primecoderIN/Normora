@@ -1,5 +1,6 @@
 namespace Normora.Modules.Tenants.Domain;
 
+/// <summary>Identifies the subscription level that controls tenant resource limits.</summary>
 public enum PlanTier
 {
     Free = 0,

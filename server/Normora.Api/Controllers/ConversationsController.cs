@@ -12,7 +12,7 @@ using Normora.Shared;
 
 namespace Normora.Api.Controllers;
 
-
+/// <summary>Exposes tenant-authorized conversation, AI, sharing, export, and feedback endpoints.</summary>
 [ApiController]
 [Route("api/[controller]")]
 [RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
@@ -165,4 +165,3 @@ public class ConversationsController(IMediator mediator) : ControllerBase
 public sealed record AskConversationRequest(string Question, int Limit = 5);
 
 public sealed record SubmitFeedbackRequest(Normora.Modules.Conversations.Domain.MessageFeedbackRating Rating, string? Comment);
-

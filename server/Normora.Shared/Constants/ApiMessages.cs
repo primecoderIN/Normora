@@ -24,6 +24,11 @@ public static class ApiMessages
 
     // Server Errors
     public const string InternalServerError = "An unexpected error occurred. Please try again later.";
+    public const string MinioTlsRequired = "MinIO TLS must be enabled outside development.";
+    public const string RedisRequired = "A distributed Redis cache must be configured outside development.";
+    public const string TrustedProxyRequired = "At least one trusted reverse proxy IP must be configured outside development.";
+    public const string InvalidTrustedProxy = "A configured trusted reverse proxy IP is invalid.";
+    public const string DocumentPurgeIncomplete = "One or more deleted documents could not be purged.";
     public const string LlmGenerationNotConfigured = "Ask Normora requires AI text generation to be configured.";
     public const string EmailServiceNotConfigured = "Transactional email delivery is not configured. Set the email API key in your environment or configuration.";
     public const string McpInvalidRequest = "Invalid MCP JSON-RPC request.";
@@ -90,5 +95,3 @@ public static class ApiMessages
     public const string PayUHashMismatch = PaymentSignatureMismatch;
     public const string AnswerSaved = "Answer saved successfully.";
 }
-
-

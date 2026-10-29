@@ -3,6 +3,7 @@ using Normora.Modules.Tenants.Domain;
 
 namespace Normora.Modules.Tenants.Application.Subscription;
 
+/// <summary>Defines PayU-specific payloads and operations while extending the provider-neutral contract.</summary>
 public record PayUCheckoutDto(string ActionUrl, Dictionary<string, string> Params) : PaymentCheckoutDto(ActionUrl, Params);
 
 public record PayUCallbackResultDto(
@@ -17,4 +18,3 @@ public record PayUCallbackResultDto(
 public interface IPayUPaymentService : IPaymentService
 {
 }
-

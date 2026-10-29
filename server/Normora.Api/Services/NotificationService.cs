@@ -4,6 +4,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Services;
 
+/// <summary>Publishes user-targeted notifications to SignalR groups.</summary>
 public class NotificationService(IHubContext<NotificationHub> hubContext) : INotificationService
 {
     public async Task NotifyInvitationReceivedAsync(string email, string tenantName, CancellationToken cancellationToken = default)

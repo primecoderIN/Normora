@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Owns tenant membership, authorization resolution, billing, and tenant persistence. -->
   <ItemGroup>
     <ProjectReference Include="..\..\Normora.Shared\Normora.Shared.csproj" />
   </ItemGroup>

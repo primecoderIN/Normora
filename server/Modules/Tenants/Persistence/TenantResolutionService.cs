@@ -5,27 +5,19 @@ namespace Normora.Modules.Tenants.Persistence;
 
 /// <summary>
 /// Implements tenant resolution and membership validation by querying the Tenants persistence store.
-/// Encapsulates direct database access within the Tenants module boundary and caches resolved access
-/// to optimize the high-throughput request authentication pipeline.
+/// Resolves current membership state from the database so revocations and permission changes take effect
+/// immediately across every API replica.
 /// </summary>
-public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheService cache) : ITenantResolutionService
+public sealed class TenantResolutionService(TenantsDbContext dbContext) : ITenantResolutionService
 {
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(2);
-
     public async Task<ResolvedTenantAccess?> ResolveTenantAccessAsync(
         Guid tenantId,
         string externalUserId,
         CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"tenant-access:{tenantId}:{externalUserId}";
-        var cached = await cache.GetAsync<ResolvedTenantAccess>(cacheKey, cancellationToken);
-        if (cached is not null)
-        {
-            return cached;
-        }
-
         var membership = await dbContext.TenantMemberships
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(m => m.User)
             .Include(m => m.MembershipDepartments)
             .Include(m => m.UserGroupMemberships)
@@ -47,9 +39,7 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheSe
 
         var effectiveDepartments = directDepartments.Concat(inheritedDepartments).Distinct().ToList();
 
-        var resolved = new ResolvedTenantAccess(tenantId, membership.Role.ToString(), effectiveDepartments);
-        await cache.SetAsync(cacheKey, resolved, CacheTtl, cancellationToken);
-        return resolved;
+        return new ResolvedTenantAccess(tenantId, membership.Role.ToString(), effectiveDepartments);
     }
 
     public async Task<bool> HasTenantAccessAsync(

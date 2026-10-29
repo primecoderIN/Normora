@@ -1,5 +1,6 @@
 namespace Normora.Modules.Tenants.Options;
 
+/// <summary>Holds merchant credentials and endpoint selection for PayU hosted payments.</summary>
 public class PayUOptions
 {
     public const string SectionName = "PayU";

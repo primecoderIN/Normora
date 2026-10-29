@@ -8,6 +8,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Subscription;
 
+/// <summary>Combines the tenant's plan limits with current member, document, and storage usage.</summary>
 public record SubscriptionUsageDto(
     string PlanTier,
     int MaxDocuments,

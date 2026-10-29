@@ -8,6 +8,7 @@ using Normora.Modules.Conversations.Application.Services;
 
 namespace Normora.Modules.Conversations.Infrastructure.Llm;
 
+/// <summary>Adapts the Gemini API to the application query-rewriting contract.</summary>
 public class GeminiQueryRewriterService(
     HttpClient httpClient,
     IOptions<GeminiOptions> options,

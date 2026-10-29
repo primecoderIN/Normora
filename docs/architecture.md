@@ -1,6 +1,6 @@
 # Architecture
 
-Normora follows a **Strict Modular Monolith** architecture on the backend and a standard **Single Page Application (SPA)** architecture on the frontend.
+Normora follows a **Modular Monolith** architecture on the backend and a standard **Single Page Application (SPA)** architecture on the frontend. The API, background worker, and one-off migration runner are independently deployable processes built from the same server solution.
 
 ## High-Level Tech Stack
 - **Frontend**: Angular, TypeScript, Nginx
@@ -10,27 +10,32 @@ Normora follows a **Strict Modular Monolith** architecture on the backend and a 
 - **Object Storage**: MinIO
 - **Infrastructure**: Docker & Docker Compose
 
-## Backend Architecture (Strict Modular Monolith)
-The backend is structured into distinct modules to enforce separation of concerns while keeping deployment simple as a single API process. 
+The project's engineering history from its initial commit is documented in [Engineering Timeline](#engineering-timeline).
 
-Crucially, there is no shared "Infrastructure" layer, and **no cross-module DbContext leakage is permitted**. Each module completely encapsulates its own persistence logic, DbContexts, domain entities, background workers, and external service integrations:
+## Backend Architecture (Modular Monolith)
+The backend is structured into distinct modules to enforce separation of concerns while keeping deployment simple.
 
-- **Normora.Api**: A lightweight orchestration host. It contains API controllers, middleware (`TenantResolutionMiddleware`), SignalR hubs (`DocumentHub`), background worker scheduling, and dependency injection composition. It owns zero domain entities or database contexts.
-- **Normora.Shared**: Shared contracts (`Normora.Shared.Contracts.*`), cross-cutting abstractions, MediatR pipeline behaviors (`AuditBehavior`), constants (`ApiMessages`, `TenantRoles`), and provider-neutral interfaces (`ITenantResolutionService`, `IDocumentNotificationService`, `IAgentTool`, `IAgentToolRegistry`, `IEmailSender`, `IPaymentService`).
+Crucially, there is no shared "Infrastructure" layer, and **no cross-module DbContext leakage is permitted**. Each module encapsulates its own persistence logic, DbContext, domain entities, jobs, and external service integrations:
+
+- **Normora.Api**: The HTTP/BFF host. It contains controllers, middleware (`TenantResolutionMiddleware`), SignalR hubs (`DocumentHub`), and dependency injection composition. Its one-off `--migrate` mode invokes module-owned migration contracts instead of resolving module contexts.
+- **Normora.Worker**: A separate generic host running Hangfire workers and scheduling recurring jobs. API replicas do not run background workers.
+- **Normora.Shared**: Shared contracts (`Normora.Shared.Contracts.*`), cross-cutting abstractions, MediatR pipeline behaviors (`AuditBehavior`), constants (`ApiMessages`, `TenantRoles`), and provider-neutral interfaces (`ITenantResolutionService`, `IDocumentNotificationService`, `IDatabaseMigrator`, `IAgentTool`, `IAgentToolRegistry`, `IEmailSender`, `IPaymentService`).
 - **Modules** (`server/Modules/`):
   Each module resides in a clean directory named after its bounded context with a matching `.csproj` file. Inside each `.csproj`, `<AssemblyName>` and `<RootNamespace>` are explicitly specified as `Normora.Modules.<ModuleName>` to maintain binary stability for migration snapshots and job serializers while keeping directory structures concise:
-  - `server/Modules/Auth/Auth.csproj` (`Normora.Modules.Auth`): Authentication and authorization flows, claims transformation, and BFF endpoint integrations.
-  - `server/Modules/Tenants/Tenants.csproj` (`Normora.Modules.Tenants`): Multi-tenancy lifecycle, membership validation, departments, user groups, white-label branding, invitations, subscription plans, and isolated tenant persistence (`TenantsDbContext`). Encapsulates `TenantResolutionService` via `IDbContextFactory<TenantsDbContext>`.
-  - `server/Modules/Users/Users.csproj` (`Normora.Modules.Users`): User profiles, OIDC shadow identity management, and current user context.
+  - `server/Modules/Tenants/Tenants.csproj` (`Normora.Modules.Tenants`): Multi-tenancy lifecycle, membership validation, departments, user groups, white-label branding, invitations, subscription plans, and isolated tenant persistence (`TenantsDbContext`).
   - `server/Modules/Documents/Documents.csproj` (`Normora.Modules.Documents`): Document upload/management vertical slices (`UploadDocumentCommand`, `DeleteDocumentCommand`, `GetEmployerDocumentsQuery`, `SearchDocumentsQuery`, `GetDocumentChunkQuery`), background ingestion (`DocumentProcessingJob`, `PurgeDeletedDocumentsJob`), text extraction (Apache Tika), chunk embedding generation (`GeminiEmbeddingService`), hybrid retrieval (`RetrievalService`), and isolated data storage (`DocumentsDbContext`).
   - `server/Modules/Conversations/Conversations.csproj` (`Normora.Modules.Conversations`): Multi-turn conversational RAG pipeline (`AskConversationCommand`, `AskConversationStreamCommand`), generative text models (`GeminiTextGenerationService`), autonomous agent tool calling (`AgentToolRegistry`, `CalculatePolicyLimitTool`, `EscalateInquiryTool`, `SearchCompanyDocumentsTool`), auto-titling, conversation metrics, saved answer exports (Markdown, QuestPDF, Docx), and chat history persistence (`ConversationsDbContext`).
 
 ### Boundary Enforcement Rules
-1. **100% DbContext Encapsulation**: Module DbContexts (`TenantsDbContext`, `DocumentsDbContext`, `ConversationsDbContext`) are strictly private to their owning module. Under no circumstance may a DbContext be injected into an API controller, middleware, hub, or another module.
+1. **100% DbContext Encapsulation**: Module DbContexts (`TenantsDbContext`, `DocumentsDbContext`, `ConversationsDbContext`) are used only inside their owning modules. The host can request migrations via `IDatabaseMigrator`, but does not resolve a module context directly.
 2. **Contract-Driven Cross-Module Queries**: When one module or the host requires data owned by another module, it dispatches a lightweight MediatR query contract residing in `Normora.Shared.Contracts.*` (e.g. `GetTenantDashboardMetricsQuery`, `GetDocumentDashboardMetricsQuery`, `GetConversationDashboardMetricsQuery`, `GetAccessibleDocumentFileNamesQuery`, `GetTenantAdminRecipientsQuery`).
 3. **Boundary Interfaces**: Cross-cutting infrastructure hooks are decoupled using shared interfaces. 
    - `ITenantResolutionService`: Allows `TenantResolutionMiddleware`, `DocumentHub`, and `McpController` to validate memberships and resolve tenant slugs without direct access to `TenantsDbContext`.
    - `IDocumentNotificationService`: Enables background workers (`DocumentProcessingJob`) in the Documents module to push real-time WebSocket progress updates without coupling the module to SignalR hub dependencies.
+   - `IDatabaseMigrator`: Lets each module migrate its own persistence boundary from the one-off migration runner.
+4. **Immediate Membership Revocation**: Tenant membership and department permissions are resolved from the Tenants database on every request so changes take effect across all API replicas immediately.
+5. **Explicit Migration Lifecycle**: Schema migrations run as a serialized `dotnet Normora.Api.dll --migrate` deployment step, not during API startup. Pending-model-change warnings are not suppressed.
+6. **Production Infrastructure Requirements**: Production requires a distributed Redis cache, MinIO TLS, and explicit trusted reverse-proxy IPs. Forwarded headers are limited to one trusted proxy hop.
 
 ## Identity & Access Management (IAM)
 Normora uses the **Backend-For-Frontend (BFF)** pattern powered by `Duende.BFF` to eliminate token exposure to the browser entirely.
@@ -98,7 +103,7 @@ The API decrypts the cookie, finds the Keycloak Access Token inside, validates i
 ### Docker Reverse-Proxy Gotcha (UseForwardedHeaders)
 When the API runs inside Docker behind an nginx reverse proxy, `HttpContext.Request.Host` resolves to the internal Docker hostname (`api:8080`) rather than the public-facing address (`localhost:4200`). This causes the OIDC middleware to build an incorrect `redirect_uri`, which Keycloak rejects.
 
-**Fix**: `UseForwardedHeaders` middleware is registered in `Program.cs` to read the `X-Forwarded-Host`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers that nginx injects, allowing the API to correctly reconstruct the public URL.
+**Fix**: `UseForwardedHeaders` middleware is registered in `Program.cs` to read the `X-Forwarded-Host`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers that nginx injects, allowing the API to correctly reconstruct the public URL. Only explicitly configured proxy IPs are trusted; do not clear ASP.NET Core's default proxy restrictions.
 
 ```csharp
 app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -144,7 +149,7 @@ The backend relies on **OpenTelemetry (OTLP)** for a unified observability layer
 The Angular application resides in the `client/` directory and communicates with the .NET backend via REST APIs. During local development and production, requests to `/api/*` are proxied to the backend. The frontend seamlessly handles complex auth flows, including intercepting OAuth callbacks to redirect users accepting invitations.
 
 ## Deployment
-The entire stack is containerized. `docker-compose.yml` orchestrates the services, including the PostgreSQL database, pgAdmin, Keycloak auth server, MinIO storage, the .NET API, and the Angular client served via Nginx.
+The local stack is containerized. `docker-compose.yml` orchestrates PostgreSQL, pgAdmin, Keycloak, MinIO, Redis, Tika, a one-off schema migrator, the .NET API, a separate Hangfire worker, and the Angular client served via Nginx. The API starts only after migrations complete successfully. Production deployments should run migrations as a serialized release step and configure trusted proxy IPs, Redis, and MinIO TLS.
 
 ## Multi-Tenancy and Scalable Architecture
 Normora implements a highly scalable **Multi-Tenant Architecture** using a many-to-many relationship between Users and Tenants. This is a foundational design choice that supports both business growth and long-term development velocity.
@@ -233,7 +238,7 @@ Uploaded -> Processing -> Ready
 
 The upload request currently stores the file and creates an `Uploaded` metadata record. The employer document list displays the lifecycle state using readable API values. The background worker, text extraction, normalization, and chunking steps are intentionally separate follow-up increments so a document is never shown as `Ready` before ingestion has completed.
 
-Hangfire uses PostgreSQL storage and runs `DocumentProcessingJob` in the API worker. Uploads enqueue a job only after the MinIO object and document metadata have been persisted. The job validates both the document ID and tenant ID outside the HTTP tenant context, downloads the tenant-owned object from MinIO, sends it to Apache Tika, stores the extracted text, normalizes it into bounded `DocumentChunk` rows, and moves the document to `Ready`. Extraction failures move the document to `Failed` and are rethrown for Hangfire retry. The Hangfire dashboard is available at `/hangfire` in Development only.
+Hangfire uses PostgreSQL storage and runs `DocumentProcessingJob` in the separate `Normora.Worker` process. Uploads enqueue a job only after the MinIO object and document metadata have been persisted. The job validates both the document ID and tenant ID outside the HTTP tenant context, downloads the tenant-owned object from MinIO, sends it to Apache Tika, stores the extracted text, normalizes it into bounded `DocumentChunk` rows, and moves the document to `Ready`. Extraction failures move the document to `Failed` and are rethrown for Hangfire retry. The Hangfire dashboard is available at `/hangfire` in Development only.
 
 Chunks are tenant-owned and uniquely ordered per document. A retry removes the document's existing chunks and recreates them, preventing duplicate chunk records. Each chunk is capped at approximately 4,000 characters and preserves paragraph boundaries where possible. Embeddings and vector search are separate later stages.
 
@@ -357,7 +362,7 @@ The export dropdown on each saved-answer card shows a spinner during the in-flig
 ## Soft Deletion and Data Retention Strategy
 Normora relies heavily on soft deletion (`DeletedAt`, `RemovedAt`) combined with EF Core **Global Query Filters** to immediately hide deleted resources (Documents, Employees) from all RAG lookups, dashboard lists, and searches without altering individual queries.
 
-- **Document Purge**: Soft-deleted documents broadcast a SignalR event for optimistic UI updates. They are physically deleted from MinIO (and database rows purged) via a nightly Hangfire job (`PurgeDeletedDocumentsJob`) after a 30-day grace period.
+- **Document Purge**: Soft-deleted documents broadcast a SignalR event for optimistic UI updates. They are physically deleted from MinIO (and database rows purged) in bounded, retry-safe batches via a nightly Hangfire job (`PurgeDeletedDocumentsJob`) after a 30-day grace period.
 - **Local-First Identity Sync**: Removing an employee soft-deletes their `TenantMembership` locally first. Access is instantly revoked via Global Query Filters. Afterward, a best-effort `IHttpClientFactory` call attempts to un-sync the user from the Keycloak Admin API, safely logging any errors without rolling back the local transaction. This protects against identity provider outages preventing critical access revocations.
 
 ## Audit Logging Architecture
@@ -576,4 +581,57 @@ Following a comprehensive senior architectural audit, the codebase implements st
   - Paginated list components use typed `PagedResult<T>` and PrimeNG `PaginatorState`.
   - UI reactive state uses Angular Signals (`signal`, `computed`) and eliminates nested RxJS subscriptions.
 
+## Engineering Timeline
 
+This timeline summarizes the major product and architecture milestones recorded in Git history. It is intentionally milestone-based rather than a list of all 243 commits. Commit IDs are included as representative evidence.
+
+### August 26-31, 2026 — Repository and product foundations
+
+- **August 26:** The repository begins with `bd4b55a` (`Initial commit`); `09e7d8c` establishes the .NET modular-monolith server and Docker Compose infrastructure.
+- **August 28-29:** Infrastructure and project documentation are expanded, the Angular application and routes are scaffolded, Keycloak/OIDC authentication is integrated, document management is built with CQRS and MinIO, and tenant isolation is introduced (`205368f`, `961db36`, `58b3e57`, `46bf3ea`, `3aaf9a5`).
+- **August 30-31:** Employer onboarding and invitations arrive; backend boundaries are tightened into a modular monolith, authentication and tenant flows are hardened, and Google sign-in, invitation expiry, and profile synchronization are added (`9d97dcd`, `0f5d73e`, `57c16bc`, `ee2bda6`).
+
+### September 1-8, 2026 — Tenant security and document scope
+
+- Tenant authorization receives a BOLA remediation, followed by white-label branding and BFLA improvements (`eb5ba1d`, `01b2cfe`, `79dce0a`).
+- Document ingestion grows to include lifecycle status, background processing, Apache Tika extraction, chunking, tenant-scoped real-time events, and pgvector embeddings with tenant-safe retrieval (`efd8e5d`, `916cb8d`, `3818b2f`, `042f1d2`, `1df8216`, `4f49e6e`, `2175fe2`).
+- Departments and user groups become first-class authorization and document-scoping concepts; client components are subsequently split and bundle/routing performance is improved (`c5aecc0`, `73afa7d`, `73e94f4`, `e7636eb`, `b0d29e2`).
+
+### September 9-19, 2026 — Conversational RAG and secure sessions
+
+- Conversational RAG develops from a foundation into query understanding, hybrid vector/keyword retrieval, grounded answer generation, telemetry, and a complete chat experience (`9525d2a`, `ce97b52`, `cd17afc`, `8a30c6d`, `f71129c`).
+- Server-sent event streaming, saved answers, and tenant-scoped workspace switching extend the conversation workflow (`0d8b883`, `b286745`, `0d8ba2e`).
+- Security controls expand with rate limiting, file magic-byte validation, and exception-leak fixes. The authentication architecture then moves to Duende BFF with PostgreSQL-backed sessions, while documentation and error responses become more consistent (`9455849`, `c51d377`, `1273c92`, `849d971`).
+
+### September 20-30, 2026 — Platform maturity and defense in depth
+
+- Configuration and API messages are centralized; white-label branding persistence, path-based workspace routing, and dynamic branding are implemented (`716d610`, `d06fab5`, `28f65c7`, `e2fea5e`).
+- Core RAG retrieval is refactored, and the repository adds CodeQL SAST and OWASP ZAP DAST workflows plus security-header hardening (`99c6863`, `44d49c8`, `8ee9ad8`, `3fb2c86`, `84c8409`).
+- Saved-answer exports, audit fixes, conversation feedback, and document versioning/outdated-answer detection are delivered (`a596829`, `357dace`, `e462a10`, `24227b5`).
+
+### October 2-14, 2026 — Lifecycle, governance, and operational features
+
+- Document and membership soft deletion, scheduled physical cleanup, paginated employee management, and last-admin protection strengthen lifecycle management (`0a9d5a0`, `29a92d3`, `a664447`, `9efe982`).
+- Employee profiles, citation previews, suggested questions, and shareable read-only conversations improve the product workflow (`9c82195`, `4cd320a`, `3afba35`, `024c2e5`).
+- Cross-module query contracts, employer audit logging, subscription quotas, and SignalR/WebSocket authorization and proxy handling are added (`5f6a6bf`, `731830e`, `1dee741`, `52883ef`, `f20c271`).
+
+### October 16-26, 2026 — Billing, integrations, and maintainability
+
+- Secure Stripe checkout and webhooks are introduced, followed by asynchronous email dispatch, Redis caching, and an AI tool-calling/MCP endpoint (`de7b0bd`, `b8cd323`, `c591477`, `f526a32`).
+- Architecture and code-quality audits consolidate module conventions, security standards, primary constructors, and centralized API messages (`964d016`, `661203f`, `f700d71`).
+- Billing moves from Stripe to PayU with UPI/card support, callback hardening, and trusted tenant-slug redirects (`2674502`, `6826496`, `fbb3daf`, `91639c7`, `1137a68`).
+
+### October 28-29, 2026 — Provider-neutral modular monolith
+
+- Provider-specific concepts are removed from shared contracts; payment, email, identity, AI, and storage concerns are expressed through provider-neutral abstractions. Document persistence dependencies move out of Shared (`7bfba4a`, `1cfec0c`, `8e1e9cf`, `7fc8c03`, `46c43ab`).
+- Module-owned DbContexts and composition roots are enforced, feature slices are re-homed, and PostgreSQL schemas are isolated by module (`821db03`, `4f9f275`, `7afddbc`, `55a1d90`).
+- Conversation orchestration is decomposed, provider options and templates move to their owning modules, and streaming cancellation, full-text-search resilience, embedding throughput, and payment signature comparison are hardened (`22919a1`, `8c86753`).
+- The latest architecture hardening separates `Normora.Worker` from the API, introduces an explicit one-off migration process, restricts trusted proxy configuration, requires secure production dependencies, removes stale authorization caching, and makes document purge batches retryable (`6d4bacb`).
+- Migrations run through module-owned `IDatabaseMigrator` implementations before API/worker rollout; production proxy IPs are explicitly configured, Redis and MinIO TLS are required, and membership/department authorization changes take effect without stale cache entries.
+- Purge processing uses bounded batches and idempotent storage deletion before database removal; per-document failures are logged and surfaced so Hangfire can retry incomplete work. Regression coverage was added for membership-revocation freshness and PostgreSQL translation of the purge cursor query.
+
+### Deployment and verification record
+
+- Production deployment runs `dotnet Normora.Api.dll --migrate` as a serialized step before the API and worker start. Production also requires explicitly configured trusted proxies, Redis, and MinIO TLS.
+- `dotnet build .\\server\\Normora.slnx` completed with zero warnings and errors; `dotnet test .\\server\\Normora.slnx --no-build` and `docker compose config --quiet` passed.
+- Docker image builds were not verified because the Docker Desktop engine was unavailable in the recorded environment.

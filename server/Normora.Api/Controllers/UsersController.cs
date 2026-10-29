@@ -9,6 +9,7 @@ using Normora.Shared;
 
 namespace Normora.Api.Controllers;
 
+/// <summary>Exposes current-user profile and tenant-scoped membership assignment endpoints.</summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]

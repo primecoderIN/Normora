@@ -1,5 +1,6 @@
 namespace Normora.Shared.Interfaces;
 
+/// <summary>Exposes tenant-safe hybrid retrieval without leaking persistence contexts.</summary>
 public record RetrievalCandidate
 {
     public Guid ChunkId { get; set; }

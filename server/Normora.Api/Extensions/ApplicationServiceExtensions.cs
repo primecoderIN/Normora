@@ -43,6 +43,7 @@ public static class ApplicationServiceExtensions
         // Core Host Abstractions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<Normora.Api.Services.DatabaseMigrationRunner>();
 
         // Email Services (Resend + Hangfire Background Delivery)
         services.AddHttpClient<ResendEmailSender>();

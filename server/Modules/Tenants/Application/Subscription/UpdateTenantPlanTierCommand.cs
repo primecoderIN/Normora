@@ -7,6 +7,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Subscription;
 
+/// <summary>Changes the active tenant's plan tier and returns its updated quota usage.</summary>
 public record UpdateTenantPlanTierCommand(PlanTier Tier) : IRequest<SubscriptionUsageDto>, IAuditableRequest
 {
     public string Action => "Subscription.TierUpdated";

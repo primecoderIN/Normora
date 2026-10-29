@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Normora.Modules.Conversations.Application.Feedback;
 
+/// <summary>Saves feedback only for an assistant message visible in the caller's tenant.</summary>
 internal sealed class SubmitFeedbackCommandHandler(
     ConversationsDbContext dbContext,
     ICurrentUser currentUser) : IRequestHandler<SubmitFeedbackCommand>

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Normora.Shared.Options;
 
+/// <summary>Holds internal and browser-facing Keycloak issuer and discovery URLs.</summary>
 public class KeycloakOptions
 {
     public const string SectionName = "Keycloak";

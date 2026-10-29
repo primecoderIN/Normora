@@ -22,10 +22,10 @@ public static class DocumentsModuleExtensions
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<DocumentsDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector())
-                   .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+            options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
 
         services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>();
+        services.AddScoped<IDatabaseMigrator, DocumentsDatabaseMigrator>();
 
         var tikaOptions = configuration.GetSection(TikaOptions.SectionName).Get<TikaOptions>() ?? new TikaOptions();
         services.AddHttpClient<IDocumentTextExtractor, TikaDocumentTextExtractor>(client =>
@@ -47,4 +47,3 @@ public static class DocumentsModuleExtensions
         return services;
     }
 }
-

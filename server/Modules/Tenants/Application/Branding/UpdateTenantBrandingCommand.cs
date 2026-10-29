@@ -8,6 +8,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Branding;
 
+/// <summary>Updates tenant branding assets and invalidates the cached public branding response.</summary>
 public record UpdateTenantBrandingCommand(
     Guid TenantId,
     string? PrimaryColor,

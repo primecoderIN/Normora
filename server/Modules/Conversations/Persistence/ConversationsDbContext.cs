@@ -4,6 +4,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence;
 
+/// <summary>Persists conversation aggregates and enforces tenant filters for tenant-owned records.</summary>
 public class ConversationsDbContext(DbContextOptions<ConversationsDbContext> options, ITenantContext tenantContext) : DbContext(options)
 {
     private readonly ITenantContext _tenantContext = tenantContext;
