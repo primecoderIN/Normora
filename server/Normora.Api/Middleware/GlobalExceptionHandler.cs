@@ -47,8 +47,15 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         }
 
         // 3. Handle resource-not-found errors thrown from command/query handlers.
-        // Maps to 404 Not Found. Also handles BOLA (Broken Object Level Authorization) by returning 404 to prevent enumeration.
-        if (exception is NotFoundException || exception is BolaException)
+        // Maps to 404 Not Found. Also handles BOLA (Broken Object Level Authorization) by returning generic 404 to prevent enumeration.
+        if (exception is BolaException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(ApiMessages.NotFound), cancellationToken);
+            return true;
+        }
+
+        if (exception is NotFoundException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
             var message = env.IsProduction() ? ApiMessages.NotFound : exception.Message;
@@ -61,7 +68,8 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is UnauthorizedAccessException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(exception.Message), cancellationToken);
+            var message = env.IsProduction() ? ApiMessages.Unauthorized : exception.Message;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
 
@@ -80,10 +88,10 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is PlanLimitExceededException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status402PaymentRequired;
-            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(exception.Message), cancellationToken);
+            var message = env.IsProduction() ? ApiMessages.PlanLimitExceeded : exception.Message;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
-
 
         // 7. Handle generic unexpected exceptions (e.g. database failure, unhandled runtime errors)
         logger.LogError(exception, "An unhandled exception occurred.");

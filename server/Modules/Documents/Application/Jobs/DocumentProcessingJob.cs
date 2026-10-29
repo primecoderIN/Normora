@@ -24,7 +24,7 @@ public sealed class DocumentProcessingJob(
 {
     [AutomaticRetry(Attempts = 3)]
     // Processes an individual DocumentVersion, ensuring separate storage keys, extracted text, and vector chunks per revision.
-    public async Task ProcessAsync(Guid documentVersionId, Guid tenantId)
+    public async Task ProcessAsync(Guid documentVersionId, Guid tenantId, CancellationToken cancellationToken = default)
     {
         // Hangfire has no HTTP tenant context, so bypass the request-scoped filter and
         // enforce ownership explicitly with both identifiers before touching the record.
@@ -32,7 +32,7 @@ public sealed class DocumentProcessingJob(
             .Include(v => v.Document)
             .IgnoreQueryFilters()
             .SingleOrDefaultAsync(v =>
-                v.Id == documentVersionId && v.TenantId == tenantId);
+                v.Id == documentVersionId && v.TenantId == tenantId, cancellationToken);
 
         if (version is null || version.Document is null)
         {
@@ -57,20 +57,20 @@ public sealed class DocumentProcessingJob(
         try
         {
             version.Status = DocumentStatus.Processing;
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
             await PublishStatusAsync(version.Document, version.Status);
 
             await using var documentStream = await storageService.DownloadDocumentAsync(version.StorageObjectName);
-            version.ExtractedText = await textExtractor.ExtractAsync(documentStream, version.Document.FileName);
+            version.ExtractedText = await textExtractor.ExtractAsync(documentStream, version.Document.FileName, cancellationToken);
 
-            await using var transaction = await context.Database.BeginTransactionAsync();
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 await context.DocumentChunks
                     // A retry replaces the complete chunk set so partial previous work cannot duplicate results.
                     .IgnoreQueryFilters()
                     .Where(chunk => chunk.DocumentVersionId == version.Id && chunk.TenantId == version.TenantId)
-                    .ExecuteDeleteAsync();
+                    .ExecuteDeleteAsync(cancellationToken);
 
                 var chunks = DocumentChunker.Split(version.ExtractedText);
                 var documentChunks = chunks.Select((content, index) => new DocumentChunk
@@ -86,20 +86,26 @@ public sealed class DocumentProcessingJob(
                 {
                     // These chunks are new and still tracked in memory, so embed this list
                     // directly instead of querying PostgreSQL before SaveChanges persists it.
-                    foreach (var chunk in documentChunks)
+                    var parallelOptions = new ParallelOptions
                     {
-                        chunk.Embedding = new Pgvector.Vector(
-                            await embeddingService.CreateEmbeddingAsync(chunk.Content));
-                    }
+                        MaxDegreeOfParallelism = 5,
+                        CancellationToken = cancellationToken
+                    };
+
+                    await Parallel.ForEachAsync(documentChunks, parallelOptions, async (chunk, ct) =>
+                    {
+                        var vector = await embeddingService.CreateEmbeddingAsync(chunk.Content, ct);
+                        chunk.Embedding = new Pgvector.Vector(vector);
+                    });
                 }
 
                 context.DocumentChunks.AddRange(documentChunks);
 
                 // Ready is published only after all configured ingestion stages have completed.
                 version.Status = DocumentStatus.Ready;
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(cancellationToken);
 
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(cancellationToken);
             }
             catch
             {
@@ -123,7 +129,7 @@ public sealed class DocumentProcessingJob(
         catch (Exception exception)
         {
             version.Status = DocumentStatus.Failed;
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
             await PublishStatusAsync(version.Document, version.Status);
             logger.LogError(exception, "Document version {DocumentVersionId} failed processing for tenant {TenantId}.", documentVersionId, tenantId);
 

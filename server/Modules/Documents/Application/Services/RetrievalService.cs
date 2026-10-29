@@ -25,8 +25,11 @@ public sealed class RetrievalService(
         var effectiveDepartments = tenantContext.EffectiveDepartments;
         var activeTenantId = tenantContext.TenantId;
 
-        var queryWords = question.Split([' ', '\t', '\n', '\r', '.', ',', '?', '!', '\''],
-            StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 2).ToArray();
+        // Extract clean alphanumeric lexemes (3+ chars) to prevent tsquery syntax errors on special characters
+        var queryWords = System.Text.RegularExpressions.Regex.Matches(question, @"\b[\p{L}\p{N}]{3,}\b")
+            .Select(m => m.Value)
+            .Distinct()
+            .ToArray();
         var tsQueryText = queryWords.Length > 0 ? string.Join(" | ", queryWords) : null;
 
         // Base query joins chunks with active versions and applies tenant + department RBAC visibility filters
@@ -69,21 +72,29 @@ public sealed class RetrievalService(
         List<RetrievalCandidate> keywordResults = [];
         if (!string.IsNullOrWhiteSpace(tsQueryText))
         {
-            keywordResults = await baseQuery
-                .Where(x => x.chunk.SearchVector != null &&
-                            x.chunk.SearchVector.Matches(EF.Functions.ToTsQuery("english", tsQueryText)))
-                .Select(x => new RetrievalCandidate
-                {
-                    ChunkId = x.chunk.Id,
-                    DocumentId = x.doc.Id,
-                    FileName = x.doc.FileName,
-                    ChunkIndex = x.chunk.ChunkIndex,
-                    Content = x.chunk.Content,
-                    Score = x.chunk.SearchVector!.Rank(EF.Functions.ToTsQuery("english", tsQueryText))
-                })
-                .OrderByDescending(x => x.Score)
-                .Take(20)
-                .ToListAsync(ct);
+            try
+            {
+                keywordResults = await baseQuery
+                    .Where(x => x.chunk.SearchVector != null &&
+                                x.chunk.SearchVector.Matches(EF.Functions.ToTsQuery("english", tsQueryText)))
+                    .Select(x => new RetrievalCandidate
+                    {
+                        ChunkId = x.chunk.Id,
+                        DocumentId = x.doc.Id,
+                        FileName = x.doc.FileName,
+                        ChunkIndex = x.chunk.ChunkIndex,
+                        Content = x.chunk.Content,
+                        Score = x.chunk.SearchVector!.Rank(EF.Functions.ToTsQuery("english", tsQueryText))
+                    })
+                    .OrderByDescending(x => x.Score)
+                    .Take(20)
+                    .ToListAsync(ct);
+            }
+            catch (Exception)
+            {
+                // Graceful fallback to dense vector search if tsquery encounters an unexpected dialect issue
+                keywordResults = [];
+            }
         }
 
         // Merge dense vector and sparse keyword result sets using Reciprocal Rank Fusion: Score = sum(1 / (k + rank))

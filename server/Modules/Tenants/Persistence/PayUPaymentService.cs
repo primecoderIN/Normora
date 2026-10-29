@@ -167,12 +167,15 @@ public class PayUPaymentService(
         }
 
         var calculatedHash = ComputeSha512(expectedHashSequence);
-        var isHashValid = string.Equals(calculatedHash, receivedHash, StringComparison.OrdinalIgnoreCase);
+        var isHashValid = !string.IsNullOrEmpty(receivedHash) &&
+                          CryptographicOperations.FixedTimeEquals(
+                              Encoding.UTF8.GetBytes(calculatedHash.ToLowerInvariant()),
+                              Encoding.UTF8.GetBytes(receivedHash.ToLowerInvariant()));
 
         if (!isHashValid)
         {
-            logger.LogError("PayU callback hash mismatch for Txn {TxnId}. Calculated: {Calculated}, Received: {Received}",
-                SanitizeLogValue(txnid), SanitizeLogValue(calculatedHash), SanitizeLogValue(receivedHash));
+            logger.LogWarning("PayU callback signature verification failed for Txn {TxnId}.", SanitizeLogValue(txnid));
+
             return new PaymentCallbackResultDto(false, tenantId, string.Empty, tier, txnid, ApiMessages.PaymentSignatureMismatch);
         }
 

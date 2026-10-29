@@ -100,22 +100,22 @@ public class ConversationsController(IMediator mediator) : ControllerBase
     /// <returns>A stream of text chunks representing the AI's answer.</returns>
     [HttpPost("{id:guid}/messages/stream")]
     [Produces("text/event-stream")]
-    public async Task AskConversationStream(Guid id, [FromBody] AskConversationRequest body)
+    public async Task AskConversationStream(Guid id, [FromBody] AskConversationRequest body, CancellationToken cancellationToken = default)
     {
         Response.Headers.Append("Content-Type", "text/event-stream");
         Response.Headers.Append("Cache-Control", "no-cache");
         Response.Headers.Append("Connection", "keep-alive");
 
-        var stream = mediator.CreateStream(new AskConversationStreamCommand(id, body.Question, body.Limit));
+        var stream = mediator.CreateStream(new AskConversationStreamCommand(id, body.Question, body.Limit), cancellationToken);
 
-        await foreach (var evt in stream)
+        await foreach (var evt in stream.WithCancellation(cancellationToken))
         {
             var json = System.Text.Json.JsonSerializer.Serialize(evt, new System.Text.Json.JsonSerializerOptions
             {
                 PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
             });
-            await Response.WriteAsync($"data: {json}\n\n");
-            await Response.Body.FlushAsync();
+            await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
         }
     }
     /// <summary>
