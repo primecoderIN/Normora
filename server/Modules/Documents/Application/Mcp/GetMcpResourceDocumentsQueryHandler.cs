@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Contracts.Documents;
 
-namespace Normora.Modules.Documents.Application.Queries;
+namespace Normora.Modules.Documents.Application.Mcp;
 
 /// <summary>
 /// Handles GetMcpResourceDocumentsQuery by filtering Documents within the Documents persistence context.

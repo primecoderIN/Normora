@@ -6,7 +6,7 @@ using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Modules.Documents.Application.Commands;
+namespace Normora.Modules.Documents.Application.Documents;
 
 /// <summary>
 /// Command to soft-delete a document by marking it as deleted in the database.

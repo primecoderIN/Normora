@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Normora.Shared;
 
-namespace Normora.Modules.Documents.Application.Dtos;
+namespace Normora.Modules.Documents.Application.Documents;
 
 /// <summary>
 /// Data transfer object representing a document for API responses.

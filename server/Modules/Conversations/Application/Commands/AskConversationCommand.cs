@@ -13,16 +13,6 @@ namespace Normora.Modules.Conversations.Application.Commands;
 
 /// <summary>
 /// Command to send a message within a conversation and receive a grounded, context-aware RAG answer.
-/// 
-/// Pipeline:
-///   1. Validate conversation ownership
-///   2. Persist user message + estimate its token count
-///   3. Load conversation history, trim to token budget (sliding window)
-///   4. Rewrite follow-up question → standalone retrieval query
-///   5. Hybrid vector + keyword retrieval with RRF fusion
-///   6. Multi-turn grounded generation (history injected into prompt)
-///   7. Persist assistant message (citations, token count, rewrite metadata)
-///   8. Auto-title the conversation on its first turn
 /// </summary>
 public sealed record AskConversationCommand(
     Guid ConversationId,
@@ -42,26 +32,20 @@ public sealed record AskConversationCitation(
     int ChunkIndex,
     double Score);
 
+/// <summary>
+/// Handles <see cref="AskConversationCommand"/> by delegating turn preparation (ownership, history, RAG)
+/// to <see cref="IConversationTurnPreparer"/>, generating the conversational response, and saving the turn.
+/// </summary>
 public sealed class AskConversationCommandHandler(
-    ConversationsDbContext conversationsContext,
-    IMediator mediator,
-    IContextResolver contextResolver,
-    IQueryRewriterService queryRewriter,
-    ITokenBudgetService tokenBudget,
-    IRetrievalService retrievalService,
+    IConversationTurnPreparer turnPreparer,
     ITextGenerationService generationService,
-    IAutoTitleService autoTitleService,
+    ConversationsDbContext conversationsContext,
     ITenantContext tenantContext,
-    ICurrentUser currentUser,
+    ITokenBudgetService tokenBudget,
+    IAutoTitleService autoTitleService,
     ConversationMetrics metrics) : IRequestHandler<AskConversationCommand, AskConversationResult>
 {
     private const double MinimumSimilarity = 0.35;
-
-    /// <summary>
-    /// Maximum tokens allocated to conversation history injected into the generation prompt.
-    /// Keeps the combined prompt well within Gemini Flash's context window.
-    /// </summary>
-    private const int HistoryTokenBudget = 2_000;
 
     public async Task<AskConversationResult> Handle(
         AskConversationCommand request,
@@ -73,96 +57,33 @@ public sealed class AskConversationCommandHandler(
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            // ── 1. Validate conversation ownership ────────────────────────────────
-            var conversation = await conversationsContext.Conversations
-                .FirstOrDefaultAsync(c =>
-                    c.Id == request.ConversationId &&
-                    c.UserId == currentUser.KeycloakUserId,
-                    cancellationToken)
-                ?? throw new BolaException();
-
-            var isFirstTurn = !await conversationsContext.Messages
-                .AnyAsync(m => m.ConversationId == request.ConversationId, cancellationToken);
-
-            // ── 2. Persist user message immediately ───────────────────────────────
-            var userMessage = new Message
-            {
-                Id = Guid.NewGuid(),
-                ConversationId = request.ConversationId,
-                TenantId = tenantContext.TenantId!.Value,
-                Role = MessageRole.User,
-                Content = request.Question,
-                CreatedAt = DateTimeOffset.UtcNow,
-                TokenCount = tokenBudget.EstimateTokenCount(request.Question)
-            };
-            conversationsContext.Messages.Add(userMessage);
-            await conversationsContext.SaveChangesAsync(cancellationToken);
-
-            // ── 3. Load history + apply sliding-window token budget ───────────────
-            var rawHistory = await contextResolver.GetConversationContextAsync(
+            // 1-5. Validate, persist user message, prepare history & hybrid retrieval via turn preparer
+            var turn = await turnPreparer.PrepareTurnAsync(
                 request.ConversationId,
-                currentUser.KeycloakUserId!,
-                messageLimit: 20,
-                cancellationToken: cancellationToken);
-
-            var historyWithoutLatest = rawHistory.Count > 0
-                ? rawHistory.Take(rawHistory.Count - 1).ToList()
-                : [];
-
-            var budgetedHistory = tokenBudget.TrimToTokenBudget(historyWithoutLatest, HistoryTokenBudget);
-
-            // ── 4. Rewrite follow-up into standalone retrieval query ──────────────
-            var rewrittenQuestion = budgetedHistory.Count > 0
-                ? await queryRewriter.RewriteQueryAsync(request.Question, budgetedHistory, cancellationToken)
-                : request.Question;
-            var wasRewritten = rewrittenQuestion != request.Question;
-
-            // ── 5. Hybrid retrieval (vector + keyword + RRF) ──────────────────────
-            var limit = Math.Clamp(request.Limit, 1, 8);
-            
-            var workspaceContext = await mediator.Send(
-                new Normora.Shared.Contracts.Tenants.GetUserWorkspaceContextQuery(
-                    currentUser.ExternalUserId,
-                    tenantContext.TenantId!.Value),
+                request.Question,
+                request.Limit,
                 cancellationToken);
 
-            var personalTenantId = workspaceContext.PersonalTenantId;
-            var activeTenantName = workspaceContext.ActiveTenantName;
-
-            var (topCandidates, vectorSimOfFirst) =
-                await retrievalService.RunHybridRetrievalAsync(rewrittenQuestion, limit, personalTenantId, cancellationToken);
-
-            // ── 6. Multi-turn grounded generation with Tool Calling ──────────────
+            // 6. Multi-turn grounded generation with Tool Calling
             string answerText;
             List<MessageCitation> citations = [];
 
-            var toolContext = new ToolExecutionContext(
-                tenantContext.TenantId!.Value,
-                activeTenantName,
-                currentUser.KeycloakUserId,
-                currentUser.Email,
-                currentUser.DisplayName,
-                personalTenantId);
-
-            var historyTurns = AskHelpers.BuildConversationTurns(budgetedHistory);
-
-            if (topCandidates.Count == 0 ||
-                (vectorSimOfFirst > 0 && vectorSimOfFirst < MinimumSimilarity))
+            if (turn.TopCandidates.Count == 0 ||
+                (turn.VectorSimOfFirst > 0 && turn.VectorSimOfFirst < MinimumSimilarity))
             {
                 answerText = await generationService.GenerateConversationalAnswerAsync(
-                    rewrittenQuestion, [], historyTurns, activeTenantName, toolContext, cancellationToken);
+                    turn.RewrittenQuestion, [], turn.HistoryTurns, turn.ActiveTenantName, turn.ToolContext, cancellationToken);
             }
             else
             {
-                var sources = topCandidates
+                var sources = turn.TopCandidates
                     .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
                     .ToList();
 
                 answerText = await generationService.GenerateConversationalAnswerAsync(
-                    rewrittenQuestion, sources, historyTurns, activeTenantName, toolContext, cancellationToken);
+                    turn.RewrittenQuestion, sources, turn.HistoryTurns, turn.ActiveTenantName, turn.ToolContext, cancellationToken);
 
-                // ── 7a. Build citations ───────────────────────────────────────────
-                citations = topCandidates.Select((c, idx) => new MessageCitation
+                citations = turn.TopCandidates.Select((c, idx) => new MessageCitation
                 {
                     Id = Guid.NewGuid(),
                     TenantId = tenantContext.TenantId!.Value,
@@ -175,7 +96,7 @@ public sealed class AskConversationCommandHandler(
                 }).ToList();
             }
 
-            // ── 7b. Persist assistant message + citations ─────────────────────────
+            // 7. Persist assistant message + citations
             var assistantMessage = new Message
             {
                 Id = Guid.NewGuid(),
@@ -185,8 +106,8 @@ public sealed class AskConversationCommandHandler(
                 Content = answerText,
                 CreatedAt = DateTimeOffset.UtcNow,
                 TokenCount = tokenBudget.EstimateTokenCount(answerText),
-                RetrievalQuery = wasRewritten ? rewrittenQuestion : null,
-                Rewritten = wasRewritten,
+                RetrievalQuery = turn.WasRewritten ? turn.RewrittenQuestion : null,
+                Rewritten = turn.WasRewritten,
                 RequiresContext = true
             };
 
@@ -198,25 +119,25 @@ public sealed class AskConversationCommandHandler(
 
             conversationsContext.Messages.Add(assistantMessage);
 
-            conversation.LastMessageAt = DateTimeOffset.UtcNow;
-            conversation.UpdatedAt = DateTimeOffset.UtcNow;
+            turn.Conversation.LastMessageAt = DateTimeOffset.UtcNow;
+            turn.Conversation.UpdatedAt = DateTimeOffset.UtcNow;
 
             await conversationsContext.SaveChangesAsync(cancellationToken);
 
-            // ── 8. Auto-title on first turn ───────────────────────────────────────
-            if (isFirstTurn && conversation.Title == ConversationConstants.DefaultTitle)
+            // 8. Auto-title on first turn
+            if (turn.IsFirstTurn && turn.Conversation.Title == ConversationConstants.DefaultTitle)
             {
-                autoTitleService.AutoTitleConversationAsync(conversation.Id, request.Question);
+                autoTitleService.AutoTitleConversationAsync(turn.Conversation.Id, request.Question);
             }
 
-            metrics.TokensConsumed.Add((userMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
+            metrics.TokensConsumed.Add((turn.UserMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
 
             return new AskConversationResult(
                 request.ConversationId,
-                userMessage.Id,
+                turn.UserMessage.Id,
                 assistantMessage.Id,
                 answerText,
-                topCandidates.Select((c, idx) => new AskConversationCitation(
+                turn.TopCandidates.Select((c, idx) => new AskConversationCitation(
                     c.DocumentId,
                     c.FileName,
                     c.ChunkIndex,

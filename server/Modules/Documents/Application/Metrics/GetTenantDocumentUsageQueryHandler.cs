@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Contracts.Documents;
 
-namespace Normora.Modules.Documents.Application.Queries;
+namespace Normora.Modules.Documents.Application.Metrics;
 
 /// <summary>
 /// Cross-module query handler that aggregates active document count and byte storage usage for a tenant.

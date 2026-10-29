@@ -1,9 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Normora.Modules.Documents.Application.Dtos;
+
 using Normora.Modules.Documents.Persistence;
 
-namespace Normora.Modules.Documents.Application.Queries;
+namespace Normora.Modules.Documents.Application.Documents;
 
 /// <summary>
 /// A query to retrieve all documents belonging to the currently active tenant.

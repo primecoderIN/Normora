@@ -47,6 +47,7 @@ public static class ConversationsModuleExtensions
         });
 
         services.AddScoped<IContextResolver, ContextResolver>();
+        services.AddScoped<IConversationTurnPreparer, ConversationTurnPreparer>();
         services.AddSingleton<ITokenBudgetService, TokenBudgetService>();
         services.AddSingleton<IAutoTitleService, AutoTitleService>();
         services.AddSingleton<ConversationMetrics>();

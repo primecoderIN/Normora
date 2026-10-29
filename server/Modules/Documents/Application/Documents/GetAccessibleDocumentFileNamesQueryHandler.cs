@@ -4,7 +4,7 @@ using Normora.Shared;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Contracts.Documents;
 
-namespace Normora.Modules.Documents.Application.Queries;
+namespace Normora.Modules.Documents.Application.Documents;
 
 public class GetAccessibleDocumentFileNamesQueryHandler(DocumentsDbContext context)
     : IRequestHandler<GetAccessibleDocumentFileNamesQuery, IReadOnlyList<string>>

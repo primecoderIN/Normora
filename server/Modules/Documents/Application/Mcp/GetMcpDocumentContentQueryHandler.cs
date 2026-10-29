@@ -4,7 +4,7 @@ using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Contracts.Documents;
 using Normora.Shared.Exceptions;
 
-namespace Normora.Modules.Documents.Application.Queries;
+namespace Normora.Modules.Documents.Application.Mcp;
 
 /// <summary>
 /// Handles GetMcpDocumentContentQuery within Documents persistence context and applies BOLA/RBAC checks.

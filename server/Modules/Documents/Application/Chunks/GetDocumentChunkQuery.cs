@@ -5,7 +5,7 @@ using Normora.Shared.Constants;
 using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Modules.Documents.Application.Queries;
+namespace Normora.Modules.Documents.Application.Chunks;
 
 /// <summary>
 /// Query to retrieve a specific text chunk for citation previews, enforcing tenant isolation and department RBAC.

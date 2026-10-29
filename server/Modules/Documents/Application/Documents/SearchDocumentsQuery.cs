@@ -6,7 +6,7 @@ using Normora.Shared.Interfaces;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;
 
-namespace Normora.Modules.Documents.Application.Queries;
+namespace Normora.Modules.Documents.Application.Documents;
 
 /// <summary>
 /// Query to perform a semantic (vector) similarity search across all indexed document chunks for the current tenant.

@@ -3,14 +3,14 @@ using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Normora.Modules.Documents.Application.Dtos;
+
 using Normora.Modules.Documents.Application.Jobs;
 using Normora.Shared;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Modules.Documents.Application.Commands;
+namespace Normora.Modules.Documents.Application.Documents;
 
 /// <summary>
 /// Command to upload a new document or a new version of an existing document.

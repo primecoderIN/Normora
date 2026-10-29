@@ -3,9 +3,10 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Normora.Modules.Documents.Application.Commands;
-using Normora.Modules.Documents.Application.Dtos;
-using Normora.Modules.Documents.Application.Queries;
+using Normora.Modules.Documents.Application.Documents;
+using Normora.Modules.Documents.Application.Chunks;
+
+
 using Normora.Shared;
 using Normora.Shared.Contracts.Tenants;
 using Normora.Shared.Interfaces;

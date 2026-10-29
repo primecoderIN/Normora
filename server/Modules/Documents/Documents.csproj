@@ -23,6 +23,10 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Using Include="Normora.Modules.Documents.Domain" />
+    <Using Include="Normora.Modules.Documents.Application.Documents" />
+    <Using Include="Normora.Modules.Documents.Application.Chunks" />
+    <Using Include="Normora.Modules.Documents.Application.Mcp" />
+    <Using Include="Normora.Modules.Documents.Application.Metrics" />
   </ItemGroup>
 
 </Project>
