@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
-using Normora.Modules.Tenants.Persistence;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Hubs;
@@ -11,7 +9,7 @@ namespace Normora.Api.Hubs;
 /// </summary>
 [Authorize]
 public sealed class DocumentHub(
-    TenantsDbContext tenantsDbContext,
+    ITenantResolutionService tenantResolutionService,
     ICurrentUser currentUser) : Hub
 {
     /// <summary>
@@ -21,12 +19,11 @@ public sealed class DocumentHub(
     public async Task JoinTenant(Guid tenantId)
     {
         // The tenant ID comes from the client only as a routing request. Membership is
-        // revalidated here before the connection can receive another tenant's events.
-        var isMember = await tenantsDbContext.TenantMemberships
-            .Include(membership => membership.User)
-            .AnyAsync(membership =>
-                membership.TenantId == tenantId &&
-                membership.User.ExternalUserId == currentUser.ExternalUserId);
+        // revalidated via the tenant boundary service before the connection can receive another tenant's events.
+        var isMember = await tenantResolutionService.HasTenantAccessAsync(
+            tenantId,
+            currentUser.ExternalUserId,
+            Context.ConnectionAborted);
 
         if (!isMember)
         {

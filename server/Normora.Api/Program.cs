@@ -9,7 +9,7 @@ using Normora.Modules.Documents.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Duende.Bff;
-using Normora.Api.Features.Documents;
+using Normora.Modules.Documents.Application.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 

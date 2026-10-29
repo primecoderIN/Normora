@@ -5,8 +5,10 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Normora.Modules.Tenants.Persistence;
 using Normora.Modules.Documents.Persistence;
-using Normora.Api.Features.Documents;
-using Normora.Api.Features.Ask;
+using Normora.Shared.Interfaces;
+using Normora.Modules.Documents.Application.Services;
+using Normora.Modules.Conversations.Application.Services;
+using Normora.Modules.Conversations.Infrastructure.Llm;
 using Minio;
 
 namespace Normora.Api.Extensions;

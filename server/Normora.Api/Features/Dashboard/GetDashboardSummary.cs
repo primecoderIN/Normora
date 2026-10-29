@@ -1,10 +1,7 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Normora.Modules.Conversations.Domain;
-using Normora.Modules.Conversations.Persistence;
-using Normora.Modules.Documents.Persistence;
-using Normora.Modules.Tenants.Persistence;
-using Normora.Shared;
+using Normora.Shared.Contracts.Conversations;
+using Normora.Shared.Contracts.Documents;
+using Normora.Shared.Contracts.Tenants;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Features.Dashboard;
@@ -12,153 +9,112 @@ namespace Normora.Api.Features.Dashboard;
 public record GetDashboardSummaryQuery() : IRequest<DashboardSummaryDto>;
 
 public class GetDashboardSummaryQueryHandler(
-    TenantsDbContext tenantsDb,
-    DocumentsDbContext documentsDb,
-    ConversationsDbContext conversationsDb,
+    IMediator mediator,
     ITenantContext tenantContext,
     ICacheService cache) : IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>
 {
     public async Task<DashboardSummaryDto> Handle(GetDashboardSummaryQuery request, CancellationToken cancellationToken)
     {
+        var tenantGuid = tenantContext.TenantId ?? Guid.Empty;
         var tenantId = tenantContext.TenantId?.ToString() ?? "global";
         var cacheKey = $"dashboard:{tenantId}";
 
         return await cache.GetOrCreateAsync(cacheKey, async ct =>
         {
-            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
-            var thirtyDaysAgoOffset = DateTimeOffset.UtcNow.AddDays(-30);
+            // 1. Retrieve document metrics and recent uploads via Documents contract
+            var docMetrics = await mediator.Send(new GetDocumentDashboardMetricsQuery(tenantGuid), ct);
 
-            var totalDocuments = await documentsDb.Documents.CountAsync(ct);
-        var documentsThisMonth = await documentsDb.Documents
-            .Where(d => d.UploadedAt >= thirtyDaysAgo)
-            .CountAsync(cancellationToken);
+            // 2. Resolve department names for recent documents via Tenants contract
+            var deptIds = docMetrics.RecentDocuments.SelectMany(d => d.DepartmentIds).Distinct().ToList();
+            var tenantMetrics = await mediator.Send(new GetTenantDashboardMetricsQuery(tenantGuid, deptIds), ct);
 
-        var totalEmployees = await tenantsDb.TenantMemberships.CountAsync(cancellationToken);
-        var employeesThisMonth = await tenantsDb.TenantMemberships
-            .Where(m => m.CreatedAt >= thirtyDaysAgo)
-            .CountAsync(cancellationToken);
+            // 3. Retrieve conversation statistics and inquiry trends via Conversations contract
+            var convMetrics = await mediator.Send(new GetConversationDashboardMetricsQuery(tenantGuid), ct);
 
-        var totalQuestions = await conversationsDb.Messages.CountAsync(m => m.Role == MessageRole.User, cancellationToken);
-        var questionsThisMonth = await conversationsDb.Messages
-            .Where(m => m.Role == MessageRole.User && m.CreatedAt >= thirtyDaysAgoOffset)
-            .CountAsync(cancellationToken);
-
-        var recentDocs = await documentsDb.Documents
-            .Include(d => d.DocumentDepartments)
-            .Include(d => d.Versions)
-            .OrderByDescending(d => d.UploadedAt)
-            .Take(5)
-            .ToListAsync(cancellationToken);
-
-        var deptIds = recentDocs.SelectMany(d => d.DocumentDepartments).Select(dd => dd.DepartmentId).Distinct().ToList();
-        var departments = await tenantsDb.Departments
-            .Where(d => deptIds.Contains(d.Id))
-            .ToDictionaryAsync(d => d.Id, d => d.Name, cancellationToken);
-
-        var recentDocumentsDto = recentDocs.Select(d => new RecentDocumentDto
-        {
-            Name = d.FileName,
-            Category = d.DocumentDepartments.Any() ? string.Join(", ", d.DocumentDepartments.Select(dd => departments.GetValueOrDefault(dd.DepartmentId, "Unknown"))) : "Company Wide",
-            // Document Versioning (Phase 19): Derive document status from the active version.
-            Status = d.Versions.FirstOrDefault(v => v.IsActive)?.Status.ToString() ?? "Unknown",
-            Type = System.IO.Path.GetExtension(d.FileName).TrimStart('.').ToUpperInvariant(),
-            Date = d.UploadedAt
-        }).ToList();
-
-        var sevenDaysAgoOffset = DateTimeOffset.UtcNow.AddDays(-7);
-        var recentMessages = await conversationsDb.Messages
-            .Where(m => m.Role == MessageRole.User && m.CreatedAt >= sevenDaysAgoOffset)
-            .Select(m => new { m.CreatedAt })
-            .ToListAsync(cancellationToken);
-
-        var messagesLast7Days = recentMessages
-            .GroupBy(m => m.CreatedAt.Date)
-            .ToDictionary(g => g.Key, g => g.Count());
-
-        var chatActivityDto = new ChatActivityDto
-        {
-            Labels = new List<string>(),
-            Data = new List<int>()
-        };
-
-        for (int i = 6; i >= 0; i--)
-        {
-            var date = DateTime.UtcNow.Date.AddDays(-i);
-            chatActivityDto.Labels.Add(date.ToString("MMM dd"));
-            chatActivityDto.Data.Add(messagesLast7Days.GetValueOrDefault(date, 0));
-        }
-
-        var topQuestions = await conversationsDb.Messages
-            .Where(m => m.Role == MessageRole.User)
-            .GroupBy(m => m.Content)
-            .Select(g => new TopQuestionDto { Question = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .Take(5)
-            .ToListAsync(cancellationToken);
-
-        var fileNames = await documentsDb.Documents
-            .Select(d => d.FileName)
-            .ToListAsync(cancellationToken);
-
-        var docTypes = fileNames
-            .GroupBy(f => 
+            var recentDocumentsDto = docMetrics.RecentDocuments.Select(d => new RecentDocumentDto
             {
-                var lastDot = f.LastIndexOf('.');
-                return lastDot >= 0 && lastDot < f.Length - 1 ? f.Substring(lastDot + 1) : "";
-            })
-            .Select(g => new { Extension = g.Key, Count = g.Count() })
-            .ToList();
+                Name = d.FileName,
+                Category = d.DepartmentIds.Any()
+                    ? string.Join(", ", d.DepartmentIds.Select(depId => tenantMetrics.DepartmentNames.GetValueOrDefault(depId, "Unknown")))
+                    : "Company Wide",
+                Status = d.Status,
+                Type = d.Type,
+                Date = d.UploadedAt
+            }).ToList();
 
-        var colors = new[] { ("#6366f1", "#4f46e5"), ("#3b82f6", "#2563eb"), ("#10b981", "#059669"), ("#f59e0b", "#d97706"), ("#94a3b8", "#64748b") };
-        var documentCoverage = docTypes.Select((d, index) => new DocumentCoverageDto
-        {
-            Label = string.IsNullOrEmpty(d.Extension) ? "UNKNOWN" : d.Extension.ToUpperInvariant(),
-            Value = d.Count,
-            Color = colors[index % colors.Length].Item1,
-            HoverColor = colors[index % colors.Length].Item2
-        }).ToList();
-
-        if (!documentCoverage.Any())
-        {
-             documentCoverage.Add(new DocumentCoverageDto { Label = "No Documents", Value = 1, Color = "#e2e8f0", HoverColor = "#cbd5e1" });
-        }
-
-        var totalSavedAnswers = await conversationsDb.SavedAnswers.CountAsync(cancellationToken);
-        double answerQuality = totalQuestions > 0 ? Math.Round(((double)totalSavedAnswers / totalQuestions) * 100, 1) : 100.0;
-        
-        // Document Versioning (Phase 19): Query DocumentVersions for KB health instead of Documents directly.
-        var failedDocs = await documentsDb.DocumentVersions.CountAsync(v => v.Status == DocumentStatus.Failed && v.IsActive, cancellationToken);
-        var processingDocs = await documentsDb.DocumentVersions.CountAsync(v => v.Status == DocumentStatus.Processing && v.IsActive, cancellationToken);
-
-        var kbDescription = failedDocs > 0 ? $"{failedDocs} documents require attention due to processing errors." : 
-                            processingDocs > 0 ? $"{processingDocs} documents are currently being processed." : 
-                            "All documents are fully indexed and up to date.";
-
-        var summary = new DashboardSummaryDto
-        {
-            Stats = new DashboardStatsDto
+            var chatActivityDto = new ChatActivityDto
             {
-                TotalDocuments = totalDocuments,
-                DocumentsTrend = documentsThisMonth,
-                TotalEmployees = totalEmployees,
-                EmployeesTrend = employeesThisMonth,
-                TotalQuestions = totalQuestions,
-                QuestionsTrend = questionsThisMonth,
-                AnswerQuality = answerQuality,
-                AnswerQualityTrend = 0.0 
-            },
-            DocumentCoverage = documentCoverage,
-            RecentDocuments = recentDocumentsDto,
-            TopQuestions = topQuestions,
-            ChatActivity = chatActivityDto,
-            KbReview = new KnowledgeBaseReviewDto
+                Labels = new List<string>(),
+                Data = new List<int>()
+            };
+
+            for (int i = 6; i >= 0; i--)
             {
-                Title = "Knowledge base review",
-                Description = kbDescription
+                var date = DateTime.UtcNow.Date.AddDays(-i);
+                chatActivityDto.Labels.Add(date.ToString("MMM dd"));
+                chatActivityDto.Data.Add(convMetrics.MessagesLast7Days.GetValueOrDefault(date, 0));
             }
-        };
 
-        return summary;
+            var topQuestions = convMetrics.TopQuestions.Select(t => new TopQuestionDto
+            {
+                Question = t.Question,
+                Count = t.Count
+            }).ToList();
+
+            var docTypes = docMetrics.FileNames
+                .GroupBy(f =>
+                {
+                    var lastDot = f.LastIndexOf('.');
+                    return lastDot >= 0 && lastDot < f.Length - 1 ? f.Substring(lastDot + 1) : "";
+                })
+                .Select(g => new { Extension = g.Key, Count = g.Count() })
+                .ToList();
+
+            var colors = new[] { ("#6366f1", "#4f46e5"), ("#3b82f6", "#2563eb"), ("#10b981", "#059669"), ("#f59e0b", "#d97706"), ("#94a3b8", "#64748b") };
+            var documentCoverage = docTypes.Select((d, index) => new DocumentCoverageDto
+            {
+                Label = string.IsNullOrEmpty(d.Extension) ? "UNKNOWN" : d.Extension.ToUpperInvariant(),
+                Value = d.Count,
+                Color = colors[index % colors.Length].Item1,
+                HoverColor = colors[index % colors.Length].Item2
+            }).ToList();
+
+            if (!documentCoverage.Any())
+            {
+                documentCoverage.Add(new DocumentCoverageDto { Label = "No Documents", Value = 1, Color = "#e2e8f0", HoverColor = "#cbd5e1" });
+            }
+
+            double answerQuality = convMetrics.TotalQuestions > 0
+                ? Math.Round(((double)convMetrics.TotalSavedAnswers / convMetrics.TotalQuestions) * 100, 1)
+                : 100.0;
+
+            var kbDescription = docMetrics.FailedDocsCount > 0 ? $"{docMetrics.FailedDocsCount} documents require attention due to processing errors." :
+                                docMetrics.ProcessingDocsCount > 0 ? $"{docMetrics.ProcessingDocsCount} documents are currently being processed." :
+                                "All documents are fully indexed and up to date.";
+
+            return new DashboardSummaryDto
+            {
+                Stats = new DashboardStatsDto
+                {
+                    TotalDocuments = docMetrics.TotalDocuments,
+                    DocumentsTrend = docMetrics.DocumentsTrend,
+                    TotalEmployees = tenantMetrics.TotalEmployees,
+                    EmployeesTrend = tenantMetrics.EmployeesTrend,
+                    TotalQuestions = convMetrics.TotalQuestions,
+                    QuestionsTrend = convMetrics.QuestionsTrend,
+                    AnswerQuality = answerQuality,
+                    AnswerQualityTrend = 0.0
+                },
+                DocumentCoverage = documentCoverage,
+                RecentDocuments = recentDocumentsDto,
+                TopQuestions = topQuestions,
+                ChatActivity = chatActivityDto,
+                KbReview = new KnowledgeBaseReviewDto
+                {
+                    Title = "Knowledge base review",
+                    Description = kbDescription
+                }
+            };
         }, TimeSpan.FromMinutes(2), cancellationToken);
     }
 }

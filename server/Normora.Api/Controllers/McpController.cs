@@ -1,12 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Normora.Api.Features.Ask.Tools;
 using Normora.Api.Middleware;
-using Normora.Modules.Documents.Persistence;
-using Normora.Modules.Tenants.Persistence;
 using Normora.Shared.Constants;
+using Normora.Shared.Contracts.Documents;
+using Normora.Shared.Contracts.Tenants;
 using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
@@ -24,8 +23,7 @@ public sealed class McpController(
     IAgentToolRegistry toolRegistry,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    TenantsDbContext tenantsContext,
-    DocumentsDbContext documentsDbContext) : ControllerBase
+    IMediator mediator) : ControllerBase
 {
     private const string ProtocolVersion = "2024-11-05";
 
@@ -35,9 +33,9 @@ public sealed class McpController(
     [HttpGet]
     public async Task<IActionResult> GetManifest(CancellationToken cancellationToken)
     {
-        var tenant = await tenantsContext.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tenantContext.TenantId, cancellationToken);
+        var workspaceContext = await mediator.Send(
+            new GetUserWorkspaceContextQuery(currentUser.ExternalUserId, tenantContext.TenantId!.Value),
+            cancellationToken);
 
         var manifest = new
         {
@@ -47,8 +45,8 @@ public sealed class McpController(
             workspace = new
             {
                 tenantId = tenantContext.TenantId,
-                tenantName = tenant?.Name,
-                slug = tenant?.Slug
+                tenantName = workspaceContext.ActiveTenantName,
+                slug = workspaceContext.ActiveTenantSlug
             },
             toolsCount = toolRegistry.Tools.Count,
             capabilities = new
@@ -156,24 +154,18 @@ public sealed class McpController(
             ? argsProp.GetRawText()
             : "{}";
 
-        // Build authenticated user & tenant context
-        var personalTenantId = await tenantsContext.TenantMemberships
-            .AsNoTracking()
-            .Where(m => m.User.ExternalUserId == currentUser.ExternalUserId && m.Tenant.IsPersonal)
-            .Select(m => (Guid?)m.TenantId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var activeTenant = await tenantsContext.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tenantContext.TenantId, cancellationToken);
+        // Build authenticated user & tenant context via query contract
+        var workspaceContext = await mediator.Send(
+            new GetUserWorkspaceContextQuery(currentUser.ExternalUserId, tenantContext.TenantId!.Value),
+            cancellationToken);
 
         var toolContext = new ToolExecutionContext(
             tenantContext.TenantId!.Value,
-            activeTenant?.Name ?? "Workspace",
+            workspaceContext.ActiveTenantName,
             currentUser.KeycloakUserId,
             currentUser.Email,
             currentUser.DisplayName,
-            personalTenantId);
+            workspaceContext.PersonalTenantId);
 
         var toolResult = await toolRegistry.ExecuteToolAsync(toolName, argsJson, toolContext, cancellationToken);
 
@@ -201,36 +193,24 @@ public sealed class McpController(
         McpJsonRpcRequest request,
         CancellationToken cancellationToken)
     {
-        var effectiveDepts = tenantContext.EffectiveDepartments.ToHashSet();
         var isAdmin = string.Equals(tenantContext.TenantRole, TenantRoles.Admin, StringComparison.OrdinalIgnoreCase);
 
-        var query = documentsDbContext.Documents
-            .AsNoTracking()
-            .Include(d => d.DocumentDepartments)
-            .Where(d => d.TenantId == tenantContext.TenantId && d.DeletedAt == null);
+        var documents = await mediator.Send(
+            new GetMcpResourceDocumentsQuery(
+                tenantContext.TenantId!.Value,
+                isAdmin,
+                tenantContext.EffectiveDepartments),
+            cancellationToken);
 
-        if (!isAdmin && effectiveDepts.Count > 0)
+        var resources = documents.Select(d => new
         {
-            query = query.Where(d =>
-                !d.DocumentDepartments.Any() ||
-                d.DocumentDepartments.Any(dd => effectiveDepts.Contains(dd.DepartmentId)));
-        }
-        else if (!isAdmin)
-        {
-            query = query.Where(d => !d.DocumentDepartments.Any());
-        }
+            uri = $"normora://documents/{d.DocumentId}",
+            name = d.FileName,
+            description = $"Corporate Document: {d.FileName} ({d.ContentType})",
+            mimeType = d.ContentType
+        }).ToList();
 
-        var documents = await query
-            .Select(d => new
-            {
-                uri = $"normora://documents/{d.Id}",
-                name = d.FileName,
-                description = $"Corporate Document: {d.FileName} ({d.ContentType})",
-                mimeType = d.ContentType
-            })
-            .ToListAsync(cancellationToken);
-
-        return McpJsonRpcResponse.Success(request.Id, new { resources = documents });
+        return McpJsonRpcResponse.Success(request.Id, new { resources });
     }
 
     private async Task<McpJsonRpcResponse> HandleResourcesReadAsync(
@@ -254,33 +234,20 @@ public sealed class McpController(
             return McpJsonRpcResponse.Failure(request.Id, -32602, "Invalid document UUID in URI.");
         }
 
-        var document = await documentsDbContext.Documents
-            .AsNoTracking()
-            .Include(d => d.DocumentDepartments)
-            .Include(d => d.Versions)
-                .ThenInclude(v => v.Chunks)
-            .FirstOrDefaultAsync(d => d.Id == documentId && d.TenantId == tenantContext.TenantId && d.DeletedAt == null, cancellationToken);
-
-        if (document == null)
-        {
-            throw new BolaException();
-        }
-
-        // BOLA / Department Scope Authorization
         var isAdmin = string.Equals(tenantContext.TenantRole, TenantRoles.Admin, StringComparison.OrdinalIgnoreCase);
-        var effectiveDepts = tenantContext.EffectiveDepartments.ToHashSet();
-        if (!isAdmin && document.DocumentDepartments.Any() && !document.DocumentDepartments.Any(dd => effectiveDepts.Contains(dd.DepartmentId)))
+
+        var contentResult = await mediator.Send(
+            new GetMcpDocumentContentQuery(
+                documentId,
+                tenantContext.TenantId!.Value,
+                isAdmin,
+                tenantContext.EffectiveDepartments),
+            cancellationToken);
+
+        if (contentResult == null)
         {
             throw new BolaException();
         }
-
-        var latestVersion = document.Versions
-            .OrderByDescending(v => v.VersionNumber)
-            .FirstOrDefault();
-
-        var extractedContent = latestVersion != null
-            ? string.Join("\n\n", latestVersion.Chunks.OrderBy(c => c.ChunkIndex).Select(c => c.Content))
-            : string.Empty;
 
         var result = new
         {
@@ -290,7 +257,7 @@ public sealed class McpController(
                 {
                     uri = uri,
                     mimeType = "text/plain",
-                    text = extractedContent
+                    text = contentResult.TextContent
                 }
             }
         };

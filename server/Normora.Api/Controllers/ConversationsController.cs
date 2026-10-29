@@ -2,7 +2,6 @@ using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Normora.Api.Features.Ask;
 using Normora.Api.Middleware;
 using Normora.Modules.Conversations.Application.Commands;
 using Normora.Modules.Conversations.Application.Dtos;

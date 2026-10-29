@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Normora.Modules.Tenants.Persistence;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Api.Middleware;
@@ -15,9 +13,12 @@ public class TenantResolutionMiddleware(RequestDelegate next)
     /// </summary>
     /// <param name="context">The current HTTP context.</param>
     /// <param name="tenantContext">The tenant context to be populated.</param>
-    /// <param name="currentUser">The identity of the currently authenticated user.</param>
-    /// <param name="tenantsDbContext">The database context for tenant-related information.</param>
-    public async Task InvokeAsync(HttpContext context, ITenantContext tenantContext, ICurrentUser currentUser, TenantsDbContext tenantsDbContext)
+    /// <param name="tenantResolutionService">The service for resolving tenant access boundaries.</param>
+    public async Task InvokeAsync(
+        HttpContext context,
+        ITenantContext tenantContext,
+        ICurrentUser currentUser,
+        ITenantResolutionService tenantResolutionService)
     {
         // 1. We only resolve tenants for authenticated users.
         if (currentUser.IsAuthenticated)
@@ -27,27 +28,16 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             {
                 if (Guid.TryParse(tenantIdValues.FirstOrDefault(), out var tenantId))
                 {
-                    // Resolve active tenant membership and aggregate direct + user group department access
-                    var membership = await tenantsDbContext.TenantMemberships
-                        .AsNoTracking()
-                        .Include(m => m.User)
-                        .Include(m => m.MembershipDepartments)
-                        .Include(m => m.UserGroupMemberships)
-                            .ThenInclude(ugm => ugm.UserGroup)
-                                .ThenInclude(ug => ug.UserGroupDepartments)
-                        .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.User.ExternalUserId == currentUser.ExternalUserId);
+                    // Resolve active tenant membership and aggregate direct + user group department access via service boundary
+                    var resolvedAccess = await tenantResolutionService.ResolveTenantAccessAsync(
+                        tenantId,
+                        currentUser.ExternalUserId,
+                        context.RequestAborted);
 
-                    if (membership != null)
+                    if (resolvedAccess != null)
                     {
-                        var directDepartments = membership.MembershipDepartments.Select(md => md.DepartmentId);
-                        var inheritedDepartments = membership.UserGroupMemberships
-                            .SelectMany(ugm => ugm.UserGroup.UserGroupDepartments)
-                            .Select(ugd => ugd.DepartmentId);
-
-                        var effectiveDepartments = directDepartments.Concat(inheritedDepartments).Distinct().ToList();
-
                         // Initialize ITenantContext so down-stream queries and [RequireTenant] filters enforce tenant isolation
-                        tenantContext.SetContext(tenantId, membership.Role.ToString(), effectiveDepartments);
+                        tenantContext.SetContext(tenantId, resolvedAccess.Role, resolvedAccess.EffectiveDepartments);
                     }
                 }
             }

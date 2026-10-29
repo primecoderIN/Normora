@@ -1,7 +1,6 @@
 using FluentValidation;
 using Hangfire;
 using MediatR;
-using Normora.Api.Features.Documents;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Shared.Interfaces;
 using Normora.Api.Services;
@@ -44,6 +43,7 @@ public static class ApplicationServiceExtensions
         // Core Abstractions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<ITenantResolutionService, Normora.Modules.Tenants.Persistence.TenantResolutionService>();
         services.AddScoped<IAuditService, Normora.Modules.Tenants.Application.Audit.AuditService>();
         services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IPaymentService, Normora.Modules.Tenants.Persistence.PayUPaymentService>();
         services.AddScoped<Normora.Modules.Tenants.Application.Subscription.IPayUPaymentService>(sp => (Normora.Modules.Tenants.Application.Subscription.IPayUPaymentService)sp.GetRequiredService<Normora.Modules.Tenants.Application.Subscription.IPaymentService>());
@@ -74,15 +74,16 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Normora.Api.Features.Email.SendEmailJob>();
         services.AddScoped<IEmailService, BackgroundEmailService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IDocumentNotificationService, SignalRDocumentNotificationService>();
 
-        services.AddScoped<DocumentProcessingJob>();
+        services.AddScoped<Normora.Modules.Documents.Application.Jobs.DocumentProcessingJob>();
 
         services.AddScoped<Normora.Modules.Conversations.Application.Services.IContextResolver, Normora.Modules.Conversations.Application.Services.ContextResolver>();
         services.AddSingleton<Normora.Modules.Conversations.Application.Services.ITokenBudgetService, Normora.Modules.Conversations.Application.Services.TokenBudgetService>();
 
-        services.AddScoped<Normora.Api.Features.Ask.IRetrievalService, Normora.Api.Features.Ask.RetrievalService>();
-        services.AddSingleton<Normora.Api.Features.Ask.IAutoTitleService, Normora.Api.Features.Ask.AutoTitleService>();
-        services.AddSingleton<Normora.Api.Features.Ask.ConversationMetrics>();
+        services.AddScoped<IRetrievalService, Normora.Modules.Documents.Application.Services.RetrievalService>();
+        services.AddSingleton<Normora.Modules.Conversations.Application.Services.IAutoTitleService, Normora.Modules.Conversations.Application.Services.AutoTitleService>();
+        services.AddSingleton<Normora.Modules.Conversations.Application.Services.ConversationMetrics>();
 
         // Answer exporters — stateless singletons registered against IAnswerExporter.
         // ExportSavedAnswerQueryHandler resolves the correct implementation via IEnumerable<IAnswerExporter>.
@@ -92,10 +93,10 @@ public static class ApplicationServiceExtensions
         services.AddSingleton<IAnswerExporter, DocxAnswerExporter>();
 
         // Agent Tools & Tool Registry (Gemini Tool Calling + MCP)
-        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentTool, Normora.Api.Features.Ask.Tools.CalculatePolicyLimitTool>();
-        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentTool, Normora.Api.Features.Ask.Tools.EscalateInquiryTool>();
-        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentTool, Normora.Api.Features.Ask.Tools.SearchCompanyDocumentsTool>();
-        services.AddScoped<Normora.Api.Features.Ask.Tools.IAgentToolRegistry, Normora.Api.Features.Ask.Tools.AgentToolRegistry>();
+        services.AddScoped<IAgentTool, Normora.Modules.Conversations.Infrastructure.Tools.CalculatePolicyLimitTool>();
+        services.AddScoped<IAgentTool, Normora.Modules.Conversations.Infrastructure.Tools.EscalateInquiryTool>();
+        services.AddScoped<IAgentTool, Normora.Modules.Conversations.Infrastructure.Tools.SearchCompanyDocumentsTool>();
+        services.AddScoped<IAgentToolRegistry, Normora.Modules.Conversations.Infrastructure.Tools.AgentToolRegistry>();
 
         return services;
     }
