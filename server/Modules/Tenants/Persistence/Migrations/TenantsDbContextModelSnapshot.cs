@@ -17,6 +17,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("tenants")
                 .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -68,7 +69,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
 
                     b.HasIndex("TenantId", "OccurredAt");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.Department", b =>
@@ -100,7 +101,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
-                    b.ToTable("Departments");
+                    b.ToTable("Departments", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.MembershipDepartment", b =>
@@ -115,7 +116,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("MembershipDepartments");
+                    b.ToTable("MembershipDepartments", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.Tenant", b =>
@@ -151,7 +152,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("Tenants");
+                    b.ToTable("Tenants", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantBranding", b =>
@@ -194,7 +195,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("TenantId")
                         .IsUnique();
 
-                    b.ToTable("TenantBrandings");
+                    b.ToTable("TenantBrandings", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantInvitation", b =>
@@ -231,7 +232,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("TenantInvitations");
+                    b.ToTable("TenantInvitations", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantMembership", b =>
@@ -266,7 +267,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"RemovedAt\" IS NULL");
 
-                    b.ToTable("TenantMemberships");
+                    b.ToTable("TenantMemberships", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantPlan", b =>
@@ -331,7 +332,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("TenantId")
                         .IsUnique();
 
-                    b.ToTable("TenantPlans");
+                    b.ToTable("TenantPlans", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.User", b =>
@@ -364,7 +365,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("ExternalUserId")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.UserGroup", b =>
@@ -396,7 +397,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
-                    b.ToTable("UserGroups");
+                    b.ToTable("UserGroups", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.UserGroupDepartment", b =>
@@ -411,7 +412,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("UserGroupDepartments");
+                    b.ToTable("UserGroupDepartments", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.UserGroupMembership", b =>
@@ -426,7 +427,7 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
 
                     b.HasIndex("UserGroupId");
 
-                    b.ToTable("UserGroupMemberships");
+                    b.ToTable("UserGroupMemberships", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.AuditLog", b =>

@@ -17,6 +17,7 @@ namespace Normora.Modules.Conversations.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("conversations")
                 .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -61,7 +62,7 @@ namespace Normora.Modules.Conversations.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Conversations");
+                    b.ToTable("Conversations", "conversations");
                 });
 
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.ConversationShare", b =>
@@ -98,7 +99,7 @@ namespace Normora.Modules.Conversations.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("ConversationShares");
+                    b.ToTable("ConversationShares", "conversations");
                 });
 
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.Message", b =>
@@ -142,7 +143,7 @@ namespace Normora.Modules.Conversations.Migrations
 
                     b.HasIndex("ConversationId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", "conversations");
                 });
 
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.MessageCitation", b =>
@@ -184,7 +185,7 @@ namespace Normora.Modules.Conversations.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("MessageCitations");
+                    b.ToTable("MessageCitations", "conversations");
                 });
 
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.MessageFeedback", b =>
@@ -220,7 +221,7 @@ namespace Normora.Modules.Conversations.Migrations
                     b.HasIndex("UserId", "MessageId")
                         .IsUnique();
 
-                    b.ToTable("MessageFeedbacks");
+                    b.ToTable("MessageFeedbacks", "conversations");
                 });
 
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.SavedAnswer", b =>
@@ -256,7 +257,7 @@ namespace Normora.Modules.Conversations.Migrations
                     b.HasIndex("UserId", "MessageId")
                         .IsUnique();
 
-                    b.ToTable("SavedAnswers");
+                    b.ToTable("SavedAnswers", "conversations");
                 });
 
             modelBuilder.Entity("Normora.Modules.Conversations.Domain.ConversationShare", b =>

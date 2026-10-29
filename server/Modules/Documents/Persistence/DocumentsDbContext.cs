@@ -25,6 +25,7 @@ public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, IT
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("documents");
         modelBuilder.HasPostgresExtension("vector");
         
         // Ensure TenantId and DeletedAt are indexed together for fast filtered document queries

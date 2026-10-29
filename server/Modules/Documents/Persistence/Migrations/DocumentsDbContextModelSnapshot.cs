@@ -19,13 +19,14 @@ namespace Normora.Modules.Documents.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("documents")
                 .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Normora.Shared.Document", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.Document", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -59,10 +60,10 @@ namespace Normora.Modules.Documents.Persistence.Migrations
 
                     b.HasIndex("TenantId", "DeletedAt");
 
-                    b.ToTable("Documents");
+                    b.ToTable("Documents", "documents");
                 });
 
-            modelBuilder.Entity("Normora.Shared.DocumentChunk", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentChunk", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -109,10 +110,10 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                     b.HasIndex("TenantId", "DocumentVersionId", "ChunkIndex")
                         .IsUnique();
 
-                    b.ToTable("DocumentChunks");
+                    b.ToTable("DocumentChunks", "documents");
                 });
 
-            modelBuilder.Entity("Normora.Shared.DocumentDepartment", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentDepartment", b =>
                 {
                     b.Property<Guid>("DocumentId")
                         .HasColumnType("uuid");
@@ -125,10 +126,10 @@ namespace Normora.Modules.Documents.Persistence.Migrations
 
                     b.HasKey("DocumentId", "DepartmentId");
 
-                    b.ToTable("DocumentDepartments");
+                    b.ToTable("DocumentDepartments", "documents");
                 });
 
-            modelBuilder.Entity("Normora.Shared.DocumentVersion", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentVersion", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -164,21 +165,21 @@ namespace Normora.Modules.Documents.Persistence.Migrations
 
                     b.HasIndex("DocumentId");
 
-                    b.ToTable("DocumentVersions");
+                    b.ToTable("DocumentVersions", "documents");
                 });
 
-            modelBuilder.Entity("Normora.Shared.DocumentChunk", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentChunk", b =>
                 {
-                    b.HasOne("Normora.Shared.DocumentVersion", null)
+                    b.HasOne("Normora.Modules.Documents.Domain.DocumentVersion", null)
                         .WithMany("Chunks")
                         .HasForeignKey("DocumentVersionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Normora.Shared.DocumentDepartment", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentDepartment", b =>
                 {
-                    b.HasOne("Normora.Shared.Document", "Document")
+                    b.HasOne("Normora.Modules.Documents.Domain.Document", "Document")
                         .WithMany("DocumentDepartments")
                         .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -187,9 +188,9 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                     b.Navigation("Document");
                 });
 
-            modelBuilder.Entity("Normora.Shared.DocumentVersion", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentVersion", b =>
                 {
-                    b.HasOne("Normora.Shared.Document", "Document")
+                    b.HasOne("Normora.Modules.Documents.Domain.Document", "Document")
                         .WithMany("Versions")
                         .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -198,14 +199,14 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                     b.Navigation("Document");
                 });
 
-            modelBuilder.Entity("Normora.Shared.Document", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.Document", b =>
                 {
                     b.Navigation("DocumentDepartments");
 
                     b.Navigation("Versions");
                 });
 
-            modelBuilder.Entity("Normora.Shared.DocumentVersion", b =>
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentVersion", b =>
                 {
                     b.Navigation("Chunks");
                 });

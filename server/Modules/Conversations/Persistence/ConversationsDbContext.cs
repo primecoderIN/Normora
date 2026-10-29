@@ -18,6 +18,7 @@ public class ConversationsDbContext(DbContextOptions<ConversationsDbContext> opt
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("conversations");
 
         modelBuilder.Entity<Conversation>(entity =>
         {

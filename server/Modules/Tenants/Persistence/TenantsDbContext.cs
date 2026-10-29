@@ -30,6 +30,7 @@ public class TenantsDbContext(DbContextOptions<TenantsDbContext> options) : DbCo
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("tenants");
         
         // Tenant Configuration
         modelBuilder.Entity<Tenant>(entity =>
