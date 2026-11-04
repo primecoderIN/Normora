@@ -5,7 +5,7 @@ namespace Normora.Modules.Tenants.Domain;
 /// Departments, and any user in that group inherits access to those departments.
 /// Example: "Engineering" group → Frontend, Backend, DevOps departments.
 /// </summary>
-public class UserGroup
+public class UserGroup : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; }
 

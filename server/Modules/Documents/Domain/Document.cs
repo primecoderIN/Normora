@@ -1,4 +1,5 @@
 using System;
+using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Documents.Domain;
 
@@ -6,7 +7,7 @@ namespace Normora.Modules.Documents.Domain;
 /// Represents an uploaded document within the system.
 /// This entity is inherently bound to a specific tenant (TenantId), guaranteeing data isolation.
 /// </summary>
-public class Document
+public class Document : ITenantEntity
 {
     /// <summary>
     /// The unique identifier for the document record.

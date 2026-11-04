@@ -74,6 +74,29 @@ public sealed class TenantResolutionServiceTests
         Assert.Contains(">", sql);
     }
 
+    [Fact]
+    public void AllEntitiesWithTenantId_MustImplementITenantEntity()
+    {
+        var assemblies = new[]
+        {
+            typeof(Normora.Modules.Conversations.Domain.Conversation).Assembly,
+            typeof(Normora.Modules.Documents.Domain.Document).Assembly,
+            typeof(Normora.Modules.Tenants.Domain.TenantMembership).Assembly
+        };
+
+        var typesWithTenantId = assemblies
+            .SelectMany(a => a.GetTypes())
+            .Where(t => t.IsClass && !t.IsAbstract && t.Namespace != null && t.Namespace.EndsWith(".Domain") && t.GetProperty("TenantId") != null)
+            .ToList();
+
+        foreach (var type in typesWithTenantId)
+        {
+            Assert.True(
+                typeof(ITenantEntity).IsAssignableFrom(type),
+                $"Entity '{type.FullName}' has a TenantId property but does not implement '{nameof(ITenantEntity)}'.");
+        }
+    }
+
     private sealed class UnresolvedTenantContext : ITenantContext
     {
         public Guid? TenantId => null;

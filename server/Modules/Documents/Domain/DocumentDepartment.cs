@@ -1,3 +1,5 @@
+using Normora.Shared.Interfaces;
+
 namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
@@ -7,7 +9,7 @@ namespace Normora.Modules.Documents.Domain;
 /// TenantId is denormalized here to support a matching global query filter alongside
 /// the Document entity filter, preventing EF Core filter mismatch warnings.
 /// </summary>
-public class DocumentDepartment
+public class DocumentDepartment : ITenantEntity
 {
     public Guid DocumentId { get; set; }
 
@@ -25,4 +27,3 @@ public class DocumentDepartment
     // Navigation Properties
     public Document Document { get; set; } = null!;
 }
-

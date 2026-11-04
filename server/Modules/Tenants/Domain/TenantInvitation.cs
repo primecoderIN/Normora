@@ -3,7 +3,7 @@ namespace Normora.Modules.Tenants.Domain;
 /// <summary>
 /// Represents a pending invitation for an external user (via email) to join a specific tenant.
 /// </summary>
-public class TenantInvitation
+public class TenantInvitation : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; }
 

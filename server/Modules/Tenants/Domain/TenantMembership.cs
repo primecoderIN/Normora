@@ -4,7 +4,7 @@ namespace Normora.Modules.Tenants.Domain;
 /// A many-to-many junction entity linking a User to a Tenant.
 /// It also defines the specific Role (Employer, Employee) that user holds within the context of that tenant.
 /// </summary>
-public class TenantMembership
+public class TenantMembership : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; }
     

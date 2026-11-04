@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Modules\Conversations\Conversations.csproj" />
     <ProjectReference Include="..\Modules\Documents\Documents.csproj" />
     <ProjectReference Include="..\Modules\Tenants\Tenants.csproj" />
   </ItemGroup>

@@ -1,11 +1,12 @@
 namespace Normora.Modules.Documents.Domain;
 
 using Pgvector;
+using Normora.Shared.Interfaces;
 
 /// <summary>
 /// A searchable piece of extracted document text.
 /// </summary>
-public class DocumentChunk
+public class DocumentChunk : ITenantEntity
 {
     public Guid Id { get; set; }
     /// Document Versioning (Phase 19): FK now points to DocumentVersion instead of Document.

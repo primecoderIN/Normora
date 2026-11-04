@@ -114,37 +114,9 @@ public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, IT
     /// </summary>
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // HTTP callers must not be able to persist a document under a different tenant than
+        // HTTP callers must not be able to persist an entity under a different tenant than
         // the resolved request context, even if a command contains a caller-supplied ID.
-        foreach (var entry in ChangeTracker.Entries<Document>().Where(e => e.State == EntityState.Added))
-        {
-            // And automatically assign the TenantId from the current HTTP context!
-            if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
-            {
-                entry.Entity.TenantId = _tenantContext.TenantId.Value;
-            }
-        }
-
-        // Propagate TenantId to DocumentDepartment rows to keep the query filter aligned.
-        foreach (var entry in ChangeTracker.Entries<DocumentDepartment>().Where(e => e.State == EntityState.Added))
-        {
-            if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
-            {
-                entry.Entity.TenantId = _tenantContext.TenantId.Value;
-            }
-        }
-
-        // Document Versioning (Phase 19): Propagate TenantId to DocumentVersion rows.
-        foreach (var entry in ChangeTracker.Entries<DocumentVersion>().Where(e => e.State == EntityState.Added))
-        {
-            if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
-            {
-                entry.Entity.TenantId = _tenantContext.TenantId.Value;
-            }
-        }
-
-        // Propagate TenantId to DocumentChunk rows.
-        foreach (var entry in ChangeTracker.Entries<DocumentChunk>().Where(e => e.State == EntityState.Added))
+        foreach (var entry in ChangeTracker.Entries<ITenantEntity>().Where(e => e.State == EntityState.Added))
         {
             if (_tenantContext.IsTenantResolved && _tenantContext.TenantId.HasValue)
             {

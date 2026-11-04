@@ -5,7 +5,7 @@ namespace Normora.Modules.Tenants.Domain;
 /// Documents can be scoped to one or more departments. Users access departmental documents
 /// via direct assignment or through User Group inheritance.
 /// </summary>
-public class Department
+public class Department : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; }
 

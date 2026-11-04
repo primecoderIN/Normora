@@ -4,7 +4,7 @@ namespace Normora.Modules.Tenants.Domain;
 /// Represents the white-label branding configuration for a specific tenant.
 /// Used to dynamically inject CSS variables into the frontend for a custom look and feel.
 /// </summary>
-public class TenantBranding
+public class TenantBranding : Normora.Shared.Interfaces.ITenantEntity
 {
     /// <summary>
     /// Unique identifier for the branding record.

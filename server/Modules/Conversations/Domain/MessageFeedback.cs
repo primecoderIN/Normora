@@ -1,3 +1,4 @@
+using Normora.Shared.Interfaces;
 using System;
 
 namespace Normora.Modules.Conversations.Domain;

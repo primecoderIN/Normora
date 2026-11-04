@@ -3,7 +3,7 @@ namespace Normora.Modules.Tenants.Domain;
 /// <summary>
 /// Represents an immutable audit trail entry recording sensitive tenant mutations.
 /// </summary>
-public class AuditLog
+public class AuditLog : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid TenantId { get; set; }

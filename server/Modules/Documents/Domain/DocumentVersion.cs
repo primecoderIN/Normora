@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
 /// Represents a specific version of a document.
 /// </summary>
-public class DocumentVersion
+public class DocumentVersion : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid DocumentId { get; set; }

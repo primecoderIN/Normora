@@ -11,7 +11,7 @@ public enum PlanTier
 /// <summary>
 /// Defines the subscription tier and resource limits for a tenant.
 /// </summary>
-public class TenantPlan
+public class TenantPlan : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid TenantId { get; set; }
