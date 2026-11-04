@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MediatR;
+using Normora.Shared.Constants;
 using Normora.Shared.Contracts.Tenants;
 using Normora.Shared.Interfaces;
 using Normora.Shared.Templates;
@@ -8,11 +9,15 @@ namespace Normora.Modules.Conversations.Infrastructure.Tools;
 
 /// <summary>
 /// Tool that escalates an employee inquiry to workspace HR administrators via transactional email.
+/// Audited and rate-capped to safeguard against notification storms and data leakage.
 /// </summary>
 public sealed class EscalateInquiryTool(
     IMediator mediator,
-    IEmailService emailService) : IAgentTool
+    IEmailService emailService,
+    IAuditService auditService) : IAgentTool
 {
+    private const int MaxEscalationRecipients = 5;
+
     public string Name => "escalate_hr_inquiry";
 
     public string Description =>
@@ -60,7 +65,7 @@ public sealed class EscalateInquiryTool(
             var inquiry = root.TryGetProperty("inquiry", out var inq) ? inq.GetString() : null;
             if (string.IsNullOrWhiteSpace(inquiry))
             {
-                return new AgentToolResult(false, string.Empty, "The 'inquiry' field is required to escalate to HR.");
+                return new AgentToolResult(false, string.Empty, ApiMessages.ValidationFailed);
             }
 
             var category = root.TryGetProperty("category", out var cat) ? cat.GetString() : "general";
@@ -72,7 +77,12 @@ public sealed class EscalateInquiryTool(
                 new GetTenantAdminRecipientsQuery(context.TenantId),
                 cancellationToken);
 
-            var adminEmails = adminRecipients.AdminEmails;
+            // Cap the recipients to prevent email broadcast storms
+            var adminEmails = adminRecipients.AdminEmails
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(MaxEscalationRecipients)
+                .ToList();
 
             var employeeName = !string.IsNullOrWhiteSpace(context.UserDisplayName)
                 ? context.UserDisplayName
@@ -103,6 +113,24 @@ public sealed class EscalateInquiryTool(
                     notifiedCount++;
                 }
             }
+
+            // Record tamper-evident audit trail for AI-initiated action
+            await auditService.RecordAsync(
+                context.TenantId,
+                context.UserId,
+                context.UserEmail,
+                context.UserDisplayName,
+                "INQUIRY_ESCALATED",
+                "Inquiry",
+                category,
+                JsonSerializer.Serialize(new
+                {
+                    category,
+                    urgency,
+                    administratorsNotified = notifiedCount,
+                    inquiryLength = inquiry.Length
+                }),
+                cancellationToken);
 
             var message = notifiedCount > 0
                 ? $"Your inquiry has been successfully escalated to {notifiedCount} HR administrator(s) at {context.TenantName}. An HR team member will follow up with you at {employeeEmail}."
