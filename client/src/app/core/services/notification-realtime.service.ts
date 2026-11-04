@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { environment } from '@env/environment';
 import { Subject } from 'rxjs';
@@ -14,7 +14,7 @@ export interface NotificationEvent {
  * Service managing real-time notifications via SignalR (e.g. employee invitations).
  */
 @Injectable({ providedIn: 'root' })
-export class NotificationRealtimeService {
+export class NotificationRealtimeService implements OnDestroy {
   private connection?: HubConnection;
 
   private invitationReceivedSource = new Subject<NotificationEvent>();
@@ -56,5 +56,10 @@ export class NotificationRealtimeService {
       await this.connection.stop();
       this.connection = undefined;
     }
+  }
+
+  ngOnDestroy(): void {
+    this.invitationReceivedSource.complete();
+    void this.disconnect();
   }
 }

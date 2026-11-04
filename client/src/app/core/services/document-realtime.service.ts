@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { environment } from '@env/environment';
 
@@ -15,7 +15,7 @@ export interface DocumentStatusChanged {
  * without requiring client-side polling.
  */
 @Injectable({ providedIn: 'root' })
-export class DocumentRealtimeService {
+export class DocumentRealtimeService implements OnDestroy {
   private connection?: HubConnection;
 
   /**
@@ -61,5 +61,9 @@ export class DocumentRealtimeService {
       await this.connection.stop();
       this.connection = undefined;
     }
+  }
+
+  ngOnDestroy(): void {
+    void this.disconnect();
   }
 }

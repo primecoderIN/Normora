@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /admin/
+Disallow: /employee/
+Disallow: /api/
+
+Sitemap: https://normora.com/sitemap.xml
+
