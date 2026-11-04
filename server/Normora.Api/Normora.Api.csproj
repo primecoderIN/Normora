@@ -39,8 +39,4 @@
     <ProjectReference Include="..\Modules\Documents\Documents.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Normora.Modules.Documents.Domain" />
-  </ItemGroup>
-
 </Project>

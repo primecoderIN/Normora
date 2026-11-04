@@ -23,6 +23,7 @@ public static class ApiServiceExtensions
 
         services.AddOpenApi();
         services.AddSignalR();
+        services.AddHealthChecks();
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 

@@ -107,6 +107,7 @@ app.UseMiddleware<TenantResolutionMiddleware>();
 // Finally, apply endpoint-specific authorization rules (e.g. [RequireTenant]).
 app.UseAuthorization();               
 
+app.MapHealthChecks("/healthz").AllowAnonymous();
 app.MapControllers().AsBffApiEndpoint(); // Enforces CSRF protection
 app.MapBffManagementEndpoints(); // Adds /bff/login, /bff/logout, /bff/user
 app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint().SkipAntiforgery();

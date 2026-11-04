@@ -109,7 +109,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     public async Task<IActionResult> GetBrandingAsset(
         string slug, 
         string assetType, 
-        [FromServices] Normora.Modules.Tenants.Persistence.IBrandingStorageService storageService)
+        CancellationToken cancellationToken = default)
     {
         if (assetType != "logo" && assetType != "logo-dark" && assetType != "favicon")
             return BadRequest(ApiResponse.Failure(ApiMessages.BadRequest));
@@ -120,9 +120,11 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
 
         try
         {
-            var objectName = $"{slug}/{assetType}";
-            var (stream, contentType) = await storageService.DownloadAssetAsync(objectName);
-            return File(stream, contentType);
+            var asset = await mediator.Send(new GetTenantBrandingAssetQuery(slug, assetType), cancellationToken);
+            if (asset is null)
+                return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
+
+            return File(asset.Stream, asset.ContentType);
         }
         catch (Exception ex)
         {
