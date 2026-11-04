@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {
   PreloadAllModules,
@@ -12,6 +12,7 @@ import { tenantInterceptor } from '@core/interceptors/tenant.interceptor';
 import { apiInterceptor } from '@core/interceptors/api.interceptor';
 import { csrfInterceptor } from '@core/interceptors/csrf.interceptor';
 import { provideClientHydration } from '@angular/platform-browser';
+import { GlobalErrorHandler } from '@core/services/global-error-handler.service';
 
 // The appConfig is the central configuration file for our standalone Angular application.
 // It tells Angular what global services (providers) should be available everywhere in the app.
@@ -20,6 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     // Catches unhandled errors globally in the browser
     provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
 
     // Sets up our routing system. withPreloading eagerly downloads lazy chunks in
     // the background after the initial page loads, so navigating between routes is instant.

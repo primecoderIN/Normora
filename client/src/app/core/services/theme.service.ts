@@ -1,9 +1,12 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ThemeService {
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
   isDarkMode = signal<boolean>(false);
   
   constructor() {
@@ -11,8 +14,7 @@ export class ThemeService {
   }
 
   private initTheme() {
-    // Only run in browser (not SSR)
-    if (typeof window === 'undefined') return;
+    if (!this.isBrowser) return;
 
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -29,7 +31,7 @@ export class ThemeService {
   }
 
   setDarkMode(isDark: boolean) {
-    if (typeof window === 'undefined') return;
+    if (!this.isBrowser) return;
 
     this.isDarkMode.set(isDark);
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
