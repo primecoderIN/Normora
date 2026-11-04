@@ -25,6 +25,9 @@ public class ConversationShare : ITenantEntity
     /// <summary>Optional expiry date after which access returns 404.</summary>
     public DateTimeOffset? ExpiresAt { get; set; }
 
+    /// <summary>Checks whether this share link has passed its expiration deadline.</summary>
+    public bool IsExpired => ExpiresAt.HasValue && ExpiresAt.Value <= DateTimeOffset.UtcNow;
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public Conversation Conversation { get; set; } = null!;

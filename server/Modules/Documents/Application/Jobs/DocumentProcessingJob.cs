@@ -56,62 +56,15 @@ public sealed class DocumentProcessingJob(
 
         try
         {
-            version.Status = DocumentStatus.Processing;
+            version.MarkProcessing();
             await context.SaveChangesAsync(cancellationToken);
             await PublishStatusAsync(version.Document, version.Status);
 
-            await using var documentStream = await storageService.DownloadDocumentAsync(version.StorageObjectName);
-            version.ExtractedText = await textExtractor.ExtractAsync(documentStream, version.Document.FileName, cancellationToken);
+            await ExtractTextAsync(version, cancellationToken);
 
-            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-            try
-            {
-                await context.DocumentChunks
-                    // A retry replaces the complete chunk set so partial previous work cannot duplicate results.
-                    .IgnoreQueryFilters()
-                    .Where(chunk => chunk.DocumentVersionId == version.Id && chunk.TenantId == version.TenantId)
-                    .ExecuteDeleteAsync(cancellationToken);
+            var documentChunks = await ChunkAndEmbedAsync(version, cancellationToken);
 
-                var chunks = DocumentChunker.Split(version.ExtractedText);
-                var documentChunks = chunks.Select((content, index) => new DocumentChunk
-                {
-                    Id = Guid.NewGuid(),
-                    DocumentVersionId = version.Id,
-                    TenantId = version.TenantId,
-                    ChunkIndex = index,
-                    Content = content
-                }).ToList();
-
-                if (embeddingService.IsConfigured)
-                {
-                    // These chunks are new and still tracked in memory, so embed this list
-                    // directly instead of querying PostgreSQL before SaveChanges persists it.
-                    var parallelOptions = new ParallelOptions
-                    {
-                        MaxDegreeOfParallelism = 5,
-                        CancellationToken = cancellationToken
-                    };
-
-                    await Parallel.ForEachAsync(documentChunks, parallelOptions, async (chunk, ct) =>
-                    {
-                        var vector = await embeddingService.CreateEmbeddingAsync(chunk.Content, ct);
-                        chunk.Embedding = new Pgvector.Vector(vector);
-                    });
-                }
-
-                context.DocumentChunks.AddRange(documentChunks);
-
-                // Ready is published only after all configured ingestion stages have completed.
-                version.Status = DocumentStatus.Ready;
-                await context.SaveChangesAsync(cancellationToken);
-
-                await transaction.CommitAsync(cancellationToken);
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            await PersistChunksAsync(version, documentChunks, cancellationToken);
 
             await PublishStatusAsync(version.Document, version.Status);
 
@@ -128,7 +81,7 @@ public sealed class DocumentProcessingJob(
         }
         catch (Exception exception)
         {
-            version.Status = DocumentStatus.Failed;
+            version.MarkFailed();
             await context.SaveChangesAsync(cancellationToken);
             await PublishStatusAsync(version.Document, version.Status);
             logger.LogError(exception, "Document version {DocumentVersionId} failed processing for tenant {TenantId}.", documentVersionId, tenantId);
@@ -139,6 +92,71 @@ public sealed class DocumentProcessingJob(
             // Notify employers about the processing failure
             await NotifyDocumentProcessingFailedAsync(version.Document, tenantId, exception.Message);
 
+            throw;
+        }
+    }
+
+    private async Task ExtractTextAsync(DocumentVersion version, CancellationToken cancellationToken)
+    {
+        await using var documentStream = await storageService.DownloadDocumentAsync(version.StorageObjectName);
+        version.ExtractedText = await textExtractor.ExtractAsync(documentStream, version.Document!.FileName, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<DocumentChunk>> ChunkAndEmbedAsync(DocumentVersion version, CancellationToken cancellationToken)
+    {
+        var chunks = DocumentChunker.Split(version.ExtractedText ?? string.Empty);
+        var documentChunks = chunks.Select((content, index) => new DocumentChunk
+        {
+            Id = Guid.NewGuid(),
+            DocumentVersionId = version.Id,
+            TenantId = version.TenantId,
+            ChunkIndex = index,
+            Content = content
+        }).ToList();
+
+        if (embeddingService.IsConfigured)
+        {
+            var parallelOptions = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = 5,
+                CancellationToken = cancellationToken
+            };
+
+            await Parallel.ForEachAsync(documentChunks, parallelOptions, async (chunk, ct) =>
+            {
+                var vector = await embeddingService.CreateEmbeddingAsync(chunk.Content, ct);
+                chunk.Embedding = new Pgvector.Vector(vector);
+            });
+        }
+
+        return documentChunks;
+    }
+
+    private async Task PersistChunksAsync(
+        DocumentVersion version,
+        IReadOnlyList<DocumentChunk> documentChunks,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await context.DocumentChunks
+                // A retry replaces the complete chunk set so partial previous work cannot duplicate results.
+                .IgnoreQueryFilters()
+                .Where(chunk => chunk.DocumentVersionId == version.Id && chunk.TenantId == version.TenantId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            context.DocumentChunks.AddRange(documentChunks);
+
+            // Ready is published only after all configured ingestion stages have completed.
+            version.MarkReady();
+            await context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
             throw;
         }
     }

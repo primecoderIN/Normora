@@ -39,7 +39,7 @@ public class GetSharedConversationQueryHandler(
         }
 
         // 2. Check expiration (returns 404 to prevent link enumeration)
-        if (share.ExpiresAt.HasValue && share.ExpiresAt.Value <= DateTimeOffset.UtcNow)
+        if (share.IsExpired)
         {
             throw new BolaException();
         }

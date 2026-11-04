@@ -33,7 +33,26 @@ public class Tenant
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
-    
+
+    public void Suspend()
+    {
+        Status = TenantStatus.Suspended;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Activate()
+    {
+        Status = TenantStatus.Active;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+        Name = name.Trim();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     // Navigation Properties
     /// <summary>
     /// All users who have been granted access to this tenant.

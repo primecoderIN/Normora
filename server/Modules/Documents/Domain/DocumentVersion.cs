@@ -40,6 +40,10 @@ public class DocumentVersion : ITenantEntity
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public void MarkProcessing() => Status = DocumentStatus.Processing;
+    public void MarkReady() => Status = DocumentStatus.Ready;
+    public void MarkFailed() => Status = DocumentStatus.Failed;
+
     public Document? Document { get; set; }
     public ICollection<DocumentChunk> Chunks { get; set; } = new List<DocumentChunk>();
 }

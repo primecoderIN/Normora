@@ -34,7 +34,7 @@ public class ShareConversationCommandHandler(
         var existingShare = await context.ConversationShares
             .FirstOrDefaultAsync(s => s.ConversationId == request.ConversationId, cancellationToken);
 
-        if (existingShare is not null && (existingShare.ExpiresAt is null || existingShare.ExpiresAt > DateTimeOffset.UtcNow))
+        if (existingShare is not null && !existingShare.IsExpired)
         {
             return new ConversationShareDto(existingShare.Token, existingShare.ExpiresAt);
         }

@@ -33,5 +33,26 @@ public class Conversation : ITenantEntity
 
     /// <summary>Ordered messages belonging to this conversation thread.</summary>
     public ICollection<Message> Messages { get; set; } = new List<Message>();
+
+    public void UpdateTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return;
+        Title = title.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void UpdateSummary(string summary)
+    {
+        Summary = summary;
+        SummaryVersion++;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void TouchLastMessage(DateTimeOffset? timestamp = null)
+    {
+        var now = timestamp ?? DateTimeOffset.UtcNow;
+        LastMessageAt = now;
+        UpdatedAt = now;
+    }
 }
 
