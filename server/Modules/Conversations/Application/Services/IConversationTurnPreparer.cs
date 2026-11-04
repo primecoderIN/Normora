@@ -23,7 +23,7 @@ public sealed record ConversationTurnContext(
 /// Prepares a conversational turn by validating ownership, persisting the user message,
 /// trimming conversation history, rewriting the query, and executing hybrid document retrieval.
 /// </summary>
-public interface IConversationTurnPreparer
+internal interface IConversationTurnPreparer
 {
     Task<ConversationTurnContext> PrepareTurnAsync(
         Guid conversationId,

@@ -26,7 +26,6 @@ public static class TenantsModuleExtensions
         services.AddScoped<IDatabaseMigrator, TenantsDatabaseMigrator>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IPaymentService, PayUPaymentService>();
-        services.AddScoped<IPayUPaymentService>(sp => (IPayUPaymentService)sp.GetRequiredService<IPaymentService>());
 
         return services;
     }

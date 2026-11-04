@@ -13,7 +13,7 @@ namespace Normora.Modules.Conversations.Application.Services;
 /// persists the user message, builds budgeted history, rewrites queries, and performs hybrid retrieval.
 /// Eliminates code duplication across synchronous and streaming turn handlers.
 /// </summary>
-public sealed class ConversationTurnPreparer(
+internal sealed class ConversationTurnPreparer(
     ConversationsDbContext conversationsContext,
     IMediator mediator,
     IContextResolver contextResolver,

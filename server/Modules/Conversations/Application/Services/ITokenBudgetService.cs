@@ -5,7 +5,7 @@ namespace Normora.Modules.Conversations.Application.Services;
 /// Uses the universal heuristic of 1 token ≈ 4 characters, which is accurate enough
 /// for English prose without requiring a full tokenizer dependency.
 /// </summary>
-public interface ITokenBudgetService
+internal interface ITokenBudgetService
 {
     /// <summary>
     /// Estimates the number of tokens in a piece of text using the 4-chars-per-token heuristic.

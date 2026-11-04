@@ -19,7 +19,7 @@ public class PayUPaymentService(
     TenantsDbContext context,
     IOptions<PayUOptions> payUOptions,
     IOptions<AppOptions> appOptions,
-    ILogger<PayUPaymentService> logger) : IPaymentService, IPayUPaymentService
+    ILogger<PayUPaymentService> logger) : IPaymentService
 {
     private readonly PayUOptions _options = payUOptions.Value;
     private readonly AppOptions _app = appOptions.Value;

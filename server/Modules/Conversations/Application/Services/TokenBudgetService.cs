@@ -5,7 +5,7 @@ namespace Normora.Modules.Conversations.Application.Services;
 /// Uses the 1 token ≈ 4 characters heuristic — accurate enough for English without
 /// requiring a tokenizer library dependency.
 /// </summary>
-public sealed class TokenBudgetService : ITokenBudgetService
+internal sealed class TokenBudgetService : ITokenBudgetService
 {
     // Standard heuristic: 1 token ≈ 4 characters for English text
     private const int CharsPerToken = 4;

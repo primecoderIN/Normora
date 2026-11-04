@@ -36,7 +36,7 @@ public sealed record AskConversationCitation(
 /// Handles <see cref="AskConversationCommand"/> by delegating turn preparation (ownership, history, RAG)
 /// to <see cref="IConversationTurnPreparer"/>, generating the conversational response, and saving the turn.
 /// </summary>
-public sealed class AskConversationCommandHandler(
+internal sealed class AskConversationCommandHandler(
     IConversationTurnPreparer turnPreparer,
     ITextGenerationService generationService,
     ConversationsDbContext conversationsContext,

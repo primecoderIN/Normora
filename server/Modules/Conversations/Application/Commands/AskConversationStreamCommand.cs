@@ -21,7 +21,7 @@ public sealed record AskConversationStreamCommand(
     string Question,
     int Limit = 5) : IStreamRequest<AskConversationStreamEvent>;
 
-public sealed class AskConversationStreamCommandHandler(
+internal sealed class AskConversationStreamCommandHandler(
     IConversationTurnPreparer turnPreparer,
     ConversationsDbContext conversationsContext,
     ITextGenerationService generationService,
