@@ -3,10 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Normora.Modules.Documents.Application.Documents;
 using Normora.Modules.Documents.Application.Chunks;
-
-
 using Normora.Shared;
 using Normora.Shared.Contracts.Tenants;
 using Normora.Shared.Interfaces;
@@ -50,6 +49,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of search results with relevance scores.</returns>
     [HttpGet("search")]
+    [EnableRateLimiting("ai")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<IReadOnlyList<DocumentSearchResult>>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     public async Task<IActionResult> SearchDocuments([FromQuery] string query, [FromQuery] int limit = 5, CancellationToken cancellationToken = default)
@@ -89,6 +89,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// <returns>The newly created document record.</returns>
     [HttpPost("upload")]
     [RequireTenant(TenantRoles.Admin)] // Security: only admins may add documents to the knowledge base
+    [EnableRateLimiting("ai")]
     [RequestSizeLimit(100_971_520)] // 100 MB max payload size for ASP.NET
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<DocumentDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
