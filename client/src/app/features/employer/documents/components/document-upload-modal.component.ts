@@ -1,9 +1,8 @@
 import { Component, input, output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Department } from '@core/services/department.service';
-import { UserService } from '@core/services/user.service';
+import { DocumentService, Document } from '@core/services/document.service';
 import {
   DsDialogComponent,
   DsMultiSelectComponent,
@@ -83,20 +82,19 @@ import {
 export class DocumentUploadModalComponent {
   visible = input.required<boolean>();
   departments = input.required<Department[]>();
-  uploadUrl = input.required<string>();
+  uploadUrl = input<string>();
   isPersonal = input<boolean>(false);
   tenantName = input<string>('your organization');
   documentId = input<string | null>(null);
   visibleChange = output<boolean>();
-  uploadSuccess = output<any>();
-  uploadError = output<any>();
+  uploadSuccess = output<Document | undefined>();
+  uploadError = output<unknown>();
 
   selectedDeptIds = signal<string[]>([]);
   selectedFile = signal<File | null>(null);
   isUploading = signal<boolean>(false);
 
-  private http = inject(HttpClient);
-  userService = inject(UserService);
+  private documentService = inject(DocumentService);
 
   handleFileSelect(event: DsFileSelectEvent): void {
     if (event.files && event.files.length > 0) {
@@ -112,31 +110,16 @@ export class DocumentUploadModalComponent {
 
     this.isUploading.set(true);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const deptIds = this.selectedDeptIds();
-    // Document Versioning (Phase 19): Department scoping only applies to new documents.
-    // If uploading a new version (documentId exists), we skip attaching departments.
-    if (deptIds && deptIds.length > 0 && !this.documentId()) {
-      deptIds.forEach((id) => formData.append('departmentIds', id));
-    }
-
-    // Document Versioning (Phase 19): If present, append the existing document ID 
-    // to signal the API to create a new DocumentVersion instead of a new Document.
-    const docId = this.documentId();
-    if (docId) {
-      formData.append('documentId', docId);
-    }
-
-    this.http.post(this.uploadUrl(), formData, { withCredentials: true }).subscribe({
-      next: (res) => {
-        this.isUploading.set(false);
-        this.selectedFile.set(null);
-        this.selectedDeptIds.set([]);
-        this.uploadSuccess.emit(res);
+    this.documentService.uploadDocument(file, this.selectedDeptIds(), this.documentId()).subscribe({
+      next: (event) => {
+        if (event.percent === 100) {
+          this.isUploading.set(false);
+          this.selectedFile.set(null);
+          this.selectedDeptIds.set([]);
+          this.uploadSuccess.emit(event.document);
+        }
       },
-      error: (err) => {
+      error: (err: unknown) => {
         this.isUploading.set(false);
         this.uploadError.emit(err);
       },

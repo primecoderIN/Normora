@@ -300,3 +300,33 @@ Enables secure snapshot sharing of assistant conversations via unique cryptograp
 | `RevokedAtUtc` | `datetime2` | ✅ | Soft revocation timestamp |
 
 **Indexes:** `UX_ConversationShares_ShareToken` (Unique)
+
+---
+
+## Database Migrations & Ephemeral Migrator Lifecycle
+
+### Architecture & Isolation
+Normora enforces a Modular Monolith architecture where each module encapsulates its own database schema boundary in PostgreSQL:
+- `tenants`: Managed by `TenantsDbContext` via `TenantsDatabaseMigrator`.
+- `documents`: Managed by `DocumentsDbContext` via `DocumentsDatabaseMigrator` (including `vector` extension support via `pgvector`).
+- `conversations`: Managed by `ConversationsDbContext` via `ConversationsDatabaseMigrator`.
+- `public` / auth sessions: Managed by `SessionDbContext` via `SessionDatabaseMigrator` (Duende BFF server-side session tables).
+
+### Ephemeral Migrator Execution
+In Docker Compose (`docker-compose.yml`), migrations are executed by a dedicated, one-off container named `migrator` before any API or Worker instances start (`condition: service_completed_successfully`):
+- **Command**: `dotnet Normora.Api.dll --migrate`
+- **Runner**: `DatabaseMigrationRunner` invokes each registered `IDatabaseMigrator` sequentially.
+- **Why Separate**: Running migrations within the API on startup risks schema deadlocks and corrupted history tables when scaling out multiple replicas. The standalone container ensures single-instance, serialized execution.
+
+### Idempotency & Pending Migration Checks
+Migrations are **strictly idempotent**:
+- On container startup, EF Core executes:
+  ```sql
+  SELECT "MigrationId", "ProductVersion" FROM "__EFMigrationsHistory" ORDER BY "MigrationId";
+  ```
+- If all migrations in the compiled assembly exist in the history table, EF Core logs:
+  ```text
+  info: Microsoft.EntityFrameworkCore.Migrations: No migrations were applied. The database is already up to date.
+  ```
+  It skips all DDL statements and completes in milliseconds without modifying the database.
+- If pending migrations exist, only the new migration scripts are executed inside a database transaction and recorded upon success.

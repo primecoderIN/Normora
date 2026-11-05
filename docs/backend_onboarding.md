@@ -202,12 +202,80 @@ dotnet ef migrations add AddUserGroups --context TenantsDbContext --project Modu
 dotnet ef database update --context TenantsDbContext
 ```
 
-### Controlled Migrations
-The API does not modify the schema during normal startup. Run migrations as a one-off release step, and wait for success before rolling out API or worker instances:
+### Controlled Migrations & The `migrator` Service
+The API does not modify the database schema during normal HTTP startup. Migrations must always run as a one-off, serialized deployment step, and dependent services (`api` and `worker`) only start after migrations complete successfully.
+
+#### Local and Production Execution
 ```powershell
+# Run directly from host CLI:
+dotnet run --project server/Normora.Api/Normora.Api.csproj -- --migrate
+
+# Or execute published binary:
 dotnet .\server\Normora.Api\bin\Release\net10.0\Normora.Api.dll --migrate
 ```
-The local Compose stack runs the same migration mode as a one-shot `migrator` service before starting the API and worker. Each module registers its own `IDatabaseMigrator`; the API does not directly resolve module `DbContext` types. Pending-model-change warnings remain visible and should be fixed rather than suppressed.
+
+In the local Docker Compose stack (`docker-compose.yml`), this migration execution is encapsulated in a dedicated ephemeral service named **`migrator`**:
+```yaml
+  migrator:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: normora_migrator
+    command: ["--migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+```
+Both `api` and `worker` depend on `migrator` with `condition: service_completed_successfully`.
+
+#### Why Migrations Are Isolated in a Separate Container
+1. **Prevents Startup Race Conditions**: Scaling out multiple API or Worker replicas in parallel would otherwise result in concurrent schema migrations, database deadlocks, and corrupted `__EFMigrationsHistory` tables.
+2. **Strict Modular Monolith Encapsulation**: Per architectural guidelines, the host API never directly resolves module `DbContext` instances. Instead, each module registers its own `IDatabaseMigrator` implementation:
+   - `TenantsDatabaseMigrator` (`TenantsDbContext` - tenants, memberships, roles, subscriptions)
+   - `DocumentsDatabaseMigrator` (`DocumentsDbContext` - documents, chunks, vector embeddings via `pgvector`)
+   - `ConversationsDatabaseMigrator` (`ConversationsDbContext` - chats, messages, citations, feedback)
+   - `SessionDatabaseMigrator` (`SessionDbContext` - Duende BFF user session tables)
+3. **Sequential Execution**: `DatabaseMigrationRunner` iterates through all registered migrators sequentially, logging progress before exiting cleanly with exit code `0`.
+
+#### Idempotency & How Pending Migrations Are Checked
+The `migrator` service runs on every `docker compose up`, but **it checks whether migrations are pending and does not re-run existing migrations**:
+
+1. **Reads `__EFMigrationsHistory`**: On startup, EF Core executes:
+   ```sql
+   SELECT "MigrationId", "ProductVersion" FROM "__EFMigrationsHistory" ORDER BY "MigrationId";
+   ```
+2. **Compares Against Compiled Assembly Migrations**: EF Core compares the IDs stored in `__EFMigrationsHistory` against the migration classes compiled into the application DLLs.
+3. **No-Op When Up-to-Date**: If no new migrations exist, EF Core logs:
+   ```text
+   info: Microsoft.EntityFrameworkCore.Migrations: No migrations were applied. The database is already up to date.
+   ```
+   No DDL changes are made, and the container exits cleanly in milliseconds.
+4. **Applies Only Pending Migrations**: When a developer adds a new EF Core migration, EF Core applies only the delta (new migrations) inside a database transaction, updates `__EFMigrationsHistory`, and completes.
+
+This makes running the migrator container on every startup completely safe and standard for containerized environments.
+
+#### Troubleshooting Migrations & Container Exit Codes
+If the `migrator` container fails to start or exit cleanly, use the following guide:
+
+- **Exit Code 139 (`SIGSEGV` / Segmentation Fault)**:
+  - **Meaning**: The process was terminated by the Linux kernel with Signal 11 (`SIGSEGV` = $128 + 11 = 139$).
+  - **Common Root Causes & Fixes**:
+    - **DI Container Validation Failure**: By default in ASP.NET Core Development environments, the host validates all service descriptors on build (`ValidateOnBuild = true`). Because `--migrate` mode deliberately skips external services like MinIO, Redis, and Hangfire, missing dependencies will cause an unhandled `AggregateException` during container build. When `--migrate` is supplied, `Program.cs` disables `ValidateOnBuild` and `ValidateScopes` so that the migration runner can construct without resolving optional application services.
+    - **Connection String Masking**: Ensure `ConnectionStrings__DefaultConnection` in `docker-compose.yml` does not contain literal redacted asterisks (`******`). Always verify connection string variables reference `${POSTGRES_USER}` and `${POSTGRES_PASSWORD}` from `.env`.
+    - **Architecture Mismatch / QEMU Emulation**: Running an `amd64` container on an Apple Silicon or ARM host without Rosetta can cause the .NET RyuJIT compiler to crash with a segmentation fault under QEMU emulation. Build containers for the native host platform.
+    - **WSL2 / Docker Memory Limits**: Ensure sufficient RAM (minimum 4GB) is allocated to WSL2 (`%USERPROFILE%\.wslconfig`).
+
+- **Diagnostic Commands**:
+  ```powershell
+  # Check migrator container output logs:
+  docker compose logs migrator
+
+  # Run migrator interactively to reproduce errors:
+  docker compose run --rm migrator
+
+  # Run migration directly outside Docker to isolate code vs container issues:
+  dotnet run --project server/Normora.Api/Normora.Api.csproj -- --migrate
+  ```
 
 ---
 

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { ChartData, ChartOptions } from 'chart.js';
 
 import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
 import { UserService } from '@core/services/user.service';
@@ -43,11 +44,11 @@ export class Dashboard implements OnInit {
   summary = signal<DashboardSummaryDto | null>(null);
   isLoading = signal(true);
 
-  documentChartData: any;
-  documentChartOptions: any;
+  documentChartData: ChartData<'doughnut'> | null = null;
+  documentChartOptions: ChartOptions<'doughnut'> | null = null;
 
-  activityChartData: any;
-  activityChartOptions: any;
+  activityChartData: ChartData<'line'> | null = null;
+  activityChartOptions: ChartOptions<'line'> | null = null;
 
   ngOnInit() {
     this.dashboardService.getSummary().subscribe({
@@ -146,8 +147,10 @@ export class Dashboard implements OnInit {
             }
           },
           grid: {
-            color: 'transparent',
-            drawBorder: false
+            color: 'transparent'
+          },
+          border: {
+            display: false
           }
         },
         y: {
@@ -160,9 +163,10 @@ export class Dashboard implements OnInit {
             }
           },
           grid: {
-            color: surfaceBorder,
-            drawBorder: false,
-            borderDash: [4, 4]
+            color: surfaceBorder
+          },
+          border: {
+            display: false
           },
           min: 0,
           max: Math.ceil(Math.max(...activity.data, 10) * 1.2)

@@ -117,10 +117,13 @@ export class Documents implements OnInit, OnDestroy {
     this.loadDocuments();
   }
 
-  onUploadError(event: { error?: { error?: string } }) {
+  onUploadError(event: unknown) {
     let errorDetail: string = ApiMessages.UploadFailed.detail;
-    if (event.error?.error) {
-      errorDetail = typeof event.error.error === 'string' ? event.error.error : ApiMessages.UploadFailed.detail;
+    const errorObj = event as { error?: { error?: string; message?: string } } | null;
+    if (errorObj?.error?.error && typeof errorObj.error.error === 'string') {
+      errorDetail = errorObj.error.error;
+    } else if (errorObj?.error?.message && typeof errorObj.error.message === 'string') {
+      errorDetail = errorObj.error.message;
     }
     this.messageService.add({ severity: 'error', summary: ApiMessages.UploadFailed.summary, detail: errorDetail });
   }

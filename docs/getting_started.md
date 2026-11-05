@@ -42,3 +42,19 @@ To stop the containers without destroying your database volumes, run:
 ```powershell
 .\stop.ps1
 ```
+
+## Troubleshooting Common Setup Issues
+
+### `service 'migrator' didn't complete successfully: exit 139`
+If the `migrator` service exits prematurely with exit code `139`:
+1. Check the migrator container logs to view the failure:
+   ```powershell
+   docker compose logs migrator
+   ```
+2. Ensure your `.env` file exists and that `POSTGRES_USER` and `POSTGRES_PASSWORD` match your database configuration.
+3. Verify Docker Desktop / WSL2 has at least 4–6GB of RAM allocated in `%USERPROFILE%\.wslconfig`.
+4. Run the migration tool directly on your host machine to isolate local code from container environment issues:
+   ```powershell
+   dotnet run --project server/Normora.Api/Normora.Api.csproj -- --migrate
+   ```
+5. For deep-dive architectural and troubleshooting details, see [docs/backend_onboarding.md](file:///c:/Users/Sanjeev%20Kumar/Codes/Normora/docs/backend_onboarding.md#controlled-migrations--the-migrator-service).

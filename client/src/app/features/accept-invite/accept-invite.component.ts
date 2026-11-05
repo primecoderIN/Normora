@@ -11,9 +11,9 @@ import { take } from 'rxjs';
   standalone: true,
   imports: [],
   template: `
-    <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Invitation</h2>
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">Invitation</h2>
       </div>
 
       <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -25,14 +25,14 @@ import { take } from 'rxjs';
           }
 
           @if (!isLoading() && error()) {
-            <div class="bg-red-50 p-4 rounded-md text-red-700 text-sm text-center">
+            <div class="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 p-4 rounded-md text-red-700 dark:text-red-300 text-sm text-center">
               {{ error() }}
             </div>
           }
 
           @if (!isLoading() && invitation()) {
             <div class="text-center">
-              <p class="text-gray-700 mb-4">
+              <p class="text-gray-700 dark:text-slate-300 mb-4">
                 You have been invited to join <strong>{{ invitation()?.tenantName }}</strong
                 >!
               </p>
@@ -53,7 +53,7 @@ import { take } from 'rxjs';
                   <button
                     (click)="rejectInvite()"
                     [disabled]="isAccepting()"
-                    class="w-full flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    class="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-slate-700 shadow-sm text-base font-medium rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                   >
                     Decline Invitation
                   </button>
@@ -72,7 +72,7 @@ import { take } from 'rxjs';
 
           @if (!isLoading() && success()) {
             <div class="text-center">
-              <div class="bg-green-50 p-4 rounded-md text-green-700 text-sm mb-4">
+              <div class="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/50 p-4 rounded-md text-green-700 dark:text-green-300 text-sm mb-4">
                 {{ acceptSuccessMessage }}
               </div>
               <button

@@ -80,7 +80,7 @@ export class UserService {
         catchError(error => {
           console.error('Failed to fetch current user profile:', error);
           this.meRequest$ = undefined;
-          return of({ success: false, message: 'Failed to load user', data: null as any });
+          return of({ success: false, message: 'Failed to load user', data: null as unknown as CurrentUser });
         }),
         shareReplay(1)
       );

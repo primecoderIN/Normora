@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpEventType, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpEventType, HttpRequest, HttpResponse } from '@angular/common/http';
 import { environment } from '@env/environment';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
@@ -60,9 +60,15 @@ export class DocumentService {
    * Emits UploadProgress events with a `percent` field (0–100) while uploading,
    * and a final event with `document` set when the server has processed the file.
    */
-  uploadDocument(file: File): Observable<UploadProgress> {
+  uploadDocument(file: File, departmentIds?: string[], documentId?: string | null): Observable<UploadProgress> {
     const formData = new FormData();
     formData.append('file', file);
+    if (departmentIds && departmentIds.length > 0 && !documentId) {
+      departmentIds.forEach(id => formData.append('departmentIds', id));
+    }
+    if (documentId) {
+      formData.append('documentId', documentId);
+    }
 
     const req = new HttpRequest('POST', `${this.apiUrl}/upload`, formData, {
       reportProgress: true
@@ -81,10 +87,10 @@ export class DocumentService {
           return { percent } as UploadProgress;
         }
         // Response received — upload complete
-        const response = event as any;
+        const response = event as HttpResponse<ApiResponse<Document>>;
         return {
           percent: 100,
-          document: response.body?.data as Document
+          document: response.body?.data
         } as UploadProgress;
       })
     );

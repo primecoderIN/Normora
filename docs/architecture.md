@@ -149,7 +149,14 @@ The backend relies on **OpenTelemetry (OTLP)** for a unified observability layer
 The Angular application resides in the `client/` directory and communicates with the .NET backend via REST APIs. During local development and production, requests to `/api/*` are proxied to the backend. The frontend seamlessly handles complex auth flows, including intercepting OAuth callbacks to redirect users accepting invitations.
 
 ## Deployment
-The local stack is containerized. `docker-compose.yml` orchestrates PostgreSQL, pgAdmin, Keycloak, MinIO, Redis, Tika, a one-off schema migrator, the .NET API, a separate Hangfire worker, and the Angular client served via Nginx. The API starts only after migrations complete successfully. Production deployments should run migrations as a serialized release step and configure trusted proxy IPs, Redis, and MinIO TLS.
+The local stack is containerized. `docker-compose.yml` orchestrates PostgreSQL, pgAdmin, Keycloak, MinIO, Redis, Tika, a one-off schema migrator, the .NET API, a separate Hangfire worker, and the Angular client served via Nginx.
+
+### Ephemeral Migration Runner (`migrator`)
+Database migrations run exclusively through a dedicated, ephemeral `migrator` service executing `dotnet Normora.Api.dll --migrate`.
+- **Pre-Rollout Dependency**: Both `api` and `worker` depend on `migrator` with `condition: service_completed_successfully`, preventing any HTTP traffic or background jobs from starting until the database schema is confirmed ready.
+- **Race Condition Prevention**: Isolating schema execution in a dedicated one-off container eliminates race conditions and PostgreSQL table lock contention that would otherwise occur if multiple API or worker replicas ran migrations simultaneously upon boot.
+- **Idempotent Pending Checks**: The runner checks `__EFMigrationsHistory` on every startup. If all migrations in the code have already been recorded, EF Core performs a no-op (`No migrations were applied. The database is already up to date.`) and exits cleanly in milliseconds.
+- **Production Alignment**: Production deployments mirror this lifecycle by executing `dotnet Normora.Api.dll --migrate` as a serialized release pipeline task prior to rolling out API and worker containers. Production also enforces explicitly configured trusted proxy IPs, Redis clustering, and MinIO TLS.
 
 ## Multi-Tenancy and Scalable Architecture
 Normora implements a highly scalable **Multi-Tenant Architecture** using a many-to-many relationship between Users and Tenants. This is a foundational design choice that supports both business growth and long-term development velocity.

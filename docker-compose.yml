@@ -108,7 +108,7 @@ services:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-password}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-${POSTGRES_USER:-postgres}};Password=${DB_PASSWORD:-${POSTGRES_PASSWORD:-password}}
       - ConnectionStrings__Redis=redis:6379
       - Keycloak__Authority=http://keycloak:8080/realms/normora
       - Keycloak__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
@@ -147,7 +147,7 @@ services:
     command: ["--migrate"]
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-postgres};******
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-${POSTGRES_USER:-postgres}};Password=${DB_PASSWORD:-${POSTGRES_PASSWORD:-password}}
       - ConnectionStrings__Redis=redis:6379
       - Keycloak__Authority=http://keycloak:8080/realms/normora
       - Keycloak__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
@@ -170,7 +170,7 @@ services:
     environment:
       - DOTNET_ENVIRONMENT=Development
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-postgres};******
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=normoradb;Username=${DB_USER:-${POSTGRES_USER:-postgres}};Password=${DB_PASSWORD:-${POSTGRES_PASSWORD:-password}}
       - ConnectionStrings__Redis=redis:6379
       - Keycloak__Authority=http://keycloak:8080/realms/normora
       - Keycloak__MetadataAddress=http://keycloak:8080/realms/normora/.well-known/openid-configuration
