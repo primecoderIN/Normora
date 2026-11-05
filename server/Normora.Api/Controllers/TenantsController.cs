@@ -1,4 +1,5 @@
 using Normora.Shared.Constants;
+using Normora.Shared.Exceptions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -150,15 +151,16 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> SuspendTenant(Guid id, CancellationToken cancellationToken = default)
     {
+        // Enforce strict BOLA isolation: throw BolaException mapped to 404 to prevent resource ID enumeration
         if (id != tenantContext.TenantId)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
+            throw new BolaException();
         }
 
         var command = new SuspendTenantCommand(id);
         var success = await mediator.Send(command, cancellationToken);
         
-        if (!success) return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
+        if (!success) throw new BolaException();
 
         return Ok(ApiResponse<object>.Ok(new { }, ApiMessages.TenantSuspended));
     }

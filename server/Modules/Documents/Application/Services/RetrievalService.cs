@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Documents.Persistence;
+using Normora.Shared.Constants;
 using Normora.Shared.Interfaces;
 using Pgvector.EntityFrameworkCore;
 using Pgvector;
@@ -22,6 +23,7 @@ public sealed class RetrievalService(
         RunHybridRetrievalAsync(string question, int limit, Guid? personalTenantId, CancellationToken ct = default)
     {
         var queryVector = new Vector(await embeddingService.CreateEmbeddingAsync(question, ct));
+        var isAdmin = string.Equals(tenantContext.TenantRole, TenantRoles.Admin, StringComparison.OrdinalIgnoreCase);
         var effectiveDepartments = tenantContext.EffectiveDepartments;
         var activeTenantId = tenantContext.TenantId;
 
@@ -44,6 +46,7 @@ public sealed class RetrievalService(
                 (chunk, version) => new { chunk, version })
             .Join(
                 documentsContext.Documents.IgnoreQueryFilters().AsNoTracking().Where(d =>
+                    isAdmin ||
                     !d.DocumentDepartments.Any() ||
                     d.DocumentDepartments.Any(dd => effectiveDepartments.Contains(dd.DepartmentId))),
                 cv => cv.version.DocumentId,

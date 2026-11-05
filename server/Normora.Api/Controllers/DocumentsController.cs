@@ -27,10 +27,12 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     /// <summary>
     /// Retrieves all documents for the currently authenticated tenant.
     /// Uses MediatR to send a GetEmployerDocumentsQuery. Data isolation is handled at the DbContext level.
+    /// Restricted strictly to tenant administrators to prevent leaking department-scoped documents to regular employees.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of documents for the current tenant.</returns>
     [HttpGet]
+    [RequireTenant(TenantRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<List<DocumentDto>>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetDocuments(CancellationToken cancellationToken = default)

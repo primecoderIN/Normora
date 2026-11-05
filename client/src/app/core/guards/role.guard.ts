@@ -21,19 +21,17 @@ export const roleGuard: CanActivateFn = (route) => {
   const validateRole = (user: CurrentUser | null) => {
     if (!user) return router.createUrlTree([AppRoutes.Login]);
 
-    // Find the specific membership belonging to the currently active workspace
-    const activeTenantId = userService.activeTenantId();
+    // Find the specific membership belonging to the currently requested workspace.
+    // SEC: Strictly prioritize the route slug over activeTenantId so stale tenant signals
+    // cannot leak privileges across workspaces. Do NOT fallback to memberships[0].
     const slug = route.parent?.paramMap.get('slug') || route.paramMap.get('slug');
+    const activeTenantId = userService.activeTenantId();
 
     let membership: UserTenantMembership | undefined;
-    if (activeTenantId) {
-      membership = user.memberships.find(m => m.tenantId === activeTenantId);
-    }
-    if (!membership && slug) {
+    if (slug) {
       membership = user.memberships.find(m => m.tenantSlug === slug);
-    }
-    if (!membership && user.memberships.length > 0) {
-      membership = user.memberships[0];
+    } else if (activeTenantId) {
+      membership = user.memberships.find(m => m.tenantId === activeTenantId);
     }
 
     if (!membership) {

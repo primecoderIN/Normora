@@ -46,6 +46,7 @@ public sealed class SearchDocumentsQueryHandler(
 
         var queryVector = new Vector(await embeddingService.CreateEmbeddingAsync(request.Query, cancellationToken));
         var limit = Math.Clamp(request.Limit, 1, 20);
+        var isAdmin = string.Equals(tenantContext.TenantRole, TenantRoles.Admin, StringComparison.OrdinalIgnoreCase);
         var effectiveDepartments = tenantContext.EffectiveDepartments;
 
         return await context.DocumentChunks
@@ -60,6 +61,7 @@ public sealed class SearchDocumentsQueryHandler(
             )
             .Join(
                 context.Documents.AsNoTracking().Where(d =>
+                    isAdmin ||
                     !d.DocumentDepartments.Any() ||
                     d.DocumentDepartments.Any(dd => effectiveDepartments.Contains(dd.DepartmentId))),
                 cv => cv.version.DocumentId,

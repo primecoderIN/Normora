@@ -29,6 +29,7 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
             throw new UnauthorizedAccessException(ApiMessages.TenantContextMissing);
         }
 
+        var isAdmin = string.Equals(tenantContext.TenantRole, TenantRoles.Admin, StringComparison.OrdinalIgnoreCase);
         var allowedDepartments = tenantContext.EffectiveDepartments;
         var tenantId = tenantContext.TenantId.Value;
 
@@ -44,6 +45,7 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
             )
             .Join(
                 dbContext.Documents.AsNoTracking().Where(d =>
+                    isAdmin ||
                     !d.DocumentDepartments.Any() ||
                     d.DocumentDepartments.Any(dd => allowedDepartments.Contains(dd.DepartmentId))),
                 cv => cv.version.DocumentId,
