@@ -148,9 +148,9 @@ public sealed class EscalateInquiryTool(
 
             return new AgentToolResult(true, JsonSerializer.Serialize(responseObj, new JsonSerializerOptions { WriteIndented = true }));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return new AgentToolResult(false, string.Empty, $"Failed to escalate inquiry: {ex.Message}");
+            return new AgentToolResult(false, string.Empty, ApiMessages.InquiryEscalationFailed);
         }
     }
 }

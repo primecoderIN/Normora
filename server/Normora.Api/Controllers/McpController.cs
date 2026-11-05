@@ -2,7 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Normora.Api.Middleware;
 using Normora.Shared.Constants;
 using Normora.Shared.Contracts.Documents;
@@ -25,7 +27,8 @@ public sealed class McpController(
     IAgentToolRegistry toolRegistry,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
-    IMediator mediator) : ControllerBase
+    IMediator mediator,
+    IWebHostEnvironment env) : ControllerBase
 {
     private const string ProtocolVersion = "2024-11-05";
 
@@ -100,7 +103,8 @@ public sealed class McpController(
         }
         catch (Exception ex)
         {
-            return Ok(McpJsonRpcResponse.Failure(request.Id, -32603, ex.Message));
+            var errorMessage = env.IsProduction() ? ApiMessages.InternalServerError : ex.Message;
+            return Ok(McpJsonRpcResponse.Failure(request.Id, -32603, errorMessage));
         }
     }
 
@@ -136,13 +140,13 @@ public sealed class McpController(
     {
         if (!request.Params.HasValue)
         {
-            return McpJsonRpcResponse.Failure(request.Id, -32602, "Parameters object is required for tools/call.");
+            return McpJsonRpcResponse.Failure(request.Id, -32602, ApiMessages.McpParametersRequired);
         }
 
         var paramsObj = request.Params.Value;
         if (!paramsObj.TryGetProperty("name", out var nameProp) || string.IsNullOrWhiteSpace(nameProp.GetString()))
         {
-            return McpJsonRpcResponse.Failure(request.Id, -32602, "Tool 'name' is required.");
+            return McpJsonRpcResponse.Failure(request.Id, -32602, ApiMessages.McpToolNameRequired);
         }
 
         var toolName = nameProp.GetString()!;
@@ -221,19 +225,19 @@ public sealed class McpController(
     {
         if (!request.Params.HasValue || !request.Params.Value.TryGetProperty("uri", out var uriProp))
         {
-            return McpJsonRpcResponse.Failure(request.Id, -32602, "Parameter 'uri' is required for resources/read.");
+            return McpJsonRpcResponse.Failure(request.Id, -32602, ApiMessages.McpUriRequired);
         }
 
         var uri = uriProp.GetString();
         if (string.IsNullOrWhiteSpace(uri) || !uri.StartsWith("normora://documents/"))
         {
-            return McpJsonRpcResponse.Failure(request.Id, -32602, "Invalid URI format. Expected normora://documents/{id}");
+            return McpJsonRpcResponse.Failure(request.Id, -32602, ApiMessages.McpInvalidUriFormat);
         }
 
         var rawId = uri.Substring("normora://documents/".Length);
         if (!Guid.TryParse(rawId, out var documentId))
         {
-            return McpJsonRpcResponse.Failure(request.Id, -32602, "Invalid document UUID in URI.");
+            return McpJsonRpcResponse.Failure(request.Id, -32602, ApiMessages.McpInvalidDocumentUriId);
         }
 
         var isAdmin = string.Equals(tenantContext.TenantRole, TenantRoles.Admin, StringComparison.OrdinalIgnoreCase);

@@ -148,6 +148,15 @@ export const ApiMessages = {
   InvalidShareToken: 'Invalid share link: no token provided.',
   SharedConversationNotFound: 'This conversation link is either invalid, expired, or belongs to another workspace.',
   ChunkMissing: 'This citation does not have an associated chunk ID.',
-  ChunkPreviewFailed: 'Failed to load document preview. You might not have permission to view it or it may have been deleted.'
+  ChunkPreviewFailed: 'Failed to load document preview. You might not have permission to view it or it may have been deleted.',
+  SignInIncomplete: 'Sign-in could not be completed. Returning to sign in...',
+  InvitationReceived: {
+    summary: 'New Invitation',
+    detail: (tenantName: string) => `You have been invited to join ${tenantName}!`
+  },
+  InvalidInvitation: 'Invalid invitation link.',
+  InvitationAlreadyAccepted: 'This invitation has already been accepted or is no longer valid.',
+  InvitationExpired: 'This invitation link has expired.',
+  InvitationInvalidOrMissing: 'This invitation is invalid or does not exist.'
 } as const;
 

@@ -8,6 +8,7 @@ import { DsToastComponent, DsToastService } from '@design-system';
 import { NotificationRealtimeService } from './core/services/notification-realtime.service';
 import { TenantRoles } from './core/constants/tenant-roles';
 import { AppRoutes } from '@core/constants/app-routes';
+import { ApiMessages } from '@core/constants/api-messages';
 
 // This is the Root Component of our Angular application. 
 // Think of it as the main container that holds everything else.
@@ -121,7 +122,7 @@ export class App implements OnInit, OnDestroy {
           this.authInitializing.set(false);
         }
       } else if (window.location.pathname.startsWith(AppRoutes.AuthCallback) || window.location.pathname.startsWith('/signin-oidc')) {
-        this.authStatus.set('Sign-in could not be completed. Returning to sign in...');
+        this.authStatus.set(ApiMessages.SignInIncomplete);
         this.authInitializing.set(false);
         this.router.navigate([AppRoutes.Login]);
       } else {
@@ -129,7 +130,7 @@ export class App implements OnInit, OnDestroy {
       }
       },
       error: () => {
-        this.authStatus.set('Sign-in could not be completed. Returning to sign in...');
+        this.authStatus.set(ApiMessages.SignInIncomplete);
         this.authInitializing.set(false);
         this.router.navigate([AppRoutes.Login]);
       }
@@ -139,8 +140,8 @@ export class App implements OnInit, OnDestroy {
     this.notificationService.invitationReceived$.subscribe(event => {
       this.messageService.add({
         severity: 'info',
-        summary: 'New Invitation',
-        detail: `You have been invited to join ${event.tenantName}!`,
+        summary: ApiMessages.InvitationReceived.summary,
+        detail: ApiMessages.InvitationReceived.detail(event.tenantName),
         life: 10000 // 10 seconds
       });
     });

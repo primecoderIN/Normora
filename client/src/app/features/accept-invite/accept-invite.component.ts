@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
+import { ApiMessages } from '@core/constants/api-messages';
 import { AuthService } from '@core/services/auth.service';
 import { InvitationService, InvitationDto } from '@core/services/invitation.service';
 import { take } from 'rxjs';
@@ -72,7 +73,7 @@ import { take } from 'rxjs';
           @if (!isLoading() && success()) {
             <div class="text-center">
               <div class="bg-green-50 p-4 rounded-md text-green-700 text-sm mb-4">
-                Invitation accepted successfully!
+                {{ acceptSuccessMessage }}
               </div>
               <button
                 (click)="goToApp()"
@@ -94,6 +95,7 @@ export class AcceptInviteComponent implements OnInit {
   private invitationService = inject(InvitationService);
 
   token: string | null = null;
+  readonly acceptSuccessMessage = ApiMessages.InvitationAccepted.detail;
   
   // State Signals
   invitation = signal<InvitationDto | null>(null);
@@ -107,7 +109,7 @@ export class AcceptInviteComponent implements OnInit {
     this.token = this.route.snapshot.queryParamMap.get('token');
 
     if (!this.token) {
-      this.error.set('Invalid invitation link.');
+      this.error.set(ApiMessages.InvalidInvitation);
       this.isLoading.set(false);
       return;
     }
@@ -128,19 +130,19 @@ export class AcceptInviteComponent implements OnInit {
         if (res.success && res.data) {
           this.invitation.set(res.data);
           if (this.invitation()!.status !== 'Pending') {
-            this.error.set('This invitation has already been accepted or is no longer valid.');
+            this.error.set(ApiMessages.InvitationAlreadyAccepted);
             this.invitation.set(null);
           } else if (new Date(this.invitation()!.expiresAt) < new Date()) {
-            this.error.set('This invitation link has expired.');
+            this.error.set(ApiMessages.InvitationExpired);
             this.invitation.set(null);
           }
         } else {
-          this.error.set(res.message || 'Failed to load invitation.');
+          this.error.set(res.message || ApiMessages.InvitationInvalidOrMissing);
         }
       },
       error: (err: { error?: { message?: string } }) => {
         this.isLoading.set(false);
-        this.error.set(err.error?.message || 'Failed to load invitation.');
+        this.error.set(err.error?.message || ApiMessages.InvitationInvalidOrMissing);
       },
     });
   }
@@ -166,12 +168,12 @@ export class AcceptInviteComponent implements OnInit {
           this.invitation.set(null);
           localStorage.removeItem('pending_invitation');
         } else {
-          this.error.set(res.message || 'Failed to accept invitation.');
+          this.error.set(res.message || ApiMessages.InvitationAcceptFailed.detail);
         }
       },
       error: (err: { error?: { message?: string } }) => {
         this.isAccepting.set(false);
-        this.error.set(err.error?.message || 'Failed to accept invitation.');
+        this.error.set(err.error?.message || ApiMessages.InvitationAcceptFailed.detail);
       },
     });
   }
@@ -188,12 +190,12 @@ export class AcceptInviteComponent implements OnInit {
         if (res.success) {
           this.router.navigate(['/']);
         } else {
-          this.error.set(res.message || 'Failed to reject invitation.');
+          this.error.set(res.message || ApiMessages.InvitationRejectFailed.detail);
         }
       },
       error: (err: { error?: { message?: string } }) => {
         this.isAccepting.set(false);
-        this.error.set(err.error?.message || 'Failed to reject invitation.');
+        this.error.set(err.error?.message || ApiMessages.InvitationRejectFailed.detail);
       },
     });
   }

@@ -35,6 +35,15 @@ public static class ApiMessages
     public const string McpMethodNotFound = "The requested MCP method was not found.";
     public const string McpToolNotFound = "The requested MCP tool was not found.";
     public const string McpResourceNotFound = "The requested MCP resource was not found.";
+    public const string McpParametersRequired = "Parameters object is required for tools/call.";
+    public const string McpToolNameRequired = "Tool 'name' is required.";
+    public const string McpUriRequired = "Parameter 'uri' is required for resources/read.";
+    public const string McpInvalidUriFormat = "Invalid URI format. Expected normora://documents/{id}";
+    public const string McpInvalidDocumentUriId = "Invalid document UUID in URI.";
+    public const string ToolQueryRequired = "The 'query' parameter is required.";
+    public const string ToolSummaryAndUrgencyRequired = "The 'summary' and 'urgency' parameters are required.";
+    public const string DocumentSearchFailed = "Document search failed. Please try again later.";
+    public const string InquiryEscalationFailed = "Failed to escalate inquiry. Please try again later.";
     
     // Actions
     public const string CannotRemoveLastAdmin = "Cannot remove the last administrator from the workspace.";

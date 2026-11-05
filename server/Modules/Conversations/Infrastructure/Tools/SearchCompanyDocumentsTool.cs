@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Normora.Shared.Constants;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Infrastructure.Tools;
@@ -45,7 +46,7 @@ public sealed class SearchCompanyDocumentsTool(IRetrievalService retrievalServic
             var query = root.TryGetProperty("query", out var q) ? q.GetString() : null;
             if (string.IsNullOrWhiteSpace(query))
             {
-                return new AgentToolResult(false, string.Empty, "The 'query' parameter is required.");
+                return new AgentToolResult(false, string.Empty, ApiMessages.ToolQueryRequired);
             }
 
             var limit = root.TryGetProperty("limit", out var l) && l.TryGetInt32(out var parsedLimit)
@@ -77,9 +78,9 @@ public sealed class SearchCompanyDocumentsTool(IRetrievalService retrievalServic
             var outputJson = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
             return new AgentToolResult(true, outputJson);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return new AgentToolResult(false, string.Empty, $"Document search failed: {ex.Message}");
+            return new AgentToolResult(false, string.Empty, ApiMessages.DocumentSearchFailed);
         }
     }
 }
