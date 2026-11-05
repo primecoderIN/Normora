@@ -47,7 +47,6 @@ public class UsersController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetUserAssignments(Guid userId, CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(new GetUserAssignmentsQuery(userId), cancellationToken);
-        if (result == null) return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
         return Ok(ApiResponse<UserAssignmentsDto>.Ok(result));
     }
 

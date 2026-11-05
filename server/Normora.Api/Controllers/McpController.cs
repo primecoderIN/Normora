@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
 using Normora.Shared.Constants;
@@ -17,6 +18,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
 [Produces("application/json")]
 public sealed class McpController(

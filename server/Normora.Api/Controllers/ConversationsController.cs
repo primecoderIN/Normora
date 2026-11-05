@@ -1,5 +1,6 @@
 using Normora.Shared.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Normora.Api.Middleware;
@@ -15,6 +16,7 @@ namespace Normora.Api.Controllers;
 /// <summary>Exposes tenant-authorized conversation, AI, sharing, export, and feedback endpoints.</summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
 [EnableRateLimiting("ai")]
 [Produces("application/json")]
@@ -57,10 +59,6 @@ public class ConversationsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetConversation(Guid id)
     {
         var result = await mediator.Send(new GetConversationQuery(id));
-        if (result is null)
-        {
-            return NotFound(ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.NotFound));
-        }
         return Ok(ApiResponse<ConversationDetailDto>.Ok(result));
     }
 

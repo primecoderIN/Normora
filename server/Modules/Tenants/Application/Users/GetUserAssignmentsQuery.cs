@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Users;
@@ -9,7 +10,7 @@ namespace Normora.Modules.Tenants.Application.Users;
 /// Query to retrieve the department and user group assignments for a specific user within the current tenant.
 /// </summary>
 /// <param name="UserId">The ID of the user whose assignments are to be retrieved.</param>
-public record GetUserAssignmentsQuery(Guid UserId) : IRequest<UserAssignmentsDto?>;
+public record GetUserAssignmentsQuery(Guid UserId) : IRequest<UserAssignmentsDto>;
 
 /// <summary>
 /// Data transfer object representing the department and user group assignments for a user.
@@ -20,9 +21,9 @@ public record UserAssignmentsDto(Guid UserId, List<Guid> DepartmentIds, List<Gui
 /// Handles <see cref="GetUserAssignmentsQuery"/> by loading the membership record with its department and group associations.
 /// </summary>
 public class GetUserAssignmentsQueryHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
-    : IRequestHandler<GetUserAssignmentsQuery, UserAssignmentsDto?>
+    : IRequestHandler<GetUserAssignmentsQuery, UserAssignmentsDto>
 {
-    public async Task<UserAssignmentsDto?> Handle(GetUserAssignmentsQuery request, CancellationToken cancellationToken)
+    public async Task<UserAssignmentsDto> Handle(GetUserAssignmentsQuery request, CancellationToken cancellationToken)
     {
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
@@ -34,7 +35,7 @@ public class GetUserAssignmentsQueryHandler(TenantsDbContext dbContext, ITenantC
 
         if (membership == null)
         {
-            return null;
+            throw new BolaException();
         }
 
         return new UserAssignmentsDto(

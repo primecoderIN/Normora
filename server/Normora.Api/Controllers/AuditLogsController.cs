@@ -24,7 +24,6 @@ public class AuditLogsController(IMediator mediator) : ControllerBase
     /// Retrieves a paginated and filterable list of audit log records for the active tenant.
     /// </summary>
     [HttpGet]
-    [RequireTenant]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<PagedResult<AuditLogDto>>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]

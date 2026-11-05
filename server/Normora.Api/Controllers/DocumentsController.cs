@@ -20,6 +20,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
 [Produces("application/json")]
 public class DocumentsController(IMediator mediator, ITenantContext tenantContext, ICurrentUser currentUser) : ControllerBase
@@ -102,9 +103,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
         [FromForm] Guid? documentId = null,
         CancellationToken cancellationToken = default)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(ApiMessages.TenantContextMissing);
-
-        var command = new UploadDocumentCommand(file, tenantContext.TenantId.Value, departmentIds, documentId);
+        var command = new UploadDocumentCommand(file, tenantContext.TenantId!.Value, departmentIds, documentId);
         var document = await mediator.Send(command, cancellationToken);
 
         return Ok(ApiResponse<DocumentDto>.Ok(document, ApiMessages.DocumentUploaded));
@@ -123,13 +122,11 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> DeleteDocument(Guid id, CancellationToken cancellationToken = default)
     {
-        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(ApiMessages.TenantContextMissing);
-
         var keycloakId = currentUser.ExternalUserId;
         var userId = await mediator.Send(new GetUserIdQuery(keycloakId), cancellationToken);
         var deletedByUserId = userId ?? Guid.Empty;
 
-        var command = new DeleteDocumentCommand(id, tenantContext.TenantId.Value, deletedByUserId);
+        var command = new DeleteDocumentCommand(id, tenantContext.TenantId!.Value, deletedByUserId);
         await mediator.Send(command, cancellationToken);
 
         return Ok(ApiResponse.Ok(ApiMessages.DocumentDeleted));

@@ -76,6 +76,12 @@ public static class DatabaseServiceExtensions
 
             services.AddSingleton<ICacheService, Services.Caching.DistributedCacheService>();
         }
+        else
+        {
+            // In migration mode, provide in-memory cache fallback for any services requiring ICacheService
+            services.AddDistributedMemoryCache();
+            services.AddSingleton<ICacheService, Services.Caching.DistributedCacheService>();
+        }
 
         // Delegate to Module Composition Roots
         services.AddTenantsModule(configuration);

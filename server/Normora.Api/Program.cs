@@ -12,6 +12,17 @@ using Normora.Shared.Constants;
 var builder = WebApplication.CreateBuilder(args);
 var isMigrationRun = args.Contains("--migrate", StringComparer.OrdinalIgnoreCase);
 
+// Prevent full DI container validation failure when running as a one-off schema migrator
+// where optional runtime services (MinIO, Redis, Hangfire) are deliberately omitted.
+if (isMigrationRun)
+{
+    builder.Host.UseDefaultServiceProvider(options =>
+    {
+        options.ValidateOnBuild = false;
+        options.ValidateScopes = false;
+    });
+}
+
 // Prevent Kestrel from broadcasting "Server: Kestrel" in HTTP response headers
 builder.WebHost.ConfigureKestrel(options =>
 {

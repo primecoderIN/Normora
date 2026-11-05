@@ -1,5 +1,6 @@
 using Normora.Shared.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
 using Normora.Modules.Tenants.Application.Departments;
@@ -13,6 +14,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [RequireTenant(TenantRoles.Admin)] // Only admins can manage departments
 [Produces("application/json")]
 public class DepartmentsController(IMediator mediator) : ControllerBase

@@ -1,5 +1,6 @@
 using Normora.Shared.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
 using Normora.Modules.Tenants.Application.UserGroups;
@@ -13,6 +14,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/user-groups")]
+[Authorize]
 [RequireTenant(TenantRoles.Admin)] // Only admins can manage user groups
 [Produces("application/json")]
 public class UserGroupsController(IMediator mediator) : ControllerBase
@@ -44,10 +46,6 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetUserGroupById(Guid id, CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(new GetUserGroupByIdQuery(id), cancellationToken);
-        if (result == null)
-        {
-            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
-        }
         return Ok(ApiResponse<UserGroupDetailDto>.Ok(result));
     }
 

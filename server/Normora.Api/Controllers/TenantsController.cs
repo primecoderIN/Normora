@@ -33,7 +33,7 @@ public class TenantsController(IMediator mediator, ITenantContext tenantContext,
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The unique identifier of the newly created tenant.</returns>
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Guid))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Normora.Modules.Tenants.Application.CreateTenant.TenantDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request, CancellationToken cancellationToken = default)
     {

@@ -8,7 +8,7 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Conversations.Application.Queries;
 
 /// <summary>Loads one tenant-scoped conversation with its ordered messages and citations.</summary>
-public record GetConversationQuery(Guid Id) : IRequest<ConversationDetailDto?>;
+public record GetConversationQuery(Guid Id) : IRequest<ConversationDetailDto>;
 
 public record ConversationDetailDto(
     Guid Id,
@@ -38,9 +38,9 @@ public record MessageCitationDto(
 public class GetConversationQueryHandler(
     ConversationsDbContext context,
     ICurrentUser currentUser,
-    IMediator mediator) : IRequestHandler<GetConversationQuery, ConversationDetailDto?>
+    IMediator mediator) : IRequestHandler<GetConversationQuery, ConversationDetailDto>
 {
-    public async Task<ConversationDetailDto?> Handle(GetConversationQuery request, CancellationToken cancellationToken)
+    public async Task<ConversationDetailDto> Handle(GetConversationQuery request, CancellationToken cancellationToken)
     {
         var conversation = await context.Conversations
             .AsNoTracking()

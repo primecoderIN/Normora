@@ -16,7 +16,7 @@ namespace Normora.Api.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 [Produces("application/json")]
-public class DashboardController(IMediator mediator, ITenantContext tenantContext) : ControllerBase
+public class DashboardController(IMediator mediator) : ControllerBase
 {
     /// <summary>
     /// Retrieves tenant dashboard summary including document counts, pending invites, and active members.
@@ -26,10 +26,6 @@ public class DashboardController(IMediator mediator, ITenantContext tenantContex
     [RequireTenant(TenantRoles.Admin)]
     public async Task<IActionResult> GetDashboardSummary(CancellationToken cancellationToken)
     {
-        // Enforce resolved tenant context
-        if (!tenantContext.TenantId.HasValue) 
-            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(Normora.Shared.Constants.ApiMessages.Forbidden));
-
         var response = await mediator.Send(new GetDashboardSummaryQuery(), cancellationToken);
         return Ok(ApiResponse<DashboardSummaryDto>.Ok(response));
     }

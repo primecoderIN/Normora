@@ -1,5 +1,6 @@
 using Normora.Shared.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
 using Normora.Modules.Conversations.Application.Commands;
@@ -15,6 +16,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/saved-answers")]
+[Authorize]
 [RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
 [Produces("application/json")]
 public class SavedAnswersController(IMediator mediator) : ControllerBase

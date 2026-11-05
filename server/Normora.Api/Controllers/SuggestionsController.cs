@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Normora.Api.Middleware;
@@ -14,6 +15,7 @@ namespace Normora.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
 [Produces("application/json")]
 public class SuggestionsController(IMediator mediator) : ControllerBase
