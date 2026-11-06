@@ -26,6 +26,11 @@ This document tracks all features, infrastructure, and tasks that have been succ
 ## ✅ Completed Refactoring & Code Organization
 - [x] Flattened backend directory structure (removed redundant `src` folder from `server`)
 - [x] Updated Solution file (`Normora.slnx`) and Dockerfiles to reflect the flattened structure
+- [x] Decentralized all controllers from `Normora.Api/Controllers` into module-owned `API/` directories (`Modules/Tenants/API/`, `Modules/Documents/API/`, `Modules/Conversations/API/`)
+- [x] Extracted all entity mappings into dedicated `IEntityTypeConfiguration<T>` classes under `Persistence/Configurations/` across `Tenants`, `Documents`, and `Conversations` modules, keeping `DbContext`s lean
+- [x] Reorganized all CQRS commands and queries into dedicated operation folders (`Commands/{OperationName}/` and `Queries/{OperationName}/`) with separated request, handler, and validator files
+- [x] Eliminated legacy placeholder ghost module artifacts (`Modules/Auth`, `Modules/Users`), maintaining identity at the host BFF and consolidating users within `Modules/Tenants`
+- [x] Standardized coding and architectural rules in `AGENTS.md` and module onboarding documentation
 
 ## ✅ Completed Documentation
 - [x] Created `docs/overview.md` for high-level project summary

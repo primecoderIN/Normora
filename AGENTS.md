@@ -41,3 +41,52 @@ Ensure all code written is robust and ready for production at scale.
 - **Testable**: Write small, decoupled components and services following the Single Responsibility Principle. All dependencies must be injected via constructors to allow easy mocking in unit tests. Avoid hidden global state.
 - **Highly Scalable**: API services must be strictly stateless to support horizontal scaling. Implement pagination for all list-based endpoints. Keep JSON payloads minimal. In the database layer, ensure queries are optimized and properly indexed (no N+1 query problems in EF Core).
 - **Maintainable Code**: Use strict TypeScript and C# typing (avoid `any` or `dynamic`). Use clear, descriptive variable names without cryptic abbreviations. Document complex business logic with comments, but let clean code speak for itself otherwise. DRY (Don't Repeat Yourself) is critical, but avoid premature abstraction.
+
+## 7. Modular Monolith Architecture & CQRS Patterns
+Normora strictly enforces a modular monolith architecture. All backend code must adhere to these structural boundaries:
+
+### Module Boundaries & Active Contexts
+- The active business modules in `server/Modules/` are:
+  - **`Tenants`**: Multi-tenancy, memberships, user profiles, user groups, invitations, departments, white-label branding, audit logs, and subscription billing.
+  - **`Documents`**: Ingestion, chunking, embeddings, text extraction, search, metrics, and MCP endpoints.
+  - **`Conversations`**: Conversational RAG, streaming, citations, tool execution, suggestions, and saved answers.
+- **No Ghost Modules**: Never create or re-introduce standalone `Auth` or `Users` modules. Authentication is handled globally by the host BFF (`Normora.Api`), while user models, memberships, and user queries live inside `Modules/Tenants`.
+- **Module Composition Roots**: Every module contains a `{ModuleName}ModuleExtensions.cs` registering its internal services, handlers, and persistence into the DI container. The host calls `services.Add{ModuleName}Module(...)`.
+
+### Decentralized Controllers
+- Controllers MUST reside directly inside their owning module's `API/` directory:
+  - `server/Modules/Tenants/API/{Feature}Controller.cs`
+  - `server/Modules/Documents/API/{Feature}Controller.cs`
+  - `server/Modules/Conversations/API/{Feature}Controller.cs`
+- `Normora.Api` contains NO business controllers. It serves strictly as the HTTP/BFF host, managing middleware, SignalR hubs, authentication pipelines, and Swagger/Scalar documentation.
+
+### CQRS Folder-Per-Operation Structure
+Inside each module's `Application/{Feature}/` directory, commands and queries MUST be organized into dedicated operation folders matching the operation name:
+
+```
+Application/{Feature}/
+├── Commands/
+│   └── {OperationName}/
+│       ├── {OperationName}Command.cs
+│       ├── {OperationName}CommandHandler.cs
+│       └── {OperationName}CommandValidator.cs  (when FluentValidation is required)
+├── Queries/
+│   └── {OperationName}/
+│       ├── {OperationName}Query.cs
+│       └── {OperationName}QueryHandler.cs
+└── DTOs/
+    └── {Feature}Dtos.cs
+```
+
+- **File Separation**: The Command/Query record, its Handler class, and its Validator class must each reside in separate files within the operation folder. Do NOT inline handlers or validators in the command/query file.
+- **DTO Placement**: Data transfer objects specific to a feature must reside in `Application/{Feature}/DTOs/`.
+
+### Persistence & Entity Configurations
+- **Lean DbContexts**: DbContext classes must remain lean and avoid large inlined Fluent API configurations in `OnModelCreating`.
+- **Dedicated Configurations**: Each entity mapping MUST be defined in its own `IEntityTypeConfiguration<T>` class inside `server/Modules/{ModuleName}/Persistence/Configurations/{Entity}Configuration.cs`.
+- **Auto-Discovery**: The module DbContext applies all configurations automatically via:
+  ```csharp
+  modelBuilder.ApplyConfigurationsFromAssembly(typeof({ModuleName}DbContext).Assembly);
+  ```
+- **100% DbContext Encapsulation**: Module DbContexts are strictly private to their owning module. API controllers, middleware, hubs, and other modules must NEVER inject another module's DbContext. Cross-module reads must use MediatR contracts in `Normora.Shared.Contracts.*`.
+

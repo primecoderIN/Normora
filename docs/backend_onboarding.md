@@ -13,7 +13,7 @@ Normora is deployed as an API host, a separate Hangfire worker, and a one-off mi
 2. **No Direct Joins**: You cannot write a LINQ query that joins a `Document` with a `Tenant`. You must query by IDs across boundaries.
 3. **Cross-Module Communication**: If the `Documents` module needs to know if a user has access, it doesn't query the `TenantsDbContext`. It sends a MediatR query to the `Tenants` module's API contract in `Normora.Shared.Contracts.Tenants`.
 4. **100% DbContext Encapsulation**: DbContexts are strictly private to their owning module. API controllers, middleware, and SignalR hubs must **never** inject a module `DbContext`.
-5. **Feature Slices Live in Modules**: All commands, queries, domain entities, background ingestion jobs, and services live in `server/Modules/<ModuleName>/Application/`. `Normora.Api` contains only protocol adapters (controllers, SignalR hubs, middleware, program startup).
+5. **Feature Slices and Controllers Live in Modules**: All commands, queries, domain entities, background ingestion jobs, entity configurations, and HTTP controllers live inside their owning module (`server/Modules/<ModuleName>/`). `Normora.Api` contains only application hosting and cross-cutting adapters (SignalR hubs, middleware, OIDC/BFF configuration, Program.cs).
 6. **Decoupled Boundary Interfaces**: When infrastructure or middleware requires module operations, expose an abstraction in `Normora.Shared.Interfaces` (e.g. `ITenantResolutionService`, `IDocumentNotificationService`, `IEmailSender`, `IPaymentService`).
 
 ### Source Documentation Convention
@@ -72,6 +72,31 @@ public class CreateDepartmentCommandHandler(TenantsDbContext db, ITenantContext 
 ```
 
 3. **Pipeline Behaviors**: Cross-cutting concerns are handled via open pipeline behaviors (e.g., `AuditBehavior<TRequest, TResponse>`). By implementing marker interfaces such as `IAuditableRequest`, commands automatically trigger structured audit event logging on completion without polluting handler business logic.
+
+### CQRS Operation Folder Structure
+To maintain organization across hundreds of operations, commands and queries are partitioned into dedicated folders per operation:
+
+```
+Application/{Feature}/
+├── Commands/
+│   └── {OperationName}/
+│       ├── {OperationName}Command.cs
+│       ├── {OperationName}CommandHandler.cs
+│       └── {OperationName}CommandValidator.cs  (optional)
+├── Queries/
+│   └── {OperationName}/
+│       ├── {OperationName}Query.cs
+│       └── {OperationName}QueryHandler.cs
+└── DTOs/
+    └── {Feature}Dtos.cs
+```
+
+Each operation has its request, handler, and validator in separate files within that folder, preventing monolith handler files.
+
+### Persistence & Lean DbContexts
+- Module `DbContext` classes remain lean.
+- All entity configurations are defined in standalone classes implementing `IEntityTypeConfiguration<T>` in `server/Modules/{ModuleName}/Persistence/Configurations/{Entity}Configuration.cs`.
+- The DbContext loads them automatically via `modelBuilder.ApplyConfigurationsFromAssembly(typeof({ModuleName}DbContext).Assembly);`.
 
 ---
 

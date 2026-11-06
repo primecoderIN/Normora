@@ -17,14 +17,24 @@ The backend is structured into distinct modules to enforce separation of concern
 
 Crucially, there is no shared "Infrastructure" layer, and **no cross-module DbContext leakage is permitted**. Each module encapsulates its own persistence logic, DbContext, domain entities, jobs, and external service integrations:
 
-- **Normora.Api**: The HTTP/BFF host. It contains controllers, middleware (`TenantResolutionMiddleware`), SignalR hubs (`DocumentHub`), and dependency injection composition. Its one-off `--migrate` mode invokes module-owned migration contracts instead of resolving module contexts.
+- **Normora.Api**: The HTTP/BFF host. It serves strictly as the application host, managing middleware (`TenantResolutionMiddleware`), SignalR hubs (`DocumentHub`), OIDC/BFF session management, and root dependency injection composition. All business controllers are decentralized into their respective modules (`server/Modules/{Module}/API/`). Its one-off `--migrate` mode invokes module-owned migration contracts instead of resolving module contexts.
 - **Normora.Worker**: A separate generic host running Hangfire workers and scheduling recurring jobs. API replicas do not run background workers.
 - **Normora.Shared**: Shared contracts (`Normora.Shared.Contracts.*`), cross-cutting abstractions, MediatR pipeline behaviors (`AuditBehavior`), constants (`ApiMessages`, `TenantRoles`), and provider-neutral interfaces (`ITenantResolutionService`, `IDocumentNotificationService`, `IDatabaseMigrator`, `IAgentTool`, `IAgentToolRegistry`, `IEmailSender`, `IPaymentService`).
 - **Modules** (`server/Modules/`):
   Each module resides in a clean directory named after its bounded context with a matching `.csproj` file. Inside each `.csproj`, `<AssemblyName>` and `<RootNamespace>` are explicitly specified as `Normora.Modules.<ModuleName>` to maintain binary stability for migration snapshots and job serializers while keeping directory structures concise:
-  - `server/Modules/Tenants/Tenants.csproj` (`Normora.Modules.Tenants`): Multi-tenancy lifecycle, membership validation, departments, user groups, white-label branding, invitations, subscription plans, and isolated tenant persistence (`TenantsDbContext`).
-  - `server/Modules/Documents/Documents.csproj` (`Normora.Modules.Documents`): Document upload/management vertical slices (`UploadDocumentCommand`, `DeleteDocumentCommand`, `GetEmployerDocumentsQuery`, `SearchDocumentsQuery`, `GetDocumentChunkQuery`), background ingestion (`DocumentProcessingJob`, `PurgeDeletedDocumentsJob`), text extraction (Apache Tika), chunk embedding generation (`GeminiEmbeddingService`), hybrid retrieval (`RetrievalService`), and isolated data storage (`DocumentsDbContext`).
-  - `server/Modules/Conversations/Conversations.csproj` (`Normora.Modules.Conversations`): Multi-turn conversational RAG pipeline (`AskConversationCommand`, `AskConversationStreamCommand`), generative text models (`GeminiTextGenerationService`), autonomous agent tool calling (`AgentToolRegistry`, `CalculatePolicyLimitTool`, `EscalateInquiryTool`, `SearchCompanyDocumentsTool`), auto-titling, conversation metrics, saved answer exports (Markdown, QuestPDF, Docx), and chat history persistence (`ConversationsDbContext`).
+  - `server/Modules/Tenants/Tenants.csproj` (`Normora.Modules.Tenants`): Multi-tenancy lifecycle, membership validation, departments, user profiles and groups, white-label branding, invitations, subscription plans, and isolated tenant persistence (`TenantsDbContext`). Exposes HTTP controllers in `API/`, entity mappings in `Persistence/Configurations/`, and CQRS operations in `Application/`.
+  - `server/Modules/Documents/Documents.csproj` (`Normora.Modules.Documents`): Document upload/management vertical slices (`UploadDocumentCommand`, `DeleteDocumentCommand`, `GetEmployerDocumentsQuery`, `SearchDocumentsQuery`, `GetDocumentChunkQuery`), background ingestion (`DocumentProcessingJob`, `PurgeDeletedDocumentsJob`), text extraction (Apache Tika), chunk embedding generation (`GeminiEmbeddingService`), hybrid retrieval (`RetrievalService`), and isolated data storage (`DocumentsDbContext`). Exposes HTTP controllers in `API/`, entity mappings in `Persistence/Configurations/`, and CQRS operations in `Application/`.
+  - `server/Modules/Conversations/Conversations.csproj` (`Normora.Modules.Conversations`): Multi-turn conversational RAG pipeline (`AskConversationCommand`, `AskConversationStreamCommand`), generative text models (`GeminiTextGenerationService`), autonomous agent tool calling (`AgentToolRegistry`, `CalculatePolicyLimitTool`, `EscalateInquiryTool`, `SearchCompanyDocumentsTool`), auto-titling, conversation metrics, saved answer exports (Markdown, QuestPDF, Docx), and chat history persistence (`ConversationsDbContext`). Exposes HTTP controllers in `API/`, entity mappings in `Persistence/Configurations/`, and CQRS operations in `Application/`.
+
+### Module Architecture & CQRS Standards
+Inside each module:
+1. **Decentralized Controllers**: HTTP endpoints live in `server/Modules/{ModuleName}/API/` and inherit from standard ASP.NET Core `ControllerBase`.
+2. **CQRS Operation Folders**: Every command and query in `Application/{Feature}/` resides in a dedicated operation folder:
+   - `Commands/{OperationName}/{OperationName}Command.cs`, `{OperationName}CommandHandler.cs`, `{OperationName}CommandValidator.cs`
+   - `Queries/{OperationName}/{OperationName}Query.cs`, `{OperationName}QueryHandler.cs`
+   - Feature DTOs reside in `Application/{Feature}/DTOs/`
+3. **Lean DbContext & Entity Configurations**: Entity mappings are encapsulated in dedicated `IEntityTypeConfiguration<T>` classes under `server/Modules/{ModuleName}/Persistence/Configurations/` and applied automatically via `modelBuilder.ApplyConfigurationsFromAssembly(...)`.
+4. **Composition Root**: Each module exposes an extension method `{ModuleName}ModuleExtensions.cs` to register its services and DbContext with the DI container.
 
 ### Boundary Enforcement Rules
 1. **100% DbContext Encapsulation**: Module DbContexts (`TenantsDbContext`, `DocumentsDbContext`, `ConversationsDbContext`) are used only inside their owning modules. The host can request migrations via `IDatabaseMigrator`, but does not resolve a module context directly.
@@ -564,9 +574,10 @@ Following a comprehensive senior architectural audit, the codebase implements st
   - Direct cross-module DbContext injection is forbidden across the entire codebase. API controllers, middleware, and hubs never inject `TenantsDbContext`, `DocumentsDbContext`, or `ConversationsDbContext`.
   - The legacy God Aggregator `GetDashboardSummary` (which previously injected 3 DbContexts simultaneously) was refactored into a pure MediatR orchestrator dispatching lightweight, decoupled contracts: `GetTenantDashboardMetricsQuery`, `GetDocumentDashboardMetricsQuery`, and `GetConversationDashboardMetricsQuery`.
   - `McpController` queries the Documents module through `GetMcpResourceDocumentsQuery` and `GetMcpDocumentContentQuery`, and validates tenants using `ITenantResolutionService`.
-- **Feature Slices Re-Homed into Modules**:
-  - All command and query handlers, background ingestion workers, and embedding services were migrated from the API project directly into their respective modules (`server/Modules/Documents/Application/` and `server/Modules/Conversations/Application/`).
-  - `Normora.Api` contains no business logic or feature handlers; it serves exclusively as a protocol host for controllers, hubs, middleware, and startup configuration.
+- **Feature Slices & Controllers Re-Homed into Modules**:
+  - All command and query handlers, background ingestion workers, and embedding services reside directly in their respective modules (`server/Modules/<ModuleName>/Application/`).
+  - Controllers are decentralized into `server/Modules/<ModuleName>/API/`, eliminating monolithic API host controller structures.
+  - `Normora.Api` contains no business logic, controllers, or feature handlers; it serves exclusively as the HTTP/BFF protocol host for hubs, middleware, and startup configuration.
 - **Decoupled External Identity (`ExternalUserId`)**:
   - The domain entity `User` maps external OIDC identity provider subject IDs to the database column `ExternalUserId` rather than vendor-specific names like `KeycloakUserId`. LINQ queries and junction tables operate against `ExternalUserId`, guaranteeing that swapping or federating identity providers requires zero schema or query alterations.
 - **Provider-Neutral Storage & AI Naming**:
