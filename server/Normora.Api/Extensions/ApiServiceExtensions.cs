@@ -15,6 +15,9 @@ public static class ApiServiceExtensions
     public static IServiceCollection AddApiServices(this IServiceCollection services, Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
         services.AddControllers()
+            .AddApplicationPart(typeof(Normora.Modules.Conversations.IConversationsModuleMarker).Assembly)
+            .AddApplicationPart(typeof(Normora.Modules.Documents.IDocumentsModuleMarker).Assembly)
+            .AddApplicationPart(typeof(Normora.Modules.Tenants.ITenantsModuleMarker).Assembly)
             .AddJsonOptions(options => 
             {
                 options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;

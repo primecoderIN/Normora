@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Normora.Modules.Conversations.Application.Commands;
+using Normora.Modules.Conversations.Application.Conversations.Commands;
 
 namespace Normora.Modules.Conversations.Application.Services;
 

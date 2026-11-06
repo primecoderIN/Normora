@@ -1,3 +1,5 @@
+using Normora.Modules.Conversations.Application.SavedAnswers.Queries;
+
 namespace Normora.Modules.Conversations.Application.Exports;
 
 /// <summary>
@@ -16,7 +18,7 @@ public interface IAnswerExporter
     /// The <see cref="ExportFormat"/> this exporter handles.
     /// Used by <c>ExportSavedAnswerQueryHandler</c> to resolve the correct implementation.
     /// </summary>
-    Queries.ExportFormat Format { get; }
+    ExportFormat Format { get; }
 
     /// <summary>The MIME type produced by this exporter, e.g. "text/markdown".</summary>
     string ContentType { get; }

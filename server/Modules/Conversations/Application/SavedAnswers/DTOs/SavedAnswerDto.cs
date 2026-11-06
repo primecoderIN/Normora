@@ -1,0 +1,20 @@
+namespace Normora.Modules.Conversations.Application.SavedAnswers.DTOs;
+
+/// <summary>
+/// A bookmark DTO returned to the client for the Saved Answers page.
+/// Contains the message content and its citations so the page is self-contained.
+/// </summary>
+public record SavedAnswerDto(
+    Guid Id,
+    Guid MessageId,
+    Guid ConversationId,
+    string Content,
+    IReadOnlyList<CitationDto> Citations,
+    DateTimeOffset SavedAt);
+
+public record CitationDto(
+    Guid DocumentId,
+    string FileName,
+    double Score,
+    // Document Versioning (Phase 19): True when the cited chunk's DocumentVersion.IsActive = false.
+    bool IsOutdated);

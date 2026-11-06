@@ -1,0 +1,28 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Normora.Modules.Tenants.Domain;
+using Normora.Modules.Tenants.Persistence;
+
+namespace Normora.Modules.Tenants.Application.Tenants.Commands;
+
+/// <summary>
+/// Handles <see cref="SuspendTenantCommand"/> by setting the tenant's status to Suspended.
+/// </summary>
+public class SuspendTenantCommandHandler(TenantsDbContext dbContext) : IRequestHandler<SuspendTenantCommand, bool>
+{
+    public async Task<bool> Handle(SuspendTenantCommand request, CancellationToken cancellationToken)
+    {
+        // Retrieve the workspace that is being suspended
+        var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == request.TenantId, cancellationToken);
+        
+        if (tenant == null)
+            return false;
+
+        // Flag the workspace as suspended to lock out its users without deleting the data
+        tenant.Status = TenantStatus.Suspended;
+        tenant.UpdatedAt = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+}

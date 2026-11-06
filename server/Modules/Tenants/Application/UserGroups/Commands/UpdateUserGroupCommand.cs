@@ -1,0 +1,89 @@
+using FluentValidation;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Normora.Modules.Tenants.Domain;
+using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Interfaces;
+
+namespace Normora.Modules.Tenants.Application.UserGroups.Commands;
+
+/// <summary>
+/// Command to update the details and department assignments of an existing user group.
+/// </summary>
+/// <param name="Id">The unique identifier of the user group.</param>
+/// <param name="Name">The new name for the user group.</param>
+public record UpdateUserGroupCommand(Guid Id, string Name, string? Description, List<Guid> DepartmentIds) : IRequest<bool>, IAuditableRequest
+{
+    public string Action => "UserGroup.Updated";
+    public string TargetType => "UserGroup";
+    public string? GetTargetId(object? response) => Id.ToString();
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name });
+}
+
+
+/// <summary>
+/// Validates the <see cref="UpdateUserGroupCommand"/>.
+/// </summary>
+public class UpdateUserGroupCommandValidator : AbstractValidator<UpdateUserGroupCommand>
+{
+    public UpdateUserGroupCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(500);
+        RuleFor(x => x.DepartmentIds).NotNull();
+    }
+}
+
+/// <summary>
+/// Handles the <see cref="UpdateUserGroupCommand"/> by updating properties and synchronizing department associations.
+/// </summary>
+public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
+    : IRequestHandler<UpdateUserGroupCommand, bool>
+{
+    public async Task<bool> Handle(UpdateUserGroupCommand request, CancellationToken cancellationToken)
+    {
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
+
+        var group = await dbContext.UserGroups
+            .Include(g => g.UserGroupDepartments)
+            .FirstOrDefaultAsync(g => g.Id == request.Id && g.TenantId == tenantContext.TenantId.Value, cancellationToken);
+
+        if (group == null)
+        {
+            throw new Normora.Shared.Exceptions.BolaException();
+        }
+
+
+        var exists = await dbContext.UserGroups
+            .AnyAsync(g => g.TenantId == tenantContext.TenantId.Value 
+                           && g.Id != request.Id 
+                           && g.Name.ToLower() == request.Name.ToLower(), cancellationToken);
+
+        if (exists)
+        {
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.UserGroupExists);
+        }
+
+        group.Name = request.Name;
+        group.Description = request.Description;
+
+        // SEC-17: Validate that all provided DepartmentIds belong to the current tenant
+        // before syncing to prevent cross-tenant department injection.
+        var validDepartmentIds = await dbContext.Departments
+            .Where(d => d.TenantId == tenantContext.TenantId.Value && request.DepartmentIds.Contains(d.Id))
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        // Sync departments (only tenant-owned ones)
+        group.UserGroupDepartments.Clear();
+        foreach (var depId in validDepartmentIds)
+        {
+            group.UserGroupDepartments.Add(new UserGroupDepartment { DepartmentId = depId });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+}

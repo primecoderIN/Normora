@@ -21,6 +21,30 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Using Include="Normora.Shared.Authorization" />
+    <Using Include="Normora.Modules.Tenants.Domain" />
+    <Using Include="Normora.Modules.Tenants.Application.Tenants.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.Tenants.DTOs" />
+    <Using Include="Normora.Modules.Tenants.Application.Departments.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.Departments.DTOs" />
+    <Using Include="Normora.Modules.Tenants.Application.Departments.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.UserGroups.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.UserGroups.DTOs" />
+    <Using Include="Normora.Modules.Tenants.Application.UserGroups.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.Users.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.Users.DTOs" />
+    <Using Include="Normora.Modules.Tenants.Application.Users.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.Invitations.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.Invitations.DTOs" />
+    <Using Include="Normora.Modules.Tenants.Application.Invitations.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.Subscription.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.Subscription.DTOs" />
+    <Using Include="Normora.Modules.Tenants.Application.Subscription.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.Audit.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.Branding.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.Branding.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.Dashboard.DTOs" />
+    <Using Include="Normora.Modules.Tenants.Application.Dashboard.Queries" />
   </ItemGroup>
 
 </Project>

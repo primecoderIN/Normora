@@ -1,0 +1,74 @@
+using FluentValidation;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Exceptions;
+using Normora.Shared.Interfaces;
+
+namespace Normora.Modules.Tenants.Application.Departments.Commands;
+
+/// <summary>
+/// Command to update the details of an existing department.
+/// </summary>
+/// <param name="Id">The unique identifier of the department.</param>
+/// <param name="Name">The new name for the department.</param>
+/// <param name="Description">The updated description for the department.</param>
+public record UpdateDepartmentCommand(Guid Id, string Name, string? Description = null) : IRequest<bool>, IAuditableRequest
+{
+    public string Action => "Department.Updated";
+    public string TargetType => "Department";
+    public string? GetTargetId(object? response) => Id.ToString();
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { name = Name, description = Description });
+}
+
+
+/// <summary>
+/// Validates the <see cref="UpdateDepartmentCommand"/>.
+/// </summary>
+public class UpdateDepartmentCommandValidator : AbstractValidator<UpdateDepartmentCommand>
+{
+    public UpdateDepartmentCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(500);
+    }
+}
+
+/// <summary>
+/// Handles the <see cref="UpdateDepartmentCommand"/> by updating the department's properties while ensuring uniqueness.
+/// </summary>
+public class UpdateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
+    : IRequestHandler<UpdateDepartmentCommand, bool>
+{
+    public async Task<bool> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
+    {
+        if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
+
+        var department = await dbContext.Departments
+            .FirstOrDefaultAsync(d => d.Id == request.Id && d.TenantId == tenantContext.TenantId.Value, cancellationToken);
+
+        if (department == null)
+        {
+            throw new BolaException();
+        }
+
+        // Enforce unique name per tenant (excluding self)
+        var exists = await dbContext.Departments
+            .AnyAsync(d => d.TenantId == tenantContext.TenantId.Value 
+                           && d.Id != request.Id 
+                           && d.Name.ToLower() == request.Name.ToLower(), cancellationToken);
+
+        if (exists)
+        {
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.DepartmentExists);
+        }
+
+        department.Name = request.Name;
+        department.Description = request.Description;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+}
+

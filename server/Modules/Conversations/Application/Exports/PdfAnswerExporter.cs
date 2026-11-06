@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using Normora.Modules.Conversations.Application.Queries;
+using Normora.Modules.Conversations.Application.SavedAnswers.Queries;
 
 namespace Normora.Modules.Conversations.Application.Exports;
 

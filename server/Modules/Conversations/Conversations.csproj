@@ -23,6 +23,14 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Using Include="Normora.Shared.Authorization" />
+    <Using Include="Normora.Modules.Conversations.Application.Conversations.Commands" />
+    <Using Include="Normora.Modules.Conversations.Application.Conversations.DTOs" />
+    <Using Include="Normora.Modules.Conversations.Application.Conversations.Queries" />
+    <Using Include="Normora.Modules.Conversations.Application.SavedAnswers.Commands" />
+    <Using Include="Normora.Modules.Conversations.Application.SavedAnswers.DTOs" />
+    <Using Include="Normora.Modules.Conversations.Application.SavedAnswers.Queries" />
+    <Using Include="Normora.Modules.Conversations.Application.Suggestions.Queries" />
   </ItemGroup>
 
 </Project>

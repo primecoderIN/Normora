@@ -22,11 +22,15 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Using Include="Normora.Shared.Authorization" />
     <Using Include="Normora.Modules.Documents.Domain" />
-    <Using Include="Normora.Modules.Documents.Application.Documents" />
-    <Using Include="Normora.Modules.Documents.Application.Chunks" />
-    <Using Include="Normora.Modules.Documents.Application.Mcp" />
-    <Using Include="Normora.Modules.Documents.Application.Metrics" />
+    <Using Include="Normora.Modules.Documents.Application.Documents.Commands" />
+    <Using Include="Normora.Modules.Documents.Application.Documents.DTOs" />
+    <Using Include="Normora.Modules.Documents.Application.Documents.Queries" />
+    <Using Include="Normora.Modules.Documents.Application.Chunks.DTOs" />
+    <Using Include="Normora.Modules.Documents.Application.Chunks.Queries" />
+    <Using Include="Normora.Modules.Documents.Application.Mcp.Queries" />
+    <Using Include="Normora.Modules.Documents.Application.Metrics.Queries" />
   </ItemGroup>
 
 </Project>

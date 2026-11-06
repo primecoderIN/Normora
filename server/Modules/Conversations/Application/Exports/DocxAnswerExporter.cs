@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
-using Normora.Modules.Conversations.Application.Queries;
+using Normora.Modules.Conversations.Application.SavedAnswers.Queries;
 
 namespace Normora.Modules.Conversations.Application.Exports;
 

@@ -1,0 +1,91 @@
+using Normora.Shared.Constants;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Normora.Shared.Authorization;
+using Normora.Modules.Conversations.Application.SavedAnswers.Commands;
+using Normora.Modules.Conversations.Application.SavedAnswers.DTOs;
+using Normora.Modules.Conversations.Application.SavedAnswers.Queries;
+using Microsoft.AspNetCore.Http;
+using Normora.Shared;
+
+namespace Normora.Modules.Conversations.API;
+
+/// <summary>
+/// Provides endpoints for employees to save, unsave, list, and export bookmarked AI answers.
+/// </summary>
+[ApiController]
+[Route("api/saved-answers")]
+[Authorize]
+[RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
+[Produces("application/json")]
+public class SavedAnswersController(IMediator mediator) : ControllerBase
+{
+    /// <summary>
+    /// Returns all saved answers for the current user, ordered newest-first.
+    /// </summary>
+    /// <param name="limit">The maximum number of saved answers to return.</param>
+    /// <param name="offset">The number of saved answers to skip.</param>
+    /// <returns>A paginated list of saved answers.</returns>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<IReadOnlyList<SavedAnswerDto>>))]
+    public async Task<IActionResult> GetSavedAnswers(
+        [FromQuery] int limit = 50,
+        [FromQuery] int offset = 0)
+    {
+        var result = await mediator.Send(new GetSavedAnswersQuery(limit, offset));
+        return Ok(ApiResponse<IReadOnlyList<SavedAnswerDto>>.Ok(result));
+    }
+
+    /// <summary>
+    /// Saves an assistant message as a bookmark. Idempotent.
+    /// </summary>
+    /// <param name="request">The payload containing the ID of the message to save.</param>
+    /// <returns>The unique identifier of the saved answer bookmark.</returns>
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Guid>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> SaveAnswer([FromBody] SaveAnswerRequest request)
+    {
+        var id = await mediator.Send(new SaveAnswerCommand(request.MessageId));
+        return Ok(ApiResponse<Guid>.Ok(id, ApiMessages.AnswerSaved));
+    }
+
+
+    /// <summary>
+    /// Removes a saved answer by the original message ID. Idempotent.
+    /// </summary>
+    /// <param name="messageId">The unique identifier of the message bookmark to remove.</param>
+    [HttpDelete("{messageId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> UnsaveAnswer(Guid messageId)
+    {
+        await mediator.Send(new UnsaveAnswerCommand(messageId));
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Exports a saved answer as a downloadable file in the requested format.
+    /// </summary>
+    /// <param name="id">The saved answer ID.</param>
+    /// <param name="format">The export format: Markdown, Pdf, or Docx.</param>
+    [HttpGet("{id:guid}/export")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> ExportSavedAnswer(
+        Guid id,
+        [FromQuery] ExportFormat format = ExportFormat.Markdown)
+    {
+        var result = await mediator.Send(new ExportSavedAnswerQuery(id, format));
+
+        // Derive a safe, human-friendly filename.
+        var timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd");
+        var fileName = $"normora-answer-{timestamp}{result.FileExtension}";
+
+        return File(result.Bytes, result.ContentType, fileName);
+    }
+}
+
+/// <summary>Request payload for saving an answer.</summary>
+public record SaveAnswerRequest(Guid MessageId);
+

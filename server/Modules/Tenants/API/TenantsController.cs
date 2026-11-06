@@ -1,0 +1,271 @@
+using Normora.Shared.Constants;
+using Normora.Shared.Exceptions;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Normora.Modules.Tenants.Application.Tenants.Commands;
+using Normora.Modules.Tenants.Application.Tenants.DTOs;
+using Normora.Modules.Tenants.Application.Users.Commands;
+using Normora.Modules.Tenants.Application.Users.DTOs;
+using Normora.Modules.Tenants.Application.Users.Queries;
+using Normora.Modules.Tenants.Application.Invitations.Commands;
+using Normora.Modules.Tenants.Application.Branding.Commands;
+using Normora.Modules.Tenants.Application.Branding.Queries;
+using Normora.Shared.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Normora.Shared;
+using Normora.Shared.Interfaces;
+using System.Text.RegularExpressions;
+
+namespace Normora.Modules.Tenants.API;
+
+/// <summary>
+/// Handles HTTP requests for managing Tenants and their lifecycle.
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+[Produces("application/json")]
+public class TenantsController(IMediator mediator, ITenantContext tenantContext, ILogger<TenantsController> logger) : ControllerBase
+{
+    /// <summary>
+    /// Creates a new Tenant. The authenticated user making the request will automatically
+    /// be assigned the 'Admin' role for the newly created tenant.
+    /// </summary>
+    /// <param name="request">The payload containing the new tenant's name and slug.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The unique identifier of the newly created tenant.</returns>
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> CreateTenant([FromBody] CreateTenantRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = new CreateTenantCommand(request.Name, request.Slug);
+        var tenant = await mediator.Send(command, cancellationToken);
+        return Ok(ApiResponse<TenantDto>.Ok(tenant, ApiMessages.TenantCreated));
+    }
+
+    /// <summary>
+    /// Retrieves white-label branding configuration for a tenant by its slug.
+    /// Anonymous — called by the frontend before login to skin the app.
+    /// </summary>
+    /// <param name="slug">The unique URL slug of the tenant.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The branding configuration for the tenant.</returns>
+    [HttpGet("branding/{slug}")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantBrandingDto>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> GetTenantBranding(string slug, CancellationToken cancellationToken = default)
+    {
+        var query = new GetTenantBrandingQuery(slug);
+        var result = await mediator.Send(query, cancellationToken);
+
+        if (result == null)
+            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
+
+        return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
+    }
+
+    /// <summary>
+    /// Updates the active tenant's white-label branding configuration.
+    /// </summary>
+    [HttpPut("branding")]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantBrandingDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> UpdateTenantBranding(
+        [FromForm] string? primaryColor,
+        [FromForm] string? secondaryColor,
+        [FromForm] IFormFile? logoFile,
+        [FromForm] IFormFile? logoFileDark,
+        [FromForm] IFormFile? faviconFile,
+        CancellationToken cancellationToken = default)
+    {
+        if (!tenantContext.TenantId.HasValue)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
+
+        var command = new UpdateTenantBrandingCommand(
+            tenantContext.TenantId.Value,
+            primaryColor,
+            secondaryColor,
+            logoFile,
+            logoFileDark,
+            faviconFile
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (result == null)
+            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
+
+        return Ok(ApiResponse<TenantBrandingDto>.Ok(result));
+    }
+
+    /// <summary>
+    /// Serves a branding asset (logo or favicon) for a given tenant slug.
+    /// Allows the frontend to load the image anonymously without MinIO pre-signed URLs.
+    /// </summary>
+    [HttpGet("branding/{slug}/{assetType}")]
+    [AllowAnonymous]
+    [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)] // Cache for 24 hours
+    public async Task<IActionResult> GetBrandingAsset(
+        string slug, 
+        string assetType, 
+        CancellationToken cancellationToken = default)
+    {
+        if (assetType != "logo" && assetType != "logo-dark" && assetType != "favicon")
+            return BadRequest(ApiResponse.Failure(ApiMessages.BadRequest));
+
+        // Sanitize slug to prevent path traversal; restrict strictly to alphanumeric characters and hyphens
+        if (!Regex.IsMatch(slug, @"^[a-zA-Z0-9\-]+$"))
+            return BadRequest(ApiResponse.Failure(ApiMessages.InvalidSlug));
+
+        try
+        {
+            var asset = await mediator.Send(new GetTenantBrandingAssetQuery(slug, assetType), cancellationToken);
+            if (asset is null)
+                return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
+
+            return File(asset.Stream, asset.ContentType);
+        }
+        catch (Exception ex)
+        {
+            // Strip CRLF characters from logged parameters to guard against log injection
+            var safeSlug = slug.Replace("\r", "").Replace("\n", "");
+            var safeAssetType = assetType.Replace("\r", "").Replace("\n", "");
+            logger.LogError(ex, "Failed to serve branding asset '{AssetType}' for slug '{Slug}'", safeAssetType, safeSlug);
+            return NotFound(ApiResponse.Failure(ApiMessages.NotFound));
+        }
+    }
+
+    /// <summary>
+    /// Suspends a tenant, preventing its members from accessing tenant resources.
+    /// Only users with the 'admin' role within this specific tenant can perform this action.
+    /// </summary>
+    /// <param name="id">The unique identifier of the tenant to suspend.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success message if the suspension was successful.</returns>
+    [HttpPost("{id}/suspend")]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> SuspendTenant(Guid id, CancellationToken cancellationToken = default)
+    {
+        // Enforce strict BOLA isolation: throw BolaException mapped to 404 to prevent resource ID enumeration
+        if (id != tenantContext.TenantId)
+        {
+            throw new BolaException();
+        }
+
+        var command = new SuspendTenantCommand(id);
+        var success = await mediator.Send(command, cancellationToken);
+        
+        if (!success) throw new BolaException();
+
+        return Ok(ApiResponse<object>.Ok(new { }, ApiMessages.TenantSuspended));
+    }
+
+    /// <summary>
+    /// Invites a new user to the tenant via email.
+    /// Only users with the 'admin' role within this specific tenant can perform this action.
+    /// </summary>
+    /// <param name="request">The payload containing the email address of the user to invite.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The invitation token that was generated.</returns>
+    [HttpPost("invitations")]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Guid>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> InviteEmployee([FromBody] InviteEmployeeRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = new InviteEmployeeCommand(request.Email);
+        var token = await mediator.Send(command, cancellationToken);
+
+        return Ok(ApiResponse<Guid>.Ok(token, ApiMessages.InvitationSent));
+    }
+
+    /// <summary>
+    /// Retrieves a list of employees for the current tenant.
+    /// </summary>
+    [HttpGet("employees")]
+    [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<Normora.Shared.Models.PagedResult<TenantEmployeeDto>>))]
+    public async Task<IActionResult> GetEmployees(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] Guid? departmentId = null,
+        [FromQuery] Guid? userGroupId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!tenantContext.TenantId.HasValue)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
+
+        var query = new GetTenantEmployeesQuery(
+            tenantContext.TenantId.Value, 
+            page, 
+            pageSize, 
+            search, 
+            departmentId, 
+            userGroupId);
+            
+        var employees = await mediator.Send(query, cancellationToken);
+
+        return Ok(ApiResponse<Normora.Shared.Models.PagedResult<TenantEmployeeDto>>.Ok(employees));
+    }
+
+    /// <summary>
+    /// Retrieves employee statistics for the current tenant.
+    /// </summary>
+    [HttpGet("employees/stats")]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantStatsDto>))]
+    public async Task<IActionResult> GetEmployeeStats(CancellationToken cancellationToken = default)
+    {
+        if (!tenantContext.TenantId.HasValue)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));
+
+        var query = new GetTenantStatsQuery(tenantContext.TenantId.Value);
+        var stats = await mediator.Send(query, cancellationToken);
+
+        return Ok(ApiResponse<TenantStatsDto>.Ok(stats));
+    }
+
+    /// <summary>
+    /// Soft-deletes a user's membership from the current tenant.
+    /// Only Admins can perform this action.
+    /// </summary>
+    /// <param name="membershipId">The unique identifier of the tenant membership to remove.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success message if removed.</returns>
+    [HttpDelete("employees/{membershipId}")]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> RemoveEmployee(Guid membershipId, CancellationToken cancellationToken = default)
+    {
+        var command = new RemoveEmployeeCommand(membershipId);
+        
+        // BolaException maps to 404. BflaException maps to 403 globally.
+        await mediator.Send(command, cancellationToken);
+
+        return Ok(ApiResponse.Ok(ApiMessages.EmployeeRemoved));
+    }
+}
+
+/// <summary>
+/// Request payload for inviting an employee.
+/// </summary>
+public record InviteEmployeeRequest(string Email);
+
+/// <summary>
+/// Request payload for creating a tenant.
+/// </summary>
+public record CreateTenantRequest(string Name, string Slug);

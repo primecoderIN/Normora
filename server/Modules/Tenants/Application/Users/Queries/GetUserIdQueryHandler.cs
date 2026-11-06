@@ -1,0 +1,23 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Contracts.Tenants;
+
+namespace Normora.Modules.Tenants.Application.Users.Queries;
+
+/// <summary>
+/// Resolves an internal application User Guid from an external Keycloak subject ID.
+/// </summary>
+public class GetUserIdQueryHandler(TenantsDbContext context) : IRequestHandler<GetUserIdQuery, Guid?>
+{
+    public async Task<Guid?> Handle(GetUserIdQuery request, CancellationToken cancellationToken)
+    {
+        // Query internal database Guid mapped to external subject ID
+        return await context.Users
+            .AsNoTracking()
+            .Where(u => u.ExternalUserId == request.ExternalUserId)
+            .Select(u => (Guid?)u.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+}
+
