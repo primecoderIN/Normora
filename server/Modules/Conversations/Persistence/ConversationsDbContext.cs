@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Conversations.Domain;
+using Normora.Modules.Conversations.Persistence.Configurations;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence;
@@ -21,97 +22,12 @@ public class ConversationsDbContext(DbContextOptions<ConversationsDbContext> opt
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("conversations");
 
-        modelBuilder.Entity<Conversation>(entity =>
-        {
-            entity.HasKey(c => c.Id);
-            entity.Property(c => c.Title).IsRequired().HasMaxLength(200);
-            entity.HasIndex(c => c.TenantId);
-            entity.HasIndex(c => c.UserId);
-            
-            // Global Query Filter for Tenant Data Isolation
-            entity.HasQueryFilter(c => c.TenantId == _tenantContext.TenantId);
-        });
-
-        modelBuilder.Entity<Message>(entity =>
-        {
-            entity.HasKey(m => m.Id);
-            entity.Property(m => m.Content).IsRequired().HasColumnType("text");
-            entity.HasIndex(m => m.ConversationId);
-            
-            entity.HasOne(m => m.Conversation)
-                .WithMany(c => c.Messages)
-                .HasForeignKey(m => m.ConversationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Global Query Filter
-            entity.HasQueryFilter(m => m.TenantId == _tenantContext.TenantId);
-        });
-
-        modelBuilder.Entity<MessageCitation>(entity =>
-        {
-            entity.HasKey(c => c.Id);
-            entity.Property(c => c.FileName).HasMaxLength(255);
-            entity.HasIndex(c => c.MessageId);
-            
-            entity.HasOne(c => c.Message)
-                .WithMany(m => m.Citations)
-                .HasForeignKey(c => c.MessageId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Global Query Filter
-            entity.HasQueryFilter(c => c.TenantId == _tenantContext.TenantId);
-        });
-
-        modelBuilder.Entity<SavedAnswer>(entity =>
-        {
-            entity.HasKey(s => s.Id);
-            entity.HasIndex(s => s.UserId);
-            entity.HasIndex(s => s.ConversationId);
-
-            // Prevent a user from saving the same message twice
-            entity.HasIndex(s => new { s.UserId, s.MessageId }).IsUnique();
-
-            entity.HasOne(s => s.Message)
-                .WithMany()
-                .HasForeignKey(s => s.MessageId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Global Query Filter for Tenant Data Isolation
-            entity.HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
-        });
-
-        modelBuilder.Entity<MessageFeedback>(entity =>
-        {
-            entity.HasKey(f => f.Id);
-            entity.Property(f => f.Comment).HasMaxLength(500);
-
-            // One feedback per user per message
-            entity.HasIndex(f => new { f.UserId, f.MessageId }).IsUnique();
-
-            entity.HasOne(f => f.Message)
-                .WithMany(m => m.Feedbacks)
-                .HasForeignKey(f => f.MessageId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Global Query Filter for Tenant Data Isolation
-            entity.HasQueryFilter(f => f.TenantId == _tenantContext.TenantId);
-        });
-
-        modelBuilder.Entity<ConversationShare>(entity =>
-        {
-            entity.HasKey(s => s.Id);
-            entity.Property(s => s.Token).IsRequired().HasMaxLength(50);
-            entity.HasIndex(s => s.Token).IsUnique();
-            entity.HasIndex(s => s.ConversationId);
-
-            entity.HasOne(s => s.Conversation)
-                .WithMany()
-                .HasForeignKey(s => s.ConversationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Global Query Filter for Tenant Data Isolation
-            entity.HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
-        });
+        modelBuilder.ApplyConfiguration(new ConversationConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new MessageConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new MessageCitationConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new SavedAnswerConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new MessageFeedbackConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new ConversationShareConfiguration(_tenantContext));
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

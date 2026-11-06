@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
-using Normora.Shared;
+using Normora.Modules.Documents.Domain;
+using Normora.Modules.Documents.Persistence.Configurations;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Documents.Persistence;
@@ -27,86 +28,11 @@ public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, IT
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("documents");
         modelBuilder.HasPostgresExtension("vector");
-        
-        // Ensure TenantId and DeletedAt are indexed together for fast filtered document queries
-        modelBuilder.Entity<Document>()
-            .HasIndex(d => new { d.TenantId, d.DeletedAt });
 
-            
-        // Enforce database constraints previously handled by Data Annotations
-        modelBuilder.Entity<Document>(entity => 
-        {
-            entity.HasKey(d => d.Id);
-            entity.Property(d => d.FileName).IsRequired().HasMaxLength(255);
-            
-            // TENANT-14: Global Query Filter for Tenant Data Isolation
-            // Soft-delete: documents with a non-null DeletedAt are excluded from all queries.
-            // The PurgeDeletedDocumentsJob uses IgnoreQueryFilters() to process them.
-            entity.HasQueryFilter(d => d.TenantId == _tenantContext.TenantId && d.DeletedAt == null);
-        });
-
-        modelBuilder.Entity<DocumentVersion>(entity => 
-        {
-            entity.HasKey(v => v.Id);
-            entity.Property(v => v.StorageObjectName).IsRequired().HasMaxLength(500);
-            entity.Property(v => v.ExtractedText).HasColumnType("text");
-            
-            entity.HasOne(v => v.Document)
-                  .WithMany(d => d.Versions)
-                  .HasForeignKey(v => v.DocumentId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            // Document Versioning (Phase 19): The same tenant filter applies to versions so
-            // a different tenant cannot read version metadata via IgnoreQueryFilters bypass.
-            entity.HasQueryFilter(v => v.TenantId == _tenantContext.TenantId);
-        });
-
-        modelBuilder.Entity<DocumentChunk>(entity =>
-        {
-            entity.HasKey(chunk => chunk.Id);
-            entity.Property(chunk => chunk.Content).IsRequired().HasColumnType("text");
-            entity.Property(chunk => chunk.Embedding).HasColumnType("vector(768)");
-            
-            // Configure full-text search vector
-            entity.HasGeneratedTsVectorColumn(
-                chunk => chunk.SearchVector!,
-                "english",
-                chunk => new { chunk.Content })
-            .HasIndex(chunk => chunk.SearchVector)
-            .HasMethod("GIN");
-
-            // Vector similarity HNSW index for high-performance approximate nearest neighbor retrieval
-            entity.HasIndex(chunk => chunk.Embedding)
-                .HasMethod("hnsw")
-                .HasOperators("vector_cosine_ops");
-
-            entity.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentVersionId, chunk.ChunkIndex }).IsUnique();
-            entity.HasOne<DocumentVersion>()
-                .WithMany(v => v.Chunks)
-                .HasForeignKey(chunk => chunk.DocumentVersionId)
-                .OnDelete(DeleteBehavior.Cascade);
-            // Chunks inherit the same tenant boundary as their parent document; background
-            // jobs may bypass this filter only after checking both tenant and document IDs.
-            entity.HasQueryFilter(chunk => chunk.TenantId == _tenantContext.TenantId);
-        });
-
-
-        // DocumentDepartment — junction table for document department scoping.
-        // DepartmentId is a plain Guid FK (no EF nav) to respect the module boundary.
-        // A document with zero DocumentDepartment rows is treated as "Company Wide".
-        // The matching query filter on TenantId aligns with the Document filter to
-        // prevent EF Core validation warning EF10622 on required-end relationships.
-        modelBuilder.Entity<DocumentDepartment>(entity =>
-        {
-            entity.HasKey(dd => new { dd.DocumentId, dd.DepartmentId });
-
-            entity.HasOne(dd => dd.Document)
-                  .WithMany(d => d.DocumentDepartments)
-                  .HasForeignKey(dd => dd.DocumentId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasQueryFilter(dd => dd.TenantId == _tenantContext.TenantId);
-        });
+        modelBuilder.ApplyConfiguration(new DocumentConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new DocumentVersionConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new DocumentChunkConfiguration(_tenantContext));
+        modelBuilder.ApplyConfiguration(new DocumentDepartmentConfiguration(_tenantContext));
     }
 
     /// <summary>
@@ -127,4 +53,3 @@ public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, IT
         return base.SaveChangesAsync(cancellationToken);
     }
 }
-
