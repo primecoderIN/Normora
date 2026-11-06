@@ -31,6 +31,7 @@
     <Using Include="Normora.Modules.Conversations.Application.SavedAnswers.DTOs" />
     <Using Include="Normora.Modules.Conversations.Application.SavedAnswers.Queries" />
     <Using Include="Normora.Modules.Conversations.Application.Suggestions.Queries" />
+    <Using Include="Normora.Modules.Conversations.Application.Suggestions.DTOs" />
   </ItemGroup>
 
 </Project>

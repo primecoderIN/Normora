@@ -41,7 +41,9 @@
     <Using Include="Normora.Modules.Tenants.Application.Subscription.DTOs" />
     <Using Include="Normora.Modules.Tenants.Application.Subscription.Queries" />
     <Using Include="Normora.Modules.Tenants.Application.Audit.Queries" />
+    <Using Include="Normora.Modules.Tenants.Application.Audit.DTOs" />
     <Using Include="Normora.Modules.Tenants.Application.Branding.Commands" />
+    <Using Include="Normora.Modules.Tenants.Application.Branding.DTOs" />
     <Using Include="Normora.Modules.Tenants.Application.Branding.Queries" />
     <Using Include="Normora.Modules.Tenants.Application.Dashboard.DTOs" />
     <Using Include="Normora.Modules.Tenants.Application.Dashboard.Queries" />

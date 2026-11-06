@@ -315,3 +315,16 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Backend: Standardized shared agent tool contracts in `Normora.Shared.Interfaces` (`IAgentTool`, `IAgentToolRegistry`, `AgentToolResult`, `ToolExecutionContext`, `McpToolDefinition`).
 - [x] Backend: Cleaned up legacy directories `server/Normora.Api/Features/Documents/` and `server/Normora.Api/Features/Ask/`.
 - [x] Backend: Validated solution build with `dotnet build server/Normora.slnx` — 0 warnings, 0 errors.
+
+## 📋 Planned: Third-Party Integrations (ClickUp, Jira, Microsoft Teams) (Phase 30)
+- [ ] Backend: Scaffold `Normora.Modules.Integrations` module with isolated `integrations` PostgreSQL schema and `IntegrationsDbContext`.
+- [ ] Backend: Implement `IDatabaseMigrator` for `Normora.Modules.Integrations` in `--migrate` pipeline.
+- [ ] Backend: Create `TenantIntegration` entity (`Id`, `TenantId`, `Provider`, `EncryptedAccessToken`, `EncryptedRefreshToken`, `Status`, `SettingsJson`) with AES-256 / Data Protection encryption.
+- [ ] Backend: Implement OAuth 2.0 3LO authorization code exchange for Atlassian Jira and ClickUp.
+- [ ] Backend: Implement `CreateJiraIssueTool` (`create_jira_issue`) and `SearchJiraIssuesTool` (`search_jira_issues`) conforming to `IAgentTool`.
+- [ ] Backend: Implement `CreateClickUpTaskTool` (`create_clickup_task`) conforming to `IAgentTool`.
+- [ ] Backend: Register new tools in `IAgentToolRegistry` for Gemini Function Calling and `/api/mcp`.
+- [ ] Backend: Implement Microsoft Teams inbound webhook / bot controller (`/api/integrations/teams/messages`) with Adaptive Cards RAG formatting and citations.
+- [ ] Backend: Implement outbound Teams notification dispatcher for HR escalations and document processing alerts.
+- [ ] Backend: Implement Hangfire background sync jobs in `Normora.Worker` (`ClickUpDocSyncJob`, `JiraKnowledgeSyncJob`) dispatching to `Documents` module for ingestion.
+- [ ] Frontend: Create Employer Settings Integrations page (`/app/workspaces/:slug/settings/integrations`) with provider connection cards, OAuth popup triggers, and project/space mapping modals.

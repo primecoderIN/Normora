@@ -1856,6 +1856,36 @@ The following phases extend the Phase plan in §31 to cover the features describ
 - **Gemini Multi-Turn Tool Calling Loop**: Integrated into `GeminiTextGenerationService` with schema generation, automatic function call interception, tool execution, and synthesized multi-turn answering.
 - **Model Context Protocol (MCP) Server**: Full JSON-RPC 2.0 endpoint (`/api/mcp`) supporting `initialize`, `ping`, `tools/list`, `tools/call`, `resources/list`, and `resources/read` with strict tenant isolation, department scoping, and BOLA/BFLA protection.
 
+#### Phase 30 — Third-Party Integrations (ClickUp, Jira, Microsoft Teams) (Planned)
+- **Modular Monolith Bounded Context**:
+  - New module: `server/Modules/Integrations/` (`Normora.Modules.Integrations`) with isolated schema `integrations` and 100% DbContext encapsulation (`IntegrationsDbContext`).
+  - Independent migration runner implementing `IDatabaseMigrator`.
+  - Multi-tenant credential storage with AES-256 envelope / `IDataProtectionProvider` encryption for OAuth tokens and API secrets.
+- **Sub-phase 30.1: Module Scaffold & OAuth Credential Engine**:
+  - `TenantIntegration` entity (`Id`, `TenantId`, `Provider`, `EncryptedAccessToken`, `EncryptedRefreshToken`, `Status`, `SettingsJson`).
+  - OAuth2 callback handlers for Atlassian Jira (3LO) and ClickUp OAuth 2.0.
+  - Integration management endpoints (`GET /api/integrations`, `POST /api/integrations/{provider}/disconnect`).
+- **Sub-phase 30.2: Autonomous Agent Tools (Jira & ClickUp)**:
+  - `CreateJiraIssueTool` (`create_jira_issue`): Auto-creates issues in selected Jira projects.
+  - `SearchJiraIssuesTool` (`search_jira_issues`): Queries open Jira issues by key/summary.
+  - `CreateClickUpTaskTool` (`create_clickup_task`): Creates tasks in selected ClickUp spaces/lists.
+  - Registration in `IAgentToolRegistry` for Gemini conversational function calling and `/api/mcp`.
+- **Sub-phase 30.3: Microsoft Teams Chat Surface & Webhooks**:
+  - Inbound Teams bot endpoint (`/api/integrations/teams/messages`).
+  - Channel/user tenant mapping and authentication via `ITenantResolutionService`.
+  - Adaptive Cards rendering grounded RAG answers with citations and action buttons.
+  - Outbound webhook dispatcher for HR escalations and document processing alerts.
+- **Sub-phase 30.4: Knowledge Base Connectors (Hangfire Sync Ingestion)**:
+  - Background Hangfire jobs in `Normora.Worker`:
+    - `ClickUpDocSyncJob`: Syncs ClickUp Docs into Normora knowledge base.
+    - `JiraKnowledgeSyncJob`: Syncs Confluence/Jira knowledge base articles.
+  - Ingestion dispatch via MediatR contracts to `Normora.Modules.Documents` for Tika extraction and pgvector indexing.
+- **Sub-phase 30.5: Employer Integrations Hub UI (Angular Standalone)**:
+  - New route and tab: `/app/workspaces/:slug/settings/integrations`.
+  - Integration catalog cards (Jira, ClickUp, Teams) with connection states (`Connected`, `Not Connected`, `Error`).
+  - Modal configuration drawers for project/space mapping and OAuth triggers.
+  - Strict Tailwind CSS v4 syntax (`!important` suffix) and Angular Signals.
+
 ---
 
 ## 13. BFF (Backend-For-Frontend) Architecture Evaluation (Draft)
