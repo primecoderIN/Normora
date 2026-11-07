@@ -1,5 +1,7 @@
 using System.Text.Json;
+using MediatR;
 using Normora.Shared.Constants;
+using Normora.Shared.Contracts.Documents;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Infrastructure.Tools;
@@ -7,7 +9,7 @@ namespace Normora.Modules.Conversations.Infrastructure.Tools;
 /// <summary>
 /// Tool that performs a targeted semantic and keyword search over company knowledge documents.
 /// </summary>
-public sealed class SearchCompanyDocumentsTool(IRetrievalService retrievalService) : IAgentTool
+public sealed class SearchCompanyDocumentsTool(IMediator mediator) : IAgentTool
 {
     public string Name => "search_company_documents";
 
@@ -53,13 +55,11 @@ public sealed class SearchCompanyDocumentsTool(IRetrievalService retrievalServic
                 ? Math.Clamp(parsedLimit, 1, 5)
                 : 3;
 
-            var (candidates, _) = await retrievalService.RunHybridRetrievalAsync(
-                query,
-                limit,
-                context.PersonalTenantId,
+            var retrievalResult = await mediator.Send(
+                new PerformHybridRetrievalQuery(query, limit, context.PersonalTenantId),
                 cancellationToken);
 
-            var excerpts = candidates.Select(c => new
+            var excerpts = retrievalResult.Candidates.Select(c => new
             {
                 documentId = c.DocumentId,
                 fileName = c.FileName,

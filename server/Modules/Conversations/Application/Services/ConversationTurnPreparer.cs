@@ -19,7 +19,6 @@ internal sealed class ConversationTurnPreparer(
     IContextResolver contextResolver,
     IQueryRewriterService queryRewriter,
     ITokenBudgetService tokenBudget,
-    IRetrievalService retrievalService,
     ITenantContext tenantContext,
     ICurrentUser currentUser) : IConversationTurnPreparer
 {
@@ -35,7 +34,7 @@ internal sealed class ConversationTurnPreparer(
         var conversation = await conversationsContext.Conversations
             .FirstOrDefaultAsync(c =>
                 c.Id == conversationId &&
-                c.UserId == currentUser.KeycloakUserId,
+                c.UserId == currentUser.ExternalUserId,
                 cancellationToken)
             ?? throw new BolaException();
 
@@ -59,7 +58,7 @@ internal sealed class ConversationTurnPreparer(
         // 3. Load history + apply sliding-window token budget
         var rawHistory = await contextResolver.GetConversationContextAsync(
             conversationId,
-            currentUser.KeycloakUserId!,
+            currentUser.ExternalUserId,
             messageLimit: 20,
             cancellationToken: cancellationToken);
 
@@ -87,15 +86,22 @@ internal sealed class ConversationTurnPreparer(
         var personalTenantId = workspaceContext.PersonalTenantId;
         var activeTenantName = workspaceContext.ActiveTenantName;
 
-        var (topCandidates, vectorSimOfFirst) =
-            await retrievalService.RunHybridRetrievalAsync(rewrittenQuestion, clampedLimit, personalTenantId, cancellationToken);
+        var retrievalResult = await mediator.Send(
+            new Normora.Shared.Contracts.Documents.PerformHybridRetrievalQuery(
+                rewrittenQuestion,
+                clampedLimit,
+                personalTenantId),
+            cancellationToken);
+
+        var topCandidates = retrievalResult.Candidates;
+        var vectorSimOfFirst = retrievalResult.VectorSimOfFirst;
 
         var historyTurns = AskHelpers.BuildConversationTurns(budgetedHistory);
 
         var toolContext = new ToolExecutionContext(
             tenantContext.TenantId!.Value,
             activeTenantName,
-            currentUser.KeycloakUserId,
+            currentUser.ExternalUserId,
             currentUser.Email,
             currentUser.DisplayName,
             personalTenantId);
