@@ -5,7 +5,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence.Configurations;
 
-public class SavedAnswerConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<SavedAnswer>
+public class SavedAnswerConfiguration : IEntityTypeConfiguration<SavedAnswer>
 {
     public void Configure(EntityTypeBuilder<SavedAnswer> builder)
     {
@@ -20,9 +20,6 @@ public class SavedAnswerConfiguration(ITenantContext tenantContext) : IEntityTyp
             .WithMany()
             .HasForeignKey(s => s.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Global Query Filter for Tenant Data Isolation
-        builder.HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
     }
 }
 

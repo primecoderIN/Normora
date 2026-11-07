@@ -22,12 +22,14 @@ public class ConversationsDbContext(DbContextOptions<ConversationsDbContext> opt
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("conversations");
 
-        modelBuilder.ApplyConfiguration(new ConversationConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new MessageConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new MessageCitationConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new SavedAnswerConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new MessageFeedbackConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new ConversationShareConfiguration(_tenantContext));
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ConversationsDbContext).Assembly);
+
+        modelBuilder.Entity<Conversation>().HasQueryFilter(c => c.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<Message>().HasQueryFilter(m => m.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<MessageCitation>().HasQueryFilter(c => c.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<SavedAnswer>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<MessageFeedback>().HasQueryFilter(f => f.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<ConversationShare>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

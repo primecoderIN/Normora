@@ -5,7 +5,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence.Configurations;
 
-public class MessageCitationConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<MessageCitation>
+public class MessageCitationConfiguration : IEntityTypeConfiguration<MessageCitation>
 {
     public void Configure(EntityTypeBuilder<MessageCitation> builder)
     {
@@ -17,9 +17,6 @@ public class MessageCitationConfiguration(ITenantContext tenantContext) : IEntit
             .WithMany(m => m.Citations)
             .HasForeignKey(c => c.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Global Query Filter for Tenant Data Isolation
-        builder.HasQueryFilter(c => c.TenantId == tenantContext.TenantId);
     }
 }
 

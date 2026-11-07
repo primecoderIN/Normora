@@ -5,7 +5,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Documents.Persistence.Configurations;
 
-public class DocumentDepartmentConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<DocumentDepartment>
+public class DocumentDepartmentConfiguration : IEntityTypeConfiguration<DocumentDepartment>
 {
     public void Configure(EntityTypeBuilder<DocumentDepartment> builder)
     {
@@ -18,10 +18,6 @@ public class DocumentDepartmentConfiguration(ITenantContext tenantContext) : IEn
               .WithMany(d => d.DocumentDepartments)
               .HasForeignKey(dd => dd.DocumentId)
               .OnDelete(DeleteBehavior.Cascade);
-
-        // The matching query filter on TenantId aligns with the Document filter to
-        // prevent EF Core validation warning EF10622 on required-end relationships.
-        builder.HasQueryFilter(dd => dd.TenantId == tenantContext.TenantId);
     }
 }
 

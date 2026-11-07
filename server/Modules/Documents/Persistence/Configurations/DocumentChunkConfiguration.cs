@@ -6,7 +6,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Documents.Persistence.Configurations;
 
-public class DocumentChunkConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<DocumentChunk>
+public class DocumentChunkConfiguration : IEntityTypeConfiguration<DocumentChunk>
 {
     public void Configure(EntityTypeBuilder<DocumentChunk> builder)
     {
@@ -33,10 +33,6 @@ public class DocumentChunkConfiguration(ITenantContext tenantContext) : IEntityT
             .WithMany(v => v.Chunks)
             .HasForeignKey(chunk => chunk.DocumentVersionId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Chunks inherit the same tenant boundary as their parent document; background
-        // jobs may bypass this filter only after checking both tenant and document IDs.
-        builder.HasQueryFilter(chunk => chunk.TenantId == tenantContext.TenantId);
     }
 }
 

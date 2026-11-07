@@ -5,7 +5,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence.Configurations;
 
-public class ConversationShareConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<ConversationShare>
+public class ConversationShareConfiguration : IEntityTypeConfiguration<ConversationShare>
 {
     public void Configure(EntityTypeBuilder<ConversationShare> builder)
     {
@@ -18,9 +18,6 @@ public class ConversationShareConfiguration(ITenantContext tenantContext) : IEnt
             .WithMany()
             .HasForeignKey(s => s.ConversationId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Global Query Filter for Tenant Data Isolation
-        builder.HasQueryFilter(s => s.TenantId == tenantContext.TenantId);
     }
 }
 

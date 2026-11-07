@@ -29,10 +29,12 @@ public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, IT
         modelBuilder.HasDefaultSchema("documents");
         modelBuilder.HasPostgresExtension("vector");
 
-        modelBuilder.ApplyConfiguration(new DocumentConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new DocumentVersionConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new DocumentChunkConfiguration(_tenantContext));
-        modelBuilder.ApplyConfiguration(new DocumentDepartmentConfiguration(_tenantContext));
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(DocumentsDbContext).Assembly);
+
+        modelBuilder.Entity<Document>().HasQueryFilter(d => d.TenantId == _tenantContext.TenantId && d.DeletedAt == null);
+        modelBuilder.Entity<DocumentVersion>().HasQueryFilter(v => v.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<DocumentChunk>().HasQueryFilter(chunk => chunk.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<DocumentDepartment>().HasQueryFilter(dd => dd.TenantId == _tenantContext.TenantId);
     }
 
     /// <summary>

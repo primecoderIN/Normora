@@ -5,7 +5,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence.Configurations;
 
-public class ConversationConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<Conversation>
+public class ConversationConfiguration : IEntityTypeConfiguration<Conversation>
 {
     public void Configure(EntityTypeBuilder<Conversation> builder)
     {
@@ -13,9 +13,6 @@ public class ConversationConfiguration(ITenantContext tenantContext) : IEntityTy
         builder.Property(c => c.Title).IsRequired().HasMaxLength(200);
         builder.HasIndex(c => c.TenantId);
         builder.HasIndex(c => c.UserId);
-
-        // Global Query Filter for Tenant Data Isolation
-        builder.HasQueryFilter(c => c.TenantId == tenantContext.TenantId);
     }
 }
 

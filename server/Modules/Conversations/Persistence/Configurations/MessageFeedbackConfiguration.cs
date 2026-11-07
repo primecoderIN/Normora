@@ -5,7 +5,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Persistence.Configurations;
 
-public class MessageFeedbackConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<MessageFeedback>
+public class MessageFeedbackConfiguration : IEntityTypeConfiguration<MessageFeedback>
 {
     public void Configure(EntityTypeBuilder<MessageFeedback> builder)
     {
@@ -19,9 +19,6 @@ public class MessageFeedbackConfiguration(ITenantContext tenantContext) : IEntit
             .WithMany(m => m.Feedbacks)
             .HasForeignKey(f => f.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Global Query Filter for Tenant Data Isolation
-        builder.HasQueryFilter(f => f.TenantId == tenantContext.TenantId);
     }
 }
 

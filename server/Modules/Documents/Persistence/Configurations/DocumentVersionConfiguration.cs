@@ -5,7 +5,7 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Documents.Persistence.Configurations;
 
-public class DocumentVersionConfiguration(ITenantContext tenantContext) : IEntityTypeConfiguration<DocumentVersion>
+public class DocumentVersionConfiguration : IEntityTypeConfiguration<DocumentVersion>
 {
     public void Configure(EntityTypeBuilder<DocumentVersion> builder)
     {
@@ -17,10 +17,6 @@ public class DocumentVersionConfiguration(ITenantContext tenantContext) : IEntit
               .WithMany(d => d.Versions)
               .HasForeignKey(v => v.DocumentId)
               .OnDelete(DeleteBehavior.Cascade);
-
-        // Document Versioning (Phase 19): The same tenant filter applies to versions so
-        // a different tenant cannot read version metadata via IgnoreQueryFilters bypass.
-        builder.HasQueryFilter(v => v.TenantId == tenantContext.TenantId);
     }
 }
 
