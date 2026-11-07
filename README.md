@@ -2,15 +2,15 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white" alt=".NET 10" />
-  <img src="https://img.shields.io/badge/Angular-DD0031?logo=angular&logoColor=white" alt="Angular" />
-  <img src="https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/Keycloak-0096D6?logo=keycloak&logoColor=white" alt="Keycloak" />
-  <img src="https://img.shields.io/badge/MinIO-C72C48?logo=minio&logoColor=white" alt="MinIO" />
-  <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/Gemini_Flash-8E75B2?logo=google-gemini&logoColor=white" alt="Google Gemini" />
-  <img src="https://img.shields.io/badge/OpenTelemetry-000000?logo=opentelemetry&logoColor=white" alt="OpenTelemetry" />
-  <img src="https://img.shields.io/badge/Duende_BFF-000000?logo=csharp&logoColor=white" alt="Duende BFF" />
-  <img src="https://img.shields.io/badge/EF_Core-512BD4?logo=nuget&logoColor=white" alt="Entity Framework Core" />
+  <img src="https://img.shields.io/badge/Angular-22.1-DD0031?logo=angular&logoColor=white" alt="Angular" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15_+_pgvector-336791?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Keycloak-24.0-0096D6?logo=keycloak&logoColor=white" alt="Keycloak" />
+  <img src="https://img.shields.io/badge/MinIO-S3_Storage-C72C48?logo=minio&logoColor=white" alt="MinIO" />
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Google_Gemini-Flash-8E75B2?logo=google-gemini&logoColor=white" alt="Google Gemini" />
+  <img src="https://img.shields.io/badge/Duende_BFF-Cookie_Session-000000?logo=csharp&logoColor=white" alt="Duende BFF" />
+  <img src="https://img.shields.io/badge/EF_Core-10.0-512BD4?logo=nuget&logoColor=white" alt="Entity Framework Core" />
+  <img src="https://img.shields.io/badge/OpenTelemetry-Tracing_&_Metrics-000000?logo=opentelemetry&logoColor=white" alt="OpenTelemetry" />
 </div>
 <br>
 
@@ -19,66 +19,142 @@
 </div>
 <br>
 
-**Normora** is an enterprise-grade full-stack web application designed for high scalability, stringent security, and an exceptional developer experience.
+**Normora** is an enterprise-grade, multi-tenant knowledge management and conversational AI platform. Architected as a **.NET 10 Modular Monolith** coupled with an **Angular 22 SPA**, Normora enables organizations to securely ingest company policies, compartmentalize access via departmental RBAC, and converse with grounded AI agents using hybrid semantic retrieval and autonomous tool calling.
 
-## 🌟 Why Normora?
-Normora is architected from the ground up to deliver a resilient and performant modern web experience:
+---
 
-- **Modular Monolith Backend**: Built on **.NET 10**, the backend keeps persistence and feature slices inside the `Tenants`, `Documents`, and `Conversations` modules. The API, Hangfire worker, and one-off migration runner are separate hosts; cross-module reads use MediatR contracts and boundary interfaces.
-- **Modern SPA Frontend**: Powered by **Angular**, providing a lightning-fast, reactive, and strictly-typed user experience.
-- **Enterprise-Ready Infrastructure**:
-  - **Identity & Access Management**: Fully integrated with **Keycloak** via OAuth2/OpenID Connect to handle secure authentication and robust role-based access control, decoupled from domain models via `ExternalUserId`.
-  - **Object Storage**: Leverages **MinIO** for S3-compatible, highly performant, and horizontally scalable file storage.
-  - **Relational Data**: Powered by **PostgreSQL** for reliable ACID-compliant transactions across isolated module schemas.
-- **Conversational AI & RAG**: Features an advanced Retrieval-Augmented Generation pipeline. Uses **pgvector** for hybrid vector-keyword retrieval (RRF scoring) and the **Gemini Flash API** to answer queries grounded in secure company documentation.
-- **Autonomous Agent Tools & MCP**: Native multi-turn function calling for deterministic corporate expense calculations, automated HR email escalations, and targeted document searches, coupled with a JSON-RPC 2.0 **Model Context Protocol (MCP)** server (`/api/mcp`) for external agent tooling.
-- **Enterprise Governance & Auditability**: Automatically tracks all sensitive business operations (document lifecycle, employee invitations/removals, permissions, branding) through open MediatR pipeline behaviors into immutable audit logs.
-- **Subscription Tiers & Decoupled Billing**: Built-in plan tier management (`Free`, `Pro`, `Enterprise`) that proactively enforces limits on employee seats, document counts, and storage allocations. Built on an `IPaymentService` abstraction supporting PayU India Hosted Checkout, SHA-512 cryptographic verification, UPI (Google Pay, PhonePe, Paytm, QR), credit/debit cards, and tier hierarchy action locking.
-- **Observability**: Fully instrumented with **OpenTelemetry (OTLP)** for distributed tracing and granular metrics (e.g. tracking LLM token consumption and DB query latencies).
-- **Containerization & DevOps**: The entire application and its complex dependencies are thoroughly Dockerized. It highlights a focus on developer experience (DX)—a single script provisions the database, IAM server, object storage, API, and the Web Client from scratch.
+## 🏗️ System Architecture
 
-## 📚 Documentation
+Normora enforces a strict **Modular Monolith** boundary on the backend, complete **DbContext encapsulation**, and the **Backend-For-Frontend (BFF)** pattern for browser token immunity.
 
-For a deeper dive into the architectural decisions, database schema, and API contracts, please refer to the dedicated documentation files:
+```mermaid
+flowchart TD
+    subgraph Client ["Client Tier (Browser)"]
+        SPA["Angular 22 SPA<br/>(Signals, PrimeNG, Tailwind v4)"]
+    end
 
-- [**General Onboarding & Setup**](./docs/getting_started.md) — Quick-start guide, local environment configuration, and test account credentials.
-- [**Project Overview & Features**](./docs/overview.md) — High-level summary of features, use cases, and multi-tenant capabilities.
-- [**Engineering Timeline**](./docs/architecture.md#engineering-timeline) — Dated project milestones from the initial commit, architecture evolution, and deployment verification.
-- [**Backend Architecture & Patterns**](./docs/architecture.md) — MediatR request lifecycles, modular monolith design, and project dependency rules.
-- [**Authorization & Security Guide**](./docs/architecture.md#application-security-bola--bfla) — Comprehensive guide to BOLA and BFLA mitigation and the tenant-level RBAC enforcement.
-- [**Backend Onboarding & .NET Course**](./docs/backend_onboarding.md) — In-depth C#/.NET crash course tailored for developers transitioning from JS/Go/Python.
-- [**Frontend Onboarding Guide**](./docs/frontend_onboarding.md) — Angular 22 architecture, path-based workspace routing (`/app/workspaces/:slug`), Signal usage, and state management.
-- [**API Endpoints Catalog**](./docs/api_endpoints.md) — A comprehensive list of routes, parameters, authorization checks, and standard envelopes.
-- [**Database Schema & Entity Relationships**](./docs/database_schema.md) — Detailed mapping of module schemas, indexes, soft delete behaviors, and multi-tenant relationships.
-- [**How Normora Works (Access & RAG)**](./docs/how_normora_works.md) — End-to-end guide on document sharing, User Group isolation, and secure Conversational AI retrieval.
-- [**Conversational RAG Deep-Dive**](./docs/conversational_rag_architecture.md) — Technical breakdown of the multi-turn conversational AI pipeline, context resolution, and hybrid retrieval.
+    subgraph Host ["API & BFF Host (Normora.Api)"]
+        BFF["Duende BFF Middleware<br/>(HttpOnly, SameSite=Strict Cookies)"]
+        TRM["TenantResolutionMiddleware<br/>(Cached Slug & RBAC Resolution)"]
+        Hub["SignalR DocumentHub<br/>(Realtime Processing Status)"]
+        Scalar["Scalar API Documentation<br/>(/scalar/v1)"]
+    end
+
+    subgraph Modules ["Modular Monolith Bounded Contexts (server/Modules/)"]
+        subgraph TenantsMod ["Tenants Module"]
+            T_API["Tenants API"]
+            T_CQRS["CQRS: Memberships, Roles,<br/>Branding, Subscriptions (PayU)"]
+            T_DB[("TenantsDbContext<br/>schema: tenants")]
+        end
+
+        subgraph DocsMod ["Documents Module"]
+            D_API["Documents API & McpController"]
+            D_CQRS["CQRS: Upload, Ingestion,<br/>Hybrid Retrieval, Apache Tika"]
+            D_DB[("DocumentsDbContext<br/>schema: documents<br/>pgvector HNSW")]
+        end
+
+        subgraph ConvsMod ["Conversations Module"]
+            C_API["Conversations API"]
+            C_CQRS["CQRS: Multi-Turn RAG,<br/>Agent Tools, SSE Streaming"]
+            C_DB[("ConversationsDbContext<br/>schema: conversations")]
+        end
+    end
+
+    subgraph WorkerHost ["Background Worker (Normora.Worker)"]
+        HF["Hangfire Processing Host<br/>(Document Ingestion, Chunking, Embeddings, Purge)"]
+    end
+
+    subgraph Infrastructure ["Infrastructure Services"]
+        PG[("PostgreSQL 15 + pgvector")]
+        KC["Keycloak 24 (OIDC / OAuth2)"]
+        S3["MinIO (S3 Object Storage)"]
+        RD[("Redis Distributed Cache")]
+        GEM["Google Gemini API (Flash)"]
+    end
+
+    SPA <-->|Secure Cookies / SSE / WS| Host
+    Host -->|Decentralized Routing| Modules
+    TenantsMod <-->|MediatR Contracts| DocsMod
+    DocsMod <-->|MediatR Contracts| ConvsMod
+    T_DB & D_DB & C_DB --> PG
+    WorkerHost -->|Background Ingestion| PG
+    WorkerHost -->|Object Storage| S3
+    DocsMod -->|File Storage| S3
+    Host -->|OIDC Backchannel| KC
+    TRM -->|30s Sliding TTL| RD
+    ConvsMod -->|Embeddings & Tool Calling| GEM
+```
+
+---
+
+## 🌟 Core Architectural Principles
+
+- **100% Modular Monolith Encapsulation**: Each module (`Tenants`, `Documents`, `Conversations`) encapsulates its own domain entities, CQRS slices, and private `DbContext`. API controllers, middleware, and other modules never directly reference another module's `DbContext`. Cross-module communication strictly traverses MediatR request/query contracts in `Normora.Shared.Contracts.*`.
+- **Zero-Trust Security (BOLA & BFLA Mitigation)**:
+  - **BOLA**: Resource enumeration is prevented by catching missing or unauthorized object access and returning generic 404 responses (`BolaException`).
+  - **BFLA**: Unauthorized functional actions are blocked globally with 403 Forbidden envelopes (`BflaException`).
+  - **Dynamic Multitenant Query Filters**: All database queries are automatically filtered by `TenantId` via EF Core global query filters dynamically bound to the DbContext's tenant context.
+- **Backend-For-Frontend (BFF) Pattern**: Browser clients never receive, handle, or store access/refresh tokens. Sessions are anchored by encrypted `HttpOnly`, `SameSite=Strict`, `Secure` cookies with anti-CSRF protection via Duende BFF.
+- **Conversational RAG with Autonomous Agent Tools & MCP**:
+  - **Hybrid Search**: Combines pgvector cosine similarity (HNSW index) with full-text keyword search using Reciprocal Rank Fusion (RRF).
+  - **Multi-Turn Function Calling**: Integrated Gemini Flash tool calling loop for deterministic corporate expense calculations (`calculate_policy_limit`), HR email escalations (`escalate_hr_inquiry`), and cross-module document search (`search_company_documents`).
+  - **Model Context Protocol (MCP)**: Implements standard JSON-RPC 2.0 MCP endpoints (`/api/mcp`) exposing corporate knowledge resources and tools to external AI agent frameworks.
+- **Provider-Neutral Abstractions**: Domain models reference neutral interfaces for payment processing (`IPaymentService`), transactional emails (`IEmailSender`), and external identity (`ExternalUserId` mapping OIDC subjects), completely decoupling business logic from third-party vendors.
+- **High-Performance Distributed Caching**: Multi-tenant resolution, role checks, and branding lookups are cached in Redis with short sliding expirations (30s–5m), eliminating redundant database queries per HTTP request while ensuring immediate revocation propagation.
+
+---
+
+## 📚 Documentation Index
+
+| Category | Guide | Description |
+|---|---|---|
+| **Architecture & System Design** | [**Backend Architecture**](./docs/architecture.md) | Deep dive into modular boundaries, CQRS folder-per-operation rules, MediatR pipeline behaviors, and parameterless entity configs. |
+| | [**Conversational RAG Architecture**](./docs/conversational_rag_architecture.md) | Technical blueprint for query rewriting, token budgeting, candidate reranking, SSE streaming, and MCP tool execution. |
+| | [**How Normora Works**](./docs/how_normora_works.md) | Visual explanation of document sharing, User Group isolation, and departmental RAG security boundaries. |
+| **Developer Onboarding** | [**Getting Started & Setup**](./docs/getting_started.md) | Zero-friction local setup guide, Docker Compose topology, environment variables, and pre-seeded test accounts. |
+| | [**Backend Onboarding & .NET Course**](./docs/backend_onboarding.md) | Crash course for engineers transitioning from Node.js, Go, or Python to modern .NET 10 CQRS development. |
+| | [**Frontend Onboarding Guide**](./docs/frontend_onboarding.md) | Angular 22 architecture, reactive Signals state management, path-based routing, and PrimeNG/Tailwind v4 styling. |
+| | [**Frontend Client README**](./client/README.md) | Client-specific setup, Vitest test execution, and directory breakdown. |
+| **Contracts, Schema & Security** | [**API Endpoints Catalog**](./docs/api_endpoints.md) | Complete REST & RPC catalog, envelope formats, MCP methods, and authorization rules. |
+| | [**Database Schema & Relationships**](./docs/database_schema.md) | PostgreSQL schemas (`tenants`, `documents`, `conversations`), pgvector HNSW indexes, and soft-delete filters. |
+| | [**Security Headers & Hardening**](./docs/security_headers.md) | Defense-in-depth specifications: CSP, HSTS, frame protection, anti-CSRF, and cookie session security. |
+| | [**Configuration Reference**](./docs/configuration.md) | Strongly-typed Options pattern, startup validation (`ValidateOnStart`), and environment variable overrides. |
+| **Governance & Roadmaps** | [**Progress Tracker**](./progress_tracker.md) | Authoritative roadmap and changelog tracking completed phases (Phases 1–28) and upcoming milestones. |
+| | [**Agent Coding Guidelines**](./AGENTS.md) | Strict engineering rules, architectural conventions, and coding patterns enforced across the repository. |
+
+---
 
 ## ⚡ Quick Start
 
-Starting the whole stack locally is incredibly simple:
+### 1. Launch Stack via Docker Compose
+Starting the complete ecosystem locally is fully automated:
 
 ```powershell
 .\start.ps1
 ```
-*(This script will automatically generate a `.env` file with defaults, pull necessary images, and build the .NET API & Angular client).*
+*(The script provisions `.env` with secure defaults, pulls container images, runs database migrations, and boots the API, worker, and Angular client).*
 
-> [!IMPORTANT]  
-> **API Configuration Requirement:**
-> - **Google Gemini API Key**: To use Conversational AI, RAG document search, and tool calling, set `GEMINI_API_KEY` in your `.env` file.
-> - **Resend Email API Key**: To enable transactional notifications (invitations, document alerts, escalation emails), set `RESEND_API_KEY` in `.env`.
-> - **Dev Email Override**: When testing with Resend's free tier, emails can only be delivered to your registered Resend account. Set `DEV_OVERRIDE_EMAIL=your-resend-account@email.com` in `.env` to route all outbound test emails to your inbox.
+> [!IMPORTANT]
+> **API Keys Required for AI & Notifications:**
+> - **Google Gemini API Key**: Set `GEMINI_API_KEY` in `.env` to enable Conversational AI, RAG embeddings, and tool calling.
+> - **Resend Email API Key**: Set `RESEND_API_KEY` in `.env` to send invitation and escalation emails.
 
-To gracefully stop the environment without destroying your data volumes:
+### 2. Graceful Shutdown
+To stop all containers without losing data volumes:
 ```powershell
 .\stop.ps1
 ```
 
-## 🌐 Access Points
+---
 
-Once the Docker containers are running, you can access the ecosystem at:
-- **Client Application (Angular)**: `http://localhost:4200`
-- **Backend API (.NET 10)**: `http://localhost:5000`
-- **API Documentation & Testing (Scalar)**: `http://localhost:5000/scalar/v1`
-- **Keycloak Admin Console**: `http://localhost:8080`
-- **MinIO Console**: `http://localhost:9001`
-- **pgAdmin**: `http://localhost:5050`
+## 🌐 Local Access Points
+
+| Service | Local URL | Default Credentials / Purpose |
+|---|---|---|
+| **Client Application (Angular)** | `http://localhost:4200` | Main user and employer web portal |
+| **Backend API (.NET 10)** | `http://localhost:5000` | REST API, BFF endpoints, SignalR hubs |
+| **API Documentation (Scalar)** | `http://localhost:5000/scalar/v1` | Interactive OpenAPI / Scalar documentation |
+| **Keycloak Admin Console** | `http://localhost:8080` | `admin` / `admin` (IAM realm management) |
+| **MinIO Console** | `http://localhost:9001` | `minioadmin` / `minioadmin` (S3 object browser) |
+| **pgAdmin (PostgreSQL UI)** | `http://localhost:5050` | `admin@normora.local` / `admin` |
+| **Hangfire Dashboard** | `http://localhost:5000/hangfire` | Background job execution and retry monitor |

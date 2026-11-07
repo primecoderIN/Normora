@@ -23,6 +23,26 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Implement ITenantContext & RequireTenantAttribute for authorization
 - [x] Configure Global Query Filters in AppDbContext for tenant isolation
 
+## ✅ Completed Codebase Inline Documentation & Architecture Elevation
+- [x] **Full Codebase Comprehensive Inline Documentation**:
+  - Implemented detailed multi-line inline comments explaining business logic, domain invariants, edge cases, multi-tenant isolation, and architectural flows across all server and client files.
+  - Replaced short two-liner summaries with comprehensive four-to-six line contextual guides matching enterprise codebase standards.
+- [x] **Backend (.NET 10 Modular Monolith) Comprehensive Coverage**:
+  - **Decentralized Controllers**: `TenantsController`, `DepartmentsController`, `UserGroupsController`, `SubscriptionController`, `UsersController`, `DocumentsController`, `McpController`, `ConversationsController`.
+  - **Module Composition Roots**: `TenantsModuleExtensions.cs`, `DocumentsModuleExtensions.cs`, `ConversationsModuleExtensions.cs`.
+  - **Persistence Configurations**: All parameterless `IEntityTypeConfiguration<T>` classes documented for table partitioning, cascading, partial unique indexes, PostgreSQL GIN full-text, and pgvector HNSW vector cosine distance indexes.
+  - **CQRS Handlers, Commands, Queries & DTOs**: Detailed security comments covering BOLA/BFLA exception mappings, last-admin protection, quota verification, MediatR pipeline behaviors (`AuditBehavior`, `ValidationBehavior`), and cross-module contracts.
+  - **Background Jobs & Domain Services**: Document ingestion, text extraction (Tika), semantic chunking, embedding generation (Gemini), MinIO object storage, PDF/DOCX/Markdown answer exporters, and SignalR notification hubs.
+- [x] **Frontend (Angular 22 + Tailwind CSS v4) Comprehensive Coverage**:
+  - **Security & Interceptors**: Detailed multi-line documentation for `csrfInterceptor` (Duende BFF anti-CSRF token rules), `apiInterceptor` (handling 401, 402, 403 BFLA, 404 BOLA, 429 status workflows), and `tenantInterceptor` (ambient `X-Tenant-Id` header resolution).
+  - **Guards & Routing**: `authGuard`, `workspaceGuard`, `roleGuard`, `rootGuard`, and `app.routes.ts`.
+  - **Core Domain Services**: Signal-based state management, optimistic UI updates, SSE streaming, real-time SignalR notifications, and DOMPurify markdown sanitization.
+  - **Feature Components**: Chat input bar (keyboard shortcuts, dynamic textarea auto-resize), chat message bubble (outdated citation warnings, copy action), conversation sidebar (virtual scrolling, relative timestamps), and document upload modal.
+  - **Design System**: Accessible headless Radix-NG primitives and custom components.
+- [x] **Compilation & Integrity Verification**:
+  - Verified 100% green compilation with 0 errors across `server/Normora.slnx` (`dotnet build`).
+  - Verified 100% clean production build with 0 errors across `client` (`npm run build`).
+
 ## ✅ Completed Refactoring & Code Organization
 - [x] Flattened backend directory structure (removed redundant `src` folder from `server`)
 - [x] Updated Solution file (`Normora.slnx`) and Dockerfiles to reflect the flattened structure
@@ -320,6 +340,17 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] Backend: Standardized shared agent tool contracts in `Normora.Shared.Interfaces` (`IAgentTool`, `IAgentToolRegistry`, `AgentToolResult`, `ToolExecutionContext`, `McpToolDefinition`).
 - [x] Backend: Cleaned up legacy directories `server/Normora.Api/Features/Documents/` and `server/Normora.Api/Features/Ask/`.
 - [x] Backend: Validated solution build with `dotnet build server/Normora.slnx` — 0 warnings, 0 errors.
+
+## ✅ Completed Modular Monolith Tight Coupling Mitigations & Decoupling (Phase 28)
+- [x] Backend: Decoupled 10 EF Core entity configurations in `Documents` and `Conversations` by removing the scoped `ITenantContext` constructor parameter, enabling parameterless auto-discovery via `ApplyConfigurationsFromAssembly` (`9c50604`).
+- [x] Backend: Bound multitenant global query filters dynamically to the DbContext instance property (`_tenantContext.TenantId`), ensuring dynamic evaluation on every query without constructor injection into configuration classes (`9c50604`).
+- [x] Backend: Decoupled `McpController` in `Documents` from `IAgentToolRegistry` in `Conversations` by creating `GetMcpToolsQuery` and `ExecuteMcpToolCommand` in `Normora.Shared.Contracts.Conversations` and implementing their handlers in `Conversations` (`3684729`).
+- [x] Backend: Eliminated direct project reference and type leakage between `Documents` and `Conversations` (`3684729`).
+- [x] Backend: Enforced MediatR boundary for cross-module hybrid document retrieval by introducing `PerformHybridRetrievalQuery` in `Normora.Shared.Contracts.Documents`, implemented in `Documents`, and refactoring `ConversationTurnPreparer` and `SearchCompanyDocumentsTool` to dispatch via `IMediator` instead of injecting `IRetrievalService` (`c411a05`).
+- [x] Backend: Added distributed caching (`ICacheService`) with a 30-second sliding expiration to `TenantResolutionService`, eliminating redundant 3-table split queries across middleware, SignalR hubs, and controllers while preserving near-instant membership revocation (`1eedda8`).
+- [x] Backend: Standardized on `currentUser.ExternalUserId` across 13 command/query handlers and `AuditBehavior`, eliminating active references to vendor-specific `KeycloakUserId` (`4286918`).
+- [x] Backend: Relocated module-internal artifacts from `Normora.Shared`: moved `ITextEmbeddingService` to `Documents/Application/Services/`, and moved `RagConstants` and `ConversationConstants` to `Conversations/Domain/` (`15b852e`).
+- [x] Backend: Added automated architecture fitness unit tests (`ModularMonolithArchitectureTests` in `Normora.Architecture.Tests`) asserting parameterless entity configurations, zero DbContext injection in controllers, and zero cross-module type leaks between `Documents` and `Conversations` (`293037c`).
 
 ## 📋 Planned: Third-Party Integrations (ClickUp, Jira, Microsoft Teams) (Phase 30)
 - [ ] Backend: Scaffold `Normora.Modules.Integrations` module with isolated `integrations` PostgreSQL schema and `IntegrationsDbContext`.

@@ -11,10 +11,14 @@ Normora is deployed as an API host, a separate Hangfire worker, and a one-off mi
 **Rules of the Modular Monolith:**
 1. **Module-Owned Persistence**: The `Tenants`, `Documents`, and `Conversations` modules each own a `DbContext` and a PostgreSQL schema. User profiles and tenant memberships currently belong to the Tenants module.
 2. **No Direct Joins**: You cannot write a LINQ query that joins a `Document` with a `Tenant`. You must query by IDs across boundaries.
-3. **Cross-Module Communication**: If the `Documents` module needs to know if a user has access, it doesn't query the `TenantsDbContext`. It sends a MediatR query to the `Tenants` module's API contract in `Normora.Shared.Contracts.Tenants`.
+3. **Cross-Module Communication**: When a module requires operations or data owned by another module, it dispatches MediatR contracts in `Normora.Shared.Contracts.*`:
+   - `Documents` checks permissions via queries in `Normora.Shared.Contracts.Tenants`.
+   - `Conversations` retrieves knowledge chunks from `Documents` via `PerformHybridRetrievalQuery` (`Normora.Shared.Contracts.Documents`) — never directly inject `IRetrievalService`.
+   - `Documents` (`McpController`) discovers and executes tools in `Conversations` via `GetMcpToolsQuery` and `ExecuteMcpToolCommand` (`Normora.Shared.Contracts.Conversations`) — never directly inject `IAgentToolRegistry`.
 4. **100% DbContext Encapsulation**: DbContexts are strictly private to their owning module. API controllers, middleware, and SignalR hubs must **never** inject a module `DbContext`.
 5. **Feature Slices and Controllers Live in Modules**: All commands, queries, domain entities, background ingestion jobs, entity configurations, and HTTP controllers live inside their owning module (`server/Modules/<ModuleName>/`). `Normora.Api` contains only application hosting and cross-cutting adapters (SignalR hubs, middleware, OIDC/BFF configuration, Program.cs).
-6. **Decoupled Boundary Interfaces**: When infrastructure or middleware requires module operations, expose an abstraction in `Normora.Shared.Interfaces` (e.g. `ITenantResolutionService`, `IDocumentNotificationService`, `IEmailSender`, `IPaymentService`).
+6. **Decoupled Boundary Interfaces**: When infrastructure or middleware requires module operations, expose an abstraction in `Normora.Shared.Interfaces` (e.g. `ITenantResolutionService` backed by distributed caching with a 30s sliding TTL, `IDocumentNotificationService`, `IEmailSender`, `IPaymentService`).
+7. **No Module-Internal Concerns in Shared**: Keep `Normora.Shared` provider-neutral and lean. Internal services (like `ITextEmbeddingService`), prompts, and domain constants (like `RagConstants`, `ConversationConstants`) must reside in their respective modules.
 
 ### Source Documentation Convention
 Each hand-written source file documents its primary type with a concise XML summary. Add inline comments only for non-obvious business rules, security boundaries, retry behavior, or lifecycle decisions; generated EF migrations and snapshots remain generated and unedited.
@@ -96,7 +100,10 @@ Each operation has its request, handler, and validator in separate files within 
 ### Persistence & Lean DbContexts
 - Module `DbContext` classes remain lean.
 - All entity configurations are defined in standalone classes implementing `IEntityTypeConfiguration<T>` in `server/Modules/{ModuleName}/Persistence/Configurations/{Entity}Configuration.cs`.
-- The DbContext loads them automatically via `modelBuilder.ApplyConfigurationsFromAssembly(typeof({ModuleName}DbContext).Assembly);`.
+- **Parameterless Entity Configurations**: Configuration classes must have parameterless public constructors. Never pass scoped dependencies (such as `ITenantContext`) into configuration constructors, as this breaks EF Core's assembly scanning (`ApplyConfigurationsFromAssembly`).
+- **Dynamic Query Filter Binding**: Multi-tenant global query filters must bind dynamically to the DbContext's instance property (`_tenantContext.TenantId`) on each query rather than capturing scoped constructor parameters.
+- The DbContext loads configurations automatically via `modelBuilder.ApplyConfigurationsFromAssembly(typeof({ModuleName}DbContext).Assembly);`.
+- Architectural fitness is verified automatically by unit tests in `Normora.Architecture.Tests` (`ModularMonolithArchitectureTests`).
 
 ---
 
@@ -195,36 +202,63 @@ The local Compose network pins the Nginx container IP and configures it as trust
 
 ## 4. Security: BOLA & BFLA Prevention
 
-We strictly prevent Broken Object Level Authorization (BOLA) and Broken Function Level Authorization (BFLA) using context injection.
+Security is the highest priority in Normora. We strictly prevent Broken Object Level Authorization (BOLA) and Broken Function Level Authorization (BFLA).
 
 ### `ITenantContext`
-Never trust the `TenantId` sent in a JSON body. The `TenantResolutionMiddleware` intercepts the `X-Tenant-Id` header, verifies the user is actually a member of that tenant in the database, and injects the `ITenantContext` into the DI container.
+Never trust a `TenantId` sent in a request body or URL route. The `TenantResolutionMiddleware` intercepts the `X-Tenant-Id` header (or path slug), verifies the user is an active member of that tenant in the cached repository, and injects `ITenantContext` into the DI scope for that request.
 
 ### `[RequireTenant]` Attribute
-Controllers use this to enforce BFLA. 
+Controllers use `[RequireTenant]` to enforce Broken Function Level Authorization (BFLA):
 ```csharp
-[RequireTenant("employer")] // Only Employers in the current tenant can call this
-public async Task<IActionResult> DeleteDocument(Guid id) ...
+[HttpPost]
+[RequireTenant(TenantRoles.Admin)] // Only Administrators in the active workspace can execute this
+public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentRequest request) ...
 ```
+
+### Exception Envelopes
+- **BOLA**: If a requested entity does not exist or belongs to another tenant/user, throw `BolaException()`. The global exception handler maps this to a generic HTTP 404 response (`ApiResponse.Failure(ApiMessages.NotFound)`). Never return custom object-missing messages that allow ID enumeration.
+- **BFLA**: If a user lacks the required role, throw `BflaException()`. Mapped globally to HTTP 403 Forbidden (`ApiResponse.Failure(ApiMessages.Forbidden)`).
 
 ---
 
-## 4. Entity Framework Core (EF Core)
+## 5. Entity Framework Core (EF Core) & Persistence
 
-We use EF Core as our ORM. 
+We use EF Core as our ORM across isolated PostgreSQL schemas.
 
-### Global Query Filters
-We use global filters to enforce soft deletes and tenant isolation at the database level.
+### Parameterless Entity Configurations
+Every entity mapping must be defined in its own `IEntityTypeConfiguration<T>` class with a public parameterless constructor under `server/Modules/{ModuleName}/Persistence/Configurations/`:
+
 ```csharp
-// In TenantsDbContext.cs
-builder.Entity<Tenant>().HasQueryFilter(t => !t.IsDeleted);
+public class DocumentConfiguration : IEntityTypeConfiguration<Document>
+{
+    public void Configure(EntityTypeBuilder<Document> builder)
+    {
+        builder.ToTable("Documents", "documents");
+        builder.HasKey(d => d.Id);
+        builder.Property(d => d.Title).HasMaxLength(300).IsRequired();
+        builder.HasIndex(d => new { d.TenantId, d.DeletedAt });
+    }
+}
+```
+
+The module `DbContext` auto-discovers and registers all configurations via:
+```csharp
+modelBuilder.ApplyConfigurationsFromAssembly(typeof(DocumentsDbContext).Assembly);
+```
+
+### Dynamic Multi-Tenant Query Filters
+Never pass `ITenantContext` to configuration constructors! Global query filters must bind dynamically to the DbContext's instance property so that `_tenantContext.TenantId` is evaluated dynamically on each query execution:
+
+```csharp
+// Inside DocumentsDbContext.cs
+modelBuilder.Entity<Document>()
+    .HasQueryFilter(d => d.TenantId == _tenantContext.TenantId && d.DeletedAt == null);
 ```
 
 ### Migrations
-Because we have multiple `DbContexts`, you must specify the context when creating migrations:
+Because each module owns an isolated schema and DbContext, specify the context when generating migrations:
 ```bash
-dotnet ef migrations add AddUserGroups --context TenantsDbContext --project Modules/Tenants
-dotnet ef database update --context TenantsDbContext
+dotnet ef migrations add AddDocumentTags --context DocumentsDbContext --project server/Modules/Documents --startup-project server/Normora.Api
 ```
 
 ### Controlled Migrations & The `migrator` Service
@@ -262,52 +296,119 @@ Both `api` and `worker` depend on `migrator` with `condition: service_completed_
    - `SessionDatabaseMigrator` (`SessionDbContext` - Duende BFF user session tables)
 3. **Sequential Execution**: `DatabaseMigrationRunner` iterates through all registered migrators sequentially, logging progress before exiting cleanly with exit code `0`.
 
-#### Idempotency & How Pending Migrations Are Checked
-The `migrator` service runs on every `docker compose up`, but **it checks whether migrations are pending and does not re-run existing migrations**:
+---
 
-1. **Reads `__EFMigrationsHistory`**: On startup, EF Core executes:
-   ```sql
-   SELECT "MigrationId", "ProductVersion" FROM "__EFMigrationsHistory" ORDER BY "MigrationId";
-   ```
-2. **Compares Against Compiled Assembly Migrations**: EF Core compares the IDs stored in `__EFMigrationsHistory` against the migration classes compiled into the application DLLs.
-3. **No-Op When Up-to-Date**: If no new migrations exist, EF Core logs:
-   ```text
-   info: Microsoft.EntityFrameworkCore.Migrations: No migrations were applied. The database is already up to date.
-   ```
-   No DDL changes are made, and the container exits cleanly in milliseconds.
-4. **Applies Only Pending Migrations**: When a developer adds a new EF Core migration, EF Core applies only the delta (new migrations) inside a database transaction, updates `__EFMigrationsHistory`, and completes.
+## 6. How to Add a New CQRS Vertical Slice
 
-This makes running the migrator container on every startup completely safe and standard for containerized environments.
+Follow this exact pattern when adding a new capability to any module:
 
-#### Troubleshooting Migrations & Container Exit Codes
-If the `migrator` container fails to start or exit cleanly, use the following guide:
+### Step 1: Create the Operation Folder
+For example, to add an operation named `ArchiveDocument`:
+```
+server/Modules/Documents/Application/Documents/Commands/ArchiveDocument/
+├── ArchiveDocumentCommand.cs
+├── ArchiveDocumentCommandHandler.cs
+└── ArchiveDocumentCommandValidator.cs
+```
 
-- **Exit Code 139 (`SIGSEGV` / Segmentation Fault)**:
-  - **Meaning**: The process was terminated by the Linux kernel with Signal 11 (`SIGSEGV` = $128 + 11 = 139$).
-  - **Common Root Causes & Fixes**:
-    - **DI Container Validation Failure**: By default in ASP.NET Core Development environments, the host validates all service descriptors on build (`ValidateOnBuild = true`). Because `--migrate` mode deliberately skips external services like MinIO, Redis, and Hangfire, missing dependencies will cause an unhandled `AggregateException` during container build. When `--migrate` is supplied, `Program.cs` disables `ValidateOnBuild` and `ValidateScopes` so that the migration runner can construct without resolving optional application services.
-    - **Connection String Masking**: Ensure `ConnectionStrings__DefaultConnection` in `docker-compose.yml` does not contain literal redacted asterisks (`******`). Always verify connection string variables reference `${POSTGRES_USER}` and `${POSTGRES_PASSWORD}` from `.env`.
-    - **Architecture Mismatch / QEMU Emulation**: Running an `amd64` container on an Apple Silicon or ARM host without Rosetta can cause the .NET RyuJIT compiler to crash with a segmentation fault under QEMU emulation. Build containers for the native host platform.
-    - **WSL2 / Docker Memory Limits**: Ensure sufficient RAM (minimum 4GB) is allocated to WSL2 (`%USERPROFILE%\.wslconfig`).
+### Step 2: Define the Command
+```csharp
+namespace Normora.Modules.Documents.Application.Documents.Commands.ArchiveDocument;
 
-- **Diagnostic Commands**:
-  ```powershell
-  # Check migrator container output logs:
-  docker compose logs migrator
+public record ArchiveDocumentCommand(Guid DocumentId) : IRequest<ApiResponse<bool>>, IAuditableRequest
+{
+    public string ActionName => "Document.Archived";
+}
+```
 
-  # Run migrator interactively to reproduce errors:
-  docker compose run --rm migrator
+### Step 3: Implement FluentValidation (Optional but Recommended)
+```csharp
+namespace Normora.Modules.Documents.Application.Documents.Commands.ArchiveDocument;
 
-  # Run migration directly outside Docker to isolate code vs container issues:
-  dotnet run --project server/Normora.Api/Normora.Api.csproj -- --migrate
-  ```
+public class ArchiveDocumentCommandValidator : AbstractValidator<ArchiveDocumentCommand>
+{
+    public ArchiveDocumentCommandValidator()
+    {
+        RuleFor(x => x.DocumentId).NotEmpty().WithMessage(ApiMessages.RequiredField);
+    }
+}
+```
+
+### Step 4: Implement the Handler (Using C# Primary Constructors)
+```csharp
+namespace Normora.Modules.Documents.Application.Documents.Commands.ArchiveDocument;
+
+public class ArchiveDocumentCommandHandler(
+    DocumentsDbContext db,
+    ITenantContext tenantContext) : IRequestHandler<ArchiveDocumentCommand, ApiResponse<bool>>
+{
+    public async Task<ApiResponse<bool>> Handle(ArchiveDocumentCommand request, CancellationToken ct)
+    {
+        // Obscure unauthorized records behind BOLA 404
+        var doc = await db.Documents.FirstOrDefaultAsync(d => d.Id == request.DocumentId, ct);
+        if (doc == null)
+            throw new BolaException();
+
+        doc.Archive();
+        await db.SaveChangesAsync(ct);
+
+        return ApiResponse.Success(true);
+    }
+}
+```
+
+### Step 5: Expose via the Module Controller
+```csharp
+namespace Normora.Modules.Documents.API;
+
+[ApiController]
+[Route("api/documents")]
+public class DocumentsController(IMediator mediator) : ControllerBase
+{
+    [HttpPost("{id:guid}/archive")]
+    [RequireTenant(TenantRoles.Admin)]
+    public async Task<IActionResult> Archive([FromRoute] Guid id, CancellationToken ct)
+    {
+        var response = await mediator.Send(new ArchiveDocumentCommand(id), ct);
+        return Ok(response);
+    }
+}
+```
 
 ---
 
-## 5. Dependency Injection (DI)
+## 7. Cross-Module Communication
 
-.NET has built-in DI. Services are registered in the `Program.cs` or in extension methods (e.g., `ApplicationServiceExtensions.cs`).
+When a handler in one module requires data or actions owned by another module:
+1. **Define a MediatR Contract** in `server/Normora.Shared/Contracts/{ModuleName}/`:
+   ```csharp
+   namespace Normora.Shared.Contracts.Documents;
+   
+   public record PerformHybridRetrievalQuery(
+       string QueryText,
+       int Limit,
+       IReadOnlyList<Guid> AuthorizedDepartmentIds) : IRequest<IReadOnlyList<RetrievedChunkDto>>;
+   ```
+2. **Implement the Handler inside the Owning Module** (`Documents`):
+   ```csharp
+   namespace Normora.Modules.Documents.Application.Retrieval.Queries.PerformHybridRetrieval;
+   
+   public class PerformHybridRetrievalQueryHandler(IRetrievalService retrieval) 
+       : IRequestHandler<PerformHybridRetrievalQuery, IReadOnlyList<RetrievedChunkDto>> ...
+   ```
+3. **Dispatch via `IMediator` from the Requesting Module** (`Conversations`):
+   ```csharp
+   var chunks = await mediator.Send(new PerformHybridRetrievalQuery(query, 5, deptIds), ct);
+   ```
+*Never directly add project references or inject internal services across module boundaries!*
 
-- `AddTransient`: Created every time they are requested.
-- `AddScoped`: Created once per HTTP request (Use this for DbContexts and tenant-aware services).
-- `AddSingleton`: Created once for the lifetime of the application.
+---
+
+## 8. Dependency Injection & Modern C# Conventions
+
+- **Primary Constructors**: Always declare injected services directly in the class definition header (`class Service(IDep A, IDep B)`) rather than declaring private fields and constructor bodies.
+- **Service Lifetimes**:
+  - `AddScoped`: Created once per HTTP request (Use for all `DbContext`s, CQRS handlers, and tenant-aware services).
+  - `AddTransient`: Lightweight stateless helpers.
+  - `AddSingleton`: Application-wide immutable singletons (e.g. `ICacheService` adapters, tokenizers).
+- **No Magic Strings**: Always reference `ApiMessages.*` and `TenantRoles.*` rather than hardcoding string constants.

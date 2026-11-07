@@ -1,67 +1,153 @@
-# How Normora Works: Document Sharing, Grouping, and Secure AI Retrieval
+# How Normora Works: Document Ingestion, Departmental RBAC & Grounded Conversational AI
 
-Welcome to Normora! This guide explains the complete end-to-end flow of how document sharing, grouping, and retrieval works in the application.
+Welcome to **Normora**! This guide provides an end-to-end visual walkthrough of how document ingestion, organizational scoping, and secure conversational AI operate together.
 
-The entire system is designed around **Secure Conversational RAG (Retrieval-Augmented Generation)**. The primary goal is to ensure that when an employee asks the AI a question, the AI *only* retrieves and uses documents that the employee is explicitly authorized to see.
-
----
-
-## Phase 1: Configuration (How an Admin sets it up)
-
-The flow begins with an Administrator (Employer) structuring the knowledge base:
-
-1. **Create Departments**: The Admin creates logical folders or subdivisions of data. 
-   *(Examples: "Human Resources", "Engineering", "Executive Team")*
-2. **Upload Documents**: The Admin uploads company files (PDFs, docs, text). During upload, the document is securely tagged to one or more Departments. 
-   *(Example: "Q3 Financial Projections.pdf" is uploaded and assigned ONLY to the "Executive Team" department).*
-3. **Create User Groups**: The Admin creates logical groups for employees and maps these groups to Departments. 
-   *(Example: Admin creates a "Managers" User Group and links it to the "Human Resources" and "Executive Team" departments).*
-4. **Assign Users**: Finally, the Admin goes to the **Users/Team** page and adds specific employees to those User Groups.
+The foundational design principle of Normora is **Zero-Trust Conversational RAG**: when an employee converses with the AI, the system guarantees that the AI *only* retrieves and reasons over documents that the employee's assigned departments explicitly authorize them to see.
 
 ---
 
-## Phase 2: The Data Processing Pipeline (Under the hood)
+## 1. High-Level Lifecycle Overview
 
-When a document is uploaded, Normora doesn't just save the file. It prepares it for AI search:
+```mermaid
+flowchart TD
+    subgraph Phase1 ["Phase 1: Admin Governance & Upload"]
+        A1["1. Admin creates Departments<br/>(e.g., HR, Engineering, Executive)"]
+        A2["2. Admin creates User Groups &<br/>maps them to Departments"]
+        A3["3. Admin assigns Employees to User Groups"]
+        A4["4. Admin uploads Document & tags<br/>to authorized Departments"]
+    end
 
-- **Chunking**: The document is split into smaller, meaningful paragraphs (chunks).
-- **Embedding**: Each chunk is passed through an embedding model to convert the text into mathematical vectors.
-- **Storage**: The vectors are stored in PostgreSQL using the `pgvector` extension, securely linked to the Tenant ID and the Department ID.
+    subgraph Phase2 ["Phase 2: Asynchronous Processing Pipeline"]
+        B1["MinIO Object Storage"]
+        B2["Hangfire Ingestion Worker"]
+        B3["Apache Tika Text Extraction"]
+        B4["Token-Bounded Text Chunking"]
+        B5["Gemini Embedding Generation<br/>(768 dimensions)"]
+        B6["pgvector HNSW Vector Store<br/>(schema: documents)"]
+        B7["SignalR Real-Time WebSocket<br/>(Status Broadcast)"]
+    end
 
----
+    subgraph Phase3 ["Phase 3: Conversational AI & Grounded Answering"]
+        C1["Employee asks question in Chat"]
+        C2["BFF Session & Department RBAC Resolution"]
+        C3["Query Rewriter (Context Awareness)"]
+        C4["Hybrid Retrieval (pgvector + Keyword FTS via RRF)"]
+        C5["Department Security Filter (WHERE DeptId IN UserDepts)"]
+        C6["Autonomous Agent Tools (Policy Limit, HR Escalation)"]
+        C7["Server-Sent Events (SSE) Grounded Stream + Citations"]
+    end
 
-## Phase 3: The Conversation Flow (How an Employee uses it)
-
-Now, an employee logs into the chat interface and asks a question:
-
-> *"What are the Q3 financial projections?"*
-
-Here is exactly what happens in milliseconds:
-
-1. **Authorization Resolution**: 
-   The backend identifies the employee. It calculates every department they have access to. If this employee is in the "Managers" User Group, the system knows they have access to the "Human Resources" and "Executive Team" departments.
-
-2. **Context Understanding**:
-   The system looks at the conversation history to see if the question requires context. *(e.g., if they asked "What about Q4?" it would use a small LLM to rewrite the query into a standalone question).*
-
-3. **Secure Hybrid Retrieval**:
-   The system runs a vector similarity search against the `pgvector` database to find text that matches "Q3 financial projections". 
-   **Crucially**, the database query includes a strict filter: 
-   `WHERE Document.DepartmentId IN (User's Authorized Departments)`
-   - If a normal Developer asks this question, the vector search will physically ignore the Executive Team documents and return nothing.
-   - If the Manager asks, it retrieves the authorized chunks from "Q3 Financial Projections.pdf".
-
-4. **Reranking**:
-   The retrieved candidate text chunks are scored and reranked to ensure the absolute most relevant paragraphs are pushed to the top.
-
-5. **LLM Generation & Agent Tool Calling**:
-   The system builds a grounded prompt injecting authoritative document chunks. If the question requires deterministic calculations or actions beyond static text (e.g., computing travel allowances or escalating an unanswered policy inquiry to HR admins), Gemini autonomously executes registered workspace tools (`calculate_policy_limit`, `escalate_hr_inquiry`, `search_company_documents`) across a multi-turn function calling loop within the user's authorized tenant context.
-
-6. **Streaming & Citations**:
-   The LLM generates the answer and streams it back to the user's screen in real-time. Alongside the answer, the backend returns **Message Citations**—a list of the exact documents and chunks that were used to generate the answer, which the UI renders as clickable references.
+    Phase1 --> Phase2
+    Phase2 --> Phase3
+```
 
 ---
 
-## Summary
+## 2. Phase 1: Configuration & Departmental Scoping
 
-By separating **Knowledge Memory** (Documents) from **Conversation Memory** (Chats), and using **User Groups** as the bridge, Normora guarantees that the AI acts as a highly secure, tenant-aware oracle. Employees can converse naturally, and administrators only have to manage role-based checkboxes to keep data strictly confidential.
+The administrator structures the organizational knowledge graph:
+
+1. **Departments**: Logical subdivisions of company data (e.g., *"Human Resources"*, *"Engineering"*, *"Executive Leadership"*).
+2. **Document Ingestion**: The admin uploads company documents (PDF, DOCX, TXT). Each document is assigned to one or more departments (or marked *Company-Wide*).
+   > *Example*: `Q3_Financial_Projections.pdf` is assigned exclusively to the **Executive Leadership** department.
+3. **User Groups**: Logical employee cohorts mapped to one or more departments.
+   > *Example*: A *"Senior Managers"* user group is granted access to both **Human Resources** and **Executive Leadership**.
+4. **User Assignment**: Employees are added to User Groups, automatically inheriting access to corresponding departmental knowledge partitions.
+
+---
+
+## 3. Phase 2: Ingestion & Vector Indexing Pipeline
+
+When an employer uploads a document, Normora offloads compute-heavy processing to an asynchronous background worker pipeline:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Employer as Employer (Admin)
+    participant API as Normora.Api
+    participant MinIO as MinIO (S3 Storage)
+    participant DB as PostgreSQL (documents schema)
+    participant HF as Hangfire Worker (Normora.Worker)
+    participant Tika as Apache Tika
+    participant Gemini as Google Gemini API
+    participant Hub as SignalR (DocumentHub)
+
+    Employer->>API: 1. POST /api/documents (Upload File)
+    API->>MinIO: 2. Store original binary (Encrypted S3 bucket)
+    API->>DB: 3. Insert Document metadata (Status: Uploaded)
+    API->>HF: 4. Enqueue DocumentProcessingJob
+    API-->>Employer: 5. 202 Accepted (Document ID)
+
+    Note over HF: Asynchronous Processing in Worker Process
+    HF->>DB: 6. Update Status -> Processing
+    HF->>Hub: 7. Broadcast WebSocket: Processing
+    HF->>MinIO: 8. Download raw file bytes
+    HF->>Tika: 9. Extract clean plain text
+    Tika-->>HF: 10. Normalized text
+    HF->>HF: 11. Normalize & split into bounded chunks (sliding window)
+    HF->>Gemini: 12. Generate 768-dim embeddings in batches
+    Gemini-->>HF: 13. Embedding vectors
+    HF->>DB: 14. Bulk insert DocumentChunks with pgvector HNSW index
+    HF->>DB: 15. Update Status -> Ready
+    HF->>Hub: 16. Broadcast WebSocket: Ready
+```
+
+1. **Storage Decoupling**: Original files are saved to MinIO S3 object storage; the API immediately returns `202 Accepted`.
+2. **Text Normalization**: Apache Tika extracts structured text across file formats, handling headers, footnotes, and tables.
+3. **Bounded Chunking**: Cleaned text is segmented into optimal token chunks with sliding-window overlaps to preserve context.
+4. **HNSW Vector Storage**: 768-dimensional embeddings are indexed in PostgreSQL using pgvector HNSW (`vector_cosine_ops`, `m = 16`, `ef_construction = 64`), enabling sub-millisecond approximate nearest neighbor lookups under enterprise volume.
+5. **Real-Time Visibility**: Hangfire pushes lifecycle updates over SignalR (`Uploaded` ➔ `Processing` ➔ `Ready` / `Failed`), updating the employer's dashboard live without browser polling.
+
+---
+
+## 4. Phase 3: Conversational RAG & Departmental Isolation
+
+When an employee asks a question in the chat interface:
+
+> *"What are the Q3 financial projections and travel meal caps?"*
+
+The system executes the following secure pipeline:
+
+```mermaid
+flowchart TD
+    User([Employee]) --> Chat["Chat Interface (Angular SPA)"]
+    Chat -->|POST /api/conversations/{id}/messages/stream| API["Conversations API"]
+
+    subgraph AuthLayer ["1. Authorization & Context Resolution"]
+        API --> Auth["BFF Session Check & Cached Tenant Resolution"]
+        Auth --> ResolveDepts["Calculate User's Effective Department IDs<br/>(e.g., Engineering only)"]
+        API --> Rewriter{"Context Required?"}
+        Rewriter -->|Follow-up Question| RewriteLLM["Query Rewriter LLM<br/>Produces Standalone Query"]
+        Rewriter -->|Standalone Question| RawQuery["Original User Query"]
+    end
+
+    subgraph RetrievalLayer ["2. Department-Filtered Hybrid Retrieval"]
+        RawQuery & RewriteLLM --> Hybrid["Hybrid Retrieval Service"]
+        Hybrid --> Vec["pgvector Cosine Similarity<br/>(WHERE DeptId IN UserDepts)"]
+        Hybrid --> FTS["Full-Text Keyword Search<br/>(WHERE DeptId IN UserDepts)"]
+        Vec & FTS --> RRF["Reciprocal Rank Fusion (RRF)<br/>Score = SUM(1 / (60 + Rank))"]
+        RRF --> Rerank["Top Authoritative Chunks Pool"]
+    end
+
+    subgraph GenerationLayer ["3. Autonomous Agent Tools & Streaming"]
+        Rerank --> Context["Assemble Grounded Prompt<br/>(System Instructions + Chunks)"]
+        Context --> Gemini["Gemini Flash LLM (Function Calling Loop)"]
+        Gemini -->|Autonomous Decision| Tools{"Tool Call?"}
+        Tools -->|calculate_policy_limit| ToolCalc["Compute Meal Allowance"]
+        Tools -->|escalate_hr_inquiry| ToolEsc["Send HR Admin Escalation Email"]
+        ToolCalc & ToolEsc --> Gemini
+        Tools -->|Synthesize Final Answer| Stream["SSE Token Stream + Citations"]
+    end
+
+    Stream -->|Real-time Tokens & Clickable Citations| Chat
+```
+
+### Critical Security Boundaries
+1. **Physical Retrieval Partitioning**: The vector similarity query applies a hard database filter:
+   ```sql
+   WHERE ("TenantId" = @tenantId) 
+     AND ("DepartmentId" IS NULL OR "DepartmentId" = ANY(@authorizedDepartmentIds))
+   ```
+   If a junior engineer asks about Executive Financials, the database query physically ignores executive documents, guaranteeing that unauthorized chunks are never read into memory or passed to the LLM.
+2. **Autonomous Tool Calling**: When the user's inquiry requires policy computations (e.g. travel limits) or human intervention (e.g. escalating an unanswered question), Gemini autonomously triggers registered agent tools (`calculate_policy_limit`, `escalate_hr_inquiry`) inside the user's tenant context.
+3. **Transparent Citations**: Every generated answer streams alongside verified **Message Citations** (document title, chunk ID, relevance rank, and preview text), allowing employees to audit and verify source material.

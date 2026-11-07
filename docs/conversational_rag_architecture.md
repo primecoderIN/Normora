@@ -550,10 +550,12 @@ server/Modules/Conversations/
 │       └── ITextGenerationService.cs
 ├── Domain/
 │   ├── Conversation.cs
+│   ├── ConversationConstants.cs
 │   ├── ConversationShare.cs
 │   ├── Message.cs
 │   ├── MessageCitation.cs
 │   ├── MessageFeedback.cs
+│   ├── RagConstants.cs
 │   └── SavedAnswer.cs
 ├── Infrastructure/
 │   ├── Llm/
@@ -562,8 +564,9 @@ server/Modules/Conversations/
 │   │   ├── AgentToolRegistry.cs
 │   │   ├── CalculatePolicyLimitTool.cs
 │   │   ├── EscalateInquiryTool.cs
-│   │   └── SearchCompanyDocumentsTool.cs
+│   │   └── SearchCompanyDocumentsTool.cs (dispatches PerformHybridRetrievalQuery via MediatR)
 │   └── Persistence/
+│       ├── Configurations/ (parameterless IEntityTypeConfiguration classes)
 │       ├── ConversationsDbContext.cs
 │       └── Migrations/
 └── Export/
@@ -572,12 +575,14 @@ server/Modules/Conversations/
     └── PdfAnswerExporter.cs
 ```
 
-### Shared Tool Abstractions
-Shared tool calling contracts reside in `Normora.Shared.Interfaces`:
+### Shared Tool Abstractions & Cross-Module Contracts
+Shared tool calling contracts and cross-module MediatR queries maintain strict modular boundaries:
 - `IAgentTool`: Interface declaring tool metadata (`Name`, `Description`, `ParametersSchema`) and async execution (`ExecuteAsync`).
-- `IAgentToolRegistry`: Registry providing tool lookup, execution dispatch, and OpenAPI/Gemini function declaration mapping.
+- `IAgentToolRegistry`: Registry providing tool lookup, execution dispatch, and OpenAPI/Gemini function declaration mapping. Encapsulated within `Conversations`.
 - `ToolExecutionContext`: Tenant-aware context holding `TenantId`, `TenantSlug`, `UserId`, `UserEmail`, and user department IDs.
 - `McpToolDefinition`: Model Context Protocol schema representation for external tool exposure via `McpController`.
+- `GetMcpToolsQuery` / `ExecuteMcpToolCommand` (`Normora.Shared.Contracts.Conversations`): Decouples `McpController` in `Documents` from `IAgentToolRegistry`, dispatching tool discovery and execution via MediatR without direct project references.
+- `PerformHybridRetrievalQuery` (`Normora.Shared.Contracts.Documents`): Decouples conversational RAG retrieval (`ConversationTurnPreparer`, `SearchCompanyDocumentsTool`) from `IRetrievalService`, querying document chunks across the module boundary via MediatR.
 
 ## 25. Main Application Pipeline
 

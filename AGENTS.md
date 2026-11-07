@@ -84,9 +84,18 @@ Application/{Feature}/
 ### Persistence & Entity Configurations
 - **Lean DbContexts**: DbContext classes must remain lean and avoid large inlined Fluent API configurations in `OnModelCreating`.
 - **Dedicated Configurations**: Each entity mapping MUST be defined in its own `IEntityTypeConfiguration<T>` class inside `server/Modules/{ModuleName}/Persistence/Configurations/{Entity}Configuration.cs`.
+- **Parameterless Entity Configurations**: All `IEntityTypeConfiguration<T>` classes MUST be parameterless and have a public default constructor. Never pass scoped dependencies (such as `ITenantContext`) to configuration constructors, as this breaks EF Core assembly scanning (`ApplyConfigurationsFromAssembly`). Global multitenant query filters must bind dynamically to the DbContext's instance property (e.g. `_tenantContext.TenantId`) inside the DbContext.
 - **Auto-Discovery**: The module DbContext applies all configurations automatically via:
   ```csharp
   modelBuilder.ApplyConfigurationsFromAssembly(typeof({ModuleName}DbContext).Assembly);
   ```
 - **100% DbContext Encapsulation**: Module DbContexts are strictly private to their owning module. API controllers, middleware, hubs, and other modules must NEVER inject another module's DbContext. Cross-module reads must use MediatR contracts in `Normora.Shared.Contracts.*`.
+
+### Cross-Module Communication & Boundaries
+- **MediatR Contracts for Cross-Module Calls**: Cross-module operations must strictly communicate using MediatR contracts in `Normora.Shared.Contracts.{ModuleName}`. Never inject internal services or interfaces across module boundaries:
+  - **Cross-Module Hybrid Retrieval**: `Conversations` (such as `ConversationTurnPreparer` and `SearchCompanyDocumentsTool`) queries knowledge chunks in `Documents` via `PerformHybridRetrievalQuery` in `Normora.Shared.Contracts.Documents` — never directly inject `IRetrievalService`.
+  - **Cross-Module MCP Tools**: `Documents` (such as `McpController`) discovers and executes tools residing in `Conversations` via `GetMcpToolsQuery` and `ExecuteMcpToolCommand` in `Normora.Shared.Contracts.Conversations` — never directly inject `IAgentToolRegistry`.
+- **No Module Internals in Shared**: `Normora.Shared` must remain clean and provider-neutral. Module-specific abstractions (like `ITextEmbeddingService`), domain constants (like `RagConstants`, `ConversationConstants`), and domain entities must reside strictly inside their owning module, not in `Normora.Shared`.
+- **Decoupled External Identity (`ExternalUserId`)**: Always reference external OIDC identity provider subject IDs as `ExternalUserId` (e.g. `currentUser.ExternalUserId`). Never re-introduce vendor-specific names like `KeycloakUserId` in domain entities, CQRS handlers, queries, or audit behaviors.
+
 

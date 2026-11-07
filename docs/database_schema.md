@@ -3,7 +3,7 @@
 > **Conventions:**
 > - All primary keys are `uniqueidentifier` (GUID), client-generated unless noted.
 > - Soft deletes are handled via EF Core global query filters where appropriate.
-> - The application uses a Modular Monolith architecture. Each module (`Tenants`, `Documents`, `Conversations`, `Users`) encapsulates its own `DbContext` and schema.
+> - The application uses a Modular Monolith architecture. Each module (`Tenants`, `Documents`, `Conversations`) encapsulates its own `DbContext` and PostgreSQL schema (`tenants`, `documents`, `conversations`). The host also manages the `session` schema for Duende BFF user session storage.
 > - Cross-module foreign keys are mapped by ID only to allow EF Core navigation without duplicating table definitions across DbContexts.
 
 ---

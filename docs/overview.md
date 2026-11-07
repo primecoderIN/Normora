@@ -1,31 +1,102 @@
-# Normora - Project Overview
+# Normora — System Overview & Architecture Summary
 
-## What is Normora?
-Normora is an enterprise-grade full-stack web application. It is designed to be highly scalable, thoroughly secure, and remarkably easy to maintain for growing engineering teams.
+## 📌 Executive Summary
 
-## Key Features
-- **Strict Scalable Architecture**: Utilizes a highly disciplined modular monolith approach on the backend. True boundary enforcement allows for easy transitioning to microservices as the product scales.
-- **Modern Frontend**: Built with Angular, providing a highly responsive, strongly-typed, and robust single-page application experience.
-- **White-Label Branding**: Supports dynamic, per-tenant white-label branding applied seamlessly at runtime via path-based workspace routing and CSS custom properties.
-- **Identity & Security First**: Integrated deeply with Keycloak for industry-standard identity, authentication, and access management.
-- **Reliable Storage Ecosystem**: Uses PostgreSQL for relational data across isolated schema boundaries, and MinIO for highly scalable S3-compatible object storage.
-- **Document Lifecycle Visibility**: Uploaded documents expose a clear `Uploaded`, `Processing`, `Ready`, or `Failed` state as background extraction and indexing progresses.
-- **Background Processing Boundary**: Hangfire persists document-processing jobs in PostgreSQL and runs them in an independently deployable worker process after upload metadata is saved.
-- **Text Extraction**: Apache Tika extracts text from tenant-owned PDF, DOCX, and TXT objects before later normalization, chunking, and embedding stages.
-- **Document Chunks**: Extracted text is normalized into bounded, tenant-owned chunks ready for future embeddings and retrieval.
-- **Realtime Processing Updates**: SignalR broadcasts tenant-scoped document status changes so the employer UI can show processing progress immediately.
-- **Embedding Preparation**: Document chunks support 768-dimensional Gemini embeddings in PostgreSQL `pgvector`, with keyless local development still supported.
-- **Tenant-Safe Retrieval**: Ready document chunks can be ranked by semantic similarity while preserving tenant isolation and source metadata.
-- **Ask Normora**: Employees can ask questions and receive grounded answers with source document and chunk citations.
-- **Department & User Group Isolation**: Documents and users can be segmented into Departments and User Groups. The hybrid search pipeline strictly filters answers so employees only ever interact with Company Wide documents or documents restricted to their assigned departments.
-- **Personal Workspaces**: Every user is automatically provisioned a private, personal workspace. Personal workspaces offer simplified organization (e.g. no departmental segregation) and allow individuals to curate and chat with their own private documents securely.
-- **Audit Trails & Soft Deletion**: Employee removals and document deletions utilize a soft-deletion architecture backed by Global Query Filters, ensuring critical audit history is preserved and accidental data loss is prevented.
-- **Enterprise Audit Logging**: MediatR pipeline behaviors automatically intercept and record all critical workspace mutations (document uploads/deletions, member invitations/removals, department and group changes, branding modifications). Employers can inspect, filter, and review JSON-level audit events through a dedicated UI.
-- **Subscription & Plan Limits**: Strict resource quota enforcement across plan tiers (`Free`, `Pro`, `Enterprise`) governing document counts, member seats, and storage bytes. Built on a provider-agnostic `IPaymentService` abstraction with PayU Hosted Checkout, SHA-512 cryptographic signing, UPI support for local Indian payments (INR), Credit/Debit Cards for international and domestic payments, reverse hash callback verification, multi-currency support with workspace currency persistence, and tier hierarchy action locking.
-- **Provider-Agnostic Infrastructure**: Clean interface abstractions for transactional emails (`IEmailSender` with Resend and Null implementations), payment gateways (`IPaymentService`), external identity (`ExternalUserId` mapping), and storage references (`StorageObjectName`).
-- **Autonomous Agent Tools & MCP**: Multi-turn agentic function calling for deterministic policy calculations, automated HR email escalations, and targeted document search, exposed externally via standard JSON-RPC 2.0 Model Context Protocol (MCP) endpoints (`/api/mcp`).
-- **Modular Monolith & DbContext Encapsulation**: `TenantsDbContext`, `DocumentsDbContext`, and `ConversationsDbContext` stay inside their owning modules. The API requests schema updates through module-owned migrator interfaces; controllers, middleware, and hubs communicate via MediatR contracts and boundary interfaces.
-- **Deferred Physical Data Purge**: Soft-deleted resources undergo physical cleanup (e.g., permanent deletion of MinIO objects and vector chunks) via scheduled Hangfire background jobs to comply with data retention policies while maintaining UI responsiveness.
+**Normora** is an enterprise-grade, multi-tenant knowledge management and conversational AI platform. It solves a fundamental problem facing modern enterprises: **how to empower employees with generative AI grounded in confidential internal company policies, without ever leaking restricted departmental data across organizational boundaries**.
 
-## Target Audience
-This platform is built to accommodate complex enterprise workloads, providing robust multi-tenant data isolation, stringent user management, and seamless document handling out of the box.
+By pairing a **.NET 10 Modular Monolith** with an **Angular 22 Single Page Application (SPA)**, Normora delivers the agility of a monolithic codebase with the strict architectural boundaries, horizontal scalability, and domain encapsulation of microservices.
+
+---
+
+## 🏢 Core Bounded Contexts
+
+Normora is partitioned into three active business modules in `server/Modules/`, each owning its database schema, domain models, and persistence boundaries:
+
+```mermaid
+graph LR
+    subgraph TenantsContext ["1. Tenants Module (schema: tenants)"]
+        T1["Multi-Tenant Workspaces"]
+        T2["Memberships & Roles"]
+        T3["Departments & User Groups"]
+        T4["White-Label Branding"]
+        T5["Audit Logging"]
+        T6["Subscription Billing (PayU)"]
+    end
+
+    subgraph DocumentsContext ["2. Documents Module (schema: documents)"]
+        D1["Document Lifecycle"]
+        D2["Apache Tika Extraction"]
+        D3["Bounded Text Chunking"]
+        D4["pgvector HNSW Embeddings"]
+        D5["Hybrid Retrieval (RRF)"]
+        D6["Model Context Protocol (MCP)"]
+    end
+
+    subgraph ConversationsContext ["3. Conversations Module (schema: conversations)"]
+        C1["Multi-Turn Chat RAG"]
+        C2["Query Rewriter LLM"]
+        C3["Autonomous Agent Tools"]
+        C4["SSE Realtime Streaming"]
+        C5["Citations & Feedback"]
+        C6["Multi-Format Export"]
+    end
+
+    TenantsContext -->|Authorizes Scope| DocumentsContext
+    DocumentsContext -->|Authoritative Chunks| ConversationsContext
+```
+
+### 1. Tenants Module (`server/Modules/Tenants/`)
+- **Workspace Isolation**: Supports path-based multi-tenancy (`/app/workspaces/:slug/*`) with isolated data partitions and private workspace auto-provisioning for individuals.
+- **Hierarchical Access Control**: Empowers administrators to model complex organizational hierarchies using **Departments** (data categories) and **User Groups** (employee cohorts).
+- **Dynamic White-Labeling**: Runtime tenant branding dynamically binds custom primary/secondary hex colors, logos, and favicons to CSS custom properties on page load.
+- **Enterprise Audit Logging**: MediatR pipeline behaviors intercept all state-mutating commands (e.g. member invitations, role promotions, document deletions) and write immutable JSON audit logs.
+- **Subscription Quotas & Billing**: Implements tier limits (`Free`, `Pro`, `Enterprise`) on seats, documents, and storage using a provider-neutral `IPaymentService` abstraction supporting PayU India Hosted Checkout, SHA-512 cryptographic verification, UPI, and international credit cards.
+
+### 2. Documents Module (`server/Modules/Documents/`)
+- **Asynchronous Ingestion Pipeline**: Decouples file uploads from heavy text processing. Uploaded files are securely stored in MinIO object storage, while background ingestion jobs run in an independent **Hangfire** worker process (`Normora.Worker`).
+- **Deep Text Extraction**: Utilizes **Apache Tika** to extract clean, normalized text from enterprise file formats (PDF, DOCX, TXT) with magic-byte security validation.
+- **Vector Embeddings & HNSW Indexing**: Normalizes extracted content into bounded chunks and generates 768-dimensional embeddings using Google's text-embedding models, indexed in PostgreSQL using `pgvector` HNSW (`vector_cosine_ops`) for sub-millisecond similarity lookups.
+- **Departmental Authorization Filtering**: Vector similarity queries strictly enforce department permissions, physically excluding documents outside the authenticated user's department clearance.
+- **Model Context Protocol (MCP)**: Implements standard JSON-RPC 2.0 endpoints (`/api/mcp`) allowing external agent frameworks to discover verified documents (`resources/list`) and execute approved workspace actions (`tools/call`).
+
+### 3. Conversations Module (`server/Modules/Conversations/`)
+- **Conversational RAG (Multi-Turn Chat)**: Manages persistent multi-turn conversations, maintaining sliding-window message memory and conversational summaries.
+- **Context-Aware Query Rewriter**: Determines whether a follow-up inquiry requires historical context (e.g., *"Does this apply to managers?"* ➔ *"Does the 30-day expense policy apply to managers?"*) using a fast LLM before executing retrieval.
+- **Reciprocal Rank Fusion (RRF)**: Merges semantic vector cosine ranking with full-text keyword search scores to produce a reranked, high-precision candidate chunk pool.
+- **Autonomous Agent Tool Calling**: Intercepts Gemini function calling turns to execute registered workspace tools:
+  - `calculate_policy_limit`: Deterministically calculates expense allowances (hotel caps, per-diem allowances, wellness stipends).
+  - `escalate_hr_inquiry`: Dispatches transactional emails to workspace administrators when an inquiry cannot be answered from documentation.
+  - `search_company_documents`: Performs deep cross-module retrieval via MediatR.
+- **Grounded Streaming & Citations**: Streams real-time token buffers to the client via Server-Sent Events (SSE) alongside verified, clickable document chunk citations.
+
+---
+
+## 🛡️ Enterprise Security Architecture
+
+```mermaid
+flowchart TD
+    User([User Request]) --> BFF["Duende BFF Host (Normora.Api)"]
+    
+    subgraph SecurityControls ["Defense-in-Depth Security Layers"]
+        BFF -->|1. Cookie Session Validation| Cookie["HttpOnly, SameSite=Strict, Secure Cookie"]
+        Cookie -->|2. Anti-CSRF Guard| CSRF["X-CSRF: 1 Header Enforcement"]
+        CSRF -->|3. Tenant Resolution| Cache["Redis 30s Sliding Cache (Slug & Membership)"]
+        Cache -->|4. Authorization Boundary| Auth{"Role Check"}
+        Auth -->|Forbidden| BFLA["BFLA Exception -> 403 Forbidden Envelope"]
+        Auth -->|Authorized| CQRS["MediatR Command / Query Handler"]
+        CQRS -->|5. Multi-Tenant Query Filter| DB[("EF Core Global Filter: TenantId == Context")]
+        DB -->|Missing / Cross-Tenant Object| BOLA["BOLA Exception -> 404 Not Found Envelope"]
+    end
+```
+
+1. **BFF Architecture**: Token immunity—no access or refresh tokens are ever exposed to browser JavaScript or stored in local storage.
+2. **BOLA (Broken Object Level Authorization) Prevention**: In accordance with OWASP API Security guidelines, requesting a resource outside the tenant or ownership scope results in a generic `BolaException` mapped to HTTP 404, preventing attacker ID enumeration.
+3. **BFLA (Broken Function Level Authorization) Prevention**: Endpoints enforce role assertions via `[RequireTenant(TenantRoles.Admin)]` and map failures to structured 403 Forbidden envelopes (`BflaException`).
+4. **Soft-Deletion & Deferred Physical Purge**: User removals and document deletions utilize soft-deletion with EF Core global query filters (`RemovedAt == null`, `DeletedAt == null`). Scheduled Hangfire background jobs perform permanent physical cleanup after retention windows.
+
+---
+
+## 🎯 Target Audience & Developer Experience
+
+- **Enterprise Organizations**: Requiring private, tenant-isolated knowledge management that respects strict departmental boundaries.
+- **Full-Stack & Systems Engineers**: Serving as a blueprint for production-ready .NET 10 Modular Monolith and Angular 22 architecture, exhibiting primary constructors, standalone components, Angular Signals, and MediatR CQRS patterns.

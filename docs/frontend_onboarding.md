@@ -1,89 +1,134 @@
 # Frontend Onboarding Guide
 
-This guide is for developers working on the **Normora Angular SPA** (`client/`). It covers the tech stack, core architectural patterns, and how multi-tenant routing is handled on the frontend.
+Welcome to the **Normora Angular SPA** (`client/`). This guide is tailored for frontend engineers to quickly understand our architecture, state management patterns, security model, and styling rules.
 
 ---
 
-## Tech Stack
+## Tech Stack & Architecture
 
-| Concern | Technology |
+| Concern | Technology / Approach |
 |---|---|
-| Framework | Angular 22 |
-| Styling | Tailwind CSS (v4) + PrimeNG Aura Theme (Hybrid Dark Mode) |
-| HTTP Client | `HttpClient` |
-| State Management | Signals + RxJS (for async streams) |
-| Identity & Auth | Keycloak + Duende.BFF |
-| Component Library | PrimeNG (Native HTML tables for complex views) |
+| **Framework** | Angular 22 (100% Standalone Components) |
+| **Language** | Strict TypeScript (No `any`, typed DTOs) |
+| **Styling** | Tailwind CSS v4 + PrimeNG Aura Theme (Synchronized Dark Mode) |
+| **State Management** | Angular Signals (`signal`, `computed`) + RxJS for async streams |
+| **Identity & Session** | Duende BFF (`HttpOnly`, `SameSite=Strict` Cookie Session) + Keycloak OIDC |
+| **Realtime Streams** | SignalR (Document Processing WebSockets) & Server-Sent Events (Conversational RAG) |
+| **Unit Testing** | Vitest (Blazing-fast native ESM test runner) |
 
 ---
 
-## 1. Dark Mode & Theming
+## 1. Dark Mode & Synchronized Theming
 
-Normora uses a synchronized hybrid approach for theming:
-- **PrimeNG Configuration**: The Aura theme is configured in `app.config.ts` with `darkModeSelector: '.app-dark'`.
-- **Tailwind v4**: Configured in `styles.css` using `@custom-variant dark (&:where(.app-dark, .app-dark *));`.
-- **Toggle Mechanism**: The `ThemeService` toggles the `.app-dark` class on the root `<html>` element. Both PrimeNG components and Tailwind `dark:` utility classes (e.g., `dark:bg-slate-900`) respond simultaneously to this single class, ensuring seamless layout and component transitions. When using dynamic class bindings, ensure you use `[class.dark:hover:bg-slate-800]="..."` correctly without spaces inside a single `[class.x]` binding.
+Normora implements a dual-system theme engine that synchronizes PrimeNG UI components and custom Tailwind styling through a single class on the root `<html>` element:
+
+- **PrimeNG Configuration**: Set in `app.config.ts` via `providePrimeNG({ theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } } })`.
+- **Tailwind v4 Configuration**: Configured in `styles.css` using:
+  ```css
+  @custom-variant dark (&:where(.app-dark, .app-dark *));
+  ```
+- **Toggle Mechanism**: `ThemeService` toggles the `.app-dark` class on `document.documentElement`. Both PrimeNG components and Tailwind `dark:` utility classes (e.g., `dark:bg-slate-900`) respond simultaneously.
+- **Tailwind v4 Syntax Rule**: The `!important` modifier is a **suffix**, not a prefix. Always write `class!` (e.g. `border-none!`, `shadow-none!`), and never legacy `!border-none`.
 
 ---
 
-## 2. Application Structure
+## 2. Directory Architecture
 
-The application follows a strictly modular structure, separating core logic from features.
+The frontend follows a domain-driven, vertical slice structure:
 
 ```
 client/src/app/
-├── core/             # Singleton services (Auth, Tenant Context, API interceptors, Realtime)
-├── shared/           # Reusable UI components, pipes, and directives
-├── features/         # Domain-specific modules
-│   ├── auth/         # Login callbacks, Keycloak integration
-│   ├── employer/     # Employer portal
-│   │   ├── dashboard/   # Overview statistics
-│   │   ├── documents/   # Document management, versioning, status tracking
-│   │   ├── employees/   # Team roster, roles, invite modal, pagination
-│   │   └── settings/    # Branding, Departments, User Groups, Audit Logs, Subscription
-│   └── employee/     # Employee portal
-│       ├── ask/         # Ask Normora / Conversational RAG with citation drawers & suggestions
-│       ├── saved/       # Bookmarked answers with multi-format export (PDF/DOCX/MD)
-│       └── profile/     # User profile and linked workspaces
-└── layout/           # Main application shell, Sidebar, Header
+├── core/                         # Singletons, security, and cross-cutting infrastructure
+│   ├── constants/                # Centralized string constants (ApiMessages, RoutePaths)
+│   ├── guards/                   # Route guards (AuthGuard, WorkspaceGuard, RoleGuard)
+│   ├── interceptors/             # HTTP interceptors (ApiInterceptor, TenantContextInterceptor)
+│   ├── models/                   # Strict domain contracts and DTO interfaces
+│   └── services/                 # Global services (AuthService, TenantService, ThemeService)
+├── features/                     # Domain feature modules (lazy-loaded routes)
+│   ├── auth/                     # Login redirection and session state views
+│   ├── employer/                 # Employer administration portal
+│   │   ├── dashboard/            # Telemetry, storage metrics, active user stats
+│   │   ├── documents/            # Ingestion table, upload modal, version history
+│   │   ├── employees/            # Team roster, invitation drawer, pagination
+│   │   └── settings/             # Branding, departments, user groups, audit logs, billing
+│   └── employee/                 # Employee knowledge workspace
+│       ├── ask/                  # Multi-turn Conversational RAG, citations drawer, suggestions
+│       ├── profile/              # User profile and linked workspaces
+│       └── saved/                # Bookmarked answers with multi-format export (PDF/DOCX/MD)
+├── layout/                       # Application shell components (Sidebar, TopNav, Breadcrumbs)
+└── shared/                       # Reusable UI widgets, empty-states, pipes, and directives
 ```
 
 ---
 
-## 3. Multi-Tenant Routing & Workspaces
+## 3. Path-Based Workspace Multi-Tenancy
 
-Normora uses **Path-based Workspace Routing** to visually isolate tenant workspaces.
+Normora visually isolates workspaces through URL paths:
+```
+/app/workspaces/:slug/{employer|employee}/*
+```
 
-When a user logs in, the `AuthService` determines their memberships:
-- If they belong to `Acme Corp`, they are redirected to `/app/workspaces/acme/employer/dashboard`.
-- The `TenantContextInterceptor` intercepts all outbound API requests to `/api/*` and automatically appends the `X-Tenant-Id` header based on the current active workspace.
-- **Important**: To bypass `HttpInterceptors` (like `p-fileupload` component), always explicitly attach `withCredentials: true` and the `X-Tenant-Id` header to requests.
-- The `TenantBrandingService` automatically fetches the branding configuration for `acme` and applies CSS Custom Properties (`--brand-primary`, etc.) to the `document.documentElement` to reskin the application.
-
-### Route Guards
-- `authGuard`: Ensures the user is authenticated via Keycloak.
-- `roleGuard`: Ensures the user holds the appropriate role in the current tenant context.
-- `workspaceGuard`: Synchronizes the active workspace tenant in the `UserService` based on the URL path.
+### Lifecycle & Interceptors
+1. **Login & Redirection**: Upon authentication via Duende BFF, `AuthService` queries user memberships. If the user belongs to workspace `acme`, they navigate to `/app/workspaces/acme/employer/dashboard`.
+2. **`WorkspaceGuard`**: Extracts `:slug` from the active route, resolves tenant metadata, and binds it to `TenantService`.
+3. **`TenantContextInterceptor`**: Intercepts outbound HTTP requests matching `/api/` or `environment.apiUrl` and automatically attaches:
+   ```http
+   X-Tenant-Id: <active-tenant-guid>
+   ```
+4. **Dynamic Branding**: `TenantBrandingService` fetches tenant branding colors and applies CSS custom variables (`--brand-primary`, `--brand-secondary`) to `document.documentElement`, instantly reskinning the workspace without reloading.
 
 ---
 
-## 4. State Management (Signals & RxJS)
+## 4. HTTP Interceptor Pipeline & Error Normalization
 
-We use **Angular Signals** for synchronous UI state and **RxJS** for complex asynchronous data flows (like WebSocket connections and HTTP requests).
+### `ApiInterceptor`
+Centralizes HTTP error handling to eliminate redundant try/catch blocks across UI components:
+- **`401 Unauthorized`**: Automatically redirects browser to the BFF login endpoint (`/bff/login?returnUrl=...`).
+- **`402 Payment Required`**: Emits event to open the subscription upgrade modal (quota exceeded).
+- **`403 Forbidden (BFLA)`**: Displays an access-denied toast notification (`ApiMessages.Forbidden`).
+- **`404 Not Found (BOLA)`**: For non-GET mutations, displays a generic not-found toast (`ApiMessages.NotFound`), preventing resource enumeration.
+- **`429 Too Many Requests`**: Triggers exponential backoff retry notification.
+- **`5xx Server Error`**: Displays a generic system error toast (`ApiMessages.InternalServerError`).
 
-### Signal Example (Local State)
+> [!IMPORTANT]
+> **No Magic Strings**: Never hardcode user-facing error messages in components or services. Always import and use `ApiMessages` from `client/src/app/core/constants/api-messages.ts`.
+
+---
+
+## 5. State Management: Angular Signals & Modern DI
+
+We use **Angular Signals** for synchronous, performant component state and **`inject()`** for dependency injection.
+
+### Standard Component Pattern
 ```typescript
-@Component({...})
+import { Component, inject, signal, computed } from '@angular/core';
+import { DepartmentService } from '@core/services/department.service';
+import { Department } from '@core/models/department.model';
+
+@Component({
+  selector: 'app-department-list',
+  standalone: true,
+  templateUrl: './department-list.component.html'
+})
 export class DepartmentListComponent {
-  departments = signal<Department[]>([]);
-  isLoading = signal(false);
+  private readonly deptService = inject(DepartmentService);
 
-  constructor(private api: DepartmentService) {}
+  // State Signals
+  readonly departments = signal<Department[]>([]);
+  readonly isLoading = signal(false);
+  readonly searchQuery = signal('');
 
-  load() {
+  // Computed Signal
+  readonly filteredDepartments = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    return this.departments().filter(d => d.name.toLowerCase().includes(query));
+  });
+
+  loadDepartments(): void {
     this.isLoading.set(true);
-    this.api.getDepartments().subscribe({
+    this.deptService.getDepartments().subscribe({
       next: (res) => this.departments.set(res.data),
+      error: () => this.isLoading.set(false),
       complete: () => this.isLoading.set(false)
     });
   }
@@ -92,20 +137,24 @@ export class DepartmentListComponent {
 
 ---
 
-## 5. Realtime Events (SignalR)
+## 6. Real-Time Communication
 
-Document processing states (`Uploaded`, `Processing`, `Ready`, `Failed`) are broadcasted in real-time to employers via SignalR.
+### SignalR WebSockets (Document Processing)
+- `DocumentRealtimeService` establishes a connection to `/hubs/documents` using credentials stored in secure BFF cookies (`withCredentials: true`).
+- The backend joins the connection to a tenant-isolated SignalR group.
+- Real-time status events (`Uploaded` ➔ `Processing` ➔ `Ready` / `Failed`) stream to components, updating UI progress bars instantly without polling.
 
-- The `DocumentRealtimeService` in `core/services` manages the WebSocket connection.
-- It authenticates automatically using the secure `__Host-spa` cookie managed by the BFF (ensure `withCredentials: true` is set in connection options).
-- Components subscribe to `documentStatusChanged$` streams to update their local signals without polling the server.
+### Server-Sent Events (SSE) (Conversational RAG)
+- `AskService` consumes streaming responses from `POST /api/conversations/{id}/messages/stream`.
+- Chunks of generated text are parsed and accumulated in real-time, streaming token-by-token directly into the chat interface alongside clickable citation references.
 
 ---
 
-## 6. Adding a New Feature
+## 7. Adding a New Frontend Feature
 
-1. **Create the Models**: Add your TypeScript interfaces in `shared/models/`.
-2. **Create the Service**: Add a service in `core/services/` that extends the base API logic.
-3. **Build the Components**: Generate components inside the appropriate `features/` directory (e.g., `ng g c features/employer/my-new-feature`).
-4. **Update Routing**: Register the component in `employer.routes.ts` or `employee.routes.ts`.
-5. **Enforce Security**: Apply the correct Route Guard (`canActivate: [EmployerGuard]`).
+Follow this checklist when adding a new feature:
+1. **Define DTOs**: Create strict TypeScript interfaces in `core/models/` matching the backend MediatR response envelopes.
+2. **Implement Service**: Create an Angular service using `inject(HttpClient)` with typed methods returning `Observable<ApiResponse<T>>`.
+3. **Build Standalone Component**: Create components with `standalone: true`, using Angular Signals for local state and PrimeNG / Tailwind v4 for layout.
+4. **Register Route**: Add the path to `employer.routes.ts` or `employee.routes.ts` with `canActivate: [WorkspaceGuard, RoleGuard]`.
+5. **Enforce Dark Mode**: Use `dark:` variants on all backgrounds, borders, and text colors.

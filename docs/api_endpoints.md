@@ -158,6 +158,43 @@ The server streams the file as `Content-Disposition: attachment` with a date-sta
 
 ---
 
+## 🤖 Model Context Protocol (MCP)
+
+Implements the standard JSON-RPC 2.0 Model Context Protocol (specification v2024-11-05), exposing enterprise tools and knowledge resources to external AI agent frameworks.
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/mcp` | RequireTenant(Admin, Employee) | Discovery manifest returning workspace server status, capabilities, and tool inventory. |
+| `POST` | `/mcp` | RequireTenant(Admin, Employee) | JSON-RPC 2.0 endpoint handling `initialize`, `ping`, `tools/list`, `tools/call`, `resources/list`, and `resources/read`. |
+
+### Supported MCP Methods
+- `initialize`: Protocol handshake returning server info (`Normora-MCP`, version `1.0.0`) and capabilities (`tools`, `resources`).
+- `ping`: Liveness check.
+- `tools/list`: Lists authorized agent tools with JSON Schema parameters (`calculate_policy_limit`, `escalate_hr_inquiry`, `search_company_documents`).
+- `tools/call`: Executes an authorized agent tool in the authenticated user's tenant context.
+- `resources/list`: Lists verified company documentation chunks accessible to the user's assigned departments.
+- `resources/read`: Reads document chunk content via URI `normora://documents/{id}` with strict BOLA checks.
+
+---
+
+## 💳 Subscriptions & Billing
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/subscriptions/plan` | RequireTenant(Employer) | Get current workspace plan tier (`Free`, `Pro`, `Enterprise`), resource quotas, and current usage. |
+| `POST` | `/subscriptions/upgrade` | RequireTenant(Employer) | Initiate subscription upgrade checkout. Returns PayU India Hosted Checkout form parameters and SHA-512 payment hash. |
+| `POST` | `/subscriptions/payu-callback` | Anonymous (Cryptographically Verified) | Webhook callback verifying PayU SHA-512 reverse hash, updating workspace plan tier upon payment success. |
+
+---
+
+## 🛡️ Audit Logs
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/auditlogs` | RequireTenant(Employer) | Query immutable audit log events with pagination, action filtering, and date ranges. |
+
+---
+
 ## 👤 Users
 
 | Method | Endpoint | Auth | Description |
