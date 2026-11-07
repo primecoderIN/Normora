@@ -88,6 +88,13 @@ export class AuditLogsComponent implements OnInit {
   }
 
   loadLogs(): void {
+    // Multi-Tenant Audit Log Querying & Filtering:
+    // Fetches immutable administrative logs recorded for this tenant.
+    // Supports:
+    // 1. Time-window filtering (past 24h, 7 days, 30 days) converted to UTC ISO strings.
+    // 2. Exact action filtering (e.g. "Department.Created", "Member.Removed").
+    // 3. Multi-field ILike search matching actor email, name, or metadata payload.
+    // 4. Server-side pagination with PageSize = 20.
     this.isLoading.set(true);
     this.errorMessage.set(null);
 

@@ -174,6 +174,9 @@ export class Employees implements OnInit {
   }
 
   onSearchChange(value: string) {
+    // 350ms Debounced Server-Side Search:
+    // Prevents issuing an HTTP query on every individual keystroke.
+    // Resets currentPage back to 1 to view initial results of the filtered set.
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
@@ -185,6 +188,8 @@ export class Employees implements OnInit {
   }
 
   onDepartmentChange(value: string | null) {
+    // Relational Department Roster Filtering:
+    // Filters employees belonging to a specific department either directly or through user groups.
     this.selectedDepartmentId.set(value);
     this.currentPage.set(1);
     this.loadEmployees();
@@ -206,6 +211,12 @@ export class Employees implements OnInit {
   }
 
   executeRemove() {
+    // Employee Membership Soft-Deletion & Invariant Enforcement:
+    // Dispatches to RemoveEmployeeCommandHandler in Tenants module.
+    // Enforces:
+    // 1. Self-removal guard: Admins cannot delete their own active membership.
+    // 2. Last-admin invariant: If this employee is the only remaining admin, removal is blocked.
+    // 3. Soft-delete: Sets RemovedAt timestamp while preserving historical message citations and audit logs.
     const membershipId = this.employeeToRemoveId();
     if (!membershipId) return;
 

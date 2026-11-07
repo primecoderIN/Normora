@@ -140,6 +140,11 @@ export class BrandingComponent {
   }
 
   save() {
+    // White-Label Multipart Form Serialization:
+    // Bundles custom primary/secondary HEX color codes with binary image assets (light logo, dark logo, favicon).
+    // The backend stores binaries in MinIO under '{tenantId}/branding/' and returns cache-busted asset URLs.
+    // TenantBrandingService updates CSS custom properties (--color-primary, --color-secondary) dynamically
+    // on document.documentElement so the entire UI theme repaints instantly.
     this.isSaving.set(true);
     const formData = new FormData();
     formData.append('primaryColor', this.primaryColor());

@@ -148,13 +148,23 @@ export class AcceptInviteComponent implements OnInit {
   }
 
   loginAndAccept() {
-    // Preserve the token across Keycloak's full-page redirect; app.ts consumes it after
-    // authentication and routes back here before the normal workspace destination.
+    // Cross-Redirect State Preservation:
+    // When an unauthenticated user arrives via an email invitation link, we save the invitation
+    // token to localStorage ('pending_invitation') before initiating the OIDC full-page redirect to Keycloak.
+    // Upon successful authentication, the BFF callback handler reads this key and redirects back
+    // to this page to complete the acceptance workflow without losing context.
     localStorage.setItem('pending_invitation', this.token!);
     this.authService.login();
   }
 
   acceptInvite() {
+    // Authoritative Invitation Acceptance:
+    // Dispatches POST /api/invitations/accept with the invitation token.
+    // Backend security invariants enforced:
+    // 1. Authenticated email must match invitation email exactly (anti-account-hijacking defense).
+    // 2. Token must not be expired or previously processed.
+    // 3. Quota check: Tenant must have available employee seats under active TenantPlan.
+    // 4. JIT provisioning: Adds user to TenantMembership with TenantRole.Employee.
     if (!this.token) return;
 
     this.isAccepting.set(true);

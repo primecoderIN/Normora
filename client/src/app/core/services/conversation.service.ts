@@ -75,6 +75,9 @@ export class ConversationService {
 
   /** List all conversations for the current user, newest first. */
   getConversations(limit = 50, offset = 0): Observable<ConversationDto[]> {
+    // Keyset / Offset Pagination:
+    // Retrieves conversation threads scoped to the authenticated caller's OIDC ExternalUserId and active workspace.
+    // Ordered by LastMessageAt descending so actively active conversations appear first.
     return this.http
       .get<ApiResponse<ConversationDto[]>>(this.baseUrl, { params: { limit, offset } })
       .pipe(map(r => r.data));
@@ -82,6 +85,9 @@ export class ConversationService {
 
   /** Load full conversation with all messages and citations. */
   getConversation(id: string): Observable<ConversationDetailDto> {
+    // BOLA-Protected Thread Retrieval:
+    // Fetches full message history and citation links.
+    // If the conversation belongs to another user or workspace, the backend throws BolaException (404).
     return this.http
       .get<ApiResponse<ConversationDetailDto>>(`${this.baseUrl}/${id}`)
       .pipe(map(r => r.data));
@@ -89,6 +95,8 @@ export class ConversationService {
 
   /** Create an empty conversation shell (title assigned by server). */
   createConversation(): Observable<ConversationDto> {
+    // JIT Thread Creation:
+    // Initializes a new conversation shell with default title "New conversation" and SummaryVersion = 0.
     return this.http
       .post<ApiResponse<ConversationDto>>(this.baseUrl, {})
       .pipe(map(r => r.data));
@@ -96,6 +104,8 @@ export class ConversationService {
 
   // Send a chat message to the backend and wait for the LLM to stream or return a grounded answer with citations
   sendMessage(conversationId: string, question: string, limit = 5): Observable<SendMessageResult> {
+    // Synchronous Non-Streaming Fallback:
+    // Used when client does not support SSE streams or for automated testing assertions.
     return this.http
       .post<ApiResponse<SendMessageResult>>(`${this.baseUrl}/${conversationId}/messages`, { question, limit })
       .pipe(map(r => r.data));
@@ -103,16 +113,22 @@ export class ConversationService {
 
   /** Permanently delete a conversation and all its messages. */
   deleteConversation(id: string): Observable<void> {
+    // BOLA-Protected Thread Purge:
+    // Cascades deletion of messages, citations, and public share links.
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   /** Submit positive (1) or negative (2) feedback for an assistant message. */
   submitFeedback(conversationId: string, messageId: string, rating: 1 | 2, comment?: string): Observable<void> {
+    // RAG Evaluation Telemetry:
+    // Records thumbs up/down rating and optional feedback comment for model alignment and retrieval scoring analysis.
     return this.http.post<void>(`${this.baseUrl}/${conversationId}/messages/${messageId}/feedback`, { rating, comment });
   }
 
   /** Fetch AI-generated suggested questions based on documents available to the employee. */
   getSuggestions(): Observable<SuggestedQuestionDto[]> {
+    // Contextual Followup Suggestions:
+    // Calls Gemini with accessible document file names to generate dynamic starter prompt chips.
     return this.http
       .get<ApiResponse<SuggestedQuestionDto[]>>(`${environment.apiUrl}/api/suggestions`)
       .pipe(map(r => r.data));
@@ -120,6 +136,8 @@ export class ConversationService {
 
   /** Create or retrieve a shareable read-only link token for a conversation. */
   shareConversation(id: string): Observable<ConversationShareDto> {
+    // Idempotent Share Link Generation:
+    // Generates a cryptographically random 16-character token (~95 bits entropy) valid for 30 days.
     return this.http
       .post<ApiResponse<ConversationShareDto>>(`${this.baseUrl}/${id}/share`, {})
       .pipe(map(r => r.data));
@@ -127,6 +145,8 @@ export class ConversationService {
 
   /** Retrieve a read-only shared conversation by token. */
   getSharedConversation(token: string): Observable<SharedConversationDetailDto> {
+    // Public Read-Only Access:
+    // Anonymous endpoint returning sanitized thread history without mutating permissions.
     return this.http
       .get<ApiResponse<SharedConversationDetailDto>>(`${this.baseUrl}/shared/${token}`)
       .pipe(map(r => r.data));

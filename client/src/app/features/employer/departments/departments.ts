@@ -71,6 +71,10 @@ export class Departments implements OnInit {
   }
 
   onSave(payload: { name: string; description: string }) {
+    // Department Mutation Dispatch (Create vs Update):
+    // 1. If editTarget is set, issues PUT /api/departments/{id} verifying BOLA tenant ownership.
+    // 2. If editTarget is null, issues POST /api/departments checking case-insensitive name uniqueness.
+    // 3. On success: Dismisses modal, resets editing state, and refreshes the reactive department signal.
     this.isSaving.set(true);
     this.formError.set('');
     const target = this.editTarget();
@@ -94,6 +98,10 @@ export class Departments implements OnInit {
   }
 
   onDelete() {
+    // Department Cascade Deletion:
+    // Dispatches DELETE /api/departments/{id}.
+    // Removing the department cascades across relational mappings, unlinking employee direct assignments
+    // and user group department links without deleting the underlying users.
     const target = this.deleteTarget();
     if (!target) return;
     this.isSaving.set(true);

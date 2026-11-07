@@ -11,6 +11,10 @@ import {
   DsButtonComponent,
 } from '@design-system';
 
+/**
+ * Modal dialog for uploading new company documents or publishing revisions to existing documents.
+ * Allows employers to scope document access to specific departments or designate them as Company-Wide.
+ */
 @Component({
   selector: 'app-document-upload-modal',
   standalone: true,
@@ -96,6 +100,8 @@ export class DocumentUploadModalComponent {
 
   private documentService = inject(DocumentService);
 
+  // File Selection:
+  // Extracts the first selected File object and holds it in reactive signal state for validation.
   handleFileSelect(event: DsFileSelectEvent): void {
     if (event.files && event.files.length > 0) {
       this.selectedFile.set(event.files[0]);
@@ -104,6 +110,9 @@ export class DocumentUploadModalComponent {
     }
   }
 
+  // Upload Dispatcher:
+  // Submits the multipart form payload with selected department scopes to the DocumentService.
+  // Tracks upload progress events and emits uploadSuccess on completion.
   upload(): void {
     const file = this.selectedFile();
     if (!file || this.isUploading()) return;

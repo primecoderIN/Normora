@@ -11,14 +11,22 @@ export const tenantInterceptor: HttpInterceptorFn = (req, next) => {
   const userService = inject(UserService);
   const currentUser = userService.currentUser();
 
+  // Multi-tenancy header injection:
+  // Evaluates whether the user is authenticated and possesses active tenant memberships.
+  // The backend's TenantResolutionMiddleware reads 'X-Tenant-Id' to bind the ambient ITenantContext,
+  // which EF Core uses to dynamically filter database queries by TenantId.
   if (currentUser && currentUser.memberships && currentUser.memberships.length > 0) {
     const activeTenantId = userService.activeTenantId();
     if (!activeTenantId) {
+      // If the path-based router has not yet set the active workspace signal (e.g., during initial app boot),
+      // default to the user's primary workspace to ensure core bootstrap queries do not fail with TenantContextMissing.
       console.warn('[TenantInterceptor] activeTenantId is unset; defaulting to first membership.');
     }
     const tenantId = activeTenantId || currentUser.memberships[0].tenantId;
 
-    // Attach tenant header only to first-party API endpoints
+    // Strict URL boundary check:
+    // Only attach the 'X-Tenant-Id' header to internal API and BFF endpoints.
+    // Never leak internal tenant GUIDs or trigger unnecessary CORS preflights on third-party URLs.
     const isApiRequest = req.url.startsWith('/api/') || 
                          req.url.startsWith('/bff/') || 
                          (Boolean(environment.apiUrl) && req.url.startsWith(environment.apiUrl));

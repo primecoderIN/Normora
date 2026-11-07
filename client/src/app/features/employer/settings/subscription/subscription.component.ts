@@ -238,6 +238,12 @@ export class SubscriptionComponent implements OnInit {
   }
 
   private handleRouteParams(): void {
+    // Payment Gateway Callback Processing:
+    // When PayU finishes processing payment, the backend redirects back to this page with query params:
+    // - status=success&txnid=...&tier=...
+    // - status=failed&error=...
+    // We display the toast notification, clear query params via router.navigate(..., { replaceUrl: true })
+    // to prevent duplicate toasts on browser refresh, and re-fetch usage metrics to reflect new quota limits.
     const status = this.route.snapshot.queryParamMap.get('status');
     const error = this.route.snapshot.queryParamMap.get('error');
     if (status === 'success') {
@@ -259,6 +265,8 @@ export class SubscriptionComponent implements OnInit {
   }
 
   private clearQueryParams(): void {
+    // URL Sanitization:
+    // Clears status/error/txnid from browser URL bar without triggering a full route navigation.
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {},
@@ -270,6 +278,9 @@ export class SubscriptionComponent implements OnInit {
    * Loads resource usage and quota metrics for the active workspace.
    */
   loadUsage(): void {
+    // Workspace Subscription & Quota Loading:
+    // Fetches document count, employee seats, storage bytes, and active plan boundaries.
+    // If the tenant has a locked workspace currency from prior payments, updates currency selector.
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
@@ -295,12 +306,16 @@ export class SubscriptionComponent implements OnInit {
   }
 
   selectPlan(tier: PlanTierType): void {
-    // Business rule: Only upgrade pathways can be selected. Lower/previous tiers are locked.
+    // Invariant: Self-Service Tier Upgrade Enforcement
+    // Only forward upgrade pathways can be selected directly (Free -> Pro -> Enterprise).
+    // Downgrades or re-purchases of equal tiers are locked to prevent inadvertent quota shrinkages.
     if (!this.isTierUpgrade(tier)) {
       return;
     }
 
-    // For paid tiers (Pro, Enterprise), initiate PayU Hosted Checkout Session
+    // Hosted Checkout Initialization (PayU India):
+    // Dispatches to backend CreateCheckoutSessionCommand with selected tier and currency code.
+    // The resulting actionUrl and signed form parameters are posted via hidden DOM form (submitPaymentForm).
     this.isUpdating.set(true);
     this.selectedTierLoading.set(tier);
 

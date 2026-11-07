@@ -148,6 +148,7 @@ export class ConversationSidebarComponent {
   showDeleteConfirm = signal(false);
   private conversationToDelete: string | null = null;
 
+  // Reactive computed thread filter matching case-insensitive title and AI rolling summaries
   filteredConversations = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     if (!query) return this.conversations;
@@ -169,12 +170,17 @@ export class ConversationSidebarComponent {
     return item.id;
   }
 
+  // Virtual Scrolling Infinite Pagination:
+  // Detects when the user scrolls within 10 items of the bottom of the list
+  // and emits onLoadMore to fetch the next page window from the backend.
   onScrolledIndexChange(index: number) {
     if (this.conversations.length > 0 && index + 10 >= this.conversations.length) {
       this.onLoadMore.emit();
     }
   }
 
+  // Deletion Confirmation Modal Workflow:
+  // Stops event bubbling to prevent clicking the parent thread row when clicking the delete trash icon.
   confirmDelete(id: string, event: Event) {
     event.stopPropagation();
     this.conversationToDelete = id;
@@ -189,6 +195,7 @@ export class ConversationSidebarComponent {
     this.showDeleteConfirm.set(false);
   }
 
+  // Formats UTC ISO timestamps into responsive relative strings ("Just now", "5m ago", "Yesterday")
   getRelativeTime(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();

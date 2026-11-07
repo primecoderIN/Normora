@@ -247,6 +247,11 @@ export class OnboardingComponent {
 
   /** Auto-generate the slug from the organization name */
   autoSlug() {
+    // Regex Slug Generation:
+    // Transforms company name into a URL-safe lowercase slug:
+    // 1. Strips non-alphanumeric characters.
+    // 2. Collapses whitespace into single dashes.
+    // 3. Emits without re-triggering form value changes.
     const name = this.onboardingForm.get('name')?.value ?? '';
     const slug = name
       .toLowerCase()
@@ -263,6 +268,9 @@ export class OnboardingComponent {
 
   // Process the acceptance of a workspace invitation and redirect the user to the employee portal on success
   acceptInvite(token: string) {
+    // Invitation Acceptance from Onboarding:
+    // If the authenticated user has pending invitations to an existing company workspace,
+    // they can accept directly from the onboarding screen instead of creating an empty workspace.
     this.isAccepting.set(true);
     this.acceptingToken.set(token);
     this.acceptError.set('');
@@ -298,6 +306,12 @@ export class OnboardingComponent {
 
   // Submit the form to create a new workspace and route the newly minted admin to their employer dashboard
   onSubmit() {
+    // New Workspace Organization Creation:
+    // Issues POST /api/tenants to CreateTenantCommandHandler which:
+    // 1. Enforces slug uniqueness across all organizations.
+    // 2. Establishes the caller as TenantRole.Admin.
+    // 3. Initializes default Free tier quota boundaries in TenantPlans.
+    // 4. Redirects to `/app/workspaces/{slug}/employer/dashboard`.
     if (this.onboardingForm.invalid) return;
 
     this.isLoading.set(true);

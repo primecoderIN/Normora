@@ -221,7 +221,10 @@ export class Conversations implements OnInit, AfterViewChecked {
     this.chatError.set('');
     this.lastSentText = text;
 
-    // Seamless start: if it's a blank slate, create it first
+    // JIT Lazy Conversation Provisioning:
+    // When the user opens the page, they are presented with a blank slate (conv.id is empty).
+    // Instead of creating an empty conversation in the database immediately, we wait until
+    // the user actually sends their first message to create the conversation container.
     if (!conv.id) {
       try {
         const newConv = await new Promise<ConversationDto>((resolve, reject) => {
@@ -239,7 +242,9 @@ export class Conversations implements OnInit, AfterViewChecked {
 
     const conversationId = conv.id;
 
-    // Optimistically add the user message
+    // Optimistic UI State Update:
+    // Generate a temporary client-side GUID (crypto.randomUUID()) and append the user message
+    // immediately to the active conversation Signal so the chat bubble appears with zero perceived latency.
     const optimisticUser: MessageDto = {
       id: crypto.randomUUID(),
       role: 'User',
@@ -255,6 +260,9 @@ export class Conversations implements OnInit, AfterViewChecked {
     try {
       const tenantId = this.userService.activeTenantId() || this.userService.activeTenant()?.tenantId;
 
+      // Duende BFF & Multi-Tenant Request Headers:
+      // - X-CSRF: 1: Mandatory anti-forgery header for Duende BFF on mutating POST endpoints.
+      // - X-Tenant-Id: Explicitly specifies the active workspace context for ambient tenant resolution.
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'X-CSRF': '1'
@@ -263,13 +271,17 @@ export class Conversations implements OnInit, AfterViewChecked {
         headers['X-Tenant-Id'] = tenantId;
       }
 
+      // Native Fetch for Readable Streams (Server-Sent Events):
+      // Angular's HttpClient buffers HTTP responses by default; native fetch with response.body.getReader()
+      // is required to process real-time token chunks incrementally as they are flushed by the backend.
       const response = await fetch(`${this.conversationService.baseUrl}/${conversationId}/messages/stream`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ question: text, limit: 5 })
       });
 
-      // UX-9: Surface HTTP errors from the stream endpoint with a specific message
+      // HTTP Error Handling & Rate Limiting Toasts:
+      // Maps HTTP 429 to friendly backoff message and 403 to permission denial alerts.
       if (!response.ok) {
         const errorBody = await response.text().catch(() => '');
         throw new Error(
@@ -281,6 +293,9 @@ export class Conversations implements OnInit, AfterViewChecked {
         );
       }
 
+      // SSE Chunk Stream Processing:
+      // Uses TextDecoder to assemble byte buffers across network packet boundaries,
+      // splitting by standard SSE double newlines ("\n\n").
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       
@@ -302,8 +317,10 @@ export class Conversations implements OnInit, AfterViewChecked {
               try {
                 const evt = JSON.parse(jsonStr);
                 
+                // Event 1: CitationsReadyEvent
+                // Early citation metadata: capture document IDs, file names, and relevance scores.
+                // We defer rendering the bubble until the first text token arrives to avoid empty placeholders.
                 if (evt.type === 'citations') {
-                  // Store metadata — bubble will be created on first text chunk
                   assistantMsg = {
                     id: evt.assistantMessageId,
                     role: 'Assistant',
@@ -317,18 +334,18 @@ export class Conversations implements OnInit, AfterViewChecked {
                       score: s.score
                     }))
                   };
-                  // Don't push to messages yet — wait for first text chunk
                 } else if (evt.type === 'text') {
+                  // Event 2: TextChunkEvent
+                  // Incrementally append new text tokens to assistantMsg.content
+                  // and update the reactive Signal in-place to trigger partial DOM re-renders.
                   if (assistantMsg) {
                     assistantMsg.content += evt.text;
                     this.activeConversation.update(c => {
                       if (!c) return c;
                       const exists = c.messages.some(m => m.id === assistantMsg!.id);
                       if (!exists) {
-                        // First text chunk — add the bubble now with initial content
                         return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
                       }
-                      // Subsequent chunks — update in place
                       const newMessages = [...c.messages];
                       const idx = newMessages.findIndex(m => m.id === assistantMsg!.id);
                       if (idx >= 0) newMessages[idx] = { ...assistantMsg! };
@@ -337,7 +354,8 @@ export class Conversations implements OnInit, AfterViewChecked {
                     this.shouldScrollToBottom = true;
                   }
                 } else if (evt.type === 'finished') {
-                  // Done
+                  // Event 3: StreamFinishedEvent
+                  // Stream generation completed; title may have been asynchronously updated.
                 }
               } catch (e) {
                 console.error('Failed to parse SSE chunk', e);
@@ -347,9 +365,11 @@ export class Conversations implements OnInit, AfterViewChecked {
         }
       }
 
-      // Refresh list for updated title
+      // Re-fetch conversation roster to synchronize the auto-generated title
       this.loadConversations();
     } catch (err: unknown) {
+      // Optimistic Rollback on Network Failure:
+      // If the stream request fails, remove the optimistic user message bubble and display the error banner.
       const errorMsg = err instanceof Error ? err.message : 'Something went wrong while streaming the response.';
       this.chatError.set(errorMsg);
       this.activeConversation.update(c =>

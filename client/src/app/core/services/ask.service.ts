@@ -23,12 +23,26 @@ interface ApiResponse<T> {
   data: T;
 }
 
+/**
+ * Service managing non-streaming RAG inquiries against the active workspace knowledge base.
+ * Ensures the user's ambient tenant context is fully hydrated before dispatching the POST request.
+ */
 @Injectable({ providedIn: 'root' })
 export class AskService {
   private http = inject(HttpClient);
   private userService = inject(UserService);
   private apiUrl = `${environment.apiUrl}/api/ask`;
 
+  /**
+   * Submits a question to the non-streaming RAG endpoint.
+   *
+   * Workflow:
+   * 1. Awaits resolved user profile to guarantee ambient tenant context exists.
+   * 2. The HTTP TenantInterceptor intercepts the outgoing POST and attaches the 'X-Tenant-Id' header.
+   * 3. Returns the grounded answer text alongside citation references and similarity scores.
+   *
+   * @param question The user's natural language inquiry string.
+   */
   ask(question: string): Observable<AskResult> {
     // Ensure the user profile is fully loaded so the HTTP interceptor can inject the correct tenant ID into the headers before asking the question
     const profile = this.userService.currentUser()

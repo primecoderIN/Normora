@@ -66,12 +66,17 @@ export class UserService {
       return of({ success: true, message: '', data: this.currentUser()! });
     }
     
+    // In-flight request deduplication via shareReplay(1):
+    // When multiple route guards (AuthGuard, WorkspaceGuard, RoleGuard) fire in parallel during router transitions,
+    // this prevents firing duplicate concurrent GET /api/users/me requests to the backend BFF.
     if (!this.meRequest$) {
       this.meRequest$ = this.http.get<ApiResponse<CurrentUser>>(`${this.apiUrl}/me`).pipe(
         tap(response => {
           if (response.success) {
             this.currentUser.set(response.data);
             if (!this.activeTenantId() && response.data.memberships.length > 0) {
+              // Default landing workspace resolution:
+              // Prioritize corporate organization workspaces over personal workspaces so enterprise users land directly on their team dashboard.
               const defaultWorkspace = response.data.memberships.find(m => !m.isPersonal) || response.data.memberships[0];
               this.activeTenantId.set(defaultWorkspace.tenantId);
             }

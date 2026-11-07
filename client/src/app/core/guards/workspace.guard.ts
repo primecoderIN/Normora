@@ -15,6 +15,9 @@ export const workspaceGuard: CanActivateFn = (route) => {
   const brandingService = inject(TenantBrandingService);
   const router = inject(Router);
 
+  // Path-based workspace slug extraction:
+  // Reads the ':slug' parameter from the URL (e.g., /app/workspaces/acme/employer/dashboard).
+  // If missing or unparseable, safely route back to the login screen.
   const slug = route.paramMap.get('slug');
   if (!slug) {
     return router.createUrlTree([AppRoutes.Login]);
@@ -23,16 +26,20 @@ export const workspaceGuard: CanActivateFn = (route) => {
   const currentUser = userService.currentUser();
 
   const validateAccess = (user: CurrentUser | null) => {
+    // Unauthenticated user: redirect to login to trigger the BFF authentication flow.
     if (!user) return router.createUrlTree([AppRoutes.Login]);
 
+    // BOLA verification on the client tier:
+    // Ensure the authenticated user holds an active membership matching this exact workspace slug.
     const membership = user.memberships.find((m: UserTenantMembership) => m.tenantSlug === slug);
     if (!membership) {
-      // Authenticated user lacks membership in this workspace; redirect to access-denied to prevent redirect loops
+      // If the user is logged in but lacks access to this tenant, redirect to AccessDenied.
+      // Redirecting to Login would trigger a session loop because the user is already authenticated.
       console.warn(`Access denied. User is not a member of workspace: ${slug}`);
       return router.createUrlTree([AppRoutes.AccessDenied]);
     }
 
-    // Set active workspace context and bootstrap white-label CSS variables
+    // Set active workspace context in the global Signal and dynamically inject white-label branding CSS variables.
     userService.activeTenantId.set(membership.tenantId);
     brandingService.applyBrandingForSlug(slug).subscribe();
     return true;

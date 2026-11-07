@@ -82,6 +82,10 @@ export class UserGroups implements OnInit {
   }
 
   onSaveForm(payload: { name: string; description: string }) {
+    // User Group Metadata Save (Create vs Update):
+    // 1. If editTarget is set, issues PUT /api/user-groups/{id} verifying BOLA tenant ownership.
+    // 2. If editTarget is null, issues POST /api/user-groups verifying case-insensitive name uniqueness.
+    // 3. On completion, dismisses modal and refreshes the reactive groups signal.
     this.isSaving.set(true);
     this.formError.set('');
     const target = this.editTarget();
@@ -102,6 +106,8 @@ export class UserGroups implements OnInit {
   // --- Assignments ---
 
   async openAssignments(group: UserGroup) {
+    // Group Assignment Drawer Activation:
+    // Fetches full detail (assigned members and departments) to populate the dual multi-select selector.
     this.assignmentTarget.set(group);
     this.formError.set('');
     this.loadingDetail.set(true);
@@ -124,6 +130,10 @@ export class UserGroups implements OnInit {
   }
 
   onSaveAssignments(payload: { memberUserIds: string[]; departmentIds: string[] }) {
+    // Group Assignment Synchronization:
+    // Posts memberUserIds and departmentIds to PUT /api/user-groups/{id}/assignments.
+    // The backend validates that all departmentIds and userIds strictly belong to the current active tenant
+    // (SEC-17 defense) before synchronizing relational join tables.
     const target = this.assignmentTarget();
     if (!target) return;
     this.isSaving.set(true);
@@ -146,6 +156,9 @@ export class UserGroups implements OnInit {
   }
 
   onDelete() {
+    // User Group Deletion:
+    // Dispatches DELETE /api/user-groups/{id}.
+    // Unlinks group memberships and department associations while preserving the underlying users and departments.
     const target = this.deleteTarget();
     if (!target) return;
     this.isSaving.set(true);

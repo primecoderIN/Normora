@@ -101,7 +101,9 @@ export class SavedAnswers implements OnInit {
   }
 
   unsave(answer: SavedAnswerDto) {
-    // Optimistic removal
+    // Optimistic UI Removal & Rollback:
+    // Immediately filters the saved answer card out of the reactive Signal list.
+    // If the backend mutation fails, the error callback reverts the filter and restores the card.
     this.savedAnswers.update(list => list.filter(a => a.id !== answer.id));
     this.savedAnswerService.unsaveAnswer(answer.messageId).subscribe({
       error: () => this.savedAnswers.update(list => [answer, ...list])
@@ -114,6 +116,9 @@ export class SavedAnswers implements OnInit {
   }
 
   exportAnswer(answer: SavedAnswerDto, format: ExportFormat) {
+    // Multi-Format File Export (Markdown / QuestPDF / OpenXML Word):
+    // Prevents concurrent export spam by tracking exportingId.
+    // Triggers blob download stream with appropriate MIME type and Content-Disposition file header.
     if (this.exportingId()) return;
 
     this.openExportMenuId.set(null);
@@ -136,10 +141,15 @@ export class SavedAnswers implements OnInit {
   }
 
   hasOutdatedCitations(answer: SavedAnswerDto): boolean {
+    // Knowledge Staleness Invariant:
+    // When employer uploads newer versions of company documents, previously saved answers may reference
+    // outdated chunks. We display an amber warning badge if any citation has isOutdated == true.
     return answer.citations.some(c => c.isOutdated);
   }
 
   openPreview(chunkId: string) {
+    // Citation Drawer Activation:
+    // Opens sliding passage inspection flyout with the underlying chunk text.
     this.chunkDrawer.open(chunkId);
   }
 }

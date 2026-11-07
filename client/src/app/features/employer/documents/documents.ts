@@ -79,6 +79,11 @@ export class Documents implements OnInit, OnDestroy {
     this.loadDocuments();
     this.loadDepartments();
 
+    // SignalR Real-Time Ingestion Subscriptions:
+    // Resolves current tenant workspace ID and joins the tenant-isolated SignalR notification group.
+    // Listens for:
+    // 1. DocumentStatusChanged: Updates status badges in real-time as Hangfire processes chunks (Uploaded -> Processing -> Ready/Failed).
+    // 2. DocumentDeleted: Immediately removes deleted document rows from the reactive signal list without page reload.
     const activeId = this.userService.activeTenantId();
     const tenantId = activeId || this.userService.currentUser()?.memberships[0]?.tenantId;
     if (tenantId) {
@@ -93,6 +98,7 @@ export class Documents implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Teardown: Disconnect from SignalR hub group when leaving employer documents view
     void this.documentRealtimeService.disconnect();
   }
 

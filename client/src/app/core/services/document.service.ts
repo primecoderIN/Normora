@@ -51,6 +51,9 @@ export class DocumentService {
   private apiUrl = `${environment.apiUrl}/api/documents`;
 
   getDocuments(): Observable<Document[]> {
+    // Multi-Tenant Knowledge Base Roster:
+    // Dispatches GET /api/documents to fetch active documents owned by the ambient workspace.
+    // Eagerly brings back version history summaries and department bindings for UI badges.
     return this.http.get<ApiResponse<Document[]>>(this.apiUrl)
       .pipe(map(response => response.data));
   }
@@ -61,6 +64,12 @@ export class DocumentService {
    * and a final event with `document` set when the server has processed the file.
    */
   uploadDocument(file: File, departmentIds?: string[], documentId?: string | null): Observable<UploadProgress> {
+    // Multipart Binary Upload with Angular HTTP Progress Reporting:
+    // 1. Constructs FormData containing the binary file stream.
+    // 2. If appending a new revision to an existing document, passes documentId to trigger version bump.
+    // 3. If new document, passes departmentIds for ACL bindings.
+    // 4. reportProgress: true emits intermediate HttpEventType.UploadProgress events calculated
+    //    via Math.round((100 * loaded) / total) to power UI progress bars.
     const formData = new FormData();
     formData.append('file', file);
     if (departmentIds && departmentIds.length > 0 && !documentId) {
@@ -97,11 +106,16 @@ export class DocumentService {
   }
 
   deleteDocument(id: string): Observable<void> {
+    // Soft-Delete Dispatch:
+    // Calls DELETE /api/documents/{id} to mark the document as soft-deleted.
+    // The backend broadcasts SignalR event to immediately remove the row on all open client sessions.
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`)
       .pipe(map(() => void 0));
   }
 
   getDocumentChunk(chunkId: string): Observable<DocumentChunkPreviewDto> {
+    // Citation Drawer Raw Passage Lookup:
+    // Fetches the exact extracted text chunk for citation drawer inspection.
     return this.http.get<ApiResponse<DocumentChunkPreviewDto>>(`${this.apiUrl}/chunks/${chunkId}`)
       .pipe(map(response => response.data));
   }

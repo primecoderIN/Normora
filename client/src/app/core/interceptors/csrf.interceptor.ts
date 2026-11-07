@@ -11,6 +11,8 @@ export const csrfInterceptor: HttpInterceptorFn = (req, next) => {
   const isApiEndpoint = req.url.startsWith('/api/') || 
                        (Boolean(environment.apiUrl) && req.url.startsWith(environment.apiUrl));
 
+  // If the outbound request targets a protected boundary, attach the anti-CSRF header
+  // so Duende BFF allows the request to pass through without rejecting it with HTTP 400 Bad Request.
   if (isMutatingRequest || isBffEndpoint || isApiEndpoint) {
     const csrfReq = req.clone({
       headers: req.headers.set('X-CSRF', '1')

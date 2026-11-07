@@ -72,6 +72,7 @@ export class TenantBrandingService {
    * Generates shades 50-950 for PrimeNG Aura components and custom styles.
    */
   private applyCssVariables(branding: TenantBrandingDto): void {
+    // SSR safe-guard: prevent DOM manipulation crashes when rendering on the Node.js server engine.
     if (typeof document === 'undefined') return;
 
     const root = document.documentElement;

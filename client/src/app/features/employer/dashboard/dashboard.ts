@@ -51,6 +51,13 @@ export class Dashboard implements OnInit {
   activityChartOptions: ChartOptions<'line'> | null = null;
 
   ngOnInit() {
+    // Executive Workspace Metrics Aggregation:
+    // Dispatches GET /api/dashboard/summary to load:
+    // 1. KPI stat cards: active members, document count, conversation turns, storage consumption.
+    // 2. Chart.js Donut chart: Departmental document coverage distribution across organizational units.
+    // 3. Chart.js Line chart: 30-day temporal conversational query volume.
+    // Backend leverages Redis distributed caching (`dashboard:{tenantId}`) with automatic cache eviction
+    // whenever documents or memberships are added or removed.
     this.dashboardService.getSummary().subscribe({
       next: (res) => {
         this.summary.set(res.data);

@@ -34,7 +34,9 @@ export class DocumentRealtimeService implements OnDestroy {
       return;
     }
 
-    // Connect with credentials so session cookie and CSRF header authenticate the connection
+    // Real-time WebSocket connection to ASP.NET Core SignalR hub:
+    // withCredentials: true ensures the Duende BFF encrypted session cookie is sent with the initial HTTP upgrade request.
+    // 'X-CSRF: 1' satisfies anti-forgery middleware constraints.
     this.connection = new HubConnectionBuilder()
       .withUrl(`${environment.apiUrl}/hubs/documents`, {
         headers: { 'X-CSRF': '1' },
@@ -49,7 +51,9 @@ export class DocumentRealtimeService implements OnDestroy {
     }
 
     await this.connection.start();
-    // Subscribe to tenant-scoped document events
+
+    // Join the tenant-isolated broadcast group.
+    // The server-side DocumentHub validates that the authenticated connection possesses membership in this tenant before authorizing group entry.
     await this.connection.invoke('JoinTenant', tenantId);
   }
 
