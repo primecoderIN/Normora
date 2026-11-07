@@ -13,7 +13,7 @@ public class UnsaveAnswerCommandHandler(
     {
         var saved = await context.SavedAnswers
             .FirstOrDefaultAsync(
-                s => s.MessageId == request.MessageId && s.UserId == currentUser.KeycloakUserId,
+                s => s.MessageId == request.MessageId && s.UserId == currentUser.ExternalUserId,
                 cancellationToken);
 
         if (saved is not null)

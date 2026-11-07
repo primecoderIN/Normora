@@ -27,7 +27,7 @@ internal sealed class SubmitFeedbackCommandHandler(
         }
 
         var feedback = await dbContext.MessageFeedbacks
-            .FirstOrDefaultAsync(f => f.MessageId == request.MessageId && f.UserId == currentUser.KeycloakUserId, cancellationToken);
+            .FirstOrDefaultAsync(f => f.MessageId == request.MessageId && f.UserId == currentUser.ExternalUserId, cancellationToken);
 
         if (feedback is not null)
         {
@@ -39,7 +39,7 @@ internal sealed class SubmitFeedbackCommandHandler(
         {
             feedback = new MessageFeedback
             {
-                UserId = currentUser.KeycloakUserId,
+                UserId = currentUser.ExternalUserId,
                 MessageId = request.MessageId,
                 Rating = request.Rating,
                 Comment = request.Comment

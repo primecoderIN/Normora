@@ -23,22 +23,22 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             throw new UnauthorizedAccessException(Normora.Shared.Constants.ApiMessages.Unauthorized);
         }
 
-        var keycloakId = currentUser.KeycloakUserId;
+        var externalUserId = currentUser.ExternalUserId;
 
         // Start a database transaction so we can safely roll back if creating the user, tenant, or membership fails midway
         using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            // Check if this Keycloak user already has a local profile in our database, and create one if they don't
+            // Check if this user already has a local profile in our database, and create one if they don't
             var user = await dbContext.Users
-                .FirstOrDefaultAsync(u => u.ExternalUserId == keycloakId, cancellationToken);
+                .FirstOrDefaultAsync(u => u.ExternalUserId == externalUserId, cancellationToken);
 
             if (user == null)
             {
                 user = new User
                 {
-                    ExternalUserId = keycloakId,
+                    ExternalUserId = externalUserId,
                     Email = currentUser.Email,
                     DisplayName = currentUser.DisplayName
                 };

@@ -21,7 +21,7 @@ public class GetConversationQueryHandler(
             .ThenInclude(m => m.Citations)
             .Include(c => c.Messages)
             .ThenInclude(m => m.Feedbacks)
-            .Where(c => c.Id == request.Id && c.UserId == currentUser.KeycloakUserId)
+            .Where(c => c.Id == request.Id && c.UserId == currentUser.ExternalUserId)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (conversation is null)
@@ -56,8 +56,8 @@ public class GetConversationQueryHandler(
                         c.FileName,
                         c.Score,
                         outdatedChunkIds.Contains(c.DocumentChunkId))).ToList(),
-                    m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.KeycloakUserId) != null 
-                        ? m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.KeycloakUserId)!.Rating 
+                    m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.ExternalUserId) != null 
+                        ? m.Feedbacks.FirstOrDefault(f => f.UserId == currentUser.ExternalUserId)!.Rating 
                         : null
                 )).ToList()
         );

@@ -17,7 +17,7 @@ public class DeleteConversationCommandHandler(
     {
         // Enforce user ownership: users can only delete their own conversations
         var conversation = await context.Conversations
-            .Where(c => c.Id == request.Id && c.UserId == currentUser.KeycloakUserId)
+            .Where(c => c.Id == request.Id && c.UserId == currentUser.ExternalUserId)
             .FirstOrDefaultAsync(cancellationToken);
 
         // Throw BolaException mapped to 404 Not Found to prevent resource enumeration

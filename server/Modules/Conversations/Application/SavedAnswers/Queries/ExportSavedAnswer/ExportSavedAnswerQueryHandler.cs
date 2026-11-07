@@ -30,7 +30,7 @@ public class ExportSavedAnswerQueryHandler(
                 .ThenInclude(m => m.Conversation)
             .FirstOrDefaultAsync(
                 s => s.Id == request.SavedAnswerId &&
-                     s.UserId == currentUser.KeycloakUserId,
+                     s.UserId == currentUser.ExternalUserId,
                 cancellationToken)
             ?? throw new BolaException();
 

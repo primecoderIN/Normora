@@ -63,13 +63,13 @@ public class RemoveEmployeeCommandHandler(
         try
         {
             var client = httpClientFactory.CreateClient("KeycloakAdmin");
-            logger.LogInformation("Successfully un-synced user {KeycloakUserId} from tenant {TenantId} in Keycloak.", membership.User.KeycloakUserId, tenantId);
+            logger.LogInformation("Successfully un-synced user {ExternalUserId} from tenant {TenantId} in Keycloak.", membership.User.ExternalUserId, tenantId);
         }
         catch (Exception ex)
         {
             // We log the error but DO NOT revert the DB transaction. 
             // Local DB is the source of truth for the application.
-            logger.LogError(ex, "Failed to remove user {KeycloakUserId} from tenant {TenantId} in Keycloak.", membership.User.KeycloakUserId, tenantId);
+            logger.LogError(ex, "Failed to remove user {ExternalUserId} from tenant {TenantId} in Keycloak.", membership.User.ExternalUserId, tenantId);
         }
 
         return true;

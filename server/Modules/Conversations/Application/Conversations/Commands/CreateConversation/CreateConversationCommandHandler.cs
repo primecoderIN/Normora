@@ -20,7 +20,7 @@ public class CreateConversationCommandHandler(
         var conversation = new Conversation
         {
             Id = Guid.NewGuid(),
-            UserId = currentUser.KeycloakUserId,
+            UserId = currentUser.ExternalUserId,
             TenantId = tenantContext.TenantId!.Value,
             Title = "New conversation",
             SummaryVersion = 0,

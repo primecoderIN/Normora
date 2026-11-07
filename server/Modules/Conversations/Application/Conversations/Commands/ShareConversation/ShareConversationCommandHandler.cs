@@ -19,7 +19,7 @@ public class ShareConversationCommandHandler(
     {
         // 1. Verify caller owns the conversation
         var conversation = await context.Conversations
-            .FirstOrDefaultAsync(c => c.Id == request.ConversationId && c.UserId == currentUser.KeycloakUserId, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Id == request.ConversationId && c.UserId == currentUser.ExternalUserId, cancellationToken);
 
         if (conversation is null)
         {
@@ -48,7 +48,7 @@ public class ShareConversationCommandHandler(
         {
             Id = Guid.NewGuid(),
             ConversationId = conversation.Id,
-            CreatedByUserId = currentUser.KeycloakUserId,
+            CreatedByUserId = currentUser.ExternalUserId,
             Token = token,
             CreatedAt = DateTimeOffset.UtcNow,
             ExpiresAt = null

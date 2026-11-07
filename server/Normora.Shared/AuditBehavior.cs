@@ -31,7 +31,7 @@ public sealed class AuditBehavior<TRequest, TResponse>(
 
                     await auditService.RecordAsync(
                         tenantId.Value,
-                        currentUser.KeycloakUserId,
+                        currentUser.ExternalUserId,
                         currentUser.Email,
                         currentUser.DisplayName,
                         auditable.Action,

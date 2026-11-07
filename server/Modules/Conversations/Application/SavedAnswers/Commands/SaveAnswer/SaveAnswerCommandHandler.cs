@@ -17,7 +17,7 @@ public class SaveAnswerCommandHandler(
         var existing = await context.SavedAnswers
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                s => s.UserId == currentUser.KeycloakUserId && s.MessageId == request.MessageId,
+                s => s.UserId == currentUser.ExternalUserId && s.MessageId == request.MessageId,
                 cancellationToken);
 
         if (existing is not null)
@@ -29,7 +29,7 @@ public class SaveAnswerCommandHandler(
             .Include(m => m.Conversation)
             .FirstOrDefaultAsync(
                 m => m.Id == request.MessageId &&
-                     m.Conversation.UserId == currentUser.KeycloakUserId,
+                     m.Conversation.UserId == currentUser.ExternalUserId,
                 cancellationToken)
             ?? throw new Normora.Shared.Exceptions.BolaException();
 
@@ -44,7 +44,7 @@ public class SaveAnswerCommandHandler(
         {
             Id = Guid.NewGuid(),
             TenantId = tenantContext.TenantId.Value,
-            UserId = currentUser.KeycloakUserId,
+            UserId = currentUser.ExternalUserId,
             MessageId = request.MessageId,
             ConversationId = message.ConversationId,
             CreatedAt = DateTimeOffset.UtcNow

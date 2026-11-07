@@ -22,7 +22,7 @@ public class GetSavedAnswersQueryHandler(
             .AsNoTracking()
             .Include(s => s.Message)
             .ThenInclude(m => m.Citations)
-            .Where(s => s.UserId == currentUser.KeycloakUserId)
+            .Where(s => s.UserId == currentUser.ExternalUserId)
             .OrderByDescending(s => s.CreatedAt)
             .Skip(offset)
             .Take(limit)

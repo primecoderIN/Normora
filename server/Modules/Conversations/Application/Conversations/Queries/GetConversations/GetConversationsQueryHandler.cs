@@ -18,7 +18,7 @@ public class GetConversationsQueryHandler(
 
         return await context.Conversations
             .AsNoTracking()
-            .Where(c => c.UserId == currentUser.KeycloakUserId)
+            .Where(c => c.UserId == currentUser.ExternalUserId)
             .OrderByDescending(c => c.LastMessageAt)
             .Skip(offset)
             .Take(limit)
