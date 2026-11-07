@@ -8,12 +8,32 @@ namespace Normora.Modules.Tenants.Persistence;
 /// Resolves current membership state from the database so revocations and permission changes take effect
 /// immediately across every API replica.
 /// </summary>
-public sealed class TenantResolutionService(TenantsDbContext dbContext) : ITenantResolutionService
+public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheService? cache = null) : ITenantResolutionService
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
+
     public async Task<ResolvedTenantAccess?> ResolveTenantAccessAsync(
         Guid tenantId,
         string externalUserId,
         CancellationToken cancellationToken = default)
+    {
+        if (cache is null)
+        {
+            return await QueryTenantAccessAsync(tenantId, externalUserId, cancellationToken);
+        }
+
+        var cacheKey = $"tenant_access:{tenantId:N}:{externalUserId}";
+        return await cache.GetOrCreateAsync(
+            cacheKey,
+            ct => QueryTenantAccessAsync(tenantId, externalUserId, ct),
+            CacheTtl,
+            cancellationToken);
+    }
+
+    private async Task<ResolvedTenantAccess?> QueryTenantAccessAsync(
+        Guid tenantId,
+        string externalUserId,
+        CancellationToken cancellationToken)
     {
         var membership = await dbContext.TenantMemberships
             .AsNoTracking()
