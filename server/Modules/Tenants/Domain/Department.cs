@@ -1,21 +1,24 @@
 namespace Normora.Modules.Tenants.Domain;
 
 /// <summary>
-/// Represents an organizational department or team within a tenant (e.g., "Frontend", "HR").
-/// Documents can be scoped to one or more departments. Users access departmental documents
-/// via direct assignment or through User Group inheritance.
+/// Domain Entity representing an organizational department within a tenant workspace.
+/// Role in Conversational RAG & ACL:
+/// 1. Departmental Scoping: Internal documents can be restricted to specific departments.
+/// 2. Access Resolution: Employees acquire departmental visibility through direct assignment
+///    (MembershipDepartment) or inherited through user groups (UserGroupDepartment).
+/// 3. Invariant: Department names must be unique within a tenant workspace (case-insensitive).
 /// </summary>
 public class Department : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; }
 
-    /// <summary>The tenant this department belongs to.</summary>
+    /// <summary>The tenant workspace this department belongs to.</summary>
     public Guid TenantId { get; set; }
 
-    /// <summary>The display name of the department (e.g., "Frontend", "HR").</summary>
+    /// <summary>The display name of the department (e.g. "Engineering", "Legal", "People Ops").</summary>
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>An optional description of the department's purpose.</summary>
+    /// <summary>An optional description of the department's responsibilities.</summary>
     public string? Description { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

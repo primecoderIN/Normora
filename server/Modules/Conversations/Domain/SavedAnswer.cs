@@ -3,17 +3,21 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Conversations.Domain;
 
 /// <summary>
-/// Represents an assistant message that an employee has bookmarked for later reference.
-/// A user can save any assistant message from any of their conversations.
+/// Domain Entity representing a bookmarked assistant response.
+/// Allows employees to preserve valuable AI-generated answers, citations, and export them
+/// to Markdown, PDF, or Word documents.
+/// Invariants:
+/// - Partitioned by TenantId and UserId (ExternalUserId).
+/// - Links to MessageId (only assistant messages can be bookmarked).
 /// </summary>
 public class SavedAnswer : ITenantEntity
 {
     public Guid Id { get; set; }
 
-    /// <summary>The tenant this saved answer belongs to.</summary>
+    /// <summary>The tenant workspace this saved answer belongs to.</summary>
     public Guid TenantId { get; set; }
 
-    /// <summary>The Keycloak user ID of the employee who saved this answer.</summary>
+    /// <summary>The OIDC subject identifier (ExternalUserId) of the employee who saved this answer.</summary>
     public string UserId { get; set; } = string.Empty;
 
     /// <summary>The assistant message that was saved.</summary>

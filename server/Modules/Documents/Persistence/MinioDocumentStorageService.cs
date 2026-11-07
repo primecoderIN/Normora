@@ -25,6 +25,9 @@ public class MinioDocumentStorageService(IMinioClient minioClient, ILogger<Minio
     /// </summary>
     private async Task EnsureBucketExistsAsync()
     {
+        // Thread-Safe Lazy S3 Bucket Provisioning:
+        // Double-checked locking pattern using SemaphoreSlim ensures the bucket is checked and created
+        // exactly once without blocking the ASP.NET dependency injection container startup.
         if (_bucketEnsured) return;
         await _lock.WaitAsync();
         try
@@ -57,7 +60,10 @@ public class MinioDocumentStorageService(IMinioClient minioClient, ILogger<Minio
     {
         await EnsureBucketExistsAsync();
 
-        // Prefix the file path with the TenantId to physically isolate organizations' documents inside the shared S3 bucket
+        // Physical Object Key Partitioning:
+        // Prefixes the storage key with the tenant GUID: "{tenantId}/{Guid}_{fileName}".
+        // This physically partitions all tenant binary objects within the bucket, preventing key collisions
+        // and enabling straightforward bucket lifecycle policies or tenant-specific access delegations.
         var objectName = $"{tenantId}/{Guid.NewGuid()}_{file.FileName}";
 
         using var stream = file.OpenReadStream();

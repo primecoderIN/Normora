@@ -29,6 +29,9 @@ public class UsersController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetMe(CancellationToken cancellationToken = default)
     {
+        // Identity & Workspace Discovery:
+        // Returns the caller's profile, roles, accessible workspaces, and pending invitations.
+        // Protected by AsBffApiEndpoint() in the host pipeline, requiring X-CSRF: 1 header.
         var query = new GetCurrentUserQuery();
         var result = await mediator.Send(query, cancellationToken);
 
@@ -48,6 +51,8 @@ public class UsersController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetUserAssignments(Guid userId, CancellationToken cancellationToken = default)
     {
+        // BOLA & BFLA Protected Query:
+        // Ensures only tenant admins can inspect member assignments, and enforces tenant scoping.
         var result = await mediator.Send(new GetUserAssignmentsQuery(userId), cancellationToken);
         return Ok(ApiResponse<UserAssignmentsDto>.Ok(result));
     }

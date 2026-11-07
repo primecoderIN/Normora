@@ -14,7 +14,7 @@ public sealed class MessageFeedback : ITenantEntity
     /// <summary>Tenant identifier for strict tenant boundary isolation.</summary>
     public Guid TenantId { get; set; }
     
-    /// <summary>Subject identifier (Keycloak sub) of the user providing feedback.</summary>
+    /// <summary>Subject identifier (ExternalUserId) of the user providing feedback.</summary>
     public string UserId { get; set; } = null!;
     
     /// <summary>Identifier of the rated message.</summary>

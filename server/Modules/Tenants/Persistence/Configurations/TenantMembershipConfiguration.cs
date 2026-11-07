@@ -10,12 +10,16 @@ public class TenantMembershipConfiguration : IEntityTypeConfiguration<TenantMemb
     {
         builder.HasKey(m => m.Id);
 
-        // TENANT-05: (TenantId, UserId) → UNIQUE for active memberships (partial index)
+        // Partial Unique Index for Re-Invitation Safety:
+        // Enforces that an active user cannot hold duplicate membership rows within the same tenant.
+        // The filter '"RemovedAt" IS NULL' allows previously soft-deleted members to be re-invited
+        // without violating uniqueness constraints, preserving complete historical audit trails.
         builder.HasIndex(m => new { m.TenantId, m.UserId })
               .IsUnique()
               .HasFilter("\"RemovedAt\" IS NULL");
 
-        // TENANT-04: Relationships
+        // Relational Mapping:
+        // Cascades ensure deleting a Tenant entity removes all associated membership records.
         builder.HasOne(m => m.Tenant)
               .WithMany(t => t.Memberships)
               .HasForeignKey(m => m.TenantId)
@@ -26,7 +30,9 @@ public class TenantMembershipConfiguration : IEntityTypeConfiguration<TenantMemb
               .HasForeignKey(m => m.UserId)
               .OnDelete(DeleteBehavior.Cascade);
 
-        // Phase 21: Soft-delete for memberships
+        // Soft-Deletion Global Query Filter:
+        // Automatically excludes removed members from all standard queries across the application,
+        // while allowing handlers to explicitly call .IgnoreQueryFilters() when auditing or reactivating memberships.
         builder.HasQueryFilter(m => m.RemovedAt == null);
     }
 }

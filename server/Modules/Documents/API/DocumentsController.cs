@@ -60,6 +60,9 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
     public async Task<IActionResult> SearchDocuments([FromQuery] string query, [FromQuery] int limit = 5, CancellationToken cancellationToken = default)
     {
+        // Vector Search Rate Limiting:
+        // Protected by the 'ai' fixed-window rate limiter policy (e.g. 30 requests/minute per IP/tenant)
+        // to prevent API key quota exhaustion and denial-of-service on Gemini embeddings.
         if (string.IsNullOrWhiteSpace(query))
         {
             return BadRequest(ApiResponse.Failure(ApiMessages.SearchQueryRequired));
@@ -80,6 +83,9 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetDocumentChunk(Guid chunkId, CancellationToken cancellationToken = default)
     {
+        // Citation Preview Endpoint:
+        // Fetches raw passage text for client-side citation drawer flyout.
+        // Protected by BOLA: non-existent chunks or unauthorized departmental chunks return 404.
         var result = await mediator.Send(new GetDocumentChunkQuery(chunkId), cancellationToken);
         return Ok(ApiResponse<DocumentChunkPreviewDto>.Ok(result));
     }
@@ -106,6 +112,10 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
         [FromForm] Guid? documentId = null,
         CancellationToken cancellationToken = default)
     {
+        // Multipart Streaming Upload:
+        // 1. [RequestSizeLimit] caps the multipart upload stream at 100MB to protect API memory buffers.
+        // 2. Dispatches to UploadDocumentCommandHandler which validates tenant plan storage limits,
+        //    streams binary to MinIO, creates DocumentVersion, and triggers Hangfire ETL processing.
         var command = new UploadDocumentCommand(file, tenantContext.TenantId!.Value, departmentIds, documentId);
         var document = await mediator.Send(command, cancellationToken);
 
@@ -125,8 +135,11 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> DeleteDocument(Guid id, CancellationToken cancellationToken = default)
     {
-        var keycloakId = currentUser.ExternalUserId;
-        var userId = await mediator.Send(new GetUserIdQuery(keycloakId), cancellationToken);
+        // Soft-Deletion Execution:
+        // Cross-module query translates OIDC ExternalUserId to internal database User GUID.
+        // Stamps DeletedAt and triggers real-time SignalR table row removal for connected employer clients.
+        var externalUserId = currentUser.ExternalUserId;
+        var userId = await mediator.Send(new GetUserIdQuery(externalUserId), cancellationToken);
         var deletedByUserId = userId ?? Guid.Empty;
 
         var command = new DeleteDocumentCommand(id, tenantContext.TenantId!.Value, deletedByUserId);

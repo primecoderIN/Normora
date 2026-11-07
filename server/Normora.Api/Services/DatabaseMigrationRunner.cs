@@ -10,6 +10,11 @@ public sealed class DatabaseMigrationRunner(
 {
     public async Task MigrateAsync(CancellationToken cancellationToken = default)
     {
+        // Sequential Multi-Schema Migration Pipeline:
+        // Each bounded module implements IDatabaseMigrator (TenantsDatabaseMigrator, DocumentsDatabaseMigrator,
+        // ConversationsDatabaseMigrator) targeting its own dedicated PostgreSQL schema ('tenants', 'documents', 'conversations').
+        // We execute them sequentially during container boot before the HTTP server accepts traffic.
+        // If any schema migration fails, the exception aborts container initialization, preventing partial or corrupt deployments.
         logger.LogInformation("Starting database migration runner...");
         var migratorList = migrators.ToList();
         logger.LogInformation("Found {Count} database migrators to execute.", migratorList.Count);

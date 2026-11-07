@@ -14,10 +14,15 @@ namespace Normora.Modules.Tenants.API;
 /// <summary>
 /// Provides administrative endpoints for managing user groups and their department assignments.
 /// </summary>
+// Decentralized Controller Architecture:
+// Resides in Modules/Tenants/API/ handling RBAC user group aggregation and departmental mapping.
+// Security:
+// 1. [Authorize] ensures user has an active identity session.
+// 2. [RequireTenant(TenantRoles.Admin)] ensures BFLA role enforcement (only tenant admins can create/modify groups).
 [ApiController]
 [Route("api/user-groups")]
 [Authorize]
-[RequireTenant(TenantRoles.Admin)] // Only admins can manage user groups
+[RequireTenant(TenantRoles.Admin)]
 [Produces("application/json")]
 public class UserGroupsController(IMediator mediator) : ControllerBase
 {
@@ -31,6 +36,8 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetUserGroups(CancellationToken cancellationToken = default)
     {
+        // MediatR Query Dispatch:
+        // Returns group summaries with member and department counts for tenant administration.
         var result = await mediator.Send(new GetUserGroupsQuery(), cancellationToken);
         return Ok(ApiResponse<List<UserGroupDto>>.Ok(result));
     }
@@ -47,6 +54,8 @@ public class UserGroupsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetUserGroupById(Guid id, CancellationToken cancellationToken = default)
     {
+        // BOLA Verification:
+        // Queries specific group; throws BolaException if the group ID does not belong to active tenant.
         var result = await mediator.Send(new GetUserGroupByIdQuery(id), cancellationToken);
         return Ok(ApiResponse<UserGroupDetailDto>.Ok(result));
     }

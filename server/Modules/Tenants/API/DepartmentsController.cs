@@ -14,10 +14,17 @@ namespace Normora.Modules.Tenants.API;
 /// <summary>
 /// Provides administrative endpoints for managing organizational departments within a tenant.
 /// </summary>
+// Decentralized Controller Architecture:
+// In Normora's modular monolith, controllers reside directly in their owning module (Modules/Tenants/API/).
+// This controller handles CRUD operations for organizational departments.
+// Security:
+// 1. [Authorize] ensures an authenticated OIDC/BFF session.
+// 2. [RequireTenant(TenantRoles.Admin)] enforces BFLA (Broken Function Level Authorization),
+//    verifying the user has the Admin role within the current ambient tenant workspace.
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-[RequireTenant(TenantRoles.Admin)] // Only admins can manage departments
+[RequireTenant(TenantRoles.Admin)]
 [Produces("application/json")]
 public class DepartmentsController(IMediator mediator) : ControllerBase
 {
@@ -30,6 +37,8 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken = default)
     {
+        // MediatR Query Dispatch:
+        // Dispatches to GetDepartmentsQueryHandler which reads tenant departments with AsNoTracking.
         var result = await mediator.Send(new GetDepartmentsQuery(), cancellationToken);
         return Ok(ApiResponse<List<DepartmentDto>>.Ok(result));
     }
@@ -46,6 +55,8 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
+        // CQRS Command Dispatch:
+        // Creates a new organizational department after verifying unique naming per tenant.
         var command = new CreateDepartmentCommand(request.Name, request.Description);
         var id = await mediator.Send(command, cancellationToken);
         return Ok(ApiResponse<Guid>.Ok(id, ApiMessages.DepartmentCreated));
@@ -65,6 +76,8 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> UpdateDepartment(Guid id, [FromBody] UpdateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
+        // BOLA-Protected Update:
+        // UpdateDepartmentCommandHandler verifies the department exists and belongs to the active tenant.
         var command = new UpdateDepartmentCommand(id, request.Name, request.Description);
         await mediator.Send(command, cancellationToken);
         return Ok(ApiResponse.Ok(ApiMessages.DepartmentUpdated));
@@ -82,6 +95,8 @@ public class DepartmentsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
     public async Task<IActionResult> DeleteDepartment(Guid id, CancellationToken cancellationToken = default)
     {
+        // BOLA-Protected Deletion:
+        // Cascades removal to employee department mappings and user group links.
         var command = new DeleteDepartmentCommand(id);
         await mediator.Send(command, cancellationToken);
         return Ok(ApiResponse.Ok(ApiMessages.DepartmentDeleted));

@@ -21,6 +21,9 @@ public static class ApplicationServiceExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        // Multi-Assembly MediatR & CQRS Assembly Discovery:
+        // Registers MediatR handlers, notification subscribers, and stream request handlers across
+        // all 3 business modules (Tenants, Documents, Conversations) plus the host BFF (Normora.Api).
         var assemblies = new[]
         {
             typeof(IApiMarker).Assembly,                                            // Normora.Api (Dashboard, Email)
@@ -32,20 +35,26 @@ public static class ApplicationServiceExtensions
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(assemblies);
-            // Validation pipeline behavior
+            // Open Generic Pipeline Behaviors:
+            // 1. ValidationBehavior: Intercepts incoming commands/queries and evaluates all registered FluentValidators.
+            // 2. AuditBehavior: Intercepts commands implementing IAuditableRequest and persists audit log entries.
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
-            // Audit pipeline behavior
             cfg.AddOpenBehavior(typeof(AuditBehavior<,>));
         });
 
+        // FluentValidation Auto-Scanning:
+        // Registers all AbstractValidator<T> implementations from the modular assemblies.
         services.AddValidatorsFromAssemblies(assemblies);
 
-        // Core Host Abstractions
+        // Ambient Host & Security Abstractions:
+        // - ICurrentUser: Bridges ClaimsPrincipal to strongly-typed identity claims (ExternalUserId, Email, Roles).
+        // - ITenantContext: Scoped ambient tenant container populated by TenantResolutionMiddleware.
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<Normora.Api.Services.DatabaseMigrationRunner>();
 
-        // Email Services (Resend + Hangfire Background Delivery)
+        // Email Dispatching Infrastructure:
+        // Integrates Resend HTTP API for transactional emails (invitations, alerts) with NullEmailSender dev fallback.
         services.AddHttpClient<ResendEmailSender>();
         services.AddTransient<ResendEmailSender>();
         services.AddTransient<NullEmailSender>();

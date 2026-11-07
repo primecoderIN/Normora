@@ -10,6 +10,7 @@ namespace Normora.Modules.Tenants.Persistence;
 /// </summary>
 public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheService? cache = null) : ITenantResolutionService
 {
+    // A 30-second sliding TTL absorbs high-frequency request bursts while ensuring role revocations take effect across replicas promptly.
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
 
     public async Task<ResolvedTenantAccess?> ResolveTenantAccessAsync(
@@ -17,6 +18,7 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheSe
         string externalUserId,
         CancellationToken cancellationToken = default)
     {
+        // Bypass caching during migration/CLI runs or tests when distributed cache is unconfigured.
         if (cache is null)
         {
             return await QueryTenantAccessAsync(tenantId, externalUserId, cancellationToken);
@@ -35,6 +37,7 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheSe
         string externalUserId,
         CancellationToken cancellationToken)
     {
+        // Split query avoids Cartesian product multiplication across direct departments and user group navigation collections.
         var membership = await dbContext.TenantMemberships
             .AsNoTracking()
             .AsSplitQuery()
@@ -52,6 +55,7 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheSe
             return null;
         }
 
+        // Aggregate effective departmental clearance by unioning direct assignments with group-inherited permissions.
         var directDepartments = membership.MembershipDepartments.Select(md => md.DepartmentId);
         var inheritedDepartments = membership.UserGroupMemberships
             .SelectMany(ugm => ugm.UserGroup.UserGroupDepartments)

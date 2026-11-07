@@ -4,65 +4,71 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
-/// Represents an uploaded document within the system.
-/// This entity is inherently bound to a specific tenant (TenantId), guaranteeing data isolation.
+/// Root Aggregate Entity for Document Management.
+/// Acts as the permanent logical container for an uploaded organizational knowledge asset.
+/// Data Isolation & Security:
+/// 1. ITenantEntity enforces automatic multitenant query filtering by TenantId.
+/// 2. DocumentDepartments defines RBAC/departmental visibility (empty collection = Company Wide).
+/// 3. Soft-delete fields (DeletedAt, DeletedByUserId) immediately exclude this document and all
+///    its underlying chunks from conversational RAG retrieval while preserving audit compliance.
 /// </summary>
 public class Document : ITenantEntity
 {
     /// <summary>
-    /// The unique identifier for the document record.
+    /// The unique primary key of the document container.
     /// </summary>
     public Guid Id { get; set; }
     
     /// <summary>
-    /// The original file name uploaded by the user (e.g., "Q3_Report.pdf").
+    /// The original file name uploaded by the administrator (e.g. "Employee_Handbook_2026.pdf").
     /// </summary>
     public string FileName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Content-Type of the file (e.g., application/pdf)
+    /// Content-Type of the file (e.g. application/pdf, text/plain).
     /// </summary>
     public string ContentType { get; set; } = string.Empty;
 
     /// <summary>
-    /// Size of the document in bytes.
+    /// Size of the active document payload in bytes.
     /// </summary>
     public long Size { get; set; }
 
     /// <summary>
-    /// The UTC timestamp when the document was uploaded.
+    /// The UTC timestamp when the root document container was created.
     /// </summary>
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// The identifier of the tenant that owns this document.
-    /// Used by the Entity Framework Global Query Filter in DocumentsDbContext to ensure cross-tenant data isolation.
+    /// The tenant workspace identifier owning this document.
+    /// Bound to the ambient ITenantContext in DocumentsDbContext global query filters.
     /// </summary>
     public Guid TenantId { get; set; }
 
     // Navigation Properties
 
     /// <summary>
-    /// The departments this document is scoped to. An empty collection means the document
-    /// is "Company Wide" and accessible to every employee in the tenant.
+    /// Departmental ACL mappings:
+    /// - If empty: The document is accessible company-wide across the tenant.
+    /// - If populated: Access is restricted strictly to employees belonging to at least one of these departments.
     /// </summary>
     public ICollection<DocumentDepartment> DocumentDepartments { get; set; } = new List<DocumentDepartment>();
 
     /// <summary>
-    /// The versions of this document.
+    /// Physical revision history. Only the version marked IsActive == true is matched during RAG retrieval.
     /// </summary>
     public ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
 
     // --- Soft-Delete Audit Fields ---
 
     /// <summary>
-    /// UTC timestamp of soft-deletion. NULL means the document is active and visible.
-    /// The global query filter in DocumentsDbContext excludes all rows where this is not null.
+    /// UTC timestamp of soft-deletion.
+    /// NULL indicates active document. Populated timestamp excludes the document from all RAG searches.
     /// </summary>
     public DateTime? DeletedAt { get; set; }
 
     /// <summary>
-    /// The UserId (from the Users table) of the employer who performed the deletion.
+    /// The UserId of the administrator who executed the soft-deletion.
     /// </summary>
     public Guid? DeletedByUserId { get; set; }
 }

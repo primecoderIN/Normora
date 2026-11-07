@@ -88,9 +88,16 @@ public class SubscriptionController(
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> HandlePaymentCallback(CancellationToken cancellationToken)
     {
+        // External Webhook / POST Return Handler:
+        // PayU redirects the user's browser back via HTTP POST to this callback endpoint.
+        // We bypass anti-forgery token verification ([IgnoreAntiforgeryToken]) since this is an external submission,
+        // but verify cryptographic HMAC-SHA512 hash integrity via paymentService.ProcessCallbackAsync.
         var form = await Request.ReadFormAsync(cancellationToken);
         var result = await paymentService.ProcessCallbackAsync(form, cancellationToken);
 
+        // Open-Redirect Defense & Destination Construction:
+        // We construct a strict absolute URI rooted in the application's configured BaseUrl.
+        // The tenant slug is URL-escaped to ensure safe path routing to the subscription dashboard.
         var baseUri = new Uri(appOptions.Value.BaseUrl, UriKind.Absolute);
         var destinationPath = !string.IsNullOrWhiteSpace(result.TenantSlug)
             ? $"app/workspaces/{Uri.EscapeDataString(result.TenantSlug)}/employer/settings/subscription"
@@ -110,6 +117,9 @@ public class SubscriptionController(
             destination.Query = $"status=failed&error={error}";
         }
 
+        // Host/Scheme/Port Invariant Guard:
+        // Strictly verify that destination URI matches the configured BaseUrl scheme, host, and port.
+        // If there is any discrepancy, fall back immediately to the default canonical path to neutralize open-redirect vectors.
         var destinationUri = destination.Uri;
         if (!string.Equals(destinationUri.Scheme, baseUri.Scheme, StringComparison.OrdinalIgnoreCase)
             || !string.Equals(destinationUri.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase)

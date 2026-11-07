@@ -22,42 +22,51 @@ public static class ConversationsModuleExtensions
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
+        // Module-Private DbContext:
+        // Registers ConversationsDbContext strictly for the 'conversations' PostgreSQL schema.
         services.AddDbContext<ConversationsDbContext>(options =>
             options.UseNpgsql(connectionString));
         services.AddScoped<IDatabaseMigrator, ConversationsDatabaseMigrator>();
 
         var geminiOptions = configuration.GetSection(GeminiOptions.SectionName).Get<GeminiOptions>() ?? new GeminiOptions();
 
+        // LLM Text Generation Client (Google Gemini 1.5 Flash):
+        // Configured with a 2-minute timeout for conversational streaming and autonomous tool execution.
         services.AddHttpClient<ITextGenerationService, GeminiTextGenerationService>(client =>
         {
             client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(2);
         });
 
+        // LLM Query Rewriter Client:
+        // Reformulates contextual followup questions into standalone search queries.
         services.AddHttpClient<IQueryRewriterService, GeminiQueryRewriterService>(client =>
         {
             client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(2);
         });
 
+        // LLM Suggested Followup Prompts Client:
+        // Fast 30-second timeout generating 3 dynamic followup question chips based on accessible documents.
         services.AddHttpClient<ISuggestionsService, GeminiSuggestionsService>(client =>
         {
             client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromSeconds(30);
         });
 
+        // Context Assembly & Token Budgeting:
         services.AddScoped<IContextResolver, ContextResolver>();
         services.AddScoped<IConversationTurnPreparer, ConversationTurnPreparer>();
         services.AddSingleton<ITokenBudgetService, TokenBudgetService>();
         services.AddSingleton<IAutoTitleService, AutoTitleService>();
         services.AddSingleton<ConversationMetrics>();
 
-        // Answer exporters
+        // Multi-Format Saved Answer Exporters (Markdown, QuestPDF, OpenXML DOCX):
         services.AddSingleton<IAnswerExporter, MarkdownAnswerExporter>();
         services.AddSingleton<IAnswerExporter, PdfAnswerExporter>();
         services.AddSingleton<IAnswerExporter, DocxAnswerExporter>();
 
-        // Agent Tools & Tool Registry
+        // Agent Tools & Cross-Module Tool Registry
         services.AddScoped<IAgentTool, CalculatePolicyLimitTool>();
         services.AddScoped<IAgentTool, EscalateInquiryTool>();
         services.AddScoped<IAgentTool, SearchCompanyDocumentsTool>();

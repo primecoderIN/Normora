@@ -31,7 +31,7 @@ public class Message : ITenantEntity
     /// <summary>True if the user query was rewritten by the LLM query rewriter for better retrieval.</summary>
     public bool Rewritten { get; set; }
 
-    /// <summary>The rewritten or expanded query executed against Qdrant/Postgres vector storage.</summary>
+    /// <summary>The rewritten or expanded query executed against pgvector and full-text retrieval.</summary>
     public string? RetrievalQuery { get; set; }
 
     /// <summary>JSON serialized performance and latency telemetry (durations, rerank times).</summary>

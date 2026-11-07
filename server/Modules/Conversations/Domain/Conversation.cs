@@ -3,20 +3,25 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Conversations.Domain;
 
 /// <summary>
-/// Represents a multi-turn conversation session between a tenant user and the RAG assistant.
-/// Maintains thread metadata, rolling summary state, and tenant boundaries.
+/// Root Aggregate Entity for Conversational Sessions.
+/// Represents a multi-turn chat thread between an employee and the conversational RAG assistant.
+/// Invariants & Architecture:
+/// 1. Data Isolation: Partitioned by both TenantId (ambient workspace) and UserId (OIDC ExternalUserId).
+/// 2. Rolling Context Summarization: Long-running threads maintain a rolling Summary and monotonic
+///    SummaryVersion counter so the LLM retains conversation context beyond the token window.
+/// 3. Ordering: LastMessageAt is updated on every turn to support keyset sorting and responsive sidebar rosters.
 /// </summary>
 public class Conversation : ITenantEntity
 {
     public Guid Id { get; set; }
 
-    /// <summary>Tenant identifier for strict logical data isolation.</summary>
+    /// <summary>Tenant workspace identifier for strict logical data isolation.</summary>
     public Guid TenantId { get; set; }
 
-    /// <summary>Subject identifier (Keycloak sub) of the user who owns this conversation.</summary>
+    /// <summary>Subject identifier (ExternalUserId) of the user who authoritatively owns this conversation.</summary>
     public string UserId { get; set; } = string.Empty;
 
-    /// <summary>Human-readable title, generated automatically or updated by the user.</summary>
+    /// <summary>Human-readable title, generated asynchronously by AutoTitleService or edited by user.</summary>
     public string Title { get; set; } = "New conversation";
 
     /// <summary>Rolling summary used for long-term multi-turn context retention.</summary>
@@ -43,6 +48,8 @@ public class Conversation : ITenantEntity
 
     public void UpdateSummary(string summary)
     {
+        // Concurrency Invariant:
+        // Monotonically increments SummaryVersion whenever summary state transitions.
         Summary = summary;
         SummaryVersion++;
         UpdatedAt = DateTimeOffset.UtcNow;

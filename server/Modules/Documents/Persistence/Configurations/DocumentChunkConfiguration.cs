@@ -14,7 +14,9 @@ public class DocumentChunkConfiguration : IEntityTypeConfiguration<DocumentChunk
         builder.Property(chunk => chunk.Content).IsRequired().HasColumnType("text");
         builder.Property(chunk => chunk.Embedding).HasColumnType("vector(768)");
 
-        // Configure full-text search vector
+        // Full-Text Search Vector:
+        // Generates a tsvector column using PostgreSQL English stemming and indexes it with a GIN index.
+        // Enables BM25/keyword ranking to be fused with dense semantic vector search via Reciprocal Rank Fusion (RRF).
         builder.HasGeneratedTsVectorColumn(
             chunk => chunk.SearchVector!,
             "english",
@@ -22,13 +24,17 @@ public class DocumentChunkConfiguration : IEntityTypeConfiguration<DocumentChunk
         .HasIndex(chunk => chunk.SearchVector)
         .HasMethod("GIN");
 
-        // Vector similarity HNSW index for high-performance approximate nearest neighbor retrieval
+        // Vector Similarity HNSW Index:
+        // Creates a Hierarchical Navigable Small World (HNSW) index using cosine distance operators (vector_cosine_ops).
+        // Delivers sub-millisecond approximate nearest neighbor lookups under enterprise chunk volume without full table scans.
         builder.HasIndex(chunk => chunk.Embedding)
             .HasMethod("hnsw")
             .HasOperators("vector_cosine_ops");
 
+        // Composite uniqueness constraint guarantees deterministic chunk ordering per document version within a tenant.
         builder.HasIndex(chunk => new { chunk.TenantId, chunk.DocumentVersionId, chunk.ChunkIndex }).IsUnique();
 
+        // Cascade delete ensures physical cleanup of a DocumentVersion automatically wipes associated vector chunks.
         builder.HasOne<DocumentVersion>()
             .WithMany(v => v.Chunks)
             .HasForeignKey(chunk => chunk.DocumentVersionId)

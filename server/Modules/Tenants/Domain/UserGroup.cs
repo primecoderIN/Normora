@@ -1,18 +1,21 @@
 namespace Normora.Modules.Tenants.Domain;
 
 /// <summary>
-/// A named group of users within a tenant. A User Group can be assigned to one or more
-/// Departments, and any user in that group inherits access to those departments.
-/// Example: "Engineering" group → Frontend, Backend, DevOps departments.
+/// Domain Entity representing a collective RBAC group within a tenant workspace.
+/// Architecture & Permissions:
+/// 1. Group Inheritance: Groups map collections of employees (UserGroupMembership) to multiple
+///    departments (UserGroupDepartment), eliminating the need for manual single-department assignments.
+/// 2. SEC-17 Boundary: When assigning departments to a group, cross-tenant department IDs are strictly rejected.
+/// 3. Invariant: Group names must be unique within a tenant workspace (case-insensitive).
 /// </summary>
 public class UserGroup : Normora.Shared.Interfaces.ITenantEntity
 {
     public Guid Id { get; set; }
 
-    /// <summary>The tenant this group belongs to.</summary>
+    /// <summary>The tenant workspace this group belongs to.</summary>
     public Guid TenantId { get; set; }
 
-    /// <summary>The display name of the group (e.g., "Engineering", "HR Team").</summary>
+    /// <summary>The display name of the group (e.g. "Core Engineering", "Leadership").</summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>An optional description of the group's purpose.</summary>

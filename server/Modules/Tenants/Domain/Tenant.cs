@@ -1,33 +1,36 @@
 namespace Normora.Modules.Tenants.Domain;
 
 /// <summary>
-/// Represents a discrete organization or workspace within the system.
-/// In a multi-tenant architecture, all data across modules is partitioned by the Tenant ID.
+/// Root Aggregate Entity for Multi-Tenancy.
+/// Represents a discrete organizational workspace or individual workspace within Normora.
+/// Enforces data isolation boundaries: all documents, embeddings, conversations, departments,
+/// user groups, and subscription quotas are partitioned by TenantId.
 /// </summary>
 public class Tenant
 {
     /// <summary>
-    /// The unique identifier of the tenant.
+    /// The unique identifier of the tenant workspace.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// The human-readable name of the tenant (e.g., "Acme Corp").
+    /// The human-readable name of the workspace (e.g. "Acme Corp").
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// A URL-friendly version of the tenant name, often used in routing or subdomains (e.g., "acme-corp").
+    /// URL-safe slug used for frontend route paths (/app/workspaces/{slug}/...) and optional subdomains.
     /// </summary>
     public string Slug { get; set; } = string.Empty;
 
     /// <summary>
-    /// The current lifecycle status of the tenant (Active, Suspended, etc.).
+    /// The operational lifecycle status of the tenant workspace (Active, Suspended).
     /// </summary>
     public TenantStatus Status { get; set; } = TenantStatus.Active;
 
     /// <summary>
-    /// True if this is a personal workspace for an individual user, false if it's an organization.
+    /// Distinguishes auto-provisioned personal user workspaces (IsPersonal = true)
+    /// from collaborative organizational workspaces.
     /// </summary>
     public bool IsPersonal { get; set; } = false;
 
@@ -36,12 +39,16 @@ public class Tenant
 
     public void Suspend()
     {
+        // Domain Transition:
+        // Transitioning to Suspended immediately disables access in TenantResolutionMiddleware.
         Status = TenantStatus.Suspended;
         UpdatedAt = DateTime.UtcNow;
     }
 
     public void Activate()
     {
+        // Domain Transition:
+        // Re-enables access for all active tenant members.
         Status = TenantStatus.Active;
         UpdatedAt = DateTime.UtcNow;
     }

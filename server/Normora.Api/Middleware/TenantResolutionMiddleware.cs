@@ -20,15 +20,15 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         ICurrentUser currentUser,
         ITenantResolutionService tenantResolutionService)
     {
-        // 1. We only resolve tenants for authenticated users.
+        // Tenant resolution only applies to authenticated security principals.
         if (currentUser.IsAuthenticated)
         {
-            // 2. Look for the X-Tenant-Id header sent by the client.
+            // Extract the active workspace ID supplied by the client interceptor.
             if (context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdValues))
             {
                 if (Guid.TryParse(tenantIdValues.FirstOrDefault(), out var tenantId))
                 {
-                    // Resolve active tenant membership and aggregate direct + user group department access via service boundary
+                    // Query the cached tenant resolution service to validate membership and compute effective departmental clearances.
                     var resolvedAccess = await tenantResolutionService.ResolveTenantAccessAsync(
                         tenantId,
                         currentUser.ExternalUserId,
@@ -36,14 +36,13 @@ public class TenantResolutionMiddleware(RequestDelegate next)
 
                     if (resolvedAccess != null)
                     {
-                        // Initialize ITenantContext so down-stream queries and [RequireTenant] filters enforce tenant isolation
+                        // Bind resolved workspace scope to ITenantContext for downstream EF query filters and [RequireTenant] guards.
                         tenantContext.SetContext(tenantId, resolvedAccess.Role, resolvedAccess.EffectiveDepartments);
                     }
                 }
             }
 
-            // Missing, malformed, or unauthorized tenant headers deliberately leave the
-            // context unresolved; RequireTenant then rejects protected endpoints.
+            // Unresolved or unauthorized tenant scopes remain unset; [RequireTenant] filters will reject downstream access.
         }
 
         await next(context);

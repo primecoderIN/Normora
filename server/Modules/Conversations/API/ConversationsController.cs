@@ -99,10 +99,18 @@ public class ConversationsController(IMediator mediator) : ControllerBase
     [Produces("text/event-stream")]
     public async Task AskConversationStream(Guid id, [FromBody] AskConversationRequest body, CancellationToken cancellationToken = default)
     {
+        // Server-Sent Events (SSE) Protocol Setup:
+        // Sets essential streaming headers:
+        // - Content-Type: text/event-stream (informs the client and reverse proxies of streaming events)
+        // - Cache-Control: no-cache (prevents intermediate CDN/proxy buffer caching)
+        // - Connection: keep-alive (maintains persistent HTTP/1.1 or HTTP/2 transport connection)
         Response.Headers.Append("Content-Type", "text/event-stream");
         Response.Headers.Append("Cache-Control", "no-cache");
         Response.Headers.Append("Connection", "keep-alive");
 
+        // MediatR IAsyncEnumerable Streaming Pipeline:
+        // Consumes the AskConversationStreamCommand async generator, receiving CitationsReadyEvent,
+        // TextChunkEvent, and StreamFinishedEvent.
         var stream = mediator.CreateStream(new AskConversationStreamCommand(id, body.Question, body.Limit), cancellationToken);
 
         await foreach (var evt in stream.WithCancellation(cancellationToken))
@@ -111,6 +119,8 @@ public class ConversationsController(IMediator mediator) : ControllerBase
             {
                 PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
             });
+            
+            // Format as standard W3C SSE event ("data: <json>\n\n") and immediately flush the response stream
             await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

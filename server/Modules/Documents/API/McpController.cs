@@ -173,6 +173,7 @@ public sealed class McpController(
             currentUser.DisplayName,
             workspaceContext.PersonalTenantId);
 
+        // Dispatch tool execution over MediatR to ensure zero project reference coupling between Documents and Conversations.
         var toolResult = await mediator.Send(
             new ExecuteMcpToolCommand(toolName, argsJson, toolContext),
             cancellationToken);

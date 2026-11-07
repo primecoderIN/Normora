@@ -5,7 +5,13 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Documents.Domain;
 
 /// <summary>
-/// Represents a specific version of a document.
+/// Domain Entity representing a physical revision/version of a root Document container.
+/// Invariants & Retrieval Architecture:
+/// 1. IsActive: Only ONE version per document is marked IsActive == true at any time.
+///    The conversational RAG hybrid retrieval engine filters exclusively on IsActive == true
+///    to guarantee that users never receive answers derived from superseded or stale versions.
+/// 2. StorageObjectName: References the immutable object key in MinIO/S3 object storage ("{tenantId}/{guid}_{fileName}").
+/// 3. Chunks: Navigates to the collection of semantic text chunks and pgvector embeddings generated for this revision.
 /// </summary>
 public class DocumentVersion : ITenantEntity
 {
@@ -14,27 +20,27 @@ public class DocumentVersion : ITenantEntity
     public Guid TenantId { get; set; }
 
     /// <summary>
-    /// Sequential version number (1, 2, 3...)
+    /// Sequential monotonic version number (1, 2, 3...) within the document container.
     /// </summary>
     public int VersionNumber { get; set; }
 
     /// <summary>
-    /// The unique object key used to store and retrieve the physical file from the underlying object storage.
+    /// S3 object key pointing to the physical binary in MinIO object storage.
     /// </summary>
     public string StorageObjectName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Text extracted from the original file by the ingestion pipeline.
+    /// Raw full-text extracted by Apache Tika during the Hangfire ETL ingestion job.
     /// </summary>
     public string? ExtractedText { get; set; }
 
     /// <summary>
-    /// The current processing status of this version.
+    /// Ingestion pipeline state: Uploaded -> Processing -> Ready (or Failed).
     /// </summary>
     public DocumentStatus Status { get; set; }
 
     /// <summary>
-    /// Only the active version is queried by RAG.
+    /// Invariant: Only the active version is matched by full-text search and vector cosine similarity.
     /// </summary>
     public bool IsActive { get; set; }
 
