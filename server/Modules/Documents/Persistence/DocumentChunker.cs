@@ -11,8 +11,15 @@ public static partial class DocumentChunker
     // paragraphs are hard-split only when preserving the paragraph would exceed the limit.
     private const int MaximumChunkCharacters = 4_000;
 
+    // Semantic Overlap Window:
+    // Retains trailing context (up to 200 characters) across chunk boundaries.
+    // This prevents information loss and boundary truncation during pgvector similarity search,
+    // ensuring concepts spanning multiple paragraphs remain retrievable in conversational RAG.
+    private const int ChunkOverlapCharacters = 200;
+
     /// <summary>
-    /// Splits the extracted text into an array of chunks, preserving paragraph boundaries where possible.
+    /// Splits the extracted text into an array of chunks, preserving paragraph boundaries where possible,
+    /// with sliding overlap to maintain semantic continuity across chunk boundaries.
     /// </summary>
     /// <param name="extractedText">The raw extracted text.</param>
     /// <returns>A list of bounded text chunks.</returns>
@@ -37,9 +44,13 @@ public static partial class DocumentChunker
                 Flush(chunks, current);
                 currentLength = 0;
 
-                for (var offset = 0; offset < paragraph.Length; offset += MaximumChunkCharacters)
+                var step = MaximumChunkCharacters - ChunkOverlapCharacters;
+                for (var offset = 0; offset < paragraph.Length; offset += step)
                 {
-                    chunks.Add(paragraph.Substring(offset, Math.Min(MaximumChunkCharacters, paragraph.Length - offset)));
+                    var len = Math.Min(MaximumChunkCharacters, paragraph.Length - offset);
+                    chunks.Add(paragraph.Substring(offset, len));
+                    if (offset + len >= paragraph.Length)
+                        break;
                 }
 
                 continue;
@@ -48,8 +59,28 @@ public static partial class DocumentChunker
             var separatorLength = current.Count == 0 ? 0 : 2;
             if (currentLength + separatorLength + paragraph.Length > MaximumChunkCharacters)
             {
-                Flush(chunks, current);
-                currentLength = 0;
+                var chunkText = string.Join("\n\n", current);
+                chunks.Add(chunkText);
+                current.Clear();
+
+                // Sliding overlap: carry over trailing context up to ChunkOverlapCharacters
+                if (chunkText.Length > ChunkOverlapCharacters)
+                {
+                    var overlap = chunkText[^ChunkOverlapCharacters..].TrimStart();
+                    if (!string.IsNullOrWhiteSpace(overlap))
+                    {
+                        current.Add(overlap);
+                        currentLength = overlap.Length;
+                    }
+                    else
+                    {
+                        currentLength = 0;
+                    }
+                }
+                else
+                {
+                    currentLength = 0;
+                }
             }
 
             current.Add(paragraph);

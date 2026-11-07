@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Normora.Shared.Constants;
 
 namespace Normora.Modules.Documents.Application.Documents.Commands;
 
@@ -11,14 +12,14 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
         // Evaluated automatically by ValidationBehavior<,> before UploadDocumentCommandHandler executes.
         // Guards against malicious payloads, oversized files, and MIME spoofing attacks before disk/storage writes.
         RuleFor(x => x.TenantId)
-            .NotEmpty().WithMessage("TenantId is required.");
+            .NotEmpty().WithMessage(ApiMessages.TenantIdRequired);
 
         RuleFor(x => x.File)
-            .NotNull().WithMessage("No file was uploaded.")
-            .Must(file => file?.Length > 0).WithMessage("File cannot be empty.")
-            .Must(file => file?.Length <= 20_971_520).WithMessage("File exceeds 20MB limit.")
-            .Must(BeAValidExtension).WithMessage("Only .pdf, .docx, and .txt files are allowed.")
-            .Must(HaveValidMagicBytes).WithMessage("File content does not match the declared file type.");
+            .NotNull().WithMessage(ApiMessages.FileRequired)
+            .Must(file => file?.Length > 0).WithMessage(ApiMessages.FileEmpty)
+            .Must(file => file?.Length <= 20_971_520).WithMessage(ApiMessages.FileExceedsLimit)
+            .Must(BeAValidExtension).WithMessage(ApiMessages.InvalidFileType)
+            .Must(HaveValidMagicBytes).WithMessage(ApiMessages.InvalidFileContent);
     }
 
     private static bool BeAValidExtension(IFormFile? file)
