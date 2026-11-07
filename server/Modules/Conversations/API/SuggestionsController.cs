@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Normora.Shared.Authorization;
 using Normora.Modules.Conversations.Application.Suggestions.Queries;
 using Normora.Shared;
@@ -17,6 +18,7 @@ namespace Normora.Modules.Conversations.API;
 [Route("api/[controller]")]
 [Authorize]
 [RequireTenant(TenantRoles.Employee, TenantRoles.Admin)]
+[EnableRateLimiting("ai")]
 [Produces("application/json")]
 public class SuggestionsController(IMediator mediator) : ControllerBase
 {

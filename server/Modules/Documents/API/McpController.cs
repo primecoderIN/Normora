@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Hosting;
 using Normora.Shared.Authorization;
 using Normora.Shared.Constants;
@@ -24,6 +25,7 @@ namespace Normora.Modules.Documents.API;
 [Route("api/[controller]")]
 [Authorize]
 [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
+[EnableRateLimiting("ai")]
 [Produces("application/json")]
 public sealed class McpController(
     ITenantContext tenantContext,

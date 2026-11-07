@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Normora.Shared.Authorization;
 using Normora.Modules.Tenants.Application.Subscription.Commands;
 using Normora.Modules.Tenants.Application.Subscription.DTOs;
@@ -85,6 +86,7 @@ public class SubscriptionController(
     [HttpPost("callback")]
     [HttpPost("payu-callback")]
     [AllowAnonymous]
+    [EnableRateLimiting("anon")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> HandlePaymentCallback(CancellationToken cancellationToken)
     {

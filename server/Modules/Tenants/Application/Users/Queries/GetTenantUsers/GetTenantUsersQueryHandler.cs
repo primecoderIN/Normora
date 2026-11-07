@@ -44,15 +44,21 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
-        var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
+
+        // Resource Exhaustion Defense (OWASP API4):
+        // Clamps page and pageSize to deterministic bounds (1 to 100), neutralizing unbounded DB allocations
+        // and preventing division by zero or negative skip offsets.
+        var page = Math.Max(1, request.Page);
+        var pageSize = Math.Clamp(request.PageSize, 1, 100);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
         // Keyset-Friendly Pagination with Relational Projections:
         // Orders by CreatedAt descending to show newest members first.
         // Nested selects project only the required department and group summaries, avoiding Cartesian row explosion.
         var items = await query
             .OrderByDescending(m => m.CreatedAt)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(m => new TenantEmployeeDto(
                 m.Id,
                 m.UserId,
@@ -68,8 +74,8 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
         return new PagedResult<TenantEmployeeDto>(
             items,
             totalCount,
-            request.Page,
-            request.PageSize,
+            page,
+            pageSize,
             totalPages
         );
     }
