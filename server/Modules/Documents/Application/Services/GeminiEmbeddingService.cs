@@ -20,12 +20,16 @@ public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<Gemin
 
     public async Task<float[]> CreateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
     {
+        // Provider Configuration Guard:
+        // Ensures Gemini API Key is configured before issuing HTTP calls to the Google Generative AI endpoints.
         if (!IsConfigured)
         {
             throw new InvalidOperationException(ApiMessages.EmbeddingServiceNotConfigured);
         }
 
-        // Convert the input text into a high-dimensional vector array so we can perform semantic similarity searches against it later
+        // Semantic Vector Generation (Google Gemini text-embedding-004):
+        // Requests a 768-dimensional embedding from the Gemini API using the outputDimensionality parameter.
+        // The 768-dimensional space matches the PostgreSQL pgvector HNSW index definition in DocumentChunkConfiguration.
         var request = new GeminiEmbeddingRequest(
             new GeminiContent([new GeminiPart(text)]),
             EmbeddingDimensions);
@@ -38,6 +42,10 @@ public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<Gemin
 
         var result = await response.Content.ReadFromJsonAsync<GeminiEmbeddingResponse>(cancellationToken);
         var values = result?.Embedding?.Values;
+
+        // Vector Dimension Invariant Verification:
+        // Strictly verify that the API returned exactly 768 float values.
+        // Any dimensional mismatch would cause PostgreSQL pgvector insert failures.
         if (values is null || values.Count != EmbeddingDimensions)
         {
             throw new InvalidOperationException(ApiMessages.InvalidEmbeddingVector);

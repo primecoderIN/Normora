@@ -40,13 +40,13 @@ public class UpdateUserGroupAssignmentsCommandHandler(TenantsDbContext dbContext
             group.UserGroupMemberships.Add(new UserGroupMembership { TenantMembershipId = memId });
         }
 
-        // SEC-17: Validate that all provided DepartmentIds belong to the current tenant
+        // BOLA validation: ensure all target departments belong strictly to the active tenant before linking.
         var validDepartmentIds = await dbContext.Departments
             .Where(d => d.TenantId == tenantContext.TenantId.Value && request.DepartmentIds.Contains(d.Id))
             .Select(d => d.Id)
             .ToListAsync(cancellationToken);
 
-        // Sync departments (only tenant-owned ones)
+        // Synchronize department mappings using verified tenant-owned records.
         group.UserGroupDepartments.Clear();
         foreach (var depId in validDepartmentIds)
         {

@@ -15,8 +15,13 @@ public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITe
 {
     public async Task<bool> Handle(UpdateUserAssignmentsCommand request, CancellationToken cancellationToken)
     {
+        // Ambient Tenant Verification:
+        // Validates that this membership modification runs within an authenticated tenant boundary.
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
+        // Broken Object Level Authorization (BOLA) Check:
+        // Retrieve the employee's active tenant membership, strictly checking TenantId.
+        // Prevents an admin in Tenant A from modifying user assignments for an employee in Tenant B.
         var membership = await dbContext.TenantMemberships
             .Include(m => m.MembershipDepartments)
             .Include(m => m.UserGroupMemberships)
@@ -27,27 +32,32 @@ public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITe
             throw new BolaException();
         }
 
-        // SEC-16: Validate that all provided DepartmentIds belong to the current tenant
-        // to prevent an admin from injecting department references from other tenants.
+        // BOLA / Cross-Tenant Injection Defense (SEC-16):
+        // Validate that all supplied DepartmentIds strictly belong to the current active tenant.
+        // This prevents an administrator from injecting department references from other tenants,
+        // which could lead to unauthorized document access or cross-tenant data leakage.
         var validDepartmentIds = await dbContext.Departments
             .Where(d => d.TenantId == tenantContext.TenantId.Value && request.DepartmentIds.Contains(d.Id))
             .Select(d => d.Id)
             .ToListAsync(cancellationToken);
 
-        // SEC-16: Validate that all UserGroupIds belong to the current tenant
+        // BOLA / Cross-Tenant Injection Defense (SEC-16):
+        // Validate that all supplied UserGroupIds strictly belong to the current active tenant.
         var validGroupIds = await dbContext.UserGroups
             .Where(g => g.TenantId == tenantContext.TenantId.Value && request.UserGroupIds.Contains(g.Id))
             .Select(g => g.Id)
             .ToListAsync(cancellationToken);
 
-        // Sync Departments (only tenant-owned ones)
+        // Direct Department Associations Synchronization:
+        // Overwrite the existing direct department links with the validated tenant-scoped set.
         membership.MembershipDepartments.Clear();
         foreach (var depId in validDepartmentIds)
         {
             membership.MembershipDepartments.Add(new MembershipDepartment { DepartmentId = depId });
         }
 
-        // Sync User Groups (only tenant-owned ones)
+        // User Group Membership Synchronization:
+        // Overwrite the user's group memberships with the validated tenant-scoped set.
         membership.UserGroupMemberships.Clear();
         foreach (var groupId in validGroupIds)
         {

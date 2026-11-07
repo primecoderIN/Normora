@@ -12,18 +12,24 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
 {
     public async Task<CurrentUserDto> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)
     {
+        // Authentication Guard:
+        // Ensures that claims principal has been populated by the Duende BFF / JWT bearer authentication scheme.
         if (!currentUser.IsAuthenticated)
         {
             throw new UnauthorizedAccessException(Normora.Shared.Constants.ApiMessages.Unauthorized);
         }
 
-        // Find the user and their existing memberships so we can determine their access levels across tenants
+        // User & Workspace Membership Resolution:
+        // Finds the internal User entity matching the external identity provider subject (ExternalUserId).
+        // Eagerly includes TenantMemberships and their corresponding Tenant details to evaluate workspace access.
         var user = await context.Users
             .Include(u => u.Memberships)
             .ThenInclude(m => m.Tenant)
             .FirstOrDefaultAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
 
-        // Check if there are any pending invitations for the user's email address so we can show them on the dashboard
+        // Pending Invitations Lookup:
+        // Checks if the user's verified email has unaccepted invitations for other organizational workspaces.
+        // These are returned so the client onboarding/dashboard can render one-click "Accept / Reject Invitation" banners.
         var pendingInvitations = new List<PendingInvitationDto>();
         if (!string.IsNullOrEmpty(currentUser.Email))
         {
@@ -37,9 +43,14 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             pendingInvitations = invites.Select(i => new PendingInvitationDto(i.Token, i.Tenant.Name)).ToList();
         }
 
+        // Just-In-Time (JIT) Provisioning Workflow:
+        // When a user authenticates via OIDC for the very first time, they will not yet exist in the local database.
+        // We automatically provision:
+        // 1. An internal User profile entity with their OIDC claims (ExternalUserId, Email, DisplayName).
+        // 2. A default "Personal Workspace" tenant (IsPersonal = true) so they can immediately begin using the system.
+        // 3. An initial TenantMembership assigning them the TenantRole.Admin role within their personal workspace.
         if (user == null)
         {
-            // Auto-provision the user and create their default Personal Workspace on first login
             var newUser = new Normora.Modules.Tenants.Domain.User
             {
                 Id = Guid.NewGuid(),
@@ -76,8 +87,10 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             }
             catch (DbUpdateException)
             {
-                // In case of a concurrent parallel request already auto-provisioning this user,
-                // detach failed entries and re-fetch the successfully saved user.
+                // Concurrency & Race Condition Handling:
+                // If two parallel requests fire simultaneously upon initial login (e.g. BFF user info + SignalR handshake),
+                // one request will succeed while the second throws a unique key violation on ExternalUserId.
+                // We safely catch the DbUpdateException, detach the failed in-memory entities, and re-fetch the persisted user.
                 context.Entry(newUser).State = EntityState.Detached;
                 context.Entry(personalTenant).State = EntityState.Detached;
                 context.Entry(membership).State = EntityState.Detached;
@@ -89,8 +102,9 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
                 .FirstAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
         }
 
-
-        // Sync any profile changes from Keycloak (e.g. if they updated their display name or email) to keep our local database up-to-date
+        // Identity Claims Synchronization (OIDC Claims Sync):
+        // If the user modified their display name or email in the identity provider (e.g. Keycloak / Google),
+        // we detect the divergence and synchronize the local database record to maintain directory consistency.
         bool isUpdated = false;
         
         if (user.DisplayName != currentUser.DisplayName)
@@ -111,6 +125,8 @@ public class GetCurrentUserQueryHandler(TenantsDbContext context, ICurrentUser c
             await context.SaveChangesAsync(cancellationToken);
         }
 
+        // Workspace Membership Projection:
+        // Formats the user's active tenant memberships with roles and personal workspace flags for client-side state.
         var memberships = user.Memberships.Select(m => new UserTenantMembershipDto(
             m.TenantId,
             m.Tenant.Name,

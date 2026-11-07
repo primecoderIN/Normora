@@ -116,6 +116,7 @@ public sealed class DocumentProcessingJob(
 
         if (embeddingService.IsConfigured)
         {
+            // Bounded parallel embedding generation avoids upstream Gemini rate-limiting while maintaining high ingestion throughput.
             var parallelOptions = new ParallelOptions
             {
                 MaxDegreeOfParallelism = 5,

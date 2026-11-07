@@ -17,7 +17,9 @@ public class ShareConversationCommandHandler(
 
     public async Task<ConversationShareDto> Handle(ShareConversationCommand request, CancellationToken cancellationToken)
     {
-        // 1. Verify caller owns the conversation
+        // Broken Object Level Authorization (BOLA) Ownership Guard:
+        // Users can only share conversations that they personally created.
+        // If the conversation belongs to another user or doesn't exist, throw BolaException (mapped to 404).
         var conversation = await context.Conversations
             .FirstOrDefaultAsync(c => c.Id == request.ConversationId && c.UserId == currentUser.ExternalUserId, cancellationToken);
 
@@ -26,7 +28,9 @@ public class ShareConversationCommandHandler(
             throw new BolaException();
         }
 
-        // 2. Check for an existing valid share to ensure idempotency
+        // Idempotent Active Share Recycling:
+        // If an unexpired public share already exists for this conversation, return the existing token
+        // to avoid polluting the database with multiple orphaned share URLs for the same conversation.
         var existingShare = await context.ConversationShares
             .FirstOrDefaultAsync(s => s.ConversationId == request.ConversationId, cancellationToken);
 
@@ -35,7 +39,9 @@ public class ShareConversationCommandHandler(
             return new ConversationShareDto(existingShare.Token, existingShare.ExpiresAt);
         }
 
-        // 3. Generate a cryptographically secure 16-character alphanumeric slug
+        // Cryptographically Secure Token Generation:
+        // Uses RandomNumberGenerator.GetInt32 across a 62-character alphanumeric set (a-z, A-Z, 0-9)
+        // to generate an unguessable 16-character token with ~95 bits of entropy.
         var tokenChars = new char[16];
         for (var i = 0; i < 16; i++)
         {
@@ -43,7 +49,8 @@ public class ShareConversationCommandHandler(
         }
         var token = new string(tokenChars);
 
-        // 4. Create and persist the share record
+        // Public Share Record Instantiation:
+        // By default, the share link is valid for 30 days unless revoked earlier.
         var share = new ConversationShare
         {
             Id = Guid.NewGuid(),

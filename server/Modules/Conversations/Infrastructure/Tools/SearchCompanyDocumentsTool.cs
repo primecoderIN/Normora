@@ -55,6 +55,7 @@ public sealed class SearchCompanyDocumentsTool(IMediator mediator) : IAgentTool
                 ? Math.Clamp(parsedLimit, 1, 5)
                 : 3;
 
+            // Query knowledge chunks across module boundary via MediatR to preserve modular monolith encapsulation.
             var retrievalResult = await mediator.Send(
                 new PerformHybridRetrievalQuery(query, limit, context.PersonalTenantId),
                 cancellationToken);

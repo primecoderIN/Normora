@@ -23,6 +23,7 @@ public class UpdateTenantBrandingCommandHandler(
             return null;
 
         var branding = tenant.Branding;
+        // Lazily initialize branding record if the workspace is using system defaults.
         if (branding == null)
         {
             branding = new TenantBranding { TenantId = tenant.Id };
@@ -33,6 +34,7 @@ public class UpdateTenantBrandingCommandHandler(
         branding.SecondaryColor = request.SecondaryColor;
         branding.UpdatedAt = DateTime.UtcNow;
 
+        // Upload custom assets to object storage with cache-busting version query parameters.
         if (request.LogoFile != null)
         {
             var objectName = await storageService.UploadAssetAsync(request.LogoFile, tenant.Slug, "logo");
@@ -53,7 +55,7 @@ public class UpdateTenantBrandingCommandHandler(
 
         await context.SaveChangesAsync(cancellationToken);
 
-        // Invalidate cached branding for this tenant slug
+        // Instant cache eviction ensures updated theme tokens and logos propagate to browsers immediately.
         await cache.RemoveAsync($"branding:{tenant.Slug.ToLowerInvariant()}", cancellationToken);
 
         return new TenantBrandingDto(

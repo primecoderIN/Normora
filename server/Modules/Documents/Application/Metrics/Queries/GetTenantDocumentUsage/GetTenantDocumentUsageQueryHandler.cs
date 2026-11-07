@@ -7,7 +7,13 @@ namespace Normora.Modules.Documents.Application.Metrics.Queries;
 
 /// <summary>
 /// Cross-module query handler that aggregates active document count and byte storage usage for a tenant.
+/// Consumed by the Tenants module during subscription limit checks and quota enforcement.
 /// </summary>
+/// <remarks>
+/// Quota Accounting:
+/// - Uses .IgnoreQueryFilters() to bypass ambient tenant context and evaluate explicitly requested TenantId.
+/// - Sums binary file size across all non-deleted documents to measure consumption against tier storage allowances.
+/// </remarks>
 public class GetTenantDocumentUsageQueryHandler(DocumentsDbContext context)
     : IRequestHandler<GetTenantDocumentUsageQuery, TenantDocumentUsageResult>
 {

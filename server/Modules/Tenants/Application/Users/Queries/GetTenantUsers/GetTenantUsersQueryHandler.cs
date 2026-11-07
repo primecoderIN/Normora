@@ -12,12 +12,15 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
 {
     public async Task<PagedResult<TenantEmployeeDto>> Handle(GetTenantEmployeesQuery request, CancellationToken cancellationToken)
     {
-        // Query active memberships; soft-delete filters are applied automatically by EF Core global query filters
+        // Tenant Boundary & Soft-Delete Enforcement:
+        // Query active memberships scoped to request.TenantId.
+        // Members marked as soft-deleted (RemovedAt != null) are automatically filtered out by EF Core global query filters.
         var query = context.TenantMemberships
             .Where(m => m.TenantId == request.TenantId)
             .AsNoTracking();
 
-        // Optional case-insensitive search by display name or email
+        // Case-Insensitive Multi-Field Search:
+        // Uses PostgreSQL ILike via EF.Functions for index-accelerated pattern matching across DisplayName and Email.
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var searchPattern = $"%{request.Search.Trim()}%";
@@ -26,13 +29,15 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
                 (m.User.Email != null && EF.Functions.ILike(m.User.Email, searchPattern)));
         }
 
-        // Filter by assigned department
+        // Relational Department Filter:
+        // Restricts results to employees associated with a specific department through MembershipDepartments.
         if (request.DepartmentId.HasValue)
         {
             query = query.Where(m => m.MembershipDepartments.Any(md => md.DepartmentId == request.DepartmentId.Value));
         }
 
-        // Filter by assigned user group
+        // Relational User Group Filter:
+        // Restricts results to employees belonging to a specific user group via UserGroupMemberships.
         if (request.UserGroupId.HasValue)
         {
             query = query.Where(m => m.UserGroupMemberships.Any(ugm => ugm.UserGroupId == request.UserGroupId.Value));
@@ -41,7 +46,9 @@ public class GetTenantEmployeesQueryHandler(TenantsDbContext context) : IRequest
         var totalCount = await query.CountAsync(cancellationToken);
         var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
 
-        // Fetch paginated results with projected department and group names
+        // Keyset-Friendly Pagination with Relational Projections:
+        // Orders by CreatedAt descending to show newest members first.
+        // Nested selects project only the required department and group summaries, avoiding Cartesian row explosion.
         var items = await query
             .OrderByDescending(m => m.CreatedAt)
             .Skip((request.Page - 1) * request.PageSize)

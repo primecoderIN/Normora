@@ -59,6 +59,9 @@ public sealed class CalculatePolicyLimitTool : IAgentTool
                 ? Math.Max(1, parsedDays)
                 : 1;
 
+            // Deterministic calculation branch:
+            // Offloads financial math from the probabilistic LLM to deterministic application logic,
+            // preventing hallucinated expense limits or incorrect per-diem calculations.
             object result = policyType switch
             {
                 "hotel" => CalculateHotel(tier, days),

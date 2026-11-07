@@ -36,20 +36,26 @@ internal sealed class AskConversationStreamCommandHandler(
         AskConversationStreamCommand request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        // Provider Verification:
+        // Ensures Gemini API text generation service is configured before accepting streaming requests.
         if (!generationService.IsConfigured)
             throw new InvalidOperationException(ApiMessages.LlmGenerationNotConfigured);
 
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            // 1-5. Validate, persist user message, prepare history & hybrid retrieval via turn preparer
+            // Pipeline Step 1-5: Turn Preparation (IConversationTurnPreparer)
+            // Executes conversation validation, BOLA ownership verification, user message persistence,
+            // token-budgeted history assembly, LLM query rewriting, and cross-module hybrid retrieval (BM25 + pgvector).
             var turn = await turnPreparer.PrepareTurnAsync(
                 request.ConversationId,
                 request.Question,
                 request.Limit,
                 cancellationToken);
 
-            // 6. Build citations + emit immediately
+            // Pipeline Step 6: Early Citation Emission
+            // Citations are emitted to the client SSE stream immediately before LLM generation begins.
+            // This allows the frontend to render document badges and source tabs instantly while text streams.
             var assistantMessageId = Guid.NewGuid();
             var citations = new List<MessageCitation>();
             var mappedSources = new List<AskConversationCitation>();
@@ -75,10 +81,13 @@ internal sealed class AskConversationStreamCommandHandler(
                     c.Score)).ToList();
             }
 
-            // Emit citations before streaming text
+            // Yield CitationsReadyEvent event across SSE stream
             yield return new CitationsReadyEvent(turn.UserMessage.Id, assistantMessageId, mappedSources);
 
-            // 7. Stream generation
+            // Pipeline Step 7: Streaming LLM Answer Generation
+            // Grounded RAG with Hallucination Defense:
+            // If top candidate similarity is below MinimumSimilarity threshold (0.35), we return a deterministic
+            // fallback message ("I could not find relevant information in company documents") to prevent hallucinations.
             var answerBuilder = new System.Text.StringBuilder();
 
             if (turn.TopCandidates.Count == 0 || (turn.VectorSimOfFirst > 0 && turn.VectorSimOfFirst < MinimumSimilarity))
@@ -93,6 +102,7 @@ internal sealed class AskConversationStreamCommandHandler(
                     .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
                     .ToList();
 
+                // Stream token chunks as they arrive from Gemini API
                 await foreach (var chunk in generationService.StreamConversationalAnswerAsync(
                     turn.RewrittenQuestion, sources, turn.HistoryTurns, turn.ActiveTenantName, cancellationToken))
                 {
@@ -103,7 +113,8 @@ internal sealed class AskConversationStreamCommandHandler(
 
             var answerText = answerBuilder.ToString();
 
-            // 8. Persist assistant message + citations
+            // Pipeline Step 8: Assistant Message Persistence & Audit Linkage
+            // Save the complete generated answer along with token usage and citation foreign keys into the database.
             var assistantMessage = new Message
             {
                 Id = assistantMessageId,
@@ -131,14 +142,17 @@ internal sealed class AskConversationStreamCommandHandler(
 
             await conversationsContext.SaveChangesAsync(cancellationToken);
 
-            // 9. Auto-title on first turn
+            // Pipeline Step 9: Asynchronous Fire-and-Forget Auto-Titling
+            // On the first conversational exchange, summarize the initial user query into a concise 3-5 word title.
             if (turn.IsFirstTurn && turn.Conversation.Title == ConversationConstants.DefaultTitle)
             {
                 autoTitleService.AutoTitleConversationAsync(turn.Conversation.Id, request.Question);
             }
 
+            // OpenTelemetry Metrics: Record token consumption and turn completion
             metrics.TokensConsumed.Add((turn.UserMessage.TokenCount ?? 0) + (assistantMessage.TokenCount ?? 0), new KeyValuePair<string, object?>("operation", "ask"));
 
+            // Signal stream completion to the frontend event listener
             yield return new StreamFinishedEvent();
         }
         finally

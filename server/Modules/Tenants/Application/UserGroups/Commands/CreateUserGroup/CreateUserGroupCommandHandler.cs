@@ -14,8 +14,13 @@ public class CreateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
 {
     public async Task<Guid> Handle(CreateUserGroupCommand request, CancellationToken cancellationToken)
     {
+        // Ambient Tenant Verification:
+        // Validates that the request is running in an authenticated tenant context.
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
+        // Group Name Uniqueness Check:
+        // User groups are RBAC containers grouping employees to assign shared departmental access.
+        // Names must be unique within the tenant to prevent ambiguous role assignments.
         var exists = await dbContext.UserGroups
             .AnyAsync(g => g.TenantId == tenantContext.TenantId.Value && g.Name.ToLower() == request.Name.ToLower(), cancellationToken);
 
@@ -24,13 +29,15 @@ public class CreateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.UserGroupExists);
         }
 
+        // BOLA / Cross-Tenant Injection Defense (SEC-17):
+        // Filter requested DepartmentIds to ensure ONLY departments actually belonging to this tenant are associated.
+        // Any foreign department IDs provided in the payload are stripped, preventing privilege escalation.
         var group = new UserGroup
         {
             Id = Guid.NewGuid(),
             TenantId = tenantContext.TenantId.Value,
             Name = request.Name,
             Description = request.Description,
-            // SEC-17: Only link departments that actually belong to this tenant
             UserGroupDepartments = request.DepartmentIds
                 .Where(depId => dbContext.Departments
                     .Any(d => d.Id == depId && d.TenantId == tenantContext.TenantId.Value))

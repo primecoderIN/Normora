@@ -20,8 +20,10 @@ public sealed class DeleteDocumentCommandHandler(
 {
     public async Task<bool> Handle(DeleteDocumentCommand request, CancellationToken cancellationToken)
     {
-        // The global query filter already applies tenant + DeletedAt IS NULL isolation,
-        // so a document from another tenant or already-deleted document will not be found.
+        // Broken Object Level Authorization (BOLA) & Soft-Delete Filter:
+        // The DocumentsDbContext global query filter applies: TenantId == _tenantContext.TenantId && DeletedAt == null.
+        // If the document does not exist, belongs to another tenant, or is already deleted, FirstOrDefaultAsync returns null.
+        // We throw BolaException (mapped to 404) to avoid leaking resource existence.
         var document = await context.Documents
             .FirstOrDefaultAsync(d => d.Id == request.Id, cancellationToken);
 
@@ -30,17 +32,23 @@ public sealed class DeleteDocumentCommandHandler(
             throw new BolaException();
         }
 
-        // Soft-delete: set the audit fields. The global query filter will now exclude
-        // this document from all future queries including RAG retrieval automatically.
+        // Soft-Deletion Invariant:
+        // Instead of immediate physical deletion, we stamp DeletedAt and DeletedByUserId.
+        // Benefits:
+        // 1. Instantly hides the document and its chunks from all conversational RAG retrievals and queries.
+        // 2. Preserves an audit trail for compliance and inadvertent deletion recovery during the grace period (30 days).
+        // 3. Physical purging of S3 binaries and pgvector embeddings is decoupled into PurgeDeletedDocumentsJob.
         document.DeletedAt = DateTime.UtcNow;
         document.DeletedByUserId = request.DeletedByUserId;
         await context.SaveChangesAsync(cancellationToken);
 
-        // Invalidate cached dashboard metrics for this tenant
+        // Distributed Cache Eviction:
+        // Invalidate cached dashboard metrics so document count and storage graphs update immediately.
         await cache.RemoveAsync($"dashboard:{document.TenantId}", cancellationToken);
 
-        // Broadcast to all employer sessions connected to this tenant so the document
-        // row is removed from the list in real time without a page refresh.
+        // Real-Time SignalR Broadcast:
+        // Broadcasts to all connected employer sessions in the tenant group to instantly remove
+        // the document row from the UI data table without requiring a browser refresh.
         await notificationService.SendDocumentDeletedAsync(document.TenantId, document.Id, cancellationToken);
 
         logger.LogInformation(

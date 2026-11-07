@@ -15,10 +15,13 @@ public class CreateCheckoutSessionCommandHandler(
 {
     public async Task<CheckoutSessionResultDto> Handle(CreateCheckoutSessionCommand request, CancellationToken cancellationToken)
     {
-        // 1. Resolve current active tenant from scoped ambient context
+        // Ambient Tenant Verification:
+        // Billing operations must always execute within the context of an identified tenant workspace.
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // 2. Fetch workspace details (name and slug) for return URLs and customer details
+        // Workspace Metadata Retrieval:
+        // We retrieve tenant details (display name and URL slug) without EF tracking to populate
+        // transaction metadata, billing descriptors, and return/cancel callback URLs.
         var tenant = await context.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
@@ -26,7 +29,9 @@ public class CreateCheckoutSessionCommandHandler(
 
         var userEmail = currentUser.Email ?? string.Empty;
 
-        // 3. Request payment service to generate hosted checkout parameters with signature
+        // Payment Gateway Integration (PayU India):
+        // Calls IPaymentService to generate the hosted checkout form parameters and HMAC-SHA512 checksum.
+        // The resulting payload allows the frontend client to submit a secure form post directly to the gateway.
         var session = await paymentService.CreatePaymentSessionAsync(
             tenantId,
             tenant.Name,

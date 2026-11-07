@@ -7,6 +7,9 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
 {
     public UploadDocumentCommandValidator()
     {
+        // FluentValidation Pipeline Enforcement:
+        // Evaluated automatically by ValidationBehavior<,> before UploadDocumentCommandHandler executes.
+        // Guards against malicious payloads, oversized files, and MIME spoofing attacks before disk/storage writes.
         RuleFor(x => x.TenantId)
             .NotEmpty().WithMessage("TenantId is required.");
 
@@ -20,6 +23,9 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
 
     private static bool BeAValidExtension(IFormFile? file)
     {
+        // Extension Allowlist:
+        // Strictly permits only supported enterprise document formats (.pdf, .docx, .txt)
+        // supported by Apache Tika and the semantic text chunking engine.
         if (file == null) return false;
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         return ext == ".pdf" || ext == ".docx" || ext == ".txt";
@@ -31,11 +37,14 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
     /// </summary>
     private static bool HaveValidMagicBytes(IFormFile? file)
     {
+        // Deep File Inspection (Magic Byte Signature Verification):
+        // Prevents extension-spoofing attacks (e.g., an executable malicious binary renamed to 'handbook.pdf').
+        // Uses stackalloc byte[8] for zero heap allocation during stream inspection.
         if (file == null || file.Length < 4) return false;
 
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-        // TXT has no standard magic bytes — trust the extension
+        // Plain text (.txt) files have no standard magic byte header
         if (ext == ".txt") return true;
 
         Span<byte> header = stackalloc byte[8];
@@ -45,9 +54,9 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
 
         return ext switch
         {
-            // PDF: starts with %PDF (0x25 0x50 0x44 0x46)
+            // PDF Magic Header: "%PDF" (0x25 0x50 0x44 0x46)
             ".pdf" => header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46,
-            // DOCX is a ZIP archive: starts with PK (0x50 0x4B 0x03 0x04)
+            // DOCX / OOXML Magic Header: PK ZIP Archive (0x50 0x4B 0x03 0x04)
             ".docx" => header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04,
             _ => false
         };

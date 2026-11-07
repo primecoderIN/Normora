@@ -40,7 +40,7 @@ public class InviteEmployeeCommandHandler(
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.PendingInvitationExists);
         }
 
-        // Enforce employee quota based on subscription plan
+        // Enforce employee seat quotas by evaluating active members plus pending invitations against the workspace plan limit.
         var plan = await context.TenantPlans
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken)

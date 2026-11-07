@@ -17,15 +17,23 @@ internal sealed class SubmitFeedbackCommandHandler(
 {
     public async Task Handle(SubmitFeedbackCommand request, CancellationToken cancellationToken)
     {
+        // Broken Object Level Authorization (BOLA) Validation:
+        // Ensures the target message exists within the specified conversation thread and caller's tenant.
+        // If not found, throw BolaException (mapped to 404).
         var message = await dbContext.Messages
             .FirstOrDefaultAsync(m => m.Id == request.MessageId && m.ConversationId == request.ConversationId, cancellationToken)
             ?? throw new BolaException();
 
+        // Invariant: Feedback Permitted Only on Assistant Responses
+        // Users cannot submit evaluation feedback on their own prompt inputs or system instructions.
         if (message.Role != MessageRole.Assistant)
         {
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.FeedbackOnlyForAssistant);
         }
 
+        // Idempotent Feedback Upsert Workflow:
+        // If the user already provided feedback on this message, update their existing rating (thumbs up/down) and comment.
+        // Otherwise, insert a new MessageFeedback record stamped with their external user ID.
         var feedback = await dbContext.MessageFeedbacks
             .FirstOrDefaultAsync(f => f.MessageId == request.MessageId && f.UserId == currentUser.ExternalUserId, cancellationToken);
 
@@ -33,7 +41,6 @@ internal sealed class SubmitFeedbackCommandHandler(
         {
             feedback.Rating = request.Rating;
             feedback.Comment = request.Comment;
-            // Optionally update CreatedAt or add an UpdatedAt field, but plan says immutable or updated. We will update.
         }
         else
         {

@@ -6,7 +6,8 @@ using Normora.Shared.Contracts.Documents;
 namespace Normora.Modules.Documents.Application.Mcp.Queries;
 
 /// <summary>
-/// Handles GetMcpResourceDocumentsQuery by filtering Documents within the Documents persistence context.
+/// Cross-module query handler that enumerates available document resources for Model Context Protocol (MCP) clients.
+/// Filters resources based on tenant ownership and caller's effective department permissions.
 /// </summary>
 public sealed class GetMcpResourceDocumentsQueryHandler(DocumentsDbContext documentsDb)
     : IRequestHandler<GetMcpResourceDocumentsQuery, IReadOnlyList<McpResourceItem>>

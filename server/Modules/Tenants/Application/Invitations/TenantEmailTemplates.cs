@@ -4,15 +4,22 @@ using Normora.Shared.Templates;
 namespace Normora.Modules.Tenants.Application.Invitations;
 
 /// <summary>
-/// Email templates for the Tenants module.
+/// Email templates and HTML generators for organization invitations and member notifications.
+/// Wraps generated content in Normora's standard responsive <see cref="EmailLayout"/> boilerplate.
 /// </summary>
 public static class TenantEmailTemplates
 {
     /// <summary>
     /// Generates an HTML email inviting an employee to join a workspace.
+    /// Encodes parameters to prevent HTML injection and provides an accessible fallback URL.
     /// </summary>
+    /// <param name="tenantName">Name of the organization inviting the user.</param>
+    /// <param name="acceptUrl">Fully-qualified onboarding URL containing the unique invitation token.</param>
+    /// <param name="inviterName">Display name or email of the administrator initiating the invitation.</param>
+    /// <returns>Complete responsive HTML email payload ready for SMTP dispatch.</returns>
     public static string InvitationEmail(string tenantName, string acceptUrl, string? inviterName = null)
     {
+        // Sanitize dynamic inputs against XSS/HTML injection attacks in email clients.
         var safeTenant = WebUtility.HtmlEncode(tenantName);
         var safeInviter = inviterName != null ? WebUtility.HtmlEncode(inviterName) : "Your team";
 

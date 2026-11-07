@@ -12,13 +12,18 @@ public class SuspendTenantCommandHandler(TenantsDbContext dbContext) : IRequestH
 {
     public async Task<bool> Handle(SuspendTenantCommand request, CancellationToken cancellationToken)
     {
-        // Retrieve the workspace that is being suspended
+        // Tenant Lifecycle & Access Suspension Workflow:
+        // Retrieves the workspace entity by Primary Key (request.TenantId).
+        // If not found, returns false indicating no-op.
         var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == request.TenantId, cancellationToken);
         
         if (tenant == null)
             return false;
 
-        // Flag the workspace as suspended to lock out its users without deleting the data
+        // Suspension Invariant:
+        // Transitioning status to TenantStatus.Suspended immediately blocks tenant access in
+        // TenantResolutionMiddleware for all employees and administrators of this organization,
+        // while safely preserving all historical documents, embeddings, and chat history.
         tenant.Status = TenantStatus.Suspended;
         tenant.UpdatedAt = DateTime.UtcNow;
 

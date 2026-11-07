@@ -86,6 +86,7 @@ internal sealed class ConversationTurnPreparer(
         var personalTenantId = workspaceContext.PersonalTenantId;
         var activeTenantName = workspaceContext.ActiveTenantName;
 
+        // Dispatch hybrid retrieval across module boundary via MediatR to query Documents candidate chunks.
         var retrievalResult = await mediator.Send(
             new Normora.Shared.Contracts.Documents.PerformHybridRetrievalQuery(
                 rewrittenQuestion,

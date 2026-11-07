@@ -1,20 +1,42 @@
 namespace Normora.Modules.Conversations.Application.SavedAnswers.DTOs;
 
 /// <summary>
-/// A bookmark DTO returned to the client for the Saved Answers page.
-/// Contains the message content and its citations so the page is self-contained.
+/// Data transfer object representing a bookmarked AI answer.
+/// Contains the markdown message body and source document citations for rendering in the employee's saved answers portal.
 /// </summary>
 public record SavedAnswerDto(
+    // Unique identifier of the bookmark record.
     Guid Id,
-    Guid MessageId,
-    Guid ConversationId,
-    string Content,
-    IReadOnlyList<CitationDto> Citations,
-    DateTimeOffset SavedAt);
 
+    // Target message identifier.
+    Guid MessageId,
+
+    // Originating conversation thread identifier.
+    Guid ConversationId,
+
+    // Markdown text content of the assistant response.
+    string Content,
+
+    // Citation references grounding this answer in tenant policy documents.
+    IReadOnlyList<CitationDto> Citations,
+
+    // UTC timestamp when the answer was saved.
+    DateTimeOffset SavedAt
+);
+
+/// <summary>
+/// Citation reference metadata attached to a saved answer.
+/// </summary>
 public record CitationDto(
+    // Unique identifier of the cited document.
     Guid DocumentId,
+
+    // File name of the source document (e.g. "Employee-Handbook.pdf").
     string FileName,
+
+    // Vector relevance/similarity score.
     double Score,
-    // Document Versioning (Phase 19): True when the cited chunk's DocumentVersion.IsActive = false.
-    bool IsOutdated);
+
+    // Indicates whether the underlying document version has been superseded or replaced.
+    bool IsOutdated
+);

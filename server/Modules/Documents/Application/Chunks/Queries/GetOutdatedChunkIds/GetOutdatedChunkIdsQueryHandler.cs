@@ -6,9 +6,14 @@ using Normora.Shared.Contracts.Documents;
 namespace Normora.Modules.Documents.Application.Chunks.Queries;
 
 /// <summary>
-/// Identifies document chunks that belong to deactivated or superseded document versions.
-/// Used during RAG retrieval to filter out stale knowledge before generating answers.
+/// Cross-module query handler that identifies document chunks belonging to deactivated or superseded document versions.
+/// Used during conversational RAG retrieval to prevent the AI model from hallucinating or answering from outdated company policies.
 /// </summary>
+/// <remarks>
+/// Version Invalidation:
+/// - Joins candidate chunk IDs against DocumentVersions where `IsActive == false`.
+/// - Returns HashSet of outdated Chunk IDs for O(1) exclusion during hybrid candidate pruning.
+/// </remarks>
 public class GetOutdatedChunkIdsQueryHandler(DocumentsDbContext context)
     : IRequestHandler<GetOutdatedChunkIdsQuery, HashSet<Guid>>
 {

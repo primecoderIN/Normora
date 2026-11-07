@@ -109,6 +109,12 @@ public sealed class GeminiTextGenerationService(
 
     // ─── Tool Calling Loop ───────────────────────────────────────────────────────
 
+    // Executes Gemini Autonomous Function Calling across a multi-turn conversation loop:
+    // 1. Injects OpenAPI parameter schemas for registered workspace tools into the Gemini API payload.
+    // 2. Intercepts candidate turns where the model requests a function call (e.g., calculate_policy_limit).
+    // 3. Executes the corresponding tool in the user's tenant context via IAgentToolRegistry.
+    // 4. Feeds the function execution result back into the dialogue history with role 'function'.
+    // 5. Continues until Gemini synthesizes a natural language answer or reaches the 3-turn safety bound.
     private async Task<string> ExecuteToolCallingLoopAsync(
         string prompt,
         ToolExecutionContext toolContext,
@@ -125,6 +131,7 @@ public sealed class GeminiTextGenerationService(
             toolRegistry.GetToolDeclarations()
         };
 
+        // Bounded loop ceiling prevents infinite recursive model execution.
         const int maxTurns = 3;
         for (var turn = 0; turn < maxTurns; turn++)
         {

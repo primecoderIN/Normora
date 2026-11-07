@@ -6,6 +6,10 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Application.SavedAnswers.Commands;
 
+/// <summary>
+/// Command handler that persists a bookmarked assistant answer for the authenticated employee.
+/// Enforces idempotent bookmark creation and strict BOLA message ownership checks.
+/// </summary>
 public class SaveAnswerCommandHandler(
     ConversationsDbContext context,
     ICurrentUser currentUser,
@@ -13,7 +17,8 @@ public class SaveAnswerCommandHandler(
 {
     public async Task<Guid> Handle(SaveAnswerCommand request, CancellationToken cancellationToken)
     {
-        // Check if already saved by this user (idempotency)
+        // 1. Idempotency Check:
+        // Returns the existing ID without failing if the user has already saved this response.
         var existing = await context.SavedAnswers
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -23,7 +28,8 @@ public class SaveAnswerCommandHandler(
         if (existing is not null)
             return existing.Id;
 
-        // Verify the message exists and belongs to the current user (BOLA protection)
+        // 2. BOLA Authorization Verification:
+        // Ensures the message exists and belongs to a thread created by the caller.
         var message = await context.Messages
             .AsNoTracking()
             .Include(m => m.Conversation)
@@ -33,10 +39,12 @@ public class SaveAnswerCommandHandler(
                 cancellationToken)
             ?? throw new Normora.Shared.Exceptions.BolaException();
 
+        // 3. Role Validation:
+        // Users may only bookmark assistant answers, not their own question prompts.
         if (message.Role != MessageRole.Assistant)
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.SaveOnlyAssistant);
 
-        // Guard against null TenantId before using the null-forgiveness operator
+        // Guard against missing tenant context before saving.
         if (!tenantContext.TenantId.HasValue)
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 

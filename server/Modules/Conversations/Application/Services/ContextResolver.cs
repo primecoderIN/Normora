@@ -17,7 +17,8 @@ public class ContextResolver(ConversationsDbContext context) : IContextResolver
         int messageLimit = 5,
         CancellationToken cancellationToken = default)
     {
-        // Verify conversation ownership to enforce security boundaries
+        // BOLA ownership verification:
+        // Ensure the conversation belongs to the authenticated external user ID before reading chat turns.
         var conversation = await context.Conversations
             .AsNoTracking()
             .Where(c => c.Id == conversationId && c.UserId == userId)
@@ -26,7 +27,9 @@ public class ContextResolver(ConversationsDbContext context) : IContextResolver
         if (conversation is null)
             return Array.Empty<ConversationMessageContext>();
 
-        // Query the latest N messages in descending order, then reorder chronologically
+        // Two-phase chronological ordering:
+        // First sort descending to retrieve the N most recent message turns efficiently via index,
+        // then sort ascending in memory so the LLM receives the natural, chronological flow of dialogue.
         var messages = await context.Messages
             .AsNoTracking()
             .Where(m => m.ConversationId == conversationId)

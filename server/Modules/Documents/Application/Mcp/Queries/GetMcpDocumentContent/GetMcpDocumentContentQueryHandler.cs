@@ -7,8 +7,15 @@ using Normora.Shared.Exceptions;
 namespace Normora.Modules.Documents.Application.Mcp.Queries;
 
 /// <summary>
-/// Handles GetMcpDocumentContentQuery within Documents persistence context and applies BOLA/RBAC checks.
+/// Cross-module query handler that loads full document content for Model Context Protocol (MCP) clients.
+/// Enforces strict BOLA object ownership and departmental role-based access control.
 /// </summary>
+/// <remarks>
+/// Security Boundaries:
+/// - Verifies document matches requested TenantId and is not soft-deleted.
+/// - Validates caller's effective department permissions; throws BolaException (404) if access denied.
+/// - Assembles sequential chunk text from the latest active document version.
+/// </remarks>
 public sealed class GetMcpDocumentContentQueryHandler(DocumentsDbContext documentsDb)
     : IRequestHandler<GetMcpDocumentContentQuery, McpDocumentContentResult?>
 {

@@ -14,9 +14,14 @@ public class CreateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
 {
     public async Task<Guid> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
     {
+        // Multi-tenant ambient context validation:
+        // Every administrative department mutation requires a resolved TenantId from TenantResolutionMiddleware.
+        // If missing or unauthenticated, throw InvalidOperationException to halt execution immediately.
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
-        // Enforce unique name per tenant
+        // Case-insensitive department name uniqueness constraint:
+        // Departments represent strict organizational boundaries for ACL and conversational RAG retrieval.
+        // We enforce uniqueness per tenant to prevent duplicate routing filters and employee assignment confusion.
         var exists = await dbContext.Departments
             .AnyAsync(d => d.TenantId == tenantContext.TenantId.Value && d.Name.ToLower() == request.Name.ToLower(), cancellationToken);
 
@@ -25,6 +30,9 @@ public class CreateDepartmentCommandHandler(TenantsDbContext dbContext, ITenantC
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.DepartmentExists);
         }
 
+        // Entity instantiation and primary key generation:
+        // Generate a new GUID client-side to ensure immediate identity reference before persistence.
+        // The TenantId is strictly bound to the authenticated ambient context to prevent cross-tenant leakage.
         var department = new Department
         {
             Id = Guid.NewGuid(),

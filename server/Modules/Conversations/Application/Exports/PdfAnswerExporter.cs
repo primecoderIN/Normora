@@ -32,6 +32,13 @@ public class PdfAnswerExporter : IAnswerExporter
 
     public ExportResult Export(AnswerExportData data)
     {
+        // QuestPDF Document Generation:
+        // Generates an A4 corporate PDF containing:
+        // 1. Branded Header: Normora indigo title and right-aligned conversation slug.
+        // 2. Question Callout: Slate-50 background container highlighting the original user prompt.
+        // 3. Answer Content: Sanitized and formatted multi-paragraph body.
+        // 4. Citation Appendix: Complete list of source document files, chunk references, and relevance scores.
+        // 5. Running Footer: Dynamic page numbering ("Page X of Y") and export UTC timestamp.
         var bytes = Document.Create(container =>
         {
             container.Page(page =>

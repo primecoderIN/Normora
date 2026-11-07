@@ -14,8 +14,13 @@ public class GetUserGroupsQueryHandler(TenantsDbContext dbContext, ITenantContex
 {
     public async Task<List<UserGroupDto>> Handle(GetUserGroupsQuery request, CancellationToken cancellationToken)
     {
+        // Ambient Tenant Verification:
+        // Ensures user group retrieval is strictly restricted to the ambient tenant workspace.
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
+        // Aggregated Group Projection:
+        // Projects user groups alongside related member counts and linked department counts.
+        // Uses AsNoTracking() to bypass EF change tracking overhead on read operations.
         return await dbContext.UserGroups
             .AsNoTracking()
             .Where(g => g.TenantId == tenantContext.TenantId.Value)

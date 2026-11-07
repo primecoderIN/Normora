@@ -15,8 +15,13 @@ public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
 {
     public async Task<bool> Handle(UpdateUserGroupCommand request, CancellationToken cancellationToken)
     {
+        // Ambient Tenant Verification:
+        // Validates that this administrative operation operates within an active tenant boundary.
         if (!tenantContext.TenantId.HasValue) throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantContextMissing);
 
+        // Broken Object Level Authorization (BOLA) Check:
+        // Group lookup is strictly scoped to the active TenantId.
+        // If the group does not exist or belongs to another tenant, throw BolaException (mapped to 404).
         var group = await dbContext.UserGroups
             .Include(g => g.UserGroupDepartments)
             .FirstOrDefaultAsync(g => g.Id == request.Id && g.TenantId == tenantContext.TenantId.Value, cancellationToken);
@@ -26,6 +31,8 @@ public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
             throw new BolaException();
         }
 
+        // Case-insensitive name collision check excluding current entity:
+        // Prevents renaming a group to a name that already exists within the current tenant workspace.
         var exists = await dbContext.UserGroups
             .AnyAsync(g => g.TenantId == tenantContext.TenantId.Value 
                            && g.Id != request.Id 
@@ -39,14 +46,17 @@ public class UpdateUserGroupCommandHandler(TenantsDbContext dbContext, ITenantCo
         group.Name = request.Name;
         group.Description = request.Description;
 
-        // SEC-17: Validate that all provided DepartmentIds belong to the current tenant
-        // before syncing to prevent cross-tenant department injection.
+        // BOLA / Cross-Tenant Injection Defense (SEC-17):
+        // Validate that all incoming DepartmentIds strictly belong to the current active tenant
+        // before performing relational synchronization. This blocks privilege escalation attacks
+        // where an admin attempts to associate departments from a different tenant.
         var validDepartmentIds = await dbContext.Departments
             .Where(d => d.TenantId == tenantContext.TenantId.Value && request.DepartmentIds.Contains(d.Id))
             .Select(d => d.Id)
             .ToListAsync(cancellationToken);
 
-        // Sync departments (only tenant-owned ones)
+        // Department membership collection reconciliation:
+        // Clear existing associations and re-populate with verified tenant-owned department IDs.
         group.UserGroupDepartments.Clear();
         foreach (var depId in validDepartmentIds)
         {

@@ -9,9 +9,19 @@ public class UpdateUserGroupAssignmentsCommandValidator : AbstractValidator<Upda
 {
     public UpdateUserGroupAssignmentsCommandValidator()
     {
-        RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.MemberUserIds).NotNull();
-        RuleFor(x => x.DepartmentIds).NotNull();
+        // FluentValidation Pipeline Enforcement:
+        // Evaluated automatically by ValidationBehavior<,> before UpdateUserGroupAssignmentsCommandHandler executes.
+        // - Id: Required GUID of the user group.
+        // - MemberUserIds: Collection of user IDs to associate with this group; must not be null.
+        // - DepartmentIds: Collection of department IDs to link to this group; must not be null.
+        RuleFor(x => x.Id)
+            .NotEmpty();
+
+        RuleFor(x => x.MemberUserIds)
+            .NotNull();
+
+        RuleFor(x => x.DepartmentIds)
+            .NotNull();
     }
 }
 

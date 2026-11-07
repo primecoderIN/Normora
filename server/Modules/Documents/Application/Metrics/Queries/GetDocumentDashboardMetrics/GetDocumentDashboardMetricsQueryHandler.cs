@@ -7,8 +7,15 @@ using Normora.Shared.Contracts.Documents;
 namespace Normora.Modules.Documents.Application.Metrics.Queries;
 
 /// <summary>
-/// Handles GetDocumentDashboardMetricsQuery by querying DocumentsDbContext.
+/// Cross-module query handler calculating knowledge base volume, upload trends, and recent documents
+/// to construct the unified Employer Analytics Dashboard.
 /// </summary>
+/// <remarks>
+/// Metrics Pipeline:
+/// - Aggregates total active documents and documents ingested in the last 30 days.
+/// - Identifies failing document versions requiring employer remediation.
+/// - Projects the 5 most recent uploads with departmental access tags and file extensions.
+/// </remarks>
 public sealed class GetDocumentDashboardMetricsQueryHandler(DocumentsDbContext documentsDb)
     : IRequestHandler<GetDocumentDashboardMetricsQuery, DocumentDashboardMetricsResult>
 {

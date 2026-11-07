@@ -6,7 +6,17 @@ using Normora.Shared.Contracts.Documents;
 
 namespace Normora.Modules.Documents.Application.Documents.Queries;
 
-/// <summary>Lists document names available to a tenant under its department access scope.</summary>
+/// <summary>
+/// Cross-module query handler that resolves the list of accessible document file names for a user
+/// based on their effective departmental scoping.
+/// </summary>
+/// <remarks>
+/// Scoping Logic:
+/// - Handled exclusively within the Documents module boundaries.
+/// - Ingests the user's effective department IDs resolved by Tenants module.
+/// - Matches Company-Wide documents (no department tags) plus documents tagged with matching departments.
+/// - Used by Conversations auto-title and suggestion generators to prime prompt context.
+/// </remarks>
 public class GetAccessibleDocumentFileNamesQueryHandler(DocumentsDbContext context)
     : IRequestHandler<GetAccessibleDocumentFileNamesQuery, IReadOnlyList<string>>
 {

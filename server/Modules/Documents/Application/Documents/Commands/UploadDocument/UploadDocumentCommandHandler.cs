@@ -24,16 +24,23 @@ public sealed class UploadDocumentCommandHandler(
 {
     public async Task<DocumentDto> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
-        // Enforce subscription plan limits before initiating binary storage upload
+        // Cross-Module Subscription Boundary Verification:
+        // Before allocating object storage or database resources, query the Tenants module via MediatR
+        // to enforce subscription tier quotas (e.g. max documents, max total storage bytes).
+        // If quotas are exceeded, this throws PlanLimitExceededException (mapped to 402 Payment Required).
         await mediator.Send(new Normora.Shared.Contracts.Tenants.CheckTenantUploadLimitQuery(
             request.TenantId,
             request.File.Length,
             !request.DocumentId.HasValue), cancellationToken);
 
-        // Persist the binary in object storage before database metadata is created.
+        // Object Store Binary Upload:
+        // Stream the binary payload directly into MinIO/S3 using a tenant-isolated storage path prefix.
+        // We persist the binary in object storage before inserting relational metadata into PostgreSQL.
         var objectName = await storageService.UploadDocumentAsync(request.File, request.TenantId.ToString());
 
-        // Wrap subsequent operations in a compensating try/catch to delete the MinIO object if database persistence fails
+        // Compensating Transaction Wrapper (Saga Pattern):
+        // If relational database insertion fails (e.g. database timeout or constraint violation),
+        // we execute a compensating rollback step to purge the orphaned binary from MinIO object storage.
         try
         {
             Document document;
@@ -41,7 +48,9 @@ public sealed class UploadDocumentCommandHandler(
 
             if (request.DocumentId.HasValue)
             {
-                // Append a new version to an existing document container
+                // Document Versioning Workflow:
+                // When request.DocumentId is provided, we append a new version to an existing document container.
+                // We perform a BOLA check ensuring the document exists and belongs to the active tenant.
                 var existingDoc = await context.Documents
                     .Include(d => d.Versions)
                     .SingleOrDefaultAsync(d => d.Id == request.DocumentId.Value && d.TenantId == request.TenantId, cancellationToken);
@@ -54,7 +63,10 @@ public sealed class UploadDocumentCommandHandler(
                     // Compute next sequential version number
                     nextVersionNumber = document.Versions.Max(v => v.VersionNumber) + 1;
 
-                    // Deactivate prior versions so the retrieval pipeline only matches against the newest revision
+                    // Invariant: Single Active Version for Retrieval
+                    // Deactivate prior versions (IsActive = false).
+                    // The hybrid retrieval pipeline (Full-Text + Vector Cosine) filters exclusively on IsActive == true
+                    // to ensure conversational RAG never retrieves obsolete or superseded knowledge.
                     foreach (var v in document.Versions)
                     {
                         v.IsActive = false;
@@ -63,6 +75,9 @@ public sealed class UploadDocumentCommandHandler(
             }
             else
             {
+                // New Document Container Creation:
+                // Initialize the root Document entity and attach ACL department bindings.
+                // If department IDs are omitted, the document is accessible globally within the tenant.
                 document = new Document
                 {
                     Id = Guid.NewGuid(),
@@ -79,7 +94,8 @@ public sealed class UploadDocumentCommandHandler(
                 context.Documents.Add(document);
             }
 
-            // Create the new active DocumentVersion record
+            // Document Version Entity Instantiation:
+            // Represents the immutable physical file revision with its storage object pointer and processing status.
             var version = new DocumentVersion
             {
                 Id = Guid.NewGuid(),
@@ -96,10 +112,12 @@ public sealed class UploadDocumentCommandHandler(
             context.DocumentVersions.Add(version);
             await context.SaveChangesAsync(cancellationToken);
 
-            // Invalidate cached dashboard metrics for this tenant
+            // Distributed Cache Invalidation:
+            // Evict cached dashboard metrics so the employer management portal reflects accurate document counts and storage usage.
             await cache.RemoveAsync($"dashboard:{document.TenantId}", cancellationToken);
 
-            // Broadcast status change via notification service before scheduling background work
+            // Real-Time SignalR Broadcast:
+            // Notify connected frontend workspace clients that a new document has been uploaded and queued.
             await notificationService.SendDocumentStatusChangedAsync(
                 document.TenantId,
                 document.Id,
@@ -107,6 +125,9 @@ public sealed class UploadDocumentCommandHandler(
                 version.Status.ToString(),
                 cancellationToken);
 
+            // Asynchronous ETL Pipeline Dispatch:
+            // Enqueue DocumentProcessingJob in Hangfire to execute text extraction (Apache Tika),
+            // sliding-window semantic chunking, and embedding generation (Gemini 768-dim) off the HTTP request thread.
             backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
                 job.ProcessAsync(version.Id, document.TenantId));
 
@@ -114,7 +135,8 @@ public sealed class UploadDocumentCommandHandler(
         }
         catch
         {
-            // Best-effort compensation: purge the uploaded binary from MinIO storage on failure
+            // Compensating Rollback:
+            // Purge the uploaded binary from object storage to prevent orphaned disk leaks if DB transaction aborts.
             try { await storageService.DeleteDocumentAsync(objectName); } catch { /* intentionally swallowed */ }
             throw;
         }

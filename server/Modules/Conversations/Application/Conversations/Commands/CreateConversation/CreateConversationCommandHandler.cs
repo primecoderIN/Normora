@@ -16,7 +16,11 @@ public class CreateConversationCommandHandler(
 {
     public async Task<ConversationDto> Handle(CreateConversationCommand request, CancellationToken cancellationToken)
     {
-        // Initialize an empty thread scoped to the authenticated tenant and user
+        // Thread Initialization & Multi-Tenant Scoping:
+        // Creates a new conversation thread bound to:
+        // 1. ExternalUserId: The OIDC subject identity of the caller (ensuring employees only see their own chat history).
+        // 2. TenantId: The active workspace context (ensuring conversation data never crosses organizational boundaries).
+        // 3. SummaryVersion = 0: Initializes the rolling summary version counter for long-running context summarization.
         var conversation = new Conversation
         {
             Id = Guid.NewGuid(),

@@ -11,13 +11,13 @@ namespace Normora.Modules.Tenants.Application.Tenants.Commands;
 /// This command ensures that the user creating the tenant is recorded as an Admin for that new tenant.
 /// </summary>
 /// <param name="dbContext">The Tenants module DbContext.</param>
-/// <param name="currentUser">The service providing the current JWT Keycloak user identity.</param>
+/// <param name="currentUser">The service providing the current authenticated OIDC user identity.</param>
 public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser currentUser) 
     : IRequestHandler<CreateTenantCommand, TenantDto>
 {
     public async Task<TenantDto> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
-        // Ensure the user is fully authenticated before allowing them to spin up a new organization
+        // Enforce authentication before permitting tenant provisioning.
         if (!currentUser.IsAuthenticated)
         {
             throw new UnauthorizedAccessException(Normora.Shared.Constants.ApiMessages.Unauthorized);
@@ -25,12 +25,12 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
 
         var externalUserId = currentUser.ExternalUserId;
 
-        // Start a database transaction so we can safely roll back if creating the user, tenant, or membership fails midway
+        // Atomic transaction guarantees tenant, creator membership, and subscription plan are provisioned together.
         using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            // Check if this user already has a local profile in our database, and create one if they don't
+            // Just-in-Time user profile synchronization on workspace creation.
             var user = await dbContext.Users
                 .FirstOrDefaultAsync(u => u.ExternalUserId == externalUserId, cancellationToken);
 
@@ -46,14 +46,13 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
 
-            // Verify that the requested workspace URL slug isn't already taken by another organization
+            // Ensure globally unique workspace slug for path-based routing.
             if (await dbContext.Tenants.AnyAsync(t => t.Slug == request.Slug, cancellationToken))
             {
                 throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.TenantSlugTaken);
             }
 
-
-            // Provision the new workspace entity
+            // Provision workspace with active status.
             var tenant = new Tenant
             {
                 Name = request.Name,
@@ -62,7 +61,7 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             dbContext.Tenants.Add(tenant);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            // Immediately grant the creator full Admin privileges over their newly minted workspace
+            // Grant creator Administrator role over the new workspace.
             var membership = new TenantMembership
             {
                 TenantId = tenant.Id,
@@ -71,14 +70,12 @@ public class CreateTenantCommandHandler(TenantsDbContext dbContext, ICurrentUser
             };
             dbContext.TenantMemberships.Add(membership);
 
-            // Initialize default subscription plan (Free tier)
+            // Initialize default subscription plan quotas (Free tier).
             var plan = TenantPlan.CreateDefault(tenant.Id);
             dbContext.TenantPlans.Add(plan);
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
-
-            // Commit the transaction to save all changes.
             await transaction.CommitAsync(cancellationToken);
 
             return new TenantDto(tenant.Id, tenant.Name, tenant.Slug, (int)tenant.Status, tenant.CreatedAt);

@@ -23,24 +23,23 @@ public class RemoveEmployeeCommandHandler(
 
         var tenantId = tenantContext.TenantId.Value;
 
-        // Fetch the membership, including the user so we have the KeycloakUserId
+        // Obscure unauthorized or non-existent memberships behind BOLA 404 to prevent resource ID enumeration.
         var membership = await context.TenantMemberships
             .Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Id == request.MembershipId && m.TenantId == tenantId, cancellationToken);
 
-        // BOLA: Return 404 if not found or belongs to another tenant
         if (membership == null)
         {
             throw new BolaException();
         }
 
-        // BFLA: Prevent removing the last admin or oneself? (optional, but good practice)
+        // Self-removal is disallowed here to prevent accidental self-lockout from the management portal.
         if (membership.User.ExternalUserId == currentUser.ExternalUserId)
         {
-            throw new BflaException(); // Cannot remove yourself this way
+            throw new BflaException();
         }
 
-        // Prevent removing the last admin
+        // Enforce the last-admin invariant: a workspace must always retain at least one active administrator.
         if (membership.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin)
         {
             var adminCount = await context.TenantMemberships.CountAsync(m => m.TenantId == tenantId && m.Role == Normora.Modules.Tenants.Domain.TenantRole.Admin, cancellationToken);
@@ -50,8 +49,7 @@ public class RemoveEmployeeCommandHandler(
             }
         }
 
-        // 1. Soft-delete the membership locally
-        // We get the current user's DB ID to populate RemovedByUserId
+        // Soft-delete the membership and record the acting admin's database ID for compliance audit trails.
         var currentDbUser = await context.Users.FirstOrDefaultAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
         
         membership.RemovedAt = DateTime.UtcNow;
@@ -59,7 +57,7 @@ public class RemoveEmployeeCommandHandler(
 
         await context.SaveChangesAsync(cancellationToken);
 
-        // 2. Best-effort Keycloak Admin API sync (Local-first strategy)
+        // Best-effort external identity sync: local database remains the authoritative source of truth.
         try
         {
             var client = httpClientFactory.CreateClient("KeycloakAdmin");
@@ -67,8 +65,6 @@ public class RemoveEmployeeCommandHandler(
         }
         catch (Exception ex)
         {
-            // We log the error but DO NOT revert the DB transaction. 
-            // Local DB is the source of truth for the application.
             logger.LogError(ex, "Failed to remove user {ExternalUserId} from tenant {TenantId} in Keycloak.", membership.User.ExternalUserId, tenantId);
         }
 

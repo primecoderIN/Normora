@@ -72,12 +72,14 @@ public sealed class EscalateInquiryTool(
             var urgency = root.TryGetProperty("urgency", out var urg) ? urg.GetString() : "medium";
             var notes = root.TryGetProperty("notes", out var nt) ? nt.GetString() : null;
 
-            // Fetch workspace administrators via query contract
+            // Cross-Module Boundary Query:
+            // Dispatches a MediatR query to the Tenants module to discover verified workspace administrators without directly injecting TenantsDbContext.
             var adminRecipients = await mediator.Send(
                 new GetTenantAdminRecipientsQuery(context.TenantId),
                 cancellationToken);
 
-            // Cap the recipients to prevent email broadcast storms
+            // Rate & Broadcast Protection:
+            // Restrict notification dispatch to at most 5 unique admin recipients to prevent email broadcast storms.
             var adminEmails = adminRecipients.AdminEmails
                 .Where(e => !string.IsNullOrWhiteSpace(e))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -114,7 +116,9 @@ public sealed class EscalateInquiryTool(
                 }
             }
 
-            // Record tamper-evident audit trail for AI-initiated action
+            // Governance & Compliance Audit Trail:
+            // Records an immutable audit log entry for autonomous AI side effects,
+            // tracking the acting user, category, urgency, and the count of administrators alerted.
             await auditService.RecordAsync(
                 context.TenantId,
                 context.UserId,

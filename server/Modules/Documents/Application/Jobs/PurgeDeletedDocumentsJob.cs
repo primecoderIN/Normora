@@ -30,6 +30,7 @@ public sealed class PurgeDeletedDocumentsJob(
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            // Keyset pagination cursor processes large purge backlogs in bounded batches without offset query degradation.
             var documentsToPurge = await context.Documents
                 .IgnoreQueryFilters()
                 .AsNoTracking()

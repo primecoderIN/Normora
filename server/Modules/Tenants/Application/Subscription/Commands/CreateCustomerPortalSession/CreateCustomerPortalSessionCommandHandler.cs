@@ -16,15 +16,19 @@ public class CreateCustomerPortalSessionCommandHandler(
 {
     public async Task<CustomerPortalResultDto> Handle(CreateCustomerPortalSessionCommand request, CancellationToken cancellationToken)
     {
-        // 1. Resolve current active tenant from scoped ambient context
+        // Ambient Tenant Verification:
+        // Validates that billing management executes within an active tenant workspace.
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // 2. Fetch workspace slug to construct workspace-specific return URL
+        // Workspace Metadata Lookup:
+        // Fetches the tenant slug to route the user back to their workspace billing settings tab.
         var tenant = await context.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
-        // 3. Direct to subscription settings view for invoice and billing overview
+        // Customer Portal Navigation:
+        // Constructs the canonical destination URL pointing to the workspace's subscription settings view,
+        // allowing administrators to view current usage quotas, upgrade plans, or inspect transaction history.
         var returnUrl = !string.IsNullOrWhiteSpace(request.ReturnUrl)
             ? request.ReturnUrl
             : (tenant != null

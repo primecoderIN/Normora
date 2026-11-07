@@ -38,13 +38,13 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.InvitationExpired);
         }
 
-        // Prevent invitation hijacking by ensuring the logged-in user's email matches the email the invite was sent to
+        // Anti-hijacking guard: the authenticated user's email must strictly match the invited email address.
         if (!string.Equals(invitation.Email, currentUser.Email, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.InvitationEmailMismatch);
         }
 
-        // Get or create the local user profile for the invitee if this is their first time logging in
+        // Just-in-Time user provisioning: synchronize the shadow profile on first workspace onboarding.
         var user = await context.Users
             .FirstOrDefaultAsync(u => u.ExternalUserId == currentUser.ExternalUserId, cancellationToken);
 
@@ -59,7 +59,7 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
             context.Users.Add(user);
         }
 
-        // Make the acceptance idempotent by skipping membership creation if active, or reactivating if soft-deleted
+        // Idempotent membership handling: bypass query filters to reactivate soft-deleted members without violating unique constraints.
         var existingMembership = await context.TenantMemberships
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(m => m.TenantId == invitation.TenantId && m.UserId == user.Id, cancellationToken);
@@ -76,7 +76,7 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
         }
         else if (existingMembership.RemovedAt != null)
         {
-            // Reactivate soft-deleted membership
+            // Reactivate previous membership while resetting audit removal markers.
             existingMembership.RemovedAt = null;
             existingMembership.RemovedByUserId = null;
             existingMembership.Role = TenantRole.Employee;

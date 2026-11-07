@@ -16,10 +16,12 @@ public class GetTenantSubscriptionUsageQueryHandler(
 {
     public async Task<SubscriptionUsageDto> Handle(GetTenantSubscriptionUsageQuery request, CancellationToken cancellationToken)
     {
-        // 1. Resolve active tenant from ambient context
+        // Ambient Tenant Verification:
+        // Ensures the request is authenticated and scoped to an active tenant workspace.
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // 2. Retrieve tenant's active plan limits or fallback to default Starter/Free plan
+        // Plan Quota Resolution:
+        // Fetch active plan tier limits or fallback to default starter limits if unassigned.
         var plan = await context.TenantPlans
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
@@ -29,14 +31,17 @@ public class GetTenantSubscriptionUsageQueryHandler(
             plan = TenantPlan.CreateDefault(tenantId);
         }
 
-        // 3. Calculate active team members count (ignoring soft-deleted memberships)
+        // Active Team Member Seat Count:
+        // Calculate non-deleted memberships. Soft-deleted members (RemovedAt != null) are excluded.
         var currentEmployees = await context.TenantMemberships
             .CountAsync(m => m.TenantId == tenantId && m.RemovedAt == null, cancellationToken);
 
-        // 4. Query Documents module via cross-module MediatR contract for current document count and storage bytes
+        // Cross-Module Document Quota Query:
+        // Query the Documents module via MediatR contract for current document count and stored byte volume.
         var docUsage = await mediator.Send(new GetTenantDocumentUsageQuery(tenantId), cancellationToken);
 
-        // 5. Evaluate boundary thresholds for UI quota progress bars and warnings
+        // Boundary Threshold Evaluation:
+        // Evaluates boolean limit flags used by the frontend dashboard to render upgrade alerts and lock upload buttons.
         var isDocLimitReached = docUsage.DocumentCount >= plan.MaxDocuments;
         var isEmpLimitReached = currentEmployees >= plan.MaxEmployees;
         var isStorageLimitReached = docUsage.TotalStorageBytes >= plan.MaxStorageBytes;

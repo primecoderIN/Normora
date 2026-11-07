@@ -14,6 +14,11 @@ public sealed class GetEmployerDocumentsQueryHandler(DocumentsDbContext context)
 {
     public async Task<List<DocumentDto>> Handle(GetEmployerDocumentsQuery request, CancellationToken cancellationToken)
     {
+        // Global Multi-Tenant Query Filter & Department ACL Projection:
+        // Relies on DocumentsDbContext global query filters to isolate documents strictly belonging to the active tenant
+        // and filter out soft-deleted records (DeletedAt == null).
+        // Eagerly includes DocumentDepartments (for department chip badges) and Versions (for revision history dropdowns).
+        // Uses AsNoTracking to minimize heap allocation and avoid tracking overhead on read-heavy employer portal views.
         var documents = await context.Documents
             .Include(d => d.DocumentDepartments)
             .Include(d => d.Versions)
@@ -21,6 +26,8 @@ public sealed class GetEmployerDocumentsQueryHandler(DocumentsDbContext context)
             .OrderByDescending(d => d.UploadedAt)
             .ToListAsync(cancellationToken);
 
+        // Domain Model to DTO Projection:
+        // Projects the active version's status, version number, and file size for UI consumption.
         return documents.Select(d => d.ToDto()).ToList();
     }
 }

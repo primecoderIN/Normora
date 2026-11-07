@@ -9,6 +9,11 @@ public sealed class SubmitFeedbackCommandValidator : AbstractValidator<SubmitFee
 {
     public SubmitFeedbackCommandValidator()
     {
+        // FluentValidation Pipeline Enforcement:
+        // Evaluated automatically by ValidationBehavior<,> before SubmitFeedbackCommandHandler executes.
+        // - ConversationId & MessageId: Required GUID identifiers.
+        // - Rating: Must be a valid defined MessageFeedbackRating enum value (Positive / Negative).
+        // - Comment: Optional feedback rationale capped at 500 characters.
         RuleFor(x => x.ConversationId).NotEmpty();
         RuleFor(x => x.MessageId).NotEmpty();
         RuleFor(x => x.Rating).IsInEnum();

@@ -15,6 +15,8 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
 {
     public async Task<DocumentChunkPreviewDto> Handle(GetDocumentChunkQuery request, CancellationToken cancellationToken)
     {
+        // Multi-Tenant Ambient Context Verification:
+        // Validates that the request has an active tenant workspace context.
         if (!tenantContext.TenantId.HasValue)
         {
             throw new UnauthorizedAccessException(ApiMessages.TenantContextMissing);
@@ -24,7 +26,13 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
         var allowedDepartments = tenantContext.EffectiveDepartments;
         var tenantId = tenantContext.TenantId.Value;
 
-        // Verify chunk exists, belongs to caller's tenant, and satisfies department restrictions
+        // Citation Drawer ACL & BOLA Verification:
+        // When a user clicks on an inline citation [1] in the chat response, the frontend requests
+        // the underlying raw chunk text to preview the source context.
+        // We ensure that:
+        // 1. The chunk belongs to the ambient TenantId.
+        // 2. The document is accessible via the user's effective department permissions.
+        // If either check fails, we throw BolaException (mapped to 404) to avoid leaking the existence of restricted documents.
         var result = await dbContext.DocumentChunks
             .AsNoTracking()
             .Where(c => c.Id == request.ChunkId && c.TenantId == tenantId)
@@ -45,7 +53,6 @@ public class GetDocumentChunkQueryHandler(DocumentsDbContext dbContext, ITenantC
             )
             .FirstOrDefaultAsync(cancellationToken);
 
-        // Protect against BOLA: throw BolaException if chunk does not exist or user lacks department permission
         if (result == null)
         {
             throw new BolaException();

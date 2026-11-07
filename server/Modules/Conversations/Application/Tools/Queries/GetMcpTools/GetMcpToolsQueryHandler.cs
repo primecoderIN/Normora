@@ -4,6 +4,10 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Application.Tools.Queries.GetMcpTools;
 
+/// <summary>
+/// Cross-module query handler that enumerates registered conversational agent tool definitions
+/// and their JSON schemas for discovery by Model Context Protocol (MCP) clients.
+/// </summary>
 public sealed class GetMcpToolsQueryHandler(IAgentToolRegistry toolRegistry)
     : IRequestHandler<GetMcpToolsQuery, IReadOnlyList<McpToolDefinition>>
 {
