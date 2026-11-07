@@ -41,6 +41,7 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheSe
         var membership = await dbContext.TenantMemberships
             .AsNoTracking()
             .AsSplitQuery()
+            .Include(m => m.Tenant)
             .Include(m => m.User)
             .Include(m => m.MembershipDepartments)
             .Include(m => m.UserGroupMemberships)
@@ -50,7 +51,10 @@ public sealed class TenantResolutionService(TenantsDbContext dbContext, ICacheSe
                 m => m.TenantId == tenantId && m.User.ExternalUserId == externalUserId,
                 cancellationToken);
 
-        if (membership is null)
+        // Multi-Tenant Isolation & Lifecycle Enforcement:
+        // Ensures suspended, archived, or soft-deleted workspaces immediately reject resolution,
+        // preventing inactive or delinquent tenants from executing API calls even if memberships exist.
+        if (membership is null || membership.Tenant == null || membership.Tenant.Status != Domain.TenantStatus.Active)
         {
             return null;
         }

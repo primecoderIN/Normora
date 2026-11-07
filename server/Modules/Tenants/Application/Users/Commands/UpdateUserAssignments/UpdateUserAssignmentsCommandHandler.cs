@@ -10,7 +10,10 @@ namespace Normora.Modules.Tenants.Application.Users.Commands;
 /// <summary>
 /// Handles <see cref="UpdateUserAssignmentsCommand"/> by synchronizing the user's department and group memberships.
 /// </summary>
-public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITenantContext tenantContext)
+public class UpdateUserAssignmentsCommandHandler(
+    TenantsDbContext dbContext,
+    ITenantContext tenantContext,
+    ICacheService? cache = null)
     : IRequestHandler<UpdateUserAssignmentsCommand, bool>
 {
     public async Task<bool> Handle(UpdateUserAssignmentsCommand request, CancellationToken cancellationToken)
@@ -23,6 +26,7 @@ public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITe
         // Retrieve the employee's active tenant membership, strictly checking TenantId.
         // Prevents an admin in Tenant A from modifying user assignments for an employee in Tenant B.
         var membership = await dbContext.TenantMemberships
+            .Include(m => m.User)
             .Include(m => m.MembershipDepartments)
             .Include(m => m.UserGroupMemberships)
             .FirstOrDefaultAsync(m => m.UserId == request.UserId && m.TenantId == tenantContext.TenantId.Value, cancellationToken);
@@ -65,6 +69,14 @@ public class UpdateUserAssignmentsCommandHandler(TenantsDbContext dbContext, ITe
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Clearance Cache Invalidation:
+        // Evict cached tenant resolution profile to ensure newly assigned/revoked department
+        // permissions immediately take effect for the user's subsequent RAG document queries.
+        if (cache != null && membership.User != null)
+        {
+            await cache.RemoveAsync($"tenant_access:{tenantContext.TenantId.Value:N}:{membership.User.ExternalUserId}", cancellationToken);
+        }
 
         return true;
     }

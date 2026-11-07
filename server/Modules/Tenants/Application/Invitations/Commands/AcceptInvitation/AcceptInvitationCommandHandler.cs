@@ -10,7 +10,10 @@ namespace Normora.Modules.Tenants.Application.Invitations.Commands;
 /// Handles <see cref="AcceptInvitationCommand"/> by validating the token, verifying the recipient's email,
 /// creating the user record if needed, and adding a TenantMembership.
 /// </summary>
-public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUser currentUser) : IRequestHandler<AcceptInvitationCommand, bool>
+public class AcceptInvitationCommandHandler(
+    TenantsDbContext context,
+    ICurrentUser currentUser,
+    ICacheService? cache = null) : IRequestHandler<AcceptInvitationCommand, bool>
 {
     public async Task<bool> Handle(AcceptInvitationCommand request, CancellationToken cancellationToken)
     {
@@ -86,6 +89,14 @@ public class AcceptInvitationCommandHandler(TenantsDbContext context, ICurrentUs
         invitation.Status = InvitationStatus.Accepted;
 
         await context.SaveChangesAsync(cancellationToken);
+
+        // Immediate Onboarding Clearance:
+        // Evict any stale negative or transient resolution cache entry for this user so their new
+        // membership and employee role become active on their very next API call.
+        if (cache != null && !string.IsNullOrWhiteSpace(currentUser.ExternalUserId))
+        {
+            await cache.RemoveAsync($"tenant_access:{invitation.TenantId:N}:{currentUser.ExternalUserId}", cancellationToken);
+        }
 
         return true;
     }

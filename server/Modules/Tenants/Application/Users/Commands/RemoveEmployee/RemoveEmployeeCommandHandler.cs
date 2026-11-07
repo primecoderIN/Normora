@@ -12,7 +12,8 @@ public class RemoveEmployeeCommandHandler(
     ITenantContext tenantContext,
     ICurrentUser currentUser,
     ILogger<RemoveEmployeeCommandHandler> logger,
-    IHttpClientFactory httpClientFactory) : IRequestHandler<RemoveEmployeeCommand, bool>
+    IHttpClientFactory httpClientFactory,
+    ICacheService? cache = null) : IRequestHandler<RemoveEmployeeCommand, bool>
 {
     public async Task<bool> Handle(RemoveEmployeeCommand request, CancellationToken cancellationToken)
     {
@@ -56,6 +57,14 @@ public class RemoveEmployeeCommandHandler(
         membership.RemovedByUserId = currentDbUser?.Id;
 
         await context.SaveChangesAsync(cancellationToken);
+
+        // Real-Time Access Revocation:
+        // Immediately evict the cached tenant access resolution entry for this user.
+        // Prevents removed employees from making authorized calls during the remaining TTL window.
+        if (cache != null)
+        {
+            await cache.RemoveAsync($"tenant_access:{tenantId:N}:{membership.User.ExternalUserId}", cancellationToken);
+        }
 
         // Best-effort external identity sync: local database remains the authoritative source of truth.
         try
