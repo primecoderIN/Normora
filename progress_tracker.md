@@ -16,6 +16,21 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - Angular Client container
 - [x] Creation of `start.ps1` and `stop.ps1` automation scripts for local environment spin-up
 
+## ✅ Completed Enterprise Architecture Hardening & Security Audit Remediation
+- [x] **Middleware Pipeline & Identity Resolution**: Corrected pipeline execution order in `Normora.Api/Program.cs` so `UseRateLimiter()` executes strictly after `UseAuthentication()` and `UseBff()`, enabling user claim (`sub`) rate-limiting partitioning and preventing global DoS.
+- [x] **Broken Function Level Authorization (BFLA) Defense**: Enforced direct tier upgrade guards in `UpdateTenantPlanTierCommandHandler.cs` to prevent unauthorized self-escalation to `Pro`/`Enterprise` tiers without payment gateway checkout.
+- [x] **Open Redirect Defense**: Implemented URI scheme, host domain matching, and relative path verification in `CreateCustomerPortalSessionCommandHandler.cs`.
+- [x] **Outbound Credential Hygiene**: Migrated all Google Gemini embedding and LLM generation calls (`GeminiEmbeddingService`, `GeminiTextGenerationService`, `GeminiQueryRewriterService`, `GeminiSuggestionsService`) from URL query strings to `x-goog-api-key` headers to stop secret leakage in OpenTelemetry traces and HTTP access logs.
+- [x] **Branding Asset Security & Anti-XSS**: Enforced strict extension allowlisting, 5MB size caps, and binary magic byte verification in `UpdateTenantBrandingCommandHandler.cs` to prevent Stored XSS and malicious file execution.
+- [x] **Payment Gateway Verification & Replay Protection**: Added `PaymentTransactionId` idempotency checks and catalog price verification in `PayUPaymentService.cs`.
+- [x] **Real-Time Tenant Access Invalidation**: Injected `ICacheService` to evict `tenant_access:{tenantId}:{userId}` upon employee removal, invitation acceptance, and user assignments update; added `TenantStatus.Active` validation in `TenantResolutionService.cs`.
+- [x] **Full CQRS Operation Standardization**: Migrated `AskConversationCommand` and `AskConversationStreamCommand` into standard operation folders with separated Command, Handler, and DTO files adhering to AGENTS.md guidelines.
+- [x] **High-Throughput SSE Optimization**: Replaced per-chunk `JsonSerializerOptions` instantiation with static cached instance in `ConversationsController.cs`.
+- [x] **Semantic Document Chunking Continuity**: Added 200-character sliding overlap in `DocumentChunker.cs` to preserve semantic context across chunk boundaries for pgvector similarity search.
+- [x] **Lifecycle-Aware Auto-Titling**: Connected background auto-titling tasks to `IHostApplicationLifetime.ApplicationStopping` for graceful cancellation.
+- [x] **Container Hardening**: Switched Dockerfile runtime execution to non-root `USER app` and separated multi-stage publish targets.
+- [x] **Zero Magic Strings**: Centralized all error messages and validation codes into `Normora.Shared.Constants.ApiMessages`.
+
 ## ✅ Completed Tenant Management & Data Isolation
 - [x] Create TenantsModule (Tenant, TenantMembership, User)
 - [x] Create TenantsDbContext (isolated from main db)

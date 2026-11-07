@@ -522,32 +522,51 @@ The Conversations module (`server/Modules/Conversations/Conversations.csproj`) c
 ```
 server/Modules/Conversations/
 ├── Application/
-│   ├── Commands/
-│   │   ├── AskConversationCommand.cs
-│   │   ├── AskConversationStreamCommand.cs
-│   │   ├── CreateConversationCommand.cs
-│   │   ├── DeleteConversationCommand.cs
-│   │   ├── ShareConversationCommand.cs
-│   │   ├── SubmitFeedbackCommand.cs
-│   │   └── UpdateConversationTitleCommand.cs
-│   ├── Queries/
-│   │   ├── GetConversationsQuery.cs
-│   │   ├── GetConversationQuery.cs
-│   │   ├── GetSharedConversationQuery.cs
-│   │   └── GetConversationDashboardMetricsQueryHandler.cs
-│   ├── Dtos/
-│   │   ├── AskConversationStreamEvent.cs
-│   │   └── ConversationDto.cs
-│   ├── Feedback/
-│   │   └── SubmitFeedbackCommandHandler.cs
-│   ├── Sharing/
-│   │   └── ShareConversationCommandHandler.cs
+│   ├── Conversations/
+│   │   ├── Commands/
+│   │   │   ├── AskConversation/
+│   │   │   │   ├── AskConversationCommand.cs
+│   │   │   │   └── AskConversationCommandHandler.cs
+│   │   │   ├── AskConversationStream/
+│   │   │   │   ├── AskConversationStreamCommand.cs
+│   │   │   │   └── AskConversationStreamCommandHandler.cs
+│   │   │   ├── CreateConversation/
+│   │   │   │   ├── CreateConversationCommand.cs
+│   │   │   │   └── CreateConversationCommandHandler.cs
+│   │   │   ├── DeleteConversation/
+│   │   │   │   ├── DeleteConversationCommand.cs
+│   │   │   │   └── DeleteConversationCommandHandler.cs
+│   │   │   ├── ShareConversation/
+│   │   │   │   ├── ShareConversationCommand.cs
+│   │   │   │   └── ShareConversationCommandHandler.cs
+│   │   │   ├── SubmitFeedback/
+│   │   │   │   ├── SubmitFeedbackCommand.cs
+│   │   │   │   ├── SubmitFeedbackCommandHandler.cs
+│   │   │   │   └── SubmitFeedbackCommandValidator.cs
+│   │   │   └── UpdateConversationTitle/
+│   │   │       ├── UpdateConversationTitleCommand.cs
+│   │   │       └── UpdateConversationTitleCommandHandler.cs
+│   │   ├── Queries/
+│   │   │   ├── GetConversations/
+│   │   │   ├── GetConversation/
+│   │   │   └── GetSharedConversation/
+│   │   └── DTOs/
+│   │       ├── AskConversationDtos.cs
+│   │       ├── AskConversationStreamEvent.cs
+│   │       ├── ConversationDetailDto.cs
+│   │       ├── ConversationDto.cs
+│   │       ├── ConversationShareDto.cs
+│   │       └── SharedConversationDto.cs
+│   ├── SavedAnswers/
+│   ├── Suggestions/
 │   └── Services/
-│       ├── AskHelpers.cs
 │       ├── AutoTitleService.cs
 │       ├── ConversationMetrics.cs
+│       ├── ConversationTurnPreparer.cs
 │       ├── IAutoTitleService.cs
-│       └── ITextGenerationService.cs
+│       ├── IConversationTurnPreparer.cs
+│       ├── ITextGenerationService.cs
+│       └── TokenBudgetService.cs
 ├── Domain/
 │   ├── Conversation.cs
 │   ├── ConversationConstants.cs
@@ -559,6 +578,9 @@ server/Modules/Conversations/
 │   └── SavedAnswer.cs
 ├── Infrastructure/
 │   ├── Llm/
+│   │   ├── GeminiModels.cs
+│   │   ├── GeminiQueryRewriterService.cs
+│   │   ├── GeminiSuggestionsService.cs
 │   │   └── GeminiTextGenerationService.cs
 │   ├── Tools/
 │   │   ├── AgentToolRegistry.cs

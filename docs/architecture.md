@@ -211,13 +211,44 @@ Security and data isolation are critical in a multi-tenant environment. Normora 
 
 ### Preventing BFLA
 BFLA occurs when users can execute functions (endpoints) they shouldn't have access to based on their roles.
-- **Tenant Context Extraction**: The `TenantResolutionMiddleware` securely extracts the `X-Tenant-Id` header from incoming requests. Crucially, it queries the database (`TenantsDbContext`) to verify that the authenticated user genuinely belongs to that tenant.
+- **Tenant Context Extraction**: The `TenantResolutionMiddleware` securely extracts the `X-Tenant-Id` header from incoming requests. Crucially, it queries the database (`TenantsDbContext`) to verify that the authenticated user genuinely belongs to that tenant and that the workspace is active (`TenantStatus.Active`).
 - **Strict Role Validation**: The `[RequireTenant(params string[] roles)]` attribute acts as an authorization filter. It checks the successfully resolved `ITenantContext` to ensure the user holds the specific role (e.g., "admin", "employee") *within that specific tenant* before the controller logic is executed.
+- **Financial BFLA Guard**: In subscription management (`UpdateTenantPlanTierCommand`), tenants are strictly blocked from upgrading to paid tiers (`Pro`, `Enterprise`) via direct API calls. Upgrades to paid tiers must execute via verified payment checkout callbacks (`PayUPaymentService`), preventing unauthorized plan escalation.
 
 ### Preventing BOLA (IDOR)
 BOLA occurs when an application does not properly validate that the user is authorized to access the specific object ID they requested (e.g., manipulating a document ID or tenant ID in the URL).
 - **Context-Bound Operations**: Controllers enforce BOLA protection by strictly associating operations with the authorized `ITenantContext`. Even if a route provides an `{id}` (like `DELETE /api/Documents/{id}` or `POST /api/Tenants/{id}/suspend`), the backend explicitly verifies that the requested object belongs to the user's validated `tenantContext.TenantId`. 
 - **Example**: In the `SuspendTenant` endpoint, the `{id}` from the route is validated against `_tenantContext.TenantId`. This prevents a malicious tenant admin from suspending *another* tenant by injecting their own valid `X-Tenant-Id` header while manipulating the target `{id}` in the URL.
+- **Generic 404 Response Mappings**: When a BOLA violation occurs, `BolaException` maps to a standard 404 Not Found response (`ApiMessages.NotFound`), preventing attackers from enumerating resource identifiers across foreign tenants.
+
+## Enterprise Security & Runtime Hardening
+
+### 1. ASP.NET Core Middleware Pipeline Ordering
+The pipeline order in `Normora.Api/Program.cs` is strictly enforced:
+1. `UseAuthentication()`: Decodes session cookie into `ClaimsPrincipal`.
+2. `UseBff()`: Applies BFF anti-forgery token and session validation.
+3. `UseRateLimiter()`: Rate limiters evaluate the authenticated `sub` (User ID) claim. Placing rate limiting after authentication prevents authenticated users from being grouped into the anonymous IP bucket, mitigating Denial-of-Service cascades.
+4. `TenantResolutionMiddleware`: Resolves `X-Tenant-Id` and binds effective department clearances.
+5. `UseAuthorization()`: Evaluates endpoint role and tenant policies (`[Authorize]`, `[RequireTenant]`).
+
+### 2. Outbound Secret Hygiene (Header-Based Auth)
+Outbound LLM and embedding integrations with Google Gemini API pass credentials exclusively via the `x-goog-api-key` HTTP request header rather than URL query parameters. This eliminates secret exposure in OpenTelemetry traces, distributed APM spans, and reverse proxy access logs.
+
+### 3. Stored XSS & File Upload Defense
+Branding assets (logos and favicons) undergo three layers of validation before persisting to MinIO storage:
+1. **Size Bound**: Strict 5MB limit prevents storage exhaustion.
+2. **Extension Allowlist**: Only raster/icon extensions (`.png`, `.jpg`, `.jpeg`, `.webp`, `.ico`) are accepted. SVG files are strictly prohibited to block inline `<script>` tags and XML External Entity (XXE) vectors.
+3. **Magic Byte Verification**: File headers are inspected to verify that payload bytes match the declared image format.
+
+### 4. Payment Gateway Security & Replay Defense
+The PayU payment integration enforces:
+- **Transaction Idempotency**: `PaymentTransactionId` is recorded and checked before applying subscription renewals, blocking callback replay attacks.
+- **Catalog Price Validation**: The incoming paid `amount` is verified against the backend plan pricing catalog for the specified currency, preventing client-side price tampering.
+
+### 5. High-Throughput & GC Optimizations
+- **Static SSE Serialization**: Streaming RAG Server-Sent Events use a pre-allocated static `JsonSerializerOptions` in `ConversationsController`, eliminating Gen-0 allocations and reflection overhead per token chunk.
+- **Chunk Boundary Overlap**: Document chunking incorporates a 200-character sliding overlap across paragraph boundaries, maintaining semantic continuity for vector search.
+- **Immediate Cache Eviction**: Tenant resolution caching (`tenant_access:{tenantId}:{userId}`) is evicted immediately upon employee removal, invitation acceptance, or department reassignment.
 
 ## White-Label Branding & Workspace Routing
 Normora supports per-tenant white-labeling without separate application builds. Each tenant can have its own brand identity applied dynamically at runtime.
