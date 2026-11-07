@@ -21,6 +21,13 @@ namespace Normora.Modules.Documents.API;
 /// Exposes Normora's agent tools and company knowledge resources via the Model Context Protocol (MCP) JSON-RPC 2.0 specification.
 /// Enforces strict tenant isolation and BOLA/BFLA authorization.
 /// </summary>
+// Multi-Tenant MCP JSON-RPC Server Endpoint:
+// Exposes autonomous agent tools (policy calculation, inquiry escalation, semantic retrieval)
+// and raw knowledge document resources to external MCP clients.
+// Security:
+// 1. [Authorize] + [RequireTenant]: Requires valid OIDC session and active tenant workspace membership.
+// 2. [EnableRateLimiting("ai")]: Caps high-frequency tool invocations and document extraction bursts
+//    to 20 requests/minute per authenticated user, mitigating denial-of-service and quota drain.
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]

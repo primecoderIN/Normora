@@ -83,6 +83,13 @@ public class SubscriptionController(
     /// Handles payment provider callback response (e.g. PayU surl/furl) with cryptographic verification.
     /// Public return endpoint called by payment gateway upon completion of checkout.
     /// </summary>
+    // Public Payment Gateway Callback Endpoint:
+    // Receives POST redirects from hosted payment gateway (PayU surl/furl).
+    // Security:
+    // 1. [AllowAnonymous] + [IgnoreAntiforgeryToken]: Gateway cannot transmit ambient CSRF cookies or OIDC tokens.
+    // 2. [EnableRateLimiting("anon")]: Caps anonymous submissions to 5 requests/minute per client IP,
+    //    preventing computational denial-of-service from SHA-512 cryptographic verification flood attacks.
+    // 3. Cryptographic HMAC-SHA512 checksum validation verified via paymentService.ProcessCallbackAsync.
     [HttpPost("callback")]
     [HttpPost("payu-callback")]
     [AllowAnonymous]

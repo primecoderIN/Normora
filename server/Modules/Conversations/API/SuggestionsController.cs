@@ -14,6 +14,11 @@ namespace Normora.Modules.Conversations.API;
 /// Provides AI-generated question suggestions to pre-populate the empty-state
 /// of the employee conversation interface.
 /// </summary>
+// AI-Powered Question Suggestion Endpoint:
+// Generates contextual starter questions via Gemini LLM based on ambient tenant document filenames.
+// Rate Limiting:
+// Protected by the 'ai' fixed-window rate limiter policy (20 requests/minute per authenticated user)
+// to prevent denial-of-service, excessive background prompt generation, and third-party quota burn.
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
