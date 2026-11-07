@@ -11,6 +11,7 @@ COPY ["Modules/Conversations/Conversations.csproj", "Modules/Conversations/"]
 COPY ["Modules/Documents/Documents.csproj", "Modules/Documents/"]
 COPY ["Modules/Tenants/Tenants.csproj", "Modules/Tenants/"]
 
+RUN dotnet restore "Normora.Api/Normora.Api.csproj"
 RUN dotnet restore "Normora.Worker/Normora.Worker.csproj"
 
 # Copy the rest of the files and build
@@ -27,4 +28,5 @@ WORKDIR /app
 EXPOSE 8080
 COPY --from=publish /app/publish .
 COPY --from=publish /app/worker-publish .
+USER app
 ENTRYPOINT ["dotnet", "Normora.Api.dll"]

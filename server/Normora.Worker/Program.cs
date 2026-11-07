@@ -24,9 +24,11 @@ using var host = builder.Build();
 // Recurring Maintenance Job Registration:
 // Runs daily at 03:00 UTC using Hangfire cron expressions.
 // Scans for documents soft-deleted more than 30 days ago, permanently purging MinIO objects and pgvector chunks in batches.
+// Uses JobCancellationToken.Null.ShutdownToken so Hangfire automatically binds the execution cancellation token
+// during runtime, allowing graceful termination if the worker process shuts down mid-batch.
 RecurringJob.AddOrUpdate<PurgeDeletedDocumentsJob>(
     "purge-deleted-documents",
-    job => job.ExecuteAsync(CancellationToken.None),
+    job => job.ExecuteAsync(JobCancellationToken.Null.ShutdownToken),
     Cron.Daily(3, 0));
 
 await host.RunAsync();
