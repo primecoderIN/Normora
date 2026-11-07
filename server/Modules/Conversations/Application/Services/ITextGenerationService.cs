@@ -54,6 +54,18 @@ public interface ITextGenerationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Streams a grounded, multi-turn answer back with optional tool execution support.
+    /// </summary>
+    IAsyncEnumerable<string> StreamConversationalAnswerAsync(
+        string question,
+        IReadOnlyList<AskSource> sources,
+        IReadOnlyList<ConversationTurn> history,
+        string companyName,
+        ToolExecutionContext? toolContext,
+        CancellationToken cancellationToken = default)
+        => StreamConversationalAnswerAsync(question, sources, history, companyName, cancellationToken);
+
+    /// <summary>
     /// Generates a concise title (≤ 6 words) for a conversation based on its first user question.
     /// Called once after the first assistant reply is persisted.
     /// </summary>

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Normora.Shared.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,15 @@ namespace Normora.Modules.Conversations.API;
 [Produces("application/json")]
 public class ConversationsController(IMediator mediator) : ControllerBase
 {
+    /// <summary>
+    /// Thread-safe, pre-configured JSON options for streaming SSE deltas.
+    /// Reusing a single static instance prevents GC Gen-0 pressure and avoids reflection metadata
+    /// re-computation on high-throughput token streams.
+    /// </summary>
+    private static readonly JsonSerializerOptions SseJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
     /// <summary>
     /// Creates a new, empty conversation shell.
     /// </summary>
@@ -115,10 +125,7 @@ public class ConversationsController(IMediator mediator) : ControllerBase
 
         await foreach (var evt in stream.WithCancellation(cancellationToken))
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(evt, new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-            });
+            var json = JsonSerializer.Serialize(evt, SseJsonOptions);
             
             // Format as standard W3C SSE event ("data: <json>\n\n") and immediately flush the response stream
             await Response.WriteAsync($"data: {json}\n\n", cancellationToken);

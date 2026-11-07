@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Normora.Modules.Conversations.Application.Conversations.DTOs;
 using Normora.Modules.Conversations.Application.Services;
 using Normora.Modules.Conversations.Domain;
 using Normora.Modules.Conversations.Persistence;
@@ -10,27 +10,6 @@ using Normora.Shared.Exceptions;
 using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Conversations.Application.Conversations.Commands;
-
-/// <summary>
-/// Command to send a message within a conversation and receive a grounded, context-aware RAG answer.
-/// </summary>
-public sealed record AskConversationCommand(
-    Guid ConversationId,
-    string Question,
-    int Limit = 5) : IRequest<AskConversationResult>;
-
-public sealed record AskConversationResult(
-    Guid ConversationId,
-    Guid UserMessageId,
-    Guid AssistantMessageId,
-    string Answer,
-    IReadOnlyList<AskConversationCitation> Sources);
-
-public sealed record AskConversationCitation(
-    Guid DocumentId,
-    string FileName,
-    int ChunkIndex,
-    double Score);
 
 /// <summary>
 /// Handles <see cref="AskConversationCommand"/> by delegating turn preparation (ownership, history, RAG)
@@ -150,3 +129,4 @@ internal sealed class AskConversationCommandHandler(
         }
     }
 }
+
