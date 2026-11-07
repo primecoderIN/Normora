@@ -1,4 +1,4 @@
-namespace Normora.Shared.Interfaces;
+namespace Normora.Modules.Documents.Application.Services;
 
 /// <summary>
 /// Defines the contract for generating dense vector embeddings from raw text.
@@ -18,3 +18,4 @@ public interface ITextEmbeddingService
     /// <returns>An array of floats representing the embedding vector.</returns>
     Task<float[]> CreateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
 }
+

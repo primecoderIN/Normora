@@ -24,6 +24,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Using Include="Normora.Shared.Authorization" />
+    <Using Include="Normora.Modules.Conversations.Domain" />
     <Using Include="Normora.Modules.Conversations.Application.Conversations.Commands" />
     <Using Include="Normora.Modules.Conversations.Application.Conversations.DTOs" />
     <Using Include="Normora.Modules.Conversations.Application.Conversations.Queries" />

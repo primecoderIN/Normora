@@ -24,6 +24,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Using Include="Normora.Shared.Authorization" />
     <Using Include="Normora.Modules.Documents.Domain" />
+    <Using Include="Normora.Modules.Documents.Application.Services" />
     <Using Include="Normora.Modules.Documents.Application.Documents.Commands" />
     <Using Include="Normora.Modules.Documents.Application.Documents.DTOs" />
     <Using Include="Normora.Modules.Documents.Application.Documents.Queries" />

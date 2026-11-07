@@ -1,4 +1,4 @@
-namespace Normora.Shared.Constants;
+namespace Normora.Modules.Conversations.Domain;
 
 /// <summary>
 /// Global default constants for conversation threads.

@@ -1,4 +1,4 @@
-namespace Normora.Shared.Constants;
+namespace Normora.Modules.Conversations.Domain;
 
 /// <summary>
 /// Constants used across the Retrieval-Augmented Generation pipeline.
