@@ -78,9 +78,10 @@ public sealed class UploadDocumentCommandHandler(
                 // New Document Container Creation:
                 // Initialize the root Document entity and attach ACL department bindings.
                 // If department IDs are omitted, the document is accessible globally within the tenant.
+                var newDocumentId = Guid.NewGuid();
                 document = new Document
                 {
-                    Id = Guid.NewGuid(),
+                    Id = newDocumentId,
                     FileName = request.File.FileName,
                     ContentType = request.File.ContentType,
                     Size = request.File.Length,
@@ -88,6 +89,8 @@ public sealed class UploadDocumentCommandHandler(
                     TenantId = request.TenantId,
                     DocumentDepartments = request.DepartmentIds?.Select(depId => new DocumentDepartment
                     {
+                        DocumentId = newDocumentId,
+                        TenantId = request.TenantId,
                         DepartmentId = depId
                     }).ToList() ?? new List<DocumentDepartment>()
                 };

@@ -44,8 +44,11 @@ internal sealed class SubmitFeedbackCommandHandler(
         }
         else
         {
+            // Explicitly stamp TenantId from the validated parent Message to uphold ITenantEntity invariants
+            // and ensure EF Core multitenant query filters seamlessly locate this record on subsequent updates.
             feedback = new MessageFeedback
             {
+                TenantId = message.TenantId,
                 UserId = currentUser.ExternalUserId,
                 MessageId = request.MessageId,
                 Rating = request.Rating,

@@ -2,13 +2,15 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Normora.Modules.Tenants.Domain;
 using Normora.Modules.Tenants.Persistence;
+using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Tenants.Commands;
 
 /// <summary>
-/// Handles <see cref="SuspendTenantCommand"/> by setting the tenant's status to Suspended.
+/// Handles <see cref="SuspendTenantCommand"/> by setting the tenant's status to Suspended
+/// and invalidating real-time cached tenant access across all cluster nodes.
 /// </summary>
-public class SuspendTenantCommandHandler(TenantsDbContext dbContext) : IRequestHandler<SuspendTenantCommand, bool>
+public class SuspendTenantCommandHandler(TenantsDbContext dbContext, ICacheService? cache = null) : IRequestHandler<SuspendTenantCommand, bool>
 {
     public async Task<bool> Handle(SuspendTenantCommand request, CancellationToken cancellationToken)
     {
@@ -28,6 +30,23 @@ public class SuspendTenantCommandHandler(TenantsDbContext dbContext) : IRequestH
         tenant.UpdatedAt = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Instantaneous Cluster-Wide Cache Eviction:
+        // Purges all cached session access entries for this tenant so active sessions cannot continue
+        // executing authenticated operations during the sliding cache TTL window.
+        if (cache is not null)
+        {
+            var userIds = await dbContext.TenantMemberships
+                .Where(m => m.TenantId == request.TenantId)
+                .Select(m => m.User.ExternalUserId)
+                .ToListAsync(cancellationToken);
+
+            foreach (var userId in userIds)
+            {
+                await cache.RemoveAsync($"tenant_access:{request.TenantId:N}:{userId}", cancellationToken);
+            }
+        }
+
         return true;
     }
 }

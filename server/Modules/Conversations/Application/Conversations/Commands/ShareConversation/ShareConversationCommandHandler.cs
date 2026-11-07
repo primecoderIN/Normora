@@ -50,10 +50,12 @@ public class ShareConversationCommandHandler(
         var token = new string(tokenChars);
 
         // Public Share Record Instantiation:
-        // By default, the share link is valid for 30 days unless revoked earlier.
+        // Explicitly stamps the conversation's TenantId onto the share entity to satisfy the ITenantEntity
+        // interface contract and enforce strict workspace boundary checks in GetSharedConversationQueryHandler.
         var share = new ConversationShare
         {
             Id = Guid.NewGuid(),
+            TenantId = conversation.TenantId,
             ConversationId = conversation.Id,
             CreatedByUserId = currentUser.ExternalUserId,
             Token = token,
