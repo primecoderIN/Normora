@@ -56,16 +56,34 @@ public sealed class GeminiTextGenerationService(
     }
 
     /// <inheritdoc />
+    public IAsyncEnumerable<string> StreamConversationalAnswerAsync(
+        string question,
+        IReadOnlyList<AskSource> sources,
+        IReadOnlyList<ConversationTurn> history,
+        string companyName,
+        CancellationToken cancellationToken = default)
+        => StreamConversationalAnswerAsync(question, sources, history, companyName, null, cancellationToken);
+
+    /// <inheritdoc />
     public async IAsyncEnumerable<string> StreamConversationalAnswerAsync(
         string question,
         IReadOnlyList<AskSource> sources,
         IReadOnlyList<ConversationTurn> history,
         string companyName,
+        ToolExecutionContext? toolContext,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         EnsureConfigured();
 
         var fullPrompt = BuildFullPrompt(question, sources, history, companyName);
+
+        // If tools are registered and available in the workspace context, evaluate tool calls first
+        if (toolContext != null && toolRegistry.Tools.Count > 0)
+        {
+            var toolAnswer = await ExecuteToolCallingLoopAsync(fullPrompt, toolContext, temperature: 0.1, cancellationToken);
+            yield return toolAnswer;
+            yield break;
+        }
 
         var anyChunks = false;
         await foreach (var chunk in StreamGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken))
@@ -140,10 +158,8 @@ public sealed class GeminiTextGenerationService(
                 new GeminiGenerationConfig(temperature),
                 toolsPayload);
 
-            using var response = await httpClient.PostAsJsonAsync(
-                $"models/{_model}:generateContent?key={_apiKey}",
-                request,
-                cancellationToken);
+            using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request);
+            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
@@ -249,10 +265,8 @@ public sealed class GeminiTextGenerationService(
             [new GeminiContent([new GeminiPart(prompt)], role: "user")],
             new GeminiGenerationConfig(temperature));
 
-        using var response = await httpClient.PostAsJsonAsync(
-            $"models/{_model}:generateContent?key={_apiKey}",
-            request,
-            cancellationToken);
+        using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request);
+        using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
@@ -268,6 +282,20 @@ public sealed class GeminiTextGenerationService(
             throw new InvalidOperationException(ApiMessages.LlmGenerationNotConfigured);
     }
 
+    private HttpRequestMessage CreateGeminiRequest(HttpMethod method, string path, object? body = null)
+    {
+        var request = new HttpRequestMessage(method, path);
+        if (!string.IsNullOrWhiteSpace(_apiKey))
+        {
+            request.Headers.Add("x-goog-api-key", _apiKey);
+        }
+        if (body != null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+        return request;
+    }
+
     private async IAsyncEnumerable<string> StreamGeminiAsync(
         string prompt,
         double temperature,
@@ -277,8 +305,7 @@ public sealed class GeminiTextGenerationService(
             [new GeminiContent([new GeminiPart(prompt)], role: "user")],
             new GeminiGenerationConfig(temperature));
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{_model}:streamGenerateContent?alt=sse&key={_apiKey}");
-        httpRequest.Content = JsonContent.Create(request);
+        using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:streamGenerateContent?alt=sse", request);
 
         using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -309,63 +336,4 @@ public sealed class GeminiTextGenerationService(
             }
         }
     }
-
-    // ─── Gemini JSON DTOs ────────────────────────────────────────────────────────
-
-    private sealed record GeminiGenerateRequest(
-        [property: JsonPropertyName("contents")] List<GeminiContent> Contents,
-        [property: JsonPropertyName("generationConfig")] GeminiGenerationConfig GenerationConfig,
-        [property: JsonPropertyName("tools")] List<object>? Tools = null);
-
-    private sealed record GeminiContent
-    {
-        [JsonPropertyName("parts")]
-        public List<GeminiPart> Parts { get; init; } = [];
-
-        [JsonPropertyName("role")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? Role { get; init; }
-
-        public GeminiContent() { }
-        public GeminiContent(List<GeminiPart> parts, string? role = null)
-        {
-            Parts = parts;
-            Role = role;
-        }
-    }
-
-    private sealed record GeminiPart
-    {
-        [JsonPropertyName("text")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? Text { get; init; }
-
-        [JsonPropertyName("functionCall")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public GeminiFunctionCall? FunctionCall { get; init; }
-
-        [JsonPropertyName("functionResponse")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public GeminiFunctionResponse? FunctionResponse { get; init; }
-
-        public GeminiPart() { }
-        public GeminiPart(string text) => Text = text;
-    }
-
-    private sealed record GeminiFunctionCall(
-        [property: JsonPropertyName("name")] string Name,
-        [property: JsonPropertyName("args")] System.Text.Json.JsonElement? Args);
-
-    private sealed record GeminiFunctionResponse(
-        [property: JsonPropertyName("name")] string Name,
-        [property: JsonPropertyName("response")] object Response);
-
-    private sealed record GeminiGenerationConfig(
-        [property: JsonPropertyName("temperature")] double Temperature);
-
-    private sealed record GeminiGenerateResponse(
-        [property: JsonPropertyName("candidates")] List<GeminiCandidate>? Candidates);
-
-    private sealed record GeminiCandidate(
-        [property: JsonPropertyName("content")] GeminiContent? Content);
 }

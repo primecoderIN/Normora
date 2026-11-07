@@ -34,10 +34,13 @@ public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<Gemin
             new GeminiContent([new GeminiPart(text)]),
             EmbeddingDimensions);
 
-        using var response = await httpClient.PostAsJsonAsync(
-            $"models/{model}:embedContent?key={apiKey}",
-            request,
-            cancellationToken);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:embedContent")
+        {
+            Content = JsonContent.Create(request)
+        };
+        httpRequest.Headers.Add("x-goog-api-key", apiKey);
+
+        using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<GeminiEmbeddingResponse>(cancellationToken);

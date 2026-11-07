@@ -67,11 +67,13 @@ public class GeminiSuggestionsService(
 
         try
         {
-            using var response = await httpClient.PostAsJsonAsync(
-                $"models/{model}:generateContent?key={apiKey}",
-                requestBody,
-                cancellationToken);
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:generateContent")
+            {
+                Content = JsonContent.Create(requestBody)
+            };
+            httpRequest.Headers.Add("x-goog-api-key", apiKey);
 
+            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(
@@ -111,16 +113,4 @@ public class GeminiSuggestionsService(
             return [];
         }
     }
-
-    // ── Private record types for Gemini JSON serialization ──────────────────
-
-    private sealed record GeminiGenerateRequest(
-        List<GeminiContent> Contents,
-        [property: JsonPropertyName("generationConfig")] GeminiGenerationConfig GenerationConfig);
-
-    private sealed record GeminiContent(List<GeminiPart> Parts);
-    private sealed record GeminiPart(string Text);
-    private sealed record GeminiGenerationConfig([property: JsonPropertyName("temperature")] double Temperature);
-    private sealed record GeminiGenerateResponse(List<GeminiCandidate>? Candidates);
-    private sealed record GeminiCandidate(GeminiContent? Content);
 }
