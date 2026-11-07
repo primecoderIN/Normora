@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Normora.Shared.Authorization;
 using Normora.Shared.Constants;
+using Normora.Shared.Contracts.Conversations;
 using Normora.Shared.Contracts.Documents;
 using Normora.Shared.Contracts.Tenants;
 using Normora.Shared.Exceptions;
@@ -25,7 +26,6 @@ namespace Normora.Modules.Documents.API;
 [RequireTenant(TenantRoles.Admin, TenantRoles.Employee)]
 [Produces("application/json")]
 public sealed class McpController(
-    IAgentToolRegistry toolRegistry,
     ITenantContext tenantContext,
     ICurrentUser currentUser,
     IMediator mediator,
@@ -43,6 +43,8 @@ public sealed class McpController(
             new GetUserWorkspaceContextQuery(currentUser.ExternalUserId, tenantContext.TenantId!.Value),
             cancellationToken);
 
+        var tools = await mediator.Send(new GetMcpToolsQuery(), cancellationToken);
+
         var manifest = new
         {
             server = "Normora Enterprise MCP Server",
@@ -54,7 +56,7 @@ public sealed class McpController(
                 tenantName = workspaceContext.ActiveTenantName,
                 slug = workspaceContext.ActiveTenantSlug
             },
-            toolsCount = toolRegistry.Tools.Count,
+            toolsCount = tools.Count,
             capabilities = new
             {
                 tools = new { listChanged = false },
@@ -85,7 +87,7 @@ public sealed class McpController(
                 "initialize" => HandleInitialize(request),
                 "notifications/initialized" => McpJsonRpcResponse.Success(request.Id, new { status = "ready" }),
                 "ping" => McpJsonRpcResponse.Success(request.Id, new { }),
-                "tools/list" => HandleToolsList(request),
+                "tools/list" => await HandleToolsListAsync(request, cancellationToken),
                 "tools/call" => await HandleToolsCallAsync(request, cancellationToken),
                 "resources/list" => await HandleResourcesListAsync(request, cancellationToken),
                 "resources/read" => await HandleResourcesReadAsync(request, cancellationToken),
@@ -129,9 +131,11 @@ public sealed class McpController(
         return McpJsonRpcResponse.Success(request.Id, result);
     }
 
-    private McpJsonRpcResponse HandleToolsList(McpJsonRpcRequest request)
+    private async Task<McpJsonRpcResponse> HandleToolsListAsync(
+        McpJsonRpcRequest request,
+        CancellationToken cancellationToken)
     {
-        var tools = toolRegistry.GetMcpToolDefinitions();
+        var tools = await mediator.Send(new GetMcpToolsQuery(), cancellationToken);
         return McpJsonRpcResponse.Success(request.Id, new { tools });
     }
 
@@ -151,11 +155,6 @@ public sealed class McpController(
         }
 
         var toolName = nameProp.GetString()!;
-        var tool = toolRegistry.FindTool(toolName);
-        if (tool == null)
-        {
-            return McpJsonRpcResponse.Failure(request.Id, -32601, ApiMessages.McpToolNotFound);
-        }
 
         var argsJson = paramsObj.TryGetProperty("arguments", out var argsProp)
             ? argsProp.GetRawText()
@@ -169,12 +168,14 @@ public sealed class McpController(
         var toolContext = new ToolExecutionContext(
             tenantContext.TenantId!.Value,
             workspaceContext.ActiveTenantName,
-            currentUser.KeycloakUserId,
+            currentUser.ExternalUserId,
             currentUser.Email,
             currentUser.DisplayName,
             workspaceContext.PersonalTenantId);
 
-        var toolResult = await toolRegistry.ExecuteToolAsync(toolName, argsJson, toolContext, cancellationToken);
+        var toolResult = await mediator.Send(
+            new ExecuteMcpToolCommand(toolName, argsJson, toolContext),
+            cancellationToken);
 
         var contentText = !string.IsNullOrWhiteSpace(toolResult.Output)
             ? toolResult.Output
