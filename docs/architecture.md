@@ -213,11 +213,14 @@ Security and data isolation are critical in a multi-tenant environment. Normora 
 BFLA occurs when users can execute functions (endpoints) they shouldn't have access to based on their roles.
 - **Tenant Context Extraction**: The `TenantResolutionMiddleware` securely extracts the `X-Tenant-Id` header from incoming requests. Crucially, it queries the database (`TenantsDbContext`) to verify that the authenticated user genuinely belongs to that tenant and that the workspace is active (`TenantStatus.Active`).
 - **Strict Role Validation**: The `[RequireTenant(params string[] roles)]` attribute acts as an authorization filter. It checks the successfully resolved `ITenantContext` to ensure the user holds the specific role (e.g., "admin", "employee") *within that specific tenant* before the controller logic is executed.
+- **Authentication Status Normalization**: In `RequireTenantAttribute`, when an authenticated user attempts to access an endpoint for a tenant they do not belong to, the filter returns `403 Forbidden` (`ApiMessages.TenantContextMissing`) rather than `401 Unauthorized`. This prevents the client-side HTTP interceptor from mistaking the permission rejection for an expired session and destroying the user's active Keycloak authentication.
 - **Financial BFLA Guard**: In subscription management (`UpdateTenantPlanTierCommand`), tenants are strictly blocked from upgrading to paid tiers (`Pro`, `Enterprise`) via direct API calls. Upgrades to paid tiers must execute via verified payment checkout callbacks (`PayUPaymentService`), preventing unauthorized plan escalation.
+- **Active Member Seat Drain Protection**: In employee invitations (`InviteEmployeeCommand`), handlers check whether the target email address is already an active member (`m.RemovedAt == null`). This blocks malicious or erroneous attempts to artificially exhaust subscription seat quotas (`plan.MaxEmployees`) with duplicate pending invites.
 
 ### Preventing BOLA (IDOR)
 BOLA occurs when an application does not properly validate that the user is authorized to access the specific object ID they requested (e.g., manipulating a document ID or tenant ID in the URL).
 - **Context-Bound Operations**: Controllers enforce BOLA protection by strictly associating operations with the authorized `ITenantContext`. Even if a route provides an `{id}` (like `DELETE /api/Documents/{id}` or `POST /api/Tenants/{id}/suspend`), the backend explicitly verifies that the requested object belongs to the user's validated `tenantContext.TenantId`. 
+- **Entity Boundary Stamping on Sub-Aggregates**: All entities implementing `ITenantEntity` (such as `ConversationShare`, `MessageFeedback`, and `DocumentDepartment`) are explicitly stamped with `TenantId` upon instantiation rather than relying solely on change-tracking defaults. In `ShareConversationCommandHandler`, initializing `TenantId = conversation.TenantId;` guarantees that public share verification in `GetSharedConversationQueryHandler` performs deterministic tenant boundary checks.
 - **Example**: In the `SuspendTenant` endpoint, the `{id}` from the route is validated against `_tenantContext.TenantId`. This prevents a malicious tenant admin from suspending *another* tenant by injecting their own valid `X-Tenant-Id` header while manipulating the target `{id}` in the URL.
 - **Generic 404 Response Mappings**: When a BOLA violation occurs, `BolaException` maps to a standard 404 Not Found response (`ApiMessages.NotFound`), preventing attackers from enumerating resource identifiers across foreign tenants.
 
@@ -245,10 +248,28 @@ The PayU payment integration enforces:
 - **Transaction Idempotency**: `PaymentTransactionId` is recorded and checked before applying subscription renewals, blocking callback replay attacks.
 - **Catalog Price Validation**: The incoming paid `amount` is verified against the backend plan pricing catalog for the specified currency, preventing client-side price tampering.
 
-### 5. High-Throughput & GC Optimizations
+### 5. OWASP API4 Resource Exhaustion Protections & Rate Limiting
+- **MCP Endpoint Rate Limiting**: `McpController` (`/api/mcp`) is guarded with `[EnableRateLimiting("ai")]` (20 requests/minute per authenticated user partition), preventing automated agents from saturating server capacity and exhausting Gemini token limits.
+- **Generative Suggestions Rate Limiting**: `SuggestionsController` (`/api/suggestions`) is guarded with `[EnableRateLimiting("ai")]` to cap LLM question starter synthesis.
+- **Unauthenticated Webhook Rate Limiting**: `SubscriptionController.HandlePaymentCallback` is guarded with `[EnableRateLimiting("anon")]` (5 requests/minute per client IP partition) to prevent denial-of-service from SHA-512 cryptographic verification flood attacks.
+- **Bounded Pagination**: List queries (such as `GetTenantEmployeesQueryHandler`) enforce strict parameter bounding (`Math.Clamp(request.PageSize, 1, 100)` and `Math.Max(1, request.Page)`), preventing multi-gigabyte memory allocations and division-by-zero errors.
+
+### 6. Input Validation Defense-in-Depth (FluentValidation)
+Incoming CQRS commands are validated via `ValidationBehavior<TRequest, TResponse>` in the MediatR pipeline:
+- **Tenant Provisioning**: `CreateTenantCommandValidator` enforces organization name length (1-100 characters) and validates workspace slugs against `^[a-z0-9]+(-[a-z0-9]+)*$` (3-50 characters), preventing path-traversal sequences and URL routing corruptions.
+- **Invitations**: `InviteEmployeeCommandValidator` enforces valid RFC email structure and 255 character length bounds.
+- **Conversational RAG**: `AskConversationCommandValidator` caps prompts to 4000 characters and clamps retrieval limits to between 1 and 20 candidates. `AskConversationStreamCommandHandler` performs equivalent stream-level boundary verification.
+
+### 7. Production Exception Masking & Information Leakage Prevention
+`GlobalExceptionHandler` enforces strict production error masking without destroying actionable client feedback:
+- **Sanctioned Business Constants**: All constant string literals declared in `Normora.Shared.Constants.ApiMessages` are cached dynamically via reflection (`SafeDomainMessages`).
+- **Safe Propagation**: Legitimate domain rule rejections (`CannotRemoveLastAdmin`, `PendingInvitationExists`, `UserAlreadyMember`, `DepartmentExists`) are preserved in production responses, ensuring frontend toast notifications remain clear.
+- **Infrastructure Masking**: Arbitrary runtime, LINQ, or database exceptions not matching `SafeDomainMessages` are masked with generic `ApiMessages.BadRequest` or `ApiMessages.InternalServerError`, preventing internal stack traces or connection details from leaking to clients.
+
+### 8. High-Throughput & GC Optimizations
 - **Static SSE Serialization**: Streaming RAG Server-Sent Events use a pre-allocated static `JsonSerializerOptions` in `ConversationsController`, eliminating Gen-0 allocations and reflection overhead per token chunk.
 - **Chunk Boundary Overlap**: Document chunking incorporates a 200-character sliding overlap across paragraph boundaries, maintaining semantic continuity for vector search.
-- **Immediate Cache Eviction**: Tenant resolution caching (`tenant_access:{tenantId}:{userId}`) is evicted immediately upon employee removal, invitation acceptance, or department reassignment.
+- **Immediate Cache Eviction**: Tenant resolution caching (`tenant_access:{tenantId}:{userId}`) is evicted immediately upon employee removal, invitation acceptance, department reassignment, or workspace suspension.
 
 ## White-Label Branding & Workspace Routing
 Normora supports per-tenant white-labeling without separate application builds. Each tenant can have its own brand identity applied dynamically at runtime.

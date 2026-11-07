@@ -31,6 +31,30 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] **Container Hardening**: Switched Dockerfile runtime execution to non-root `USER app` and separated multi-stage publish targets.
 - [x] **Zero Magic Strings**: Centralized all error messages and validation codes into `Normora.Shared.Constants.ApiMessages`.
 
+## ✅ Completed OWASP API Security, BOLA/BFLA & Multi-Tenant Isolation Audit
+- [x] **Multi-Tenant Entity Boundary Enforcement (BOLA)**:
+  - Stamped explicit `TenantId = conversation.TenantId;` in `ShareConversationCommandHandler.cs`, resolving an issue where `GetSharedConversationQueryHandler.cs` rejected un-stamped share tokens with 404 BOLA errors.
+  - Stamped explicit `TenantId = message.TenantId;` in `SubmitFeedbackCommandHandler.cs` so EF Core multitenant query filters locate records on feedback updates.
+  - Stamped explicit `DocumentId` and `TenantId` on `DocumentDepartment` join records in `UploadDocumentCommandHandler.cs`.
+- [x] **Instant Workspace Suspension Lockout**: Added cluster-wide distributed cache eviction for all tenant users (`tenant_access:{tenantId}:{userId}`) in `SuspendTenantCommandHandler.cs` so suspended workspaces immediately reject requests.
+- [x] **OWASP API4 Resource Exhaustion Protections & Rate Limiting**:
+  - Added `[EnableRateLimiting("ai")]` to `McpController.cs` to prevent denial-of-service on JSON-RPC tool calling and raw resource extraction.
+  - Added `[EnableRateLimiting("ai")]` to `SuggestionsController.cs` to cap generative question suggestions.
+  - Added `[EnableRateLimiting("anon")]` to `HandlePaymentCallback` in `SubscriptionController.cs` to prevent unauthenticated CPU exhaustion on SHA-512 cryptographic checks.
+  - Clamped pagination limits in `GetTenantUsersQueryHandler.cs` (`Math.Max(1, page)`, `Math.Clamp(pageSize, 1, 100)`), neutralizing unbounded database allocations and division-by-zero risks.
+- [x] **BFLA Active Member Seat Drain Protection**:
+  - Added duplicate membership check in `InviteEmployeeCommandHandler.cs` to verify the recipient email is not already an active workspace member (`RemovedAt == null`), preventing administrators from exhausting plan employee seats with redundant invites.
+  - Added `UserAlreadyMember` constant to `Normora.Shared.Constants.ApiMessages` and client `api-messages.ts`.
+- [x] **Input Validation Defense-in-Depth (FluentValidation)**:
+  - Created `CreateTenantCommandValidator.cs` enforcing organization display name length (1-100) and regex-safe workspace slug (`^[a-z0-9]+(-[a-z0-9]+)*$`, 3-50 chars) to prevent path traversal and routing corruption.
+  - Created `InviteEmployeeCommandValidator.cs` enforcing valid RFC corporate email formats and 255 character limits.
+  - Created `AskConversationCommandValidator.cs` enforcing question constraints (1-4000 chars) and candidate bounds (1-20).
+  - Added stream-level input bounds checking in `AskConversationStreamCommandHandler.cs`.
+- [x] **Authentication & Client UX Normalization**:
+  - In `RequireTenantAttribute.cs`, normalized unauthorized tenant requests from authenticated users to `403 Forbidden` (`ApiMessages.TenantContextMissing`) rather than `401 Unauthorized`, preventing the frontend HTTP interceptor from destroying the user's active Keycloak session.
+- [x] **Safe Production Exception Masking**:
+  - Cached all declared `ApiMessages` constant literals in `GlobalExceptionHandler.cs` (`SafeDomainMessages`). Legitimate business rule rejections reach users in production, while arbitrary framework/infrastructure exceptions remain strictly masked as `ApiMessages.BadRequest`.
+
 ## ✅ Completed Tenant Management & Data Isolation
 - [x] Create TenantsModule (Tenant, TenantMembership, User)
 - [x] Create TenantsDbContext (isolated from main db)

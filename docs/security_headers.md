@@ -52,3 +52,43 @@ By default, web servers and frameworks are highly verbose. Nginx will append a `
 
 ### How disabling them mitigates risk
 While exposing version numbers is not a direct vulnerability, it provides free reconnaissance to automated scanners and attackers. If an attacker knows you are running a specific version of Express or Nginx, they can instantly look up a database of known CVEs (Common Vulnerabilities and Exposures) for that exact version and launch a targeted exploit. By disabling these headers, we force attackers to operate blindly, significantly raising the difficulty of an attack.
+
+---
+
+## 5. Backend Server Header Hardening (Kestrel & ASP.NET Core)
+**Configurations:**
+- Kestrel: `options.AddServerHeader = false;` (in `server/Normora.Api/Program.cs`)
+- Pipeline: `app.Use(...)` appending `X-Content-Type-Options: nosniff` to all HTTP API responses.
+
+### What it is
+By default, ASP.NET Core Kestrel broadcasts `Server: Kestrel` on all HTTP responses, aiding automated fingerprinting. Furthermore, missing `X-Content-Type-Options` on JSON API endpoints can occasionally allow legacy clients or proxies to misinterpret error payloads.
+
+### How this mitigates risk
+- Suppressing `Server: Kestrel` strips banner identification from API calls.
+- Enforcing `nosniff` prevents MIME-type sniffing on API responses across all environments.
+
+---
+
+## 6. API Rate Limiting & Resource Exhaustion Defense (OWASP API4)
+**Policies Configured (`server/Normora.Api/Extensions/ApiServiceExtensions.cs`):**
+- **AI Policy (`"ai"`):** 20 requests/minute per authenticated user partition (`sub` claim). Protects `/api/conversations`, `/api/documents/search`, `/api/documents/upload`, `/api/suggestions`, and `/api/mcp`.
+- **Anonymous Policy (`"anon"`):** 5 requests/minute per client IP address. Protects public endpoints including `/api/invitations/{token}` and `/api/subscription/callback` / `/payu-callback`.
+
+### What it is
+Without rate limiting, malicious callers or misconfigured client-side loops can trigger high-cost LLM completions, run CPU-intensive SHA-512 cryptographic calculations, or flood vector databases.
+
+### How this mitigates risk
+- Guarantees deterministic resource consumption per user and IP bucket.
+- Exceeding quotas returns `HTTP 429 Too Many Requests` which is normalized by the frontend interceptor into a non-destructive user notification toast.
+
+---
+
+## 7. Production Exception Masking & Information Leakage Prevention
+**Handler:** `GlobalExceptionHandler` (`server/Normora.Api/Middleware/GlobalExceptionHandler.cs`)
+
+### What it is
+Unhandled runtime exceptions can leak internal database schemas, SQL fragments, server file paths, and framework library versions.
+
+### How this mitigates risk
+- In production (`env.IsProduction()`), internal exceptions are strictly replaced with generic sanitized messages (`ApiMessages.BadRequest` or `ApiMessages.InternalServerError`).
+- Deliberate business rule rejections declared in `Normora.Shared.Constants.ApiMessages` are cached dynamically via reflection (`SafeDomainMessages`) and safely returned to the client, providing clear UI feedback without exposing internal system internals.

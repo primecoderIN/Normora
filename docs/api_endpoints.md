@@ -27,11 +27,11 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/invitations` | RequireTenant(Employer) | Invite a user to the current tenant by email. |
+| `POST` | `/invitations` | RequireTenant(Employer) | Invite a user to the current tenant by email. Rejects duplicate invitations for active members (`UserAlreadyMember`). Validated with `InviteEmployeeCommandValidator`. |
 | `GET` | `/invitations/my` | Authenticated | List all pending invitations for the current user. |
 | `POST` | `/invitations/{id}/accept` | Authenticated | Accept an invitation to join a tenant. |
-| `GET` | `/tenants/employees` | RequireTenant(Admin, Employee) | List employees with pagination, search, and department/group filters. |
-| `DELETE` | `/tenants/employees/{membershipId}` | RequireTenant(Admin) | Remove an employee's membership from the current workspace (Soft delete). |
+| `GET` | `/tenants/employees` | RequireTenant(Admin, Employee) | List employees with pagination (`page >= 1`, `pageSize` clamped 1-100), search, and department/group filters. |
+| `DELETE` | `/tenants/employees/{membershipId}` | RequireTenant(Admin) | Remove an employee's membership from the current workspace (Soft delete) and evict tenant resolution cache. |
 
 ---
 
@@ -71,17 +71,19 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 ## 💬 Conversations (RAG)
 
+> **Rate Limiting:** All conversational endpoints are protected under the `"ai"` rate limiter policy (20 requests/minute per authenticated user partition).
+
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
 | `GET` | `/conversations` | RequireTenant(Employee) | List the user's past conversations within the tenant. |
 | `GET` | `/conversations/{id}` | RequireTenant(Employee) | Get full message history for a specific conversation. |
-| `POST` | `/conversations` | RequireTenant(Employee) | Start a new conversation with an initial prompt. Returns grounded answer and citations. |
-| `POST` | `/conversations/{id}/messages` | RequireTenant(Employee) | Send a follow-up message in an existing conversation (Multi-turn RAG). |
-| `POST` | `/conversations/{id}/messages/stream` | RequireTenant(Employee) | Stream a grounded AI response using Server-Sent Events (SSE). |
-| `POST` | `/conversations/{id}/messages/{messageId}/feedback` | RequireTenant(Employee) | Submit a Positive (1) or Negative (2) rating for an AI message. |
+| `POST` | `/conversations` | RequireTenant(Employee) | Start a new conversation shell. |
+| `POST` | `/conversations/{id}/messages` | RequireTenant(Employee) | Send a follow-up message in an existing conversation (Multi-turn RAG). Validated via `AskConversationCommandValidator`. |
+| `POST` | `/conversations/{id}/messages/stream` | RequireTenant(Employee) | Stream a grounded AI response using Server-Sent Events (SSE). Validates bounds directly to protect LLM token budget. |
+| `POST` | `/conversations/{id}/messages/{messageId}/feedback` | RequireTenant(Employee) | Submit a Positive (1) or Negative (2) rating for an AI message. Explicitly stamps `TenantId` on feedback record. |
 | `DELETE` | `/conversations/{id}` | RequireTenant(Employee) | Delete a conversation history. |
-| `POST` | `/conversations/{id}/share` | RequireTenant(Employee) | Create or retrieve a shareable read-only link token for a conversation. |
-| `GET` | `/conversations/shared/{token}` | Authenticated | Fetch a read-only snapshot of a shared conversation by token. |
+| `POST` | `/conversations/{id}/share` | RequireTenant(Employee) | Create or retrieve a shareable read-only link token for a conversation. Stamped with `conversation.TenantId`. |
+| `GET` | `/conversations/shared/{token}` | Authenticated | Fetch a read-only snapshot of a shared conversation by token, verifying token expiry and tenant boundary matching. |
 
 ---
 
@@ -95,6 +97,8 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 ## 🤖 Model Context Protocol (MCP)
 
+> **Rate Limiting:** Protected under the `"ai"` rate limiter policy (20 requests/minute per authenticated user partition) to prevent agent saturation of tools and document reading.
+
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
 | `GET` | `/mcp` | RequireTenant(Employee) | Discovery manifest returning MCP server capabilities, protocol version, and tool inventory. |
@@ -103,6 +107,8 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 ---
 
 ## 💡 Suggestions
+
+> **Rate Limiting:** Protected under the `"ai"` rate limiter policy (20 requests/minute per authenticated user partition).
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
@@ -124,9 +130,9 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 |---|---|---|---|
 | `GET` | `/subscription/usage` | RequireTenant | Fetch tenant resource usage (documents, member seats, storage bytes, subscription status, currency) compared against current plan limits. |
 | `POST` | `/subscription/checkout` | RequireTenant(Admin) | Generate PayU hosted checkout action URL and parameters signed with a SHA-512 cryptographic hash for upgrading to a paid tier (`Pro`, `Enterprise`) in specified currency. |
-| `POST` | `/subscription/portal` | RequireTenant(Admin) | Direct user to workspace subscription and billing management overview. |
-| `POST` | `/subscription/payu-callback` | AllowAnonymous | Securely handle PayU hosted checkout return (`surl`/`furl`) with reverse SHA-512 hash verification, quota provisioning, and browser redirection. |
-| `POST` | `/subscription/tier` | RequireTenant(Admin) | Upgrade or downgrade tenant subscription tier directly (free tier fallback). |
+| `POST` | `/subscription/portal` | RequireTenant(Admin) | Direct user to workspace subscription and billing management overview. Validates `returnUrl` to block open redirects. |
+| `POST` | `/subscription/payu-callback` | AllowAnonymous | Securely handle PayU hosted checkout return (`surl`/`furl`) with reverse SHA-512 hash verification, quota provisioning, and browser redirection. Protected under `"anon"` rate limiter policy (5 requests/minute per IP). |
+| `POST` | `/subscription/tier` | RequireTenant(Admin) | Upgrade or downgrade tenant subscription tier directly (free tier fallback). Direct upgrade to paid tiers is blocked by BFLA. |
 
 ---
 
