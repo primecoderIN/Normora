@@ -69,6 +69,7 @@ public static class ApiMessages
     public const string InvitationAlreadyProcessed = "This invitation has already been processed.";
     public const string InvitationAlreadyAccepted = "This invitation has already been accepted or is no longer valid.";
     public const string PendingInvitationExists = "A pending invitation already exists for this email.";
+    public const string UserAlreadyMember = "This user is already a member of this workspace.";
     
     // Feature Specific
     public const string FeedbackOnlyForAssistant = "Feedback can only be submitted for assistant messages.";

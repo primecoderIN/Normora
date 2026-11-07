@@ -31,6 +31,14 @@ internal sealed class AskConversationStreamCommandHandler(
         AskConversationStreamCommand request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        // Stream Request Validation Guard:
+        // Because MediatR stream requests (IStreamRequest<T>) bypass IPipelineBehavior<TRequest, TResponse>,
+        // we validate bounds directly here to protect downstream LLM and database token budgets.
+        if (request.ConversationId == Guid.Empty || string.IsNullOrWhiteSpace(request.Question) || request.Question.Length > 4000)
+        {
+            throw new ArgumentException(ApiMessages.ValidationFailed);
+        }
+
         // Provider Verification:
         // Ensures Gemini API text generation service is configured before accepting streaming requests.
         if (!generationService.IsConfigured)

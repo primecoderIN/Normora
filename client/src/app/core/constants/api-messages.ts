@@ -21,6 +21,7 @@ export const ApiMessages = {
     detail: 'An unexpected error occurred. Please try again later.'
   },
   CannotRemoveLastAdmin: 'Cannot remove the last administrator from the workspace.',
+  UserAlreadyMember: 'This user is already a member of this workspace.',
   PlanLimitExceeded: {
     summary: 'Plan Limit Exceeded',
     detail: 'Your workspace has reached its subscription resource limit. Please upgrade your plan to proceed.'

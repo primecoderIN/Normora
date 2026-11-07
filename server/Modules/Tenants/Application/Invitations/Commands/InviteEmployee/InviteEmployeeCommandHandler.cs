@@ -31,6 +31,16 @@ public class InviteEmployeeCommandHandler(
 
         var tenantId = tenantContext.TenantId.Value;
 
+        // Active Membership Verification (Seat Drain & Duplicate Protection):
+        // Ensure the prospective employee is not already an active member of this organization.
+        var isAlreadyMember = await context.TenantMemberships
+            .AnyAsync(m => m.TenantId == tenantId && m.RemovedAt == null && m.User.Email == request.Email, cancellationToken);
+
+        if (isAlreadyMember)
+        {
+            throw new InvalidOperationException(Normora.Shared.Constants.ApiMessages.UserAlreadyMember);
+        }
+
         // Prevent duplicate invitations by checking if the user already has a pending invite for this specific organization
         var existingInvite = await context.TenantInvitations
             .FirstOrDefaultAsync(i => i.Email == request.Email && i.TenantId == tenantId && i.Status == InvitationStatus.Pending, cancellationToken);
