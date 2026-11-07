@@ -22,9 +22,18 @@ public class RequireTenantAttribute(params string[] roles) : Attribute, IAsyncAu
         // 2. Ensure the tenant is actually resolved (the user belongs to the tenant)
         if (!tenantContext.IsTenantResolved)
         {
+            // BFLA Status Normalization:
+            // If the user has a valid authentication session (User.Identity.IsAuthenticated == true),
+            // but is attempting to access a workspace where they lack membership, return 403 Forbidden.
+            // Returning 401 Unauthorized here would trigger the frontend HTTP interceptor to forcibly
+            // navigate to /login and destroy the user's active Keycloak session.
+            var statusCode = context.HttpContext.User.Identity?.IsAuthenticated == true
+                ? StatusCodes.Status403Forbidden
+                : StatusCodes.Status401Unauthorized;
+
             context.Result = new ObjectResult(ApiResponse.Failure(ApiMessages.TenantContextMissing))
             {
-                StatusCode = StatusCodes.Status401Unauthorized
+                StatusCode = statusCode
             };
             return Task.CompletedTask;
         }

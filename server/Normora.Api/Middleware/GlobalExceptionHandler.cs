@@ -3,15 +3,29 @@ using Microsoft.AspNetCore.Diagnostics;
 using Normora.Shared;
 using Normora.Shared.Constants;
 using Normora.Shared.Exceptions;
+using System.Reflection;
 
 namespace Normora.Api.Middleware;
 
 /// <summary>
 /// A centralized exception handler for the API.
 /// It intercepts unhandled exceptions globally and formats them into standard RFC 7807 Problem Details JSON.
+/// In production, it securely masks internal framework/infrastructure errors while faithfully returning
+/// sanitized business messages defined in <see cref="ApiMessages"/>.
 /// </summary>
 public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IWebHostEnvironment env) : IExceptionHandler
 {
+    /// <summary>
+    /// Reflection-cached set of all declared constant messages in <see cref="ApiMessages"/>.
+    /// Used in production to verify whether an exception message is a deliberate, safe business rule message
+    /// versus an arbitrary framework leak (e.g. EF Core internal message).
+    /// </summary>
+    private static readonly HashSet<string> SafeDomainMessages = typeof(ApiMessages)
+        .GetFields(BindingFlags.Public | BindingFlags.Static)
+        .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(string))
+        .Select(f => (string)f.GetValue(null)!)
+        .ToHashSet(StringComparer.Ordinal);
+
     /// <summary>
     /// Attempts to handle the exception. Returns true if the exception was successfully handled, false otherwise.
     /// </summary>
@@ -37,11 +51,14 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
 
         // 2. Handle domain business rule violations (e.g. duplicate slug, invalid invite state).
         // Maps to 400 Bad Request — the client sent a logically invalid request.
-        // Detail is hidden in production to avoid leaking internal state.
+        // Known constants from ApiMessages are safely propagated even in production so the client UI
+        // receives actionable feedback. Unknown internal framework exceptions fall back to ApiMessages.BadRequest.
         if (exception is InvalidOperationException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            var message = env.IsProduction() ? ApiMessages.BadRequest : exception.Message;
+            var message = env.IsProduction() && !SafeDomainMessages.Contains(exception.Message)
+                ? ApiMessages.BadRequest
+                : exception.Message;
             await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
@@ -58,7 +75,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is NotFoundException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            var message = env.IsProduction() ? ApiMessages.NotFound : exception.Message;
+            var message = env.IsProduction() && !SafeDomainMessages.Contains(exception.Message)
+                ? ApiMessages.NotFound
+                : exception.Message;
             await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
@@ -68,7 +87,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is UnauthorizedAccessException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            var message = env.IsProduction() ? ApiMessages.Unauthorized : exception.Message;
+            var message = env.IsProduction() && !SafeDomainMessages.Contains(exception.Message)
+                ? ApiMessages.Unauthorized
+                : exception.Message;
             await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
@@ -78,7 +99,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is BflaException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
-            var message = env.IsProduction() ? ApiMessages.Forbidden : exception.Message;
+            var message = env.IsProduction() && !SafeDomainMessages.Contains(exception.Message)
+                ? ApiMessages.Forbidden
+                : exception.Message;
             await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
@@ -88,7 +111,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         if (exception is PlanLimitExceededException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status402PaymentRequired;
-            var message = env.IsProduction() ? ApiMessages.PlanLimitExceeded : exception.Message;
+            var message = env.IsProduction() && !SafeDomainMessages.Contains(exception.Message)
+                ? ApiMessages.PlanLimitExceeded
+                : exception.Message;
             await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(message), cancellationToken);
             return true;
         }
