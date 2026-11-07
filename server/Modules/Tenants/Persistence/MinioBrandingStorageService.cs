@@ -61,13 +61,23 @@ public class MinioBrandingStorageService(IMinioClient minioClient, ILogger<Minio
         // Object name format: {slug}/{assetType}
         var objectName = $"{tenantSlug}/{assetType}";
 
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var safeContentType = ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".webp" => "image/webp",
+            ".ico" => "image/x-icon",
+            _ => "application/octet-stream"
+        };
+
         using var stream = file.OpenReadStream();
         await minioClient.PutObjectAsync(new PutObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName)
             .WithStreamData(stream)
             .WithObjectSize(file.Length)
-            .WithContentType(file.ContentType));
+            .WithContentType(safeContentType));
 
         return objectName;
     }

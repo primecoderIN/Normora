@@ -27,13 +27,26 @@ public class CreateCustomerPortalSessionCommandHandler(
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
         // Customer Portal Navigation:
-        // Constructs the canonical destination URL pointing to the workspace's subscription settings view,
-        // allowing administrators to view current usage quotas, upgrade plans, or inspect transaction history.
-        var returnUrl = !string.IsNullOrWhiteSpace(request.ReturnUrl)
-            ? request.ReturnUrl
-            : (tenant != null
-                ? $"{appOptions.Value.BaseUrl}/app/workspaces/{tenant.Slug}/employer/settings/subscription"
-                : $"{appOptions.Value.BaseUrl}/settings/subscription");
+        // Validates return URL to prevent open redirect vulnerabilities.
+        // Accepts only safe relative URLs or absolute URLs matching AppOptions.BaseUrl.
+        string returnUrl;
+        var defaultUrl = tenant != null
+            ? $"{appOptions.Value.BaseUrl}/app/workspaces/{tenant.Slug}/employer/settings/subscription"
+            : $"{appOptions.Value.BaseUrl}/settings/subscription";
+
+        if (!string.IsNullOrWhiteSpace(request.ReturnUrl))
+        {
+            var isSafeRelative = request.ReturnUrl.StartsWith('/') && !request.ReturnUrl.StartsWith("//") && !request.ReturnUrl.StartsWith("/\\");
+            var isSafeAbsolute = Uri.TryCreate(request.ReturnUrl, UriKind.Absolute, out var parsedUri)
+                && Uri.TryCreate(appOptions.Value.BaseUrl, UriKind.Absolute, out var baseUri)
+                && string.Equals(parsedUri.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase);
+
+            returnUrl = (isSafeRelative || isSafeAbsolute) ? request.ReturnUrl : defaultUrl;
+        }
+        else
+        {
+            returnUrl = defaultUrl;
+        }
 
         return new CustomerPortalResultDto(returnUrl);
     }

@@ -61,10 +61,10 @@ public class MinioDocumentStorageService(IMinioClient minioClient, ILogger<Minio
         await EnsureBucketExistsAsync();
 
         // Physical Object Key Partitioning:
-        // Prefixes the storage key with the tenant GUID: "{tenantId}/{Guid}_{fileName}".
-        // This physically partitions all tenant binary objects within the bucket, preventing key collisions
-        // and enabling straightforward bucket lifecycle policies or tenant-specific access delegations.
-        var objectName = $"{tenantId}/{Guid.NewGuid()}_{file.FileName}";
+        // Prefixes the storage key with the tenant GUID: "{tenantId}/{Guid}_{safeFileName}".
+        // Uses Path.GetFileName to sanitize and prevent path traversal in object keys.
+        var safeFileName = Path.GetFileName(file.FileName);
+        var objectName = $"{tenantId}/{Guid.NewGuid()}_{safeFileName}";
 
         using var stream = file.OpenReadStream();
         await minioClient.PutObjectAsync(new PutObjectArgs()

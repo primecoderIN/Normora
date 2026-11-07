@@ -46,34 +46,7 @@ public class PayUPaymentService(
             : currency.Trim().ToLowerInvariant();
 
         // Calculate tier price
-        var amount = (tier, normalizedCurrency) switch
-        {
-            (PlanTier.Pro, "inr") => 3999.00m,
-            (PlanTier.Enterprise, "inr") => 19999.00m,
-
-            (PlanTier.Pro, "usd") => 49.00m,
-            (PlanTier.Enterprise, "usd") => 249.00m,
-
-            (PlanTier.Pro, "eur") => 45.00m,
-            (PlanTier.Enterprise, "eur") => 229.00m,
-
-            (PlanTier.Pro, "gbp") => 39.00m,
-            (PlanTier.Enterprise, "gbp") => 199.00m,
-
-            (PlanTier.Pro, "cad") => 65.00m,
-            (PlanTier.Enterprise, "cad") => 329.00m,
-
-            (PlanTier.Pro, "aud") => 75.00m,
-            (PlanTier.Enterprise, "aud") => 379.00m,
-
-            (PlanTier.Pro, "jpy") => 7500.00m,
-            (PlanTier.Enterprise, "jpy") => 38000.00m,
-
-            (PlanTier.Pro, "sgd") => 65.00m,
-            (PlanTier.Enterprise, "sgd") => 329.00m,
-
-            _ => tier == PlanTier.Pro ? 3999.00m : 19999.00m
-        };
+        var amount = GetExpectedPrice(tier, normalizedCurrency);
 
         var amountString = amount.ToString("F2", CultureInfo.InvariantCulture);
         var txnid = "txn_" + Guid.NewGuid().ToString("N")[..18];
@@ -198,9 +171,26 @@ public class PayUPaymentService(
             return new PaymentCallbackResultDto(false, tenantId, tenantSlug, tier, txnid, string.IsNullOrWhiteSpace(errorMessage) ? ApiMessages.PaymentProcessingFailed : errorMessage);
         }
 
+        // Amount verification: ensure the paid amount matches the tier price catalog
+        var expectedAmount = GetExpectedPrice(tier, udf3);
+        if (!decimal.TryParse(amount, CultureInfo.InvariantCulture, out var parsedAmount) || Math.Abs(parsedAmount - expectedAmount) > 0.01m)
+        {
+            logger.LogWarning("PayU transaction {TxnId} amount mismatch. Expected: {Expected}, Received: {Received}",
+                SanitizeLogValue(txnid), expectedAmount, SanitizeLogValue(amount));
+            return new PaymentCallbackResultDto(false, tenantId, tenantSlug, tier, txnid, ApiMessages.PaymentProcessingFailed);
+        }
+
         // Fulfillment: update TenantPlan in database
         var plan = await context.TenantPlans
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
+
+        // Idempotency check: if this transaction was already processed, avoid duplicate renewals or audit entries
+        if (plan != null && string.Equals(plan.PaymentTransactionId, txnid, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogInformation("PayU transaction {TxnId} was already fulfilled for Tenant {TenantId}. Returning existing confirmation.",
+                SanitizeLogValue(txnid), tenantId);
+            return new PaymentCallbackResultDto(true, tenantId, tenantSlug, tier, txnid, null);
+        }
 
         var template = TenantPlan.CreateDefault(tenantId, tier, udf3);
 
@@ -261,6 +251,39 @@ public class PayUPaymentService(
         var bytes = Encoding.UTF8.GetBytes(input);
         var hashBytes = SHA512.HashData(bytes);
         return Convert.ToHexStringLower(hashBytes);
+    }
+
+    private static decimal GetExpectedPrice(PlanTier tier, string? currency)
+    {
+        var normalizedCurrency = string.IsNullOrWhiteSpace(currency) ? "inr" : currency.Trim().ToLowerInvariant();
+        return (tier, normalizedCurrency) switch
+        {
+            (PlanTier.Pro, "inr") => 3999.00m,
+            (PlanTier.Enterprise, "inr") => 19999.00m,
+
+            (PlanTier.Pro, "usd") => 49.00m,
+            (PlanTier.Enterprise, "usd") => 249.00m,
+
+            (PlanTier.Pro, "eur") => 45.00m,
+            (PlanTier.Enterprise, "eur") => 229.00m,
+
+            (PlanTier.Pro, "gbp") => 39.00m,
+            (PlanTier.Enterprise, "gbp") => 199.00m,
+
+            (PlanTier.Pro, "cad") => 65.00m,
+            (PlanTier.Enterprise, "cad") => 329.00m,
+
+            (PlanTier.Pro, "aud") => 75.00m,
+            (PlanTier.Enterprise, "aud") => 379.00m,
+
+            (PlanTier.Pro, "jpy") => 7500.00m,
+            (PlanTier.Enterprise, "jpy") => 38000.00m,
+
+            (PlanTier.Pro, "sgd") => 65.00m,
+            (PlanTier.Enterprise, "sgd") => 329.00m,
+
+            _ => tier == PlanTier.Pro ? 3999.00m : 19999.00m
+        };
     }
 
     private static string SanitizeLogValue(string value) =>

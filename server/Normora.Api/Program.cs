@@ -104,18 +104,24 @@ foreach (var trustedProxyAddress in trustedProxyAddresses)
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.UseCors("CorsPolicy");
-app.UseRateLimiter();
 
-// Security & Tenancy Pipeline (Order is critical here)
-// First, verify the user's session cookie is valid (Authentication).
+// Security & Tenancy Pipeline (Order is critical for security invariants):
+// 1. Authenticate user credentials/session cookies first so ClaimsPrincipal is populated.
 app.UseAuthentication();              
 
+// 2. Process BFF session validation and anti-forgery headers.
 app.UseBff();
 
-// Second, extract the X-Tenant-Id header and verify the authenticated user has access to that tenant.
+// 3. Rate limiting MUST execute AFTER authentication & BFF session resolution:
+//    Partitioners inspect `context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value` ('sub').
+//    If executed before authentication, all authenticated requests would lack claims and collapse
+//    into the shared anonymous rate-limit bucket, resulting in platform-wide DoS for legitimate users.
+app.UseRateLimiter();
+
+// 4. Extract and validate active workspace boundaries (X-Tenant-Id header) for the authenticated principal.
 app.UseMiddleware<TenantResolutionMiddleware>();
 
-// Finally, apply endpoint-specific authorization rules (e.g. [RequireTenant]).
+// 5. Apply endpoint-specific authorization rules (e.g. [Authorize], [RequireTenant]).
 app.UseAuthorization();               
 
 app.MapHealthChecks("/healthz").AllowAnonymous();

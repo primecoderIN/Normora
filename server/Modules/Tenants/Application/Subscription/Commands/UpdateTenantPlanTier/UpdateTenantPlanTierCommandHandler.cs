@@ -9,6 +9,11 @@ using Normora.Shared.Interfaces;
 
 namespace Normora.Modules.Tenants.Application.Subscription.Commands;
 
+/// <summary>
+/// Handles <see cref="UpdateTenantPlanTierCommand"/> by updating the tenant's subscription tier and recalculating quotas.
+/// Enforces Broken Function-Level Authorization (BFLA) guards: only direct downgrades to <see cref="PlanTier.Free"/>
+/// are permitted without a verified payment gateway transaction; paid tiers must be acquired via checkout.
+/// </summary>
 public class UpdateTenantPlanTierCommandHandler(
     TenantsDbContext context,
     ITenantContext tenantContext,
@@ -19,6 +24,13 @@ public class UpdateTenantPlanTierCommandHandler(
         // Ambient Tenant Verification:
         // Validates that plan tier updates operate on the current tenant workspace.
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
+
+        // BFLA Guard: Only downgrading to the Free tier is permitted directly without a payment transaction.
+        // Paid tiers (Pro, Enterprise) must be acquired through the verified checkout flow.
+        if (request.Tier != PlanTier.Free)
+        {
+            throw new Normora.Shared.Exceptions.BflaException(ApiMessages.DirectTierUpgradeNotAllowed);
+        }
 
         // Plan Record Upsert Workflow:
         // Locate the existing tenant subscription record, or initialize a new default record if first time.

@@ -18,6 +18,18 @@ public static class ApiMessages
     public const string InvalidInvitation = "Failed to accept invitation. It may be expired or invalid.";
     public const string SearchQueryRequired = "A search query is required.";
     public const string UnsupportedExportFormat = "The requested export format is not supported.";
+    public const string TenantIdRequired = "TenantId is required.";
+    public const string DocumentIdRequired = "Document ID is required.";
+    public const string FileRequired = "No file was uploaded.";
+    public const string FileEmpty = "File cannot be empty.";
+    public const string FileExceedsLimit = "File exceeds allowed size limit.";
+    public const string InvalidFileType = "Only .pdf, .docx, and .txt files are allowed.";
+    public const string InvalidFileContent = "File content does not match the declared file type.";
+    public const string InvalidBrandingFileType = "Only .png, .jpg, .jpeg, .webp, and .ico image files are allowed for branding.";
+    public const string BrandingFileExceedsLimit = "Branding image exceeds allowed 5MB limit.";
+    public const string DeletedByUserIdRequired = "DeletedByUserId is required.";
+    public const string DirectTierUpgradeNotAllowed = "Paid tier upgrades must be completed via checkout.";
+    public const string InvalidRedirectUrl = "The provided return URL is invalid or unsafe.";
 
     // Resource
     public const string NotFound = "The requested resource was not found.";
