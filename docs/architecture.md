@@ -332,9 +332,31 @@ The tenant-protected `GET /api/documents/search?query=...&limit=5` endpoint embe
 
 The employee `POST /api/ask` endpoint uses the same tenant-filtered retrieval, rejects weak matches below the similarity threshold, and sends only the selected chunks to Gemini generation. Its response contains the grounded answer and document/chunk citations; when evidence is insufficient it returns a no-answer message instead of guessing.
 
-### Realtime Document Events
+### Realtime Document Events & Multi-Host SignalR Backplane
 
 Authenticated clients connect to `/hubs/documents` and explicitly join a tenant group. SignalR automatically forwards the secure `__Host-spa` cookie for authentication. The hub validates the current user's membership before adding the connection. Upload and processing transitions publish `DocumentStatusChanged` events to that tenant group, allowing the employer document list to update without polling.
+
+#### Evolution: In-Process vs. Multi-Host SignalR
+1. **Earlier Architecture (Single-Process In-Memory)**:
+   - When Hangfire background processing and WebSockets ran inside the single `Normora.Api` host, SignalR utilized ASP.NET Core's default in-memory lifetime manager (`DefaultHubLifetimeManager`).
+   - When `DocumentProcessingJob` finished, it called `hubContext.Clients.Group("tenant:...").SendAsync(...)`. Both the publisher (background job thread) and the subscriber (open browser WebSocket connection) shared the exact same process memory space, so events reached the browser without any external broker.
+2. **The Multi-Process Boundary Problem**:
+   - To prevent intensive background workloads (Apache Tika OCR, PDF extraction, Gemini 768-dim vector embeddings) from blocking HTTP request threads, the worker was decoupled into an independent generic host process: `Normora.Worker`.
+   - In this decoupled architecture, browser WebSockets connect exclusively to the HTTP BFF (`Normora.Api`), while background ingestion executes inside `Normora.Worker`.
+   - Without an external backplane, `Normora.Worker` invoked its own local in-memory SignalR hub context, which had **0 connected clients**, causing all status transition events to be silently dropped within the worker container.
+3. **The Solution: Distributed Redis Pub/Sub Backplane**:
+   - Both `Normora.Api` and `Normora.Worker` are configured with `Microsoft.AspNetCore.SignalR.StackExchangeRedis` via `AddNormoraSignalR(configuration)` in `Normora.Infrastructure`.
+   - When `Normora.Worker` finishes embedding chunks, it publishes the event to Redis under the `normora:signalr` channel.
+   - `Normora.Api` receives the event via Redis pub/sub and immediately pushes it down the active WebSocket connection to the browser.
+
+```mermaid
+flowchart LR
+    Browser["Angular Browser Client"] <-->|"WebSocket (/hubs/documents)"| Api["normora_api Host"]
+    Worker["normora_worker Host<br/>(DocumentProcessingJob)"] -->|"PUBLISH normora:signalr"| Redis[("normora_redis<br/>(Pub/Sub Backplane)")]
+    Redis -->|"SUBSCRIBE normora:signalr"| Api
+    Api -->|"Live DocumentStatusChanged"| Browser
+```
+
 
 ### Path-Based Workspace Routing
 After a successful login:

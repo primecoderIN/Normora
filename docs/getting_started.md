@@ -67,3 +67,9 @@ Exit code `139` corresponds to `SIGSEGV` (Segmentation Fault). In containerized 
    dotnet run --project server/Normora.Api/Normora.Api.csproj -- --migrate
    ```
 5. For deep-dive architectural and lifecycle details, see [docs/backend_onboarding.md](file:///c:/Users/Sanjeev%20Kumar/Codes/Normora/docs/backend_onboarding.md#controlled-migrations--the-migrator-service).
+
+### Real-Time Document Status Not Updating in Browser
+If documents stay in `Uploaded` state on the frontend until a manual page refresh (F5):
+- **Cause**: Browser WebSockets connect to `normora_api`, while Hangfire background ingestion executes inside `normora_worker`. Without a shared message backplane, the worker's status notifications cannot reach the API process.
+- **Resolution**: SignalR is configured with a shared Redis pub/sub backplane via `AddNormoraSignalR` (`Microsoft.AspNetCore.SignalR.StackExchangeRedis`). Ensure the `normora_redis` container is running and healthy (`docker compose ps redis`).
+

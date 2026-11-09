@@ -69,9 +69,10 @@ sequenceDiagram
     participant DB as PostgreSQL (documents schema)
     participant Outbox as Outbox Dispatcher
     participant HF as Hangfire Worker (Normora.Worker)
+    participant Redis as Redis Backplane
     participant Tika as Apache Tika
     participant Gemini as Google Gemini API
-    participant Hub as SignalR (DocumentHub)
+    participant Hub as SignalR (API Host)
 
     Employer->>API: 1. POST /api/documents (Upload File)
     API->>MinIO: 2. Store original binary (Encrypted S3 bucket)
@@ -82,23 +83,27 @@ sequenceDiagram
 
     Note over HF: Asynchronous Processing in Worker Process
     HF->>DB: 7. Update Status -> Processing
-    HF->>Hub: 8. Broadcast WebSocket: Processing
-    HF->>MinIO: 9. Download raw file bytes
-    HF->>Tika: 10. Extract clean plain text
-    Tika-->>HF: 11. Normalized text
-    HF->>HF: 12. Normalize & split into bounded chunks (sliding window)
-    HF->>Gemini: 13. Generate 768-dim embeddings in batches
-    Gemini-->>HF: 14. Embedding vectors
-    HF->>DB: 15. Bulk insert DocumentChunks with pgvector HNSW index
-    HF->>DB: 16. Update Status -> Ready
-    HF->>Hub: 17. Broadcast WebSocket: Ready
+    HF->>Redis: 8. Publish StatusChanged: Processing
+    Redis->>Hub: 9. Relay to API Host
+    Hub-->>Employer: 10. WebSocket: Processing
+    HF->>MinIO: 11. Download raw file bytes
+    HF->>Tika: 12. Extract clean plain text
+    Tika-->>HF: 13. Normalized text
+    HF->>HF: 14. Normalize & split into bounded chunks (sliding window)
+    HF->>Gemini: 15. Generate 768-dim embeddings in batches
+    Gemini-->>HF: 16. Embedding vectors
+    HF->>DB: 17. Bulk insert DocumentChunks with pgvector HNSW index
+    HF->>DB: 18. Update Status -> Ready
+    HF->>Redis: 19. Publish StatusChanged: Ready
+    Redis->>Hub: 20. Relay to API Host
+    Hub-->>Employer: 21. WebSocket: Ready
 ```
 
 1. **Transactional Outbox Decoupling**: Original files are saved to MinIO S3 object storage; file metadata, version, and a `DocumentProcessingOutboxMessage` are committed atomically within the same database transaction, ensuring no work is lost even if downstream background dispatch experiences transient faults. The API immediately returns `202 Accepted`.
 2. **Text Normalization**: Apache Tika extracts structured text across file formats, handling headers, footnotes, and tables.
 3. **Bounded Chunking**: Cleaned text is segmented into optimal token chunks with sliding-window overlaps to preserve context.
 4. **HNSW Vector Storage**: 768-dimensional embeddings are indexed in PostgreSQL using pgvector HNSW (`vector_cosine_ops`, `m = 16`, `ef_construction = 64`), enabling sub-millisecond approximate nearest neighbor lookups under enterprise volume.
-5. **Real-Time Visibility**: Hangfire pushes lifecycle updates over SignalR (`Uploaded` ➔ `Processing` ➔ `Ready` / `Failed`), updating the employer's dashboard live without browser polling.
+5. **Real-Time Visibility via Redis Backplane**: `Normora.Worker` pushes lifecycle updates over the Redis SignalR backplane (`Uploaded` ➔ `Processing` ➔ `Ready` / `Failed`). The API host relays these directly to connected browser WebSockets, updating the employer's dashboard live without browser polling.
 
 ---
 
