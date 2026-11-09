@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Normora.Modules.Documents.Options;
 using Normora.Modules.Tenants.Options;
 using Normora.Shared.Options;
+using Normora.Infrastructure.Providers.DocumentExtraction;
+using Normora.Infrastructure.Providers.Gemini;
+using Normora.Infrastructure.Providers.Storage;
 
 namespace Normora.Infrastructure.Extensions;
 

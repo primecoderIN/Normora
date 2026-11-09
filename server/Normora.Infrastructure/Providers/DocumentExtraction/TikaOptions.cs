@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Normora.Modules.Documents.Options;
+namespace Normora.Infrastructure.Providers.DocumentExtraction;
 
 /// <summary>
 /// Configuration for Apache Tika document text extraction service.

@@ -6,25 +6,29 @@ using Minio.Exceptions;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Normora.Modules.Documents.Persistence;
 
-namespace Normora.Modules.Tenants.Persistence;
+namespace Normora.Infrastructure.Providers.Storage;
 
 /// <summary>
 /// A storage service implementation that interacts with a MinIO S3-compatible object storage server.
-/// MinIO is used to physically store the tenant branding assets.
+/// MinIO is used to physically store the uploaded documents, keeping large binary data out of the PostgreSQL database.
 /// </summary>
-public class MinioBrandingStorageService(IMinioClient minioClient, ILogger<MinioBrandingStorageService> logger) : IBrandingStorageService
+public class MinioDocumentStorageService(IMinioClient minioClient, ILogger<MinioDocumentStorageService> logger) : IDocumentStorageService
 {
-    private const string BucketName = "normora-branding";
+    private const string BucketName = "normora-documents";
     private static volatile bool _bucketEnsured;
     private static readonly SemaphoreSlim _lock = new(1, 1);
 
     /// <summary>
-    /// Checks if the configured bucket exists in MinIO lazily on first upload, and creates it if it doesn't.
+    /// Checks if the configured bucket exists in MinIO lazily on first access, and creates it if it doesn't.
     /// Thread-safe and non-blocking during DI service instantiation.
     /// </summary>
     private async Task EnsureBucketExistsAsync()
     {
+        // Thread-Safe Lazy S3 Bucket Provisioning:
+        // Double-checked locking pattern using SemaphoreSlim ensures the bucket is checked and created
+        // exactly once without blocking the ASP.NET dependency injection container startup.
         if (_bucketEnsured) return;
         await _lock.WaitAsync();
         try
@@ -51,25 +55,17 @@ public class MinioBrandingStorageService(IMinioClient minioClient, ILogger<Minio
     /// Streams a newly uploaded file directly into MinIO storage.
     /// </summary>
     /// <param name="file">The uploaded file payload.</param>
-    /// <param name="tenantSlug">The Tenant Slug.</param>
-    /// <param name="assetType">The type of asset (e.g. 'logo', 'logo-dark', 'favicon').</param>
+    /// <param name="tenantId">The Tenant ID, used to prefix the object name for logical partitioning inside the bucket.</param>
     /// <returns>The generated Object Name (Key) that can be used to retrieve the file later.</returns>
-    public async Task<string> UploadAssetAsync(IFormFile file, string tenantSlug, string assetType)
+    public async Task<string> UploadDocumentAsync(IFormFile file, string tenantId)
     {
         await EnsureBucketExistsAsync();
 
-        // Object name format: {slug}/{assetType}
-        var objectName = $"{tenantSlug}/{assetType}";
-
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var safeContentType = ext switch
-        {
-            ".png" => "image/png",
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".webp" => "image/webp",
-            ".ico" => "image/x-icon",
-            _ => "application/octet-stream"
-        };
+        // Physical Object Key Partitioning:
+        // Prefixes the storage key with the tenant GUID: "{tenantId}/{Guid}_{safeFileName}".
+        // Uses Path.GetFileName to sanitize and prevent path traversal in object keys.
+        var safeFileName = Path.GetFileName(file.FileName);
+        var objectName = $"{tenantId}/{Guid.NewGuid()}_{safeFileName}";
 
         using var stream = file.OpenReadStream();
         await minioClient.PutObjectAsync(new PutObjectArgs()
@@ -77,17 +73,13 @@ public class MinioBrandingStorageService(IMinioClient minioClient, ILogger<Minio
             .WithObject(objectName)
             .WithStreamData(stream)
             .WithObjectSize(file.Length)
-            .WithContentType(safeContentType));
+            .WithContentType(file.ContentType));
 
         return objectName;
     }
 
-    public async Task<(Stream Content, string ContentType)> DownloadAssetAsync(string objectName)
+    public async Task<Stream> DownloadDocumentAsync(string objectName)
     {
-        var stat = await minioClient.StatObjectAsync(new StatObjectArgs()
-            .WithBucket(BucketName)
-            .WithObject(objectName));
-
         var stream = new MemoryStream();
 
         await minioClient.GetObjectAsync(new GetObjectArgs()
@@ -99,17 +91,32 @@ public class MinioBrandingStorageService(IMinioClient minioClient, ILogger<Minio
             }));
 
         stream.Position = 0;
-        return (stream, stat.ContentType);
+        return stream;
     }
 
     /// <summary>
-    /// Permanently deletes an asset from MinIO storage.
+    /// Permanently deletes a file from MinIO storage.
     /// </summary>
     /// <param name="objectName">The exact Key/ObjectName of the file in the bucket.</param>
-    public async Task DeleteAssetAsync(string objectName)
+    public async Task DeleteDocumentAsync(string objectName)
     {
         await minioClient.RemoveObjectAsync(new RemoveObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectName));
+    }
+
+    /// <summary>
+    /// Generates a temporary, pre-signed URL that allows the frontend to download the file directly from MinIO,
+    /// bypassing the .NET API to save bandwidth.
+    /// </summary>
+    /// <param name="objectName">The exact Key/ObjectName.</param>
+    /// <returns>A secure, time-limited URL.</returns>
+    public async Task<string> GetDocumentUrlAsync(string objectName)
+    {
+        // Generate a secure, time-limited download link directly to S3 so large files don't proxy through our API servers
+        return await minioClient.PresignedGetObjectAsync(new PresignedGetObjectArgs()
+            .WithBucket(BucketName)
+            .WithObject(objectName)
+            .WithExpiry(60 * 60)); // The URL becomes invalid after 1 hour for security.
     }
 }

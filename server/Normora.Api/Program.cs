@@ -36,7 +36,11 @@ builder.Services.AddConfigurationServices(builder.Configuration); // Options pat
 builder.Services.AddDatabaseServices(
     builder.Configuration,
     builder.Environment,
-    migrationMode: isMigrationRun); // EF Core, MinIO
+    migrationMode: isMigrationRun); // EF Core
+if (!isMigrationRun)
+{
+    builder.Services.AddExternalProviders(builder.Configuration, builder.Environment); // Storage, Extraction, AI
+}
 builder.Services.AddApplicationServices();                   // MediatR, FluentValidation, Scoped Services
 builder.Services.AddApiServices(builder.Configuration);      // Controllers, CORS, OpenAPI, Exception Handling
 builder.Services.AddIdentityServices(builder.Configuration, builder.Environment); // Keycloak JWT Authentication

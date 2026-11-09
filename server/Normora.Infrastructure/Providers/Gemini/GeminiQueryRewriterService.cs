@@ -3,10 +3,9 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Normora.Shared.Constants;
-using Normora.Shared.Options;
 using Normora.Modules.Conversations.Application.Services;
 
-namespace Normora.Modules.Conversations.Infrastructure.Llm;
+namespace Normora.Infrastructure.Providers.Gemini;
 
 /// <summary>Adapts the Gemini API to the application query-rewriting contract.</summary>
 public class GeminiQueryRewriterService(

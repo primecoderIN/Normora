@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Normora.Shared.Options;
+namespace Normora.Infrastructure.Providers.Gemini;
 
 /// <summary>
 /// Configuration settings for Google Gemini API models, endpoints, and authentication keys.
@@ -25,4 +25,3 @@ public class GeminiOptions
     [Required]
     public string GenerationModel { get; set; } = "gemini-2.0-flash";
 }
-

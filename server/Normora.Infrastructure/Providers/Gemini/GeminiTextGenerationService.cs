@@ -3,11 +3,11 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Normora.Modules.Conversations.Application.Services;
+using Normora.Modules.Conversations.Domain;
 using Normora.Shared.Constants;
 using Normora.Shared.Interfaces;
-using Normora.Shared.Options;
 
-namespace Normora.Modules.Conversations.Infrastructure.Llm;
+namespace Normora.Infrastructure.Providers.Gemini;
 
 /// <summary>
 /// Implementation of <see cref="ITextGenerationService"/> that uses Google's Gemini API.

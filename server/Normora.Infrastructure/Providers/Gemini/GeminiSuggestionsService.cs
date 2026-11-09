@@ -4,9 +4,8 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Normora.Modules.Conversations.Application.Services;
-using Normora.Shared.Options;
 
-namespace Normora.Modules.Conversations.Infrastructure.Llm;
+namespace Normora.Infrastructure.Providers.Gemini;
 
 /// <summary>
 /// Calls Gemini to generate a short list of questions an employee might ask

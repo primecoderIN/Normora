@@ -2,7 +2,7 @@ namespace Normora.Modules.Documents.Application.Services;
 
 /// <summary>
 /// Domain service contract defining vector embedding generation from textual passages.
-/// Implemented by <see cref="GeminiEmbeddingService"/> using Google Gemini's text-embedding-004 model.
+/// Implemented by provider adapters registered by the host.
 /// </summary>
 public interface ITextEmbeddingService
 {
@@ -20,4 +20,3 @@ public interface ITextEmbeddingService
     /// <returns>A float array of length 768 representing the dense vector coordinates.</returns>
     Task<float[]> CreateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
 }
-

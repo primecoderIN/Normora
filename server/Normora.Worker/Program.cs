@@ -16,6 +16,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSignalR();
 // Enable Hangfire Server processing exclusively on the worker process:
 builder.Services.AddDatabaseServices(builder.Configuration, builder.Environment, enableHangfireServer: true);
+builder.Services.AddExternalProviders(builder.Configuration, builder.Environment);
 builder.Services.AddApplicationServices();
 builder.Services.AddNormoraTelemetry(builder.Environment, "Normora.Worker");
 

@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Normora.Shared.Constants;
 using Normora.Shared.Interfaces;
-using Normora.Shared.Options;
+using Normora.Modules.Documents.Application.Services;
 
-namespace Normora.Modules.Documents.Application.Services;
+namespace Normora.Infrastructure.Providers.Gemini;
 
 /// <summary>
 /// Implementation of <see cref="ITextEmbeddingService"/> that uses Google's Gemini API for generating 768-dimensional embeddings.

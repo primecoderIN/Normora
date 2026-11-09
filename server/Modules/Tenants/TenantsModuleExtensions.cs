@@ -24,10 +24,6 @@ public static class TenantsModuleExtensions
         services.AddDbContext<TenantsDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        // White-Label Branding Asset Storage:
-        // Connects to MinIO/S3 object store for isolated storage of company logos and favicons.
-        services.AddScoped<IBrandingStorageService, MinioBrandingStorageService>();
-
         // Multi-Tenant Ambient Context Resolution:
         // Implements tenant resolution via subdomain, path slug, or X-Tenant-Id header with Redis caching.
         services.AddScoped<ITenantResolutionService, TenantResolutionService>();

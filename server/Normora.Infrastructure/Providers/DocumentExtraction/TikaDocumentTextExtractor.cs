@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
+using Normora.Modules.Documents.Persistence;
 
-namespace Normora.Modules.Documents.Persistence;
+namespace Normora.Infrastructure.Providers.DocumentExtraction;
 
 /// <summary>
 /// An implementation of <see cref="IDocumentTextExtractor"/> that delegates extraction to an Apache Tika service.

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Normora.Shared.Options;
+namespace Normora.Infrastructure.Providers.Storage;
 
 /// <summary>
 /// Connection options for MinIO S3-compatible document storage.

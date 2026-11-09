@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Normora.Modules.Conversations.Infrastructure.Llm;
+namespace Normora.Infrastructure.Providers.Gemini;
 
 internal sealed record GeminiGenerateRequest(
     [property: JsonPropertyName("contents")] List<GeminiContent> Contents,
@@ -58,4 +58,3 @@ internal sealed record GeminiGenerateResponse(
 
 internal sealed record GeminiCandidate(
     [property: JsonPropertyName("content")] GeminiContent? Content);
-
