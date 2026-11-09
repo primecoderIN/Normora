@@ -1,9 +1,9 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
-using Normora.Api.Features.Email;
+using Normora.Infrastructure.Features.Email;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services.Email;
+namespace Normora.Infrastructure.Services.Email;
 
 /// <summary>
 /// Asynchronous implementation of <see cref="IEmailService"/> that enqueues email delivery

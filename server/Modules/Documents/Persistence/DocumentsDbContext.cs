@@ -17,6 +17,7 @@ public class DocumentsDbContext(DbContextOptions<DocumentsDbContext> options, IT
     public DbSet<Document> Documents { get; set; } = null!;
     // Document Versioning (Phase 19): Tracks immutable file versions within a Document container.
     public DbSet<DocumentVersion> DocumentVersions { get; set; } = null!;
+    public DbSet<DocumentProcessingOutboxMessage> DocumentProcessingOutboxMessages { get; set; } = null!;
     public DbSet<DocumentChunk> DocumentChunks { get; set; } = null!;
     public DbSet<DocumentDepartment> DocumentDepartments { get; set; } = null!;
 

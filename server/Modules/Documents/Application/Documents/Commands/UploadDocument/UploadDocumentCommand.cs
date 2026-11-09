@@ -14,7 +14,7 @@ namespace Normora.Modules.Documents.Application.Documents.Commands;
 /// - Enforces subscription quotas (document limits and storage bytes) prior to accepting upload.
 /// - Performs deep magic byte inspection via FluentValidation to guarantee authenticity (PDF, DOCX, TXT, CSV).
 /// - Persists binary blob to MinIO under secure object keys ({tenantId}/{docId}.pdf).
-/// - Enqueues background Hangfire job (<see cref="Jobs.DocumentProcessingJob"/>) for text extraction, chunking, and embedding.
+/// - Persists a processing outbox message for asynchronous text extraction, chunking, and embedding.
 /// - Emits real-time progress events over SignalR to update the employer processing status indicator.
 /// - Implements <see cref="IAuditableRequest"/> to trace document uploads.
 /// </remarks>
@@ -35,4 +35,3 @@ public record UploadDocumentCommand(
         ? System.Text.Json.JsonSerializer.Serialize(new { fileName = doc.FileName, status = doc.Status, versionCount = doc.Versions.Count })
         : System.Text.Json.JsonSerializer.Serialize(new { fileName = File?.FileName, fileSize = File?.Length });
 }
-

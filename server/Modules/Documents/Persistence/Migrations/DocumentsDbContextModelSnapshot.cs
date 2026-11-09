@@ -129,6 +129,31 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                     b.ToTable("DocumentDepartments", "documents");
                 });
 
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentProcessingOutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("DocumentVersionId")
+                        .IsUnique();
+
+                    b.ToTable("DocumentProcessingOutboxMessages", "documents");
+                });
+
             modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentVersion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -186,6 +211,15 @@ namespace Normora.Modules.Documents.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Document");
+                });
+
+            modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentProcessingOutboxMessage", b =>
+                {
+                    b.HasOne("Normora.Modules.Documents.Domain.DocumentVersion", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Normora.Modules.Documents.Domain.DocumentVersion", b =>

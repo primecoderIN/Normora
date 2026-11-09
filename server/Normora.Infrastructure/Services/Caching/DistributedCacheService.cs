@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services.Caching;
+namespace Normora.Infrastructure.Services.Caching;
 
 /// <summary>
 /// Resilient implementation of <see cref="ICacheService"/> utilizing Microsoft's <see cref="IDistributedCache"/>.

@@ -32,7 +32,7 @@ public static class DocumentsModuleExtensions
         services.AddScoped<IDocumentStorageService, MinioDocumentStorageService>();
 
         // Isolated Database Migrations:
-        // Runs migrations specifically for the 'documents' PostgreSQL schema during host startup.
+        // Applies migrations for the 'documents' PostgreSQL schema during the one-off migration process.
         services.AddScoped<IDatabaseMigrator, DocumentsDatabaseMigrator>();
 
         // Apache Tika Text Extraction Client:
@@ -57,7 +57,7 @@ public static class DocumentsModuleExtensions
         // Encapsulated RRF service combining PostgreSQL full-text search with pgvector cosine distance.
         services.AddScoped<IRetrievalService, RetrievalService>();
 
-        // Hangfire ETL Ingestion Worker:
+        // Background document ingestion handler:
         services.AddScoped<DocumentProcessingJob>();
 
         return services;

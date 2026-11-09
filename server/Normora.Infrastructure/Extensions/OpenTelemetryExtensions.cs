@@ -1,8 +1,10 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace Normora.Api.Extensions;
+namespace Normora.Infrastructure.Extensions;
 
 /// <summary>Registers application tracing and metrics with environment-specific exporters.</summary>
 public static class OpenTelemetryExtensions

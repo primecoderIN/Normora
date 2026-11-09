@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Hubs;
+namespace Normora.Infrastructure.Hubs;
 
 /// <summary>
 /// SignalR hub for broadcasting real-time document processing updates to connected employers.

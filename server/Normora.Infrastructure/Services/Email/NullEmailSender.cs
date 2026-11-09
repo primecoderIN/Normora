@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services.Email;
+namespace Normora.Infrastructure.Services.Email;
 
 /// <summary>
 /// A no-op implementation of <see cref="IEmailSender"/> used in testing or when email delivery is disabled.

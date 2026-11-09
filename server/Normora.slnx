@@ -1,6 +1,7 @@
 <!-- Solution entry points for the API, worker, architecture tests, shared code, and bounded contexts. -->
 <Solution>
   <Project Path="Normora.Api/Normora.Api.csproj" />
+  <Project Path="Normora.Infrastructure/Normora.Infrastructure.csproj" />
   <Project Path="Normora.Architecture.Tests/Normora.Architecture.Tests.csproj" />
   <Project Path="Normora.Worker/Normora.Worker.csproj" />
   <Project Path="Normora.Shared/Normora.Shared.csproj" />

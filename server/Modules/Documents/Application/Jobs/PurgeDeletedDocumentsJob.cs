@@ -1,4 +1,3 @@
-using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Normora.Modules.Documents.Persistence;
@@ -7,7 +6,7 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Documents.Application.Jobs;
 
 /// <summary>
-/// A nightly Hangfire background job that permanently deletes documents
+/// A scheduled background job that permanently deletes documents
 /// (and their physical MinIO chunks) that were soft-deleted beyond the grace period.
 /// </summary>
 public sealed class PurgeDeletedDocumentsJob(
@@ -18,7 +17,6 @@ public sealed class PurgeDeletedDocumentsJob(
     private const int GracePeriodDays = 30;
     private const int BatchSize = 100;
 
-    [AutomaticRetry(Attempts = 3)]
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         var cutoffDate = DateTime.UtcNow.AddDays(-GracePeriodDays);

@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Normora.Shared.Constants;
 using Normora.Shared.Options;
 using Normora.Shared.Interfaces;
+using Normora.Infrastructure.Services;
 using Normora.Api.Services;
 
 namespace Normora.Api.Extensions;

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services;
+namespace Normora.Infrastructure.Services;
 
 /// <summary>Runs registered module migrations sequentially and propagates failures to deployment.</summary>
 public sealed class DatabaseMigrationRunner(
@@ -13,8 +13,8 @@ public sealed class DatabaseMigrationRunner(
         // Sequential Multi-Schema Migration Pipeline:
         // Each bounded module implements IDatabaseMigrator (TenantsDatabaseMigrator, DocumentsDatabaseMigrator,
         // ConversationsDatabaseMigrator) targeting its own dedicated PostgreSQL schema ('tenants', 'documents', 'conversations').
-        // We execute them sequentially during container boot before the HTTP server accepts traffic.
-        // If any schema migration fails, the exception aborts container initialization, preventing partial or corrupt deployments.
+        // The one-off migration process applies each schema sequentially before the deployment starts API replicas.
+        // Any failure aborts this process so deployment cannot mistake a partial migration for success.
         logger.LogInformation("Starting database migration runner...");
         var migratorList = migrators.ToList();
         logger.LogInformation("Found {Count} database migrators to execute.", migratorList.Count);

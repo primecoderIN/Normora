@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
-using Normora.Api.Hubs;
+using Normora.Infrastructure.Hubs;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services;
+namespace Normora.Infrastructure.Services;
 
 /// <summary>
 /// Implements IDocumentNotificationService using SignalR to broadcast real-time events to connected clients.

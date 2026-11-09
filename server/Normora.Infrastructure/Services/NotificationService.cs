@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
-using Normora.Api.Hubs;
+using Normora.Infrastructure.Hubs;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services;
+namespace Normora.Infrastructure.Services;
 
 /// <summary>Publishes user-targeted notifications to SignalR groups.</summary>
 public class NotificationService(IHubContext<NotificationHub> hubContext) : INotificationService

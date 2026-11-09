@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services;
+namespace Normora.Infrastructure.Services;
 
 /// <summary>
 /// A scoped service that extracts the current user's identity from the HTTP Context.

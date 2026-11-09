@@ -115,7 +115,7 @@ public class DocumentsController(IMediator mediator, ITenantContext tenantContex
         // Multipart Streaming Upload:
         // 1. [RequestSizeLimit] caps the multipart upload stream at 100MB to protect API memory buffers.
         // 2. Dispatches to UploadDocumentCommandHandler which validates tenant plan storage limits,
-        //    streams binary to MinIO, creates DocumentVersion, and triggers Hangfire ETL processing.
+        //    streams binary to MinIO, creates DocumentVersion and a durable processing-outbox record.
         var command = new UploadDocumentCommand(file, tenantContext.TenantId!.Value, departmentIds, documentId);
         var document = await mediator.Send(command, cancellationToken);
 

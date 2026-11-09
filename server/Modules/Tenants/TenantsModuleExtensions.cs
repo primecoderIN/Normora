@@ -33,7 +33,7 @@ public static class TenantsModuleExtensions
         services.AddScoped<ITenantResolutionService, TenantResolutionService>();
 
         // Schema Isolation & Automatic Database Migrations:
-        // Implements IDatabaseMigrator to apply isolated 'tenants' schema migrations sequentially during host startup.
+        // Implements IDatabaseMigrator to apply isolated 'tenants' schema migrations during the one-off migration process.
         services.AddScoped<IDatabaseMigrator, TenantsDatabaseMigrator>();
 
         // Centralized Audit Logging Service:

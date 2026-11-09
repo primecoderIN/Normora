@@ -2,7 +2,7 @@ using Hangfire;
 using Microsoft.Extensions.Logging;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Features.Email;
+namespace Normora.Infrastructure.Features.Email;
 
 /// <summary>
 /// Hangfire background job responsible for asynchronously dispatching emails.

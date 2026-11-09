@@ -1,7 +1,7 @@
 using System;
 using Normora.Shared.Interfaces;
 
-namespace Normora.Api.Services;
+namespace Normora.Infrastructure.Services;
 
 /// <summary>
 /// A scoped service that holds the state of the active tenant during an HTTP Request.

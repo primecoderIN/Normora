@@ -193,6 +193,22 @@ A single document can have multiple versions. RAG uses the one with `IsActive = 
 
 ---
 
+### `DocumentProcessingOutboxMessages`
+Durable dispatch records for document ingestion. A row is inserted in the same `DocumentsDbContext` save as the corresponding document version, so work is not lost if the API process fails before the configured queue adapter accepts a job. The current Hangfire adapter removes each row after enqueueing; failed dispatches remain available for the recurring dispatcher to retry. Dispatch is at-least-once, and the processing handler atomically claims eligible versions.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `Id` | `uuid` | ❌ | PK |
+| `DocumentVersionId` | `uuid` | ❌ | FK → `DocumentVersions.Id` (`Cascade`); unique, at most one outbox row per version |
+| `TenantId` | `uuid` | ❌ | Tenant ownership |
+| `CreatedAt` | `timestamp with time zone` | ❌ | UTC creation time; used to order pending dispatches |
+
+**Indexes:**
+- `IX_DocumentProcessingOutboxMessages_CreatedAt`
+- `IX_DocumentProcessingOutboxMessages_DocumentVersionId` (Unique)
+
+---
+
 ### `DocumentChunks`
 Extracted text and 768-dimensional Gemini embeddings for RAG retrieval.
 

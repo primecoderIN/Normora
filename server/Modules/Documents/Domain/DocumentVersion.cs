@@ -30,7 +30,7 @@ public class DocumentVersion : ITenantEntity
     public string StorageObjectName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Raw full-text extracted by Apache Tika during the Hangfire ETL ingestion job.
+    /// Raw full-text extracted by Apache Tika during background ingestion.
     /// </summary>
     public string? ExtractedText { get; set; }
 

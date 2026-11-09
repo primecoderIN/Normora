@@ -1,8 +1,8 @@
 using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Normora.Api.Extensions;
-using Normora.Modules.Documents.Application.Jobs;
+using Normora.Infrastructure.Extensions;
+using Normora.Infrastructure.BackgroundJobs;
 
 // Dedicated Background Worker Host:
 // Runs as a separate micro-process from the API host to isolate heavy CPU/IO background workloads:
@@ -26,9 +26,14 @@ using var host = builder.Build();
 // Scans for documents soft-deleted more than 30 days ago, permanently purging MinIO objects and pgvector chunks in batches.
 // Uses JobCancellationToken.Null.ShutdownToken so Hangfire automatically binds the execution cancellation token
 // during runtime, allowing graceful termination if the worker process shuts down mid-batch.
-RecurringJob.AddOrUpdate<PurgeDeletedDocumentsJob>(
+RecurringJob.AddOrUpdate<HangfirePurgeDeletedDocumentsJob>(
     "purge-deleted-documents",
     job => job.ExecuteAsync(JobCancellationToken.Null.ShutdownToken),
     Cron.Daily(3, 0));
+
+RecurringJob.AddOrUpdate<HangfireDocumentProcessingOutboxDispatcher>(
+    "dispatch-document-processing-outbox",
+    job => job.DispatchPendingAsync(CancellationToken.None),
+    Cron.Minutely());
 
 await host.RunAsync();

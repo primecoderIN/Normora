@@ -10,7 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Normora.Api\Normora.Api.csproj" />
+    <ProjectReference Include="..\Normora.Infrastructure\Normora.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Documents\Documents.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
     <PackageReference Include="Hangfire.Core" Version="1.8.21" />
     <!-- Pin secure version of Newtonsoft.Json to remediate GHSA-5crp-9r3c-p9vr pulled transitively by Hangfire -->

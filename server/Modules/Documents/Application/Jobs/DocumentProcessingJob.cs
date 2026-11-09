@@ -1,4 +1,3 @@
-using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Normora.Shared;
@@ -8,7 +7,7 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Documents.Application.Jobs;
 
 /// <summary>
-/// Hangfire background job orchestrating document ingestion: text extraction (Tika), semantic chunking,
+/// Background job orchestrating document ingestion: text extraction (Tika), semantic chunking,
 /// vector embedding generation (Gemini), chunk persistence, cache eviction, and real-time client notifications.
 /// </summary>
 public sealed class DocumentProcessingJob(
@@ -22,12 +21,30 @@ public sealed class DocumentProcessingJob(
     ICacheService cache,
     ILogger<DocumentProcessingJob> logger)
 {
-    [AutomaticRetry(Attempts = 3)]
     // Processes an individual DocumentVersion, ensuring separate storage keys, extracted text, and vector chunks per revision.
     public async Task ProcessAsync(Guid documentVersionId, Guid tenantId, CancellationToken cancellationToken = default)
     {
-        // Hangfire has no HTTP tenant context, so bypass the request-scoped filter and
+        // Background workers have no HTTP tenant context, so bypass the request-scoped filter and
         // enforce ownership explicitly with both identifiers before touching the record.
+        var claimedCount = await context.DocumentVersions
+            .IgnoreQueryFilters()
+            .Where(v =>
+                v.Id == documentVersionId &&
+                v.TenantId == tenantId &&
+                (v.Status == DocumentStatus.Uploaded || v.Status == DocumentStatus.Failed))
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(version => version.Status, DocumentStatus.Processing),
+                cancellationToken);
+
+        if (claimedCount == 0)
+        {
+            logger.LogInformation(
+                "Document processing job skipped because document version {DocumentVersionId} is already claimed or no longer processable for tenant {TenantId}.",
+                documentVersionId,
+                tenantId);
+            return;
+        }
+
         var version = await context.DocumentVersions
             .Include(v => v.Document)
             .IgnoreQueryFilters()
@@ -43,21 +60,8 @@ public sealed class DocumentProcessingJob(
             return;
         }
 
-        // Reprocessing only these states makes retries idempotent and prevents a late job
-        // from overwriting a document that has already reached a later lifecycle state.
-        if (version.Status is not (DocumentStatus.Uploaded or DocumentStatus.Failed))
-        {
-            logger.LogInformation(
-                "Document processing job skipped because document version {DocumentVersionId} is already {Status}.",
-                documentVersionId,
-                version.Status);
-            return;
-        }
-
         try
         {
-            version.MarkProcessing();
-            await context.SaveChangesAsync(cancellationToken);
             await PublishStatusAsync(version.Document, version.Status);
 
             await ExtractTextAsync(version, cancellationToken);

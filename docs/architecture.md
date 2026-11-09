@@ -1,6 +1,6 @@
 # Architecture
 
-Normora follows a **Modular Monolith** architecture on the backend and a standard **Single Page Application (SPA)** architecture on the frontend. The API, background worker, and one-off migration runner are independently deployable processes built from the same server solution.
+Normora follows a **Modular Monolith** architecture on the backend and an Angular **hybrid-rendered application** on the frontend (server-rendered root route with client-rendered application routes). The API, background worker, and one-off migration runner are independently deployable processes built from the same server solution.
 
 ## High-Level Tech Stack
 - **Frontend**: Angular, TypeScript, Nginx
@@ -15,10 +15,11 @@ The project's architectural milestones and completed phases are tracked in [Prog
 ## Backend Architecture (Modular Monolith)
 The backend is structured into distinct modules to enforce separation of concerns while keeping deployment simple.
 
-Crucially, there is no shared "Infrastructure" layer, and **no cross-module DbContext leakage is permitted**. Each module encapsulates its own persistence logic, DbContext, domain entities, jobs, and external service integrations:
+Each module encapsulates its own persistence logic, DbContext, domain entities, jobs, and external service integrations; host-neutral composition and infrastructure adapters live in `Normora.Infrastructure`. **No cross-module DbContext leakage is permitted.**
 
 - **Normora.Api**: The HTTP/BFF host. It serves strictly as the application host, managing middleware (`TenantResolutionMiddleware`), SignalR hubs (`DocumentHub`), OIDC/BFF session management, and root dependency injection composition. All business controllers are decentralized into their respective modules (`server/Modules/{Module}/API/`). Its one-off `--migrate` mode invokes module-owned migration contracts instead of resolving module contexts.
 - **Normora.Worker**: A separate generic host running Hangfire workers and scheduling recurring jobs. API replicas do not run background workers.
+- **Normora.Infrastructure**: Host-neutral composition and infrastructure adapters shared by the API and worker. It depends on shared contracts and modules, but does not depend on either executable host.
 - **Normora.Shared**: Shared contracts (`Normora.Shared.Contracts.*`), cross-cutting abstractions, MediatR pipeline behaviors (`AuditBehavior`), constants (`ApiMessages`, `TenantRoles`), and provider-neutral interfaces (`ITenantResolutionService`, `IDocumentNotificationService`, `IDatabaseMigrator`, `IAgentTool`, `IAgentToolRegistry`, `IEmailSender`, `IPaymentService`).
 - **Modules** (`server/Modules/`):
   Each module resides in a clean directory named after its bounded context with a matching `.csproj` file. Inside each `.csproj`, `<AssemblyName>` and `<RootNamespace>` are explicitly specified as `Normora.Modules.<ModuleName>` to maintain binary stability for migration snapshots and job serializers while keeping directory structures concise:
@@ -35,6 +36,8 @@ Inside each module:
    - Feature DTOs reside in `Application/{Feature}/DTOs/`
 3. **Lean DbContext & Parameterless Entity Configurations**: Entity mappings are encapsulated in dedicated `IEntityTypeConfiguration<T>` classes with parameterless constructors under `server/Modules/{ModuleName}/Persistence/Configurations/` and applied automatically via `modelBuilder.ApplyConfigurationsFromAssembly(...)`. Multi-tenant global query filters bind dynamically to the DbContext instance property (`_tenantContext.TenantId`) on each query rather than passing scoped services to configuration constructors.
 4. **Composition Root**: Each module exposes an extension method `{ModuleName}ModuleExtensions.cs` to register its services and DbContext with the DI container.
+5. **Host Boundary**: `Normora.Infrastructure` provides shared registrations and technology adapters used by the API and worker. The worker must not reference the API project.
+6. **Background Queue Boundary**: Documents application code depends on the module-owned `IDocumentProcessingWakeup` contract and provider-neutral job handlers. Hangfire dispatchers, retry attributes, and recurring schedule registration reside in `Normora.Infrastructure` and `Normora.Worker`; replacing Hangfire should not require changes to document command handlers or ingestion/purge logic.
 
 ### Boundary Enforcement Rules
 1. **100% DbContext Encapsulation**: Module DbContexts (`TenantsDbContext`, `DocumentsDbContext`, `ConversationsDbContext`) are used only inside their owning modules. The host can request migrations via `IDatabaseMigrator`, but does not resolve a module context directly.
@@ -47,7 +50,7 @@ Inside each module:
    - `IDocumentNotificationService`: Enables background workers (`DocumentProcessingJob`) in the Documents module to push real-time WebSocket progress updates without coupling the module to SignalR hub dependencies.
    - `IDatabaseMigrator`: Lets each module migrate its own persistence boundary from the one-off migration runner.
 4. **Immediate Membership Revocation & Distributed Caching**: Tenant membership and department permissions are resolved via `ITenantResolutionService` backed by distributed cache with a short 30-second sliding expiration, eliminating redundant 3-table split-queries per request while guaranteeing permission changes and revocations propagate within seconds across all API replicas.
-5. **Explicit Migration Lifecycle**: Schema migrations run as a serialized `dotnet Normora.Api.dll --migrate` deployment step, not during API startup. Pending-model-change warnings are not suppressed.
+5. **Explicit Migration Lifecycle**: Schema migrations run as a serialized `dotnet Normora.Api.dll --migrate` deployment step, not during API or worker startup. Pending-model-change warnings are not suppressed.
 6. **Production Infrastructure Requirements**: Production requires a distributed Redis cache, MinIO TLS, and explicit trusted reverse-proxy IPs. Forwarded headers are limited to one trusted proxy hop.
 
 ## Identity & Access Management (IAM)
@@ -159,7 +162,7 @@ The backend relies on **OpenTelemetry (OTLP)** for a unified observability layer
 - **Exporters**: Designed to export to the console during development and a vendor-neutral OTLP collector in production.
 
 ## Frontend Architecture
-The Angular application resides in the `client/` directory and communicates with the .NET backend via REST APIs. During local development and production, requests to `/api/*` are proxied to the backend. The frontend seamlessly handles complex auth flows, including intercepting OAuth callbacks to redirect users accepting invitations.
+The Angular application resides in the `client/` directory and communicates with the .NET backend via REST APIs. Its root route is server-rendered, while wildcard application routes are client-rendered. During local development and production, requests to `/api/*` are proxied to the backend. The frontend seamlessly handles complex auth flows, including intercepting OAuth callbacks to redirect users accepting invitations.
 
 ## Deployment
 The local stack is containerized. `docker-compose.yml` orchestrates PostgreSQL, pgAdmin, Keycloak, MinIO, Redis, Tika, a one-off schema migrator, the .NET API, a separate Hangfire worker, and the Angular client served via Nginx.
@@ -308,9 +311,9 @@ Uploaded -> Processing -> Ready
                          \-> Failed
 ```
 
-The upload request currently stores the file and creates an `Uploaded` metadata record. The employer document list displays the lifecycle state using readable API values. The background worker, text extraction, normalization, and chunking steps are intentionally separate follow-up increments so a document is never shown as `Ready` before ingestion has completed.
+The upload request stores the file and creates an `Uploaded` metadata record. The employer document list displays the lifecycle state using readable API values. The background worker, text extraction, normalization, and chunking steps are intentionally separate so a document is never shown as `Ready` before ingestion has completed.
 
-Hangfire uses PostgreSQL storage and runs `DocumentProcessingJob` in the separate `Normora.Worker` process. Uploads enqueue a job only after the MinIO object and document metadata have been persisted. The job validates both the document ID and tenant ID outside the HTTP tenant context, downloads the tenant-owned object from MinIO, sends it to Apache Tika, stores the extracted text, normalizes it into bounded `DocumentChunk` rows, and moves the document to `Ready`. Extraction failures move the document to `Failed` and are rethrown for Hangfire retry. The Hangfire dashboard is available at `/hangfire` in Development only.
+Hangfire currently provides the queue adapter, using PostgreSQL storage, and runs document-processing and purge handlers in the separate `Normora.Worker` process. Documents application code has no Hangfire reference: the upload handler signals the module-owned `IDocumentProcessingWakeup` abstraction, while Hangfire-specific dispatch wrappers and retry configuration live in `Normora.Infrastructure`. The MinIO object, document metadata, and a processing outbox record are persisted together. The adapter enqueues work and removes each outbox record only after enqueue succeeds; a recurring dispatch provides recovery if the immediate wake-up fails. Since dispatch is at-least-once, `DocumentProcessingJob` atomically claims only `Uploaded` or `Failed` versions before processing. The job validates both the document ID and tenant ID outside the HTTP tenant context, downloads the tenant-owned object from MinIO, sends it to Apache Tika, stores the extracted text, normalizes it into bounded `DocumentChunk` rows, and moves the document to `Ready`. Extraction failures move the document to `Failed` and are rethrown for the queue adapter's retry policy. The Hangfire dashboard is available at `/hangfire` in Development only.
 
 Chunks are tenant-owned and uniquely ordered per document. A retry removes the document's existing chunks and recreates them, preventing duplicate chunk records. Each chunk is capped at approximately 4,000 characters and preserves paragraph boundaries where possible. Embeddings and vector search are separate later stages.
 
@@ -434,7 +437,7 @@ The export dropdown on each saved-answer card shows a spinner during the in-flig
 ## Soft Deletion and Data Retention Strategy
 Normora relies heavily on soft deletion (`DeletedAt`, `RemovedAt`) combined with EF Core **Global Query Filters** to immediately hide deleted resources (Documents, Employees) from all RAG lookups, dashboard lists, and searches without altering individual queries.
 
-- **Document Purge**: Soft-deleted documents broadcast a SignalR event for optimistic UI updates. They are physically deleted from MinIO (and database rows purged) in bounded, retry-safe batches via a nightly Hangfire job (`PurgeDeletedDocumentsJob`) after a 30-day grace period.
+- **Document Purge**: Soft-deleted documents broadcast a SignalR event for optimistic UI updates. They are physically deleted from MinIO (and database rows purged) in bounded, retry-safe batches via a nightly queue-adapter schedule after a 30-day grace period.
 - **Local-First Identity Sync**: Removing an employee soft-deletes their `TenantMembership` locally first. Access is instantly revoked via Global Query Filters. Afterward, a best-effort `IHttpClientFactory` call attempts to un-sync the user from the Keycloak Admin API, safely logging any errors without rolling back the local transaction. This protects against identity provider outages preventing critical access revocations.
 
 ## Audit Logging Architecture

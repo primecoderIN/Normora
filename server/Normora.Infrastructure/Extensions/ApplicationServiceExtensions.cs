@@ -1,17 +1,20 @@
 using FluentValidation;
+using Hangfire;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Normora.Api.Features.Email;
-using Normora.Api.Services;
-using Normora.Api.Services.Email;
+using Normora.Infrastructure.Features.Email;
+using Normora.Infrastructure.BackgroundJobs;
+using Normora.Infrastructure.Services;
+using Normora.Infrastructure.Services.Email;
 using Normora.Shared.Audit;
 using Normora.Shared.Interfaces;
 using Normora.Shared.Options;
 using Normora.Shared.Validation;
+using Normora.Modules.Documents.Application.Services;
 
-namespace Normora.Api.Extensions;
+namespace Normora.Infrastructure.Extensions;
 
 /// <summary>
 /// Registers application-layer services, including MediatR CQRS pipelines, FluentValidation validators,
@@ -23,10 +26,9 @@ public static class ApplicationServiceExtensions
     {
         // Multi-Assembly MediatR & CQRS Assembly Discovery:
         // Registers MediatR handlers, notification subscribers, and stream request handlers across
-        // all 3 business modules (Tenants, Documents, Conversations) plus the host BFF (Normora.Api).
+        // all 3 business modules (Tenants, Documents, Conversations).
         var assemblies = new[]
         {
-            typeof(IApiMarker).Assembly,                                            // Normora.Api (Dashboard, Email)
             typeof(Normora.Modules.Tenants.ITenantsModuleMarker).Assembly,          // Tenants module
             typeof(Normora.Modules.Documents.IDocumentsModuleMarker).Assembly,      // Documents module
             typeof(Normora.Modules.Conversations.IConversationsModuleMarker).Assembly // Conversations module
@@ -51,7 +53,7 @@ public static class ApplicationServiceExtensions
         // - ITenantContext: Scoped ambient tenant container populated by TenantResolutionMiddleware.
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ITenantContext, TenantContext>();
-        services.AddScoped<Normora.Api.Services.DatabaseMigrationRunner>();
+        services.AddScoped<DatabaseMigrationRunner>();
 
         // Email Dispatching Infrastructure:
         // Integrates Resend HTTP API for transactional emails (invitations, alerts) with NullEmailSender dev fallback.
@@ -82,6 +84,10 @@ public static class ApplicationServiceExtensions
         services.AddScoped<IEmailService, BackgroundEmailService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IDocumentNotificationService, SignalRDocumentNotificationService>();
+        services.AddScoped<IDocumentProcessingWakeup, HangfireDocumentProcessingWakeup>();
+        services.AddScoped<HangfireDocumentProcessingOutboxDispatcher>();
+        services.AddScoped<HangfireDocumentProcessingJob>();
+        services.AddScoped<HangfirePurgeDeletedDocumentsJob>();
 
         return services;
     }

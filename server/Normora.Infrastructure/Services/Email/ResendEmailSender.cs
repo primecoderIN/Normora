@@ -7,7 +7,7 @@ using Normora.Shared.Constants;
 using Normora.Shared.Interfaces;
 using Normora.Shared.Options;
 
-namespace Normora.Api.Services.Email;
+namespace Normora.Infrastructure.Services.Email;
 
 /// <summary>
 /// Cloud transactional email implementation of <see cref="IEmailSender"/> powered by Resend (https://resend.com).

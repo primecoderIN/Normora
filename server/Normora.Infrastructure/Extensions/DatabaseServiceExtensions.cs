@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Minio;
@@ -10,7 +11,7 @@ using Normora.Shared.Interfaces;
 using Normora.Shared.Options;
 using Normora.Shared.Constants;
 
-namespace Normora.Api.Extensions;
+namespace Normora.Infrastructure.Extensions;
 
 /// <summary>
 /// Registers shared database and infrastructure services, delegating module-specific
@@ -74,13 +75,13 @@ public static class DatabaseServiceExtensions
                 services.AddDistributedMemoryCache();
             }
 
-            services.AddSingleton<ICacheService, Services.Caching.DistributedCacheService>();
+            services.AddSingleton<ICacheService, Normora.Infrastructure.Services.Caching.DistributedCacheService>();
         }
         else
         {
             // In migration mode, provide in-memory cache fallback for any services requiring ICacheService
             services.AddDistributedMemoryCache();
-            services.AddSingleton<ICacheService, Services.Caching.DistributedCacheService>();
+            services.AddSingleton<ICacheService, Normora.Infrastructure.Services.Caching.DistributedCacheService>();
         }
 
         // Delegate to Module Composition Roots

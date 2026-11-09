@@ -4,7 +4,7 @@ using Normora.Modules.Documents.Options;
 using Normora.Modules.Tenants.Options;
 using Normora.Shared.Options;
 
-namespace Normora.Api.Extensions;
+namespace Normora.Infrastructure.Extensions;
 
 /// <summary>
 /// Registers strongly typed configuration options with startup validation.
@@ -57,4 +57,3 @@ public static class ConfigurationServiceExtensions
         return services;
     }
 }
-

@@ -1,6 +1,7 @@
-using Normora.Api.Extensions;
 using Normora.Api.Middleware;
-using Normora.Api.Hubs;
+using Normora.Api.Extensions;
+using Normora.Infrastructure.Extensions;
+using Normora.Infrastructure.Hubs;
 using Hangfire;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Builder;
@@ -64,7 +65,7 @@ if (isMigrationRun)
 {
     await using var scope = app.Services.CreateAsyncScope();
     await scope.ServiceProvider
-        .GetRequiredService<Normora.Api.Services.DatabaseMigrationRunner>()
+        .GetRequiredService<Normora.Infrastructure.Services.DatabaseMigrationRunner>()
         .MigrateAsync();
     return;
 }

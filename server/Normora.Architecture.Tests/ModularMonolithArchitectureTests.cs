@@ -10,6 +10,8 @@ public sealed class ModularMonolithArchitectureTests
     private static readonly Assembly ConversationsAssembly = typeof(Normora.Modules.Conversations.Domain.Conversation).Assembly;
     private static readonly Assembly DocumentsAssembly = typeof(Normora.Modules.Documents.Domain.Document).Assembly;
     private static readonly Assembly TenantsAssembly = typeof(Normora.Modules.Tenants.Domain.Tenant).Assembly;
+    private static readonly Assembly WorkerAssembly = typeof(Normora.Worker.WorkerAssemblyMarker).Assembly;
+    private static readonly Assembly InfrastructureAssembly = typeof(Normora.Infrastructure.Extensions.ApplicationServiceExtensions).Assembly;
 
     [Fact]
     public void EntityConfigurations_MustHaveParameterlessConstructors()
@@ -100,5 +102,53 @@ public sealed class ModularMonolithArchitectureTests
             }
         }
     }
-}
 
+    [Fact]
+    public void BusinessModules_MustNotReferenceEachOther()
+    {
+        var moduleAssemblies = new[] { TenantsAssembly, DocumentsAssembly, ConversationsAssembly };
+
+        foreach (var module in moduleAssemblies)
+        {
+            var moduleReferences = module.GetReferencedAssemblies()
+                .Where(reference => reference.Name?.StartsWith("Normora.Modules.", StringComparison.Ordinal) == true)
+                .Select(reference => reference.Name)
+                .ToList();
+
+            Assert.Empty(moduleReferences);
+        }
+
+    }
+
+    [Fact]
+    public void DocumentsModule_MustNotReferenceHangfire()
+    {
+        var hangfireReferences = DocumentsAssembly.GetReferencedAssemblies()
+            .Where(reference => reference.Name?.StartsWith("Hangfire", StringComparison.Ordinal) == true)
+            .Select(reference => reference.Name)
+            .ToList();
+
+        Assert.Empty(hangfireReferences);
+    }
+
+    [Fact]
+    public void Worker_MustNotReferenceApiHost()
+    {
+        Assert.DoesNotContain(
+            WorkerAssembly.GetReferencedAssemblies(),
+            reference => string.Equals(reference.Name, "Normora.Api", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Infrastructure_MustNotReferenceExecutableHosts()
+    {
+        var hostReferences = InfrastructureAssembly.GetReferencedAssemblies()
+            .Where(reference =>
+                string.Equals(reference.Name, "Normora.Api", StringComparison.Ordinal) ||
+                string.Equals(reference.Name, "Normora.Worker", StringComparison.Ordinal))
+            .Select(reference => reference.Name)
+            .ToList();
+
+        Assert.Empty(hostReferences);
+    }
+}

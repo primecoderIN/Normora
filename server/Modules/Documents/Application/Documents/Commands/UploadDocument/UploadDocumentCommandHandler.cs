@@ -1,8 +1,8 @@
-using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Normora.Modules.Documents.Application.Documents.DTOs;
-using Normora.Modules.Documents.Application.Jobs;
+using Normora.Modules.Documents.Application.Services;
 using Normora.Modules.Documents.Domain;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Exceptions;
@@ -17,10 +17,11 @@ namespace Normora.Modules.Documents.Application.Documents.Commands;
 public sealed class UploadDocumentCommandHandler(
     DocumentsDbContext context,
     IDocumentStorageService storageService,
-    IBackgroundJobClient backgroundJobClient,
+    IDocumentProcessingWakeup processingWakeup,
     IDocumentNotificationService notificationService,
     IMediator mediator,
-    ICacheService cache) : IRequestHandler<UploadDocumentCommand, DocumentDto>
+    ICacheService cache,
+    ILogger<UploadDocumentCommandHandler> logger) : IRequestHandler<UploadDocumentCommand, DocumentDto>
 {
     public async Task<DocumentDto> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
@@ -37,13 +38,11 @@ public sealed class UploadDocumentCommandHandler(
         // Stream the binary payload directly into MinIO/S3 using a tenant-isolated storage path prefix.
         // We persist the binary in object storage before inserting relational metadata into PostgreSQL.
         var objectName = await storageService.UploadDocumentAsync(request.File, request.TenantId.ToString());
+        Document document;
+        DocumentVersion version;
 
-        // Compensating Transaction Wrapper (Saga Pattern):
-        // If relational database insertion fails (e.g. database timeout or constraint violation),
-        // we execute a compensating rollback step to purge the orphaned binary from MinIO object storage.
         try
         {
-            Document document;
             int nextVersionNumber = 1;
 
             if (request.DocumentId.HasValue)
@@ -99,7 +98,7 @@ public sealed class UploadDocumentCommandHandler(
 
             // Document Version Entity Instantiation:
             // Represents the immutable physical file revision with its storage object pointer and processing status.
-            var version = new DocumentVersion
+            version = new DocumentVersion
             {
                 Id = Guid.NewGuid(),
                 DocumentId = document.Id,
@@ -113,36 +112,68 @@ public sealed class UploadDocumentCommandHandler(
 
             document.Versions.Add(version);
             context.DocumentVersions.Add(version);
+            context.DocumentProcessingOutboxMessages.Add(new DocumentProcessingOutboxMessage
+            {
+                Id = Guid.NewGuid(),
+                DocumentVersionId = version.Id,
+                TenantId = document.TenantId
+            });
             await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception persistenceException)
+        {
+            try
+            {
+                await storageService.DeleteDocumentAsync(objectName);
+            }
+            catch (Exception cleanupException)
+            {
+                logger.LogError(
+                    cleanupException,
+                    "Failed to remove uploaded object {StorageObjectName} after document metadata could not be committed.",
+                    objectName);
+            }
 
-            // Distributed Cache Invalidation:
-            // Evict cached dashboard metrics so the employer management portal reflects accurate document counts and storage usage.
-            await cache.RemoveAsync($"dashboard:{document.TenantId}", cancellationToken);
+            logger.LogError(
+                persistenceException,
+                "Failed while persisting document metadata for uploaded object {StorageObjectName}.",
+                objectName);
 
-            // Real-Time SignalR Broadcast:
-            // Notify connected frontend workspace clients that a new document has been uploaded and queued.
+            throw;
+        }
+
+        await cache.RemoveAsync($"dashboard:{document.TenantId}", cancellationToken);
+
+        try
+        {
             await notificationService.SendDocumentStatusChangedAsync(
                 document.TenantId,
                 document.Id,
                 document.FileName,
                 version.Status.ToString(),
                 cancellationToken);
-
-            // Asynchronous ETL Pipeline Dispatch:
-            // Enqueue DocumentProcessingJob in Hangfire to execute text extraction (Apache Tika),
-            // sliding-window semantic chunking, and embedding generation (Gemini 768-dim) off the HTTP request thread.
-            backgroundJobClient.Enqueue<DocumentProcessingJob>(job =>
-                job.ProcessAsync(version.Id, document.TenantId));
-
-            return document.ToDto();
         }
-        catch
+        catch (Exception notificationException)
         {
-            // Compensating Rollback:
-            // Purge the uploaded binary from object storage to prevent orphaned disk leaks if DB transaction aborts.
-            try { await storageService.DeleteDocumentAsync(objectName); } catch { /* intentionally swallowed */ }
-            throw;
+            logger.LogError(
+                notificationException,
+                "Failed to publish upload status for document {DocumentId}; the document is persisted.",
+                document.Id);
         }
+
+        // The outbox row is durable; the configured queue adapter is only a wake-up signal.
+        try
+        {
+            await processingWakeup.SignalAsync(cancellationToken);
+        }
+        catch (Exception dispatchException)
+        {
+            logger.LogError(
+                dispatchException,
+                "Could not immediately dispatch document processing for version {DocumentVersionId}; the persisted outbox will be retried.",
+                version.Id);
+        }
+
+        return document.ToDto();
     }
 }
-
