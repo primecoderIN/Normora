@@ -36,7 +36,6 @@ flowchart TD
     subgraph Host ["API & BFF Host (Normora.Api)"]
         BFF["Duende BFF Middleware<br/>(HttpOnly, SameSite=Strict Cookies)"]
         TRM["TenantResolutionMiddleware<br/>(Cached Slug & RBAC Resolution)"]
-        Hub["SignalR DocumentHub<br/>(Realtime Processing Status)"]
         Scalar["Scalar API Documentation<br/>(/scalar/v1)"]
     end
 
@@ -49,7 +48,7 @@ flowchart TD
 
         subgraph DocsMod ["Documents Module"]
             D_API["Documents API & McpController"]
-            D_CQRS["CQRS: Upload, Ingestion,<br/>Hybrid Retrieval, Apache Tika"]
+            D_CQRS["CQRS: Upload Outbox, Ingestion,<br/>Hybrid Retrieval, Domain Contracts"]
             D_DB[("DocumentsDbContext<br/>schema: documents<br/>pgvector HNSW")]
         end
 
@@ -60,29 +59,34 @@ flowchart TD
         end
     end
 
-    subgraph WorkerHost ["Background Worker (Normora.Worker)"]
-        HF["Hangfire Processing Host<br/>(Document Ingestion, Chunking, Embeddings, Purge)"]
+    subgraph InfraLib ["Host & Provider Infrastructure (Normora.Infrastructure)"]
+        INF_PROV["External Provider Adapters<br/>(MinIO Storage, Gemini AI, Apache Tika)"]
+        INF_HOST["Shared Host Infrastructure<br/>(Redis Cache, Telemetry, SignalR Hubs, Outbox Dispatcher)"]
     end
 
-    subgraph Infrastructure ["Infrastructure Services"]
+    subgraph WorkerHost ["Background Worker (Normora.Worker)"]
+        HF["Hangfire Processing Host<br/>(Outbox Ingestion, Chunking, Embeddings, Purge)"]
+    end
+
+    subgraph Infrastructure ["External Services"]
         PG[("PostgreSQL 15 + pgvector")]
         KC["Keycloak 24 (OIDC / OAuth2)"]
         S3["MinIO (S3 Object Storage)"]
         RD[("Redis Distributed Cache")]
         GEM["Google Gemini API (Flash)"]
+        TIKA["Apache Tika (Text Extraction)"]
     end
 
     SPA <-->|Secure Cookies / SSE / WS| Host
     Host -->|Decentralized Routing| Modules
+    Host --> InfraLib
+    WorkerHost --> InfraLib
     TenantsMod <-->|MediatR Contracts| DocsMod
     DocsMod <-->|MediatR Contracts| ConvsMod
     T_DB & D_DB & C_DB --> PG
     WorkerHost -->|Background Ingestion| PG
-    WorkerHost -->|Object Storage| S3
-    DocsMod -->|File Storage| S3
+    InfraLib --> S3 & GEM & TIKA & RD
     Host -->|OIDC Backchannel| KC
-    TRM -->|30s Sliding TTL| RD
-    ConvsMod -->|Embeddings & Tool Calling| GEM
 ```
 
 ---
@@ -90,6 +94,9 @@ flowchart TD
 ## 🌟 Core Architectural Principles
 
 - **100% Modular Monolith Encapsulation**: Each module (`Tenants`, `Documents`, `Conversations`) encapsulates its own domain entities, CQRS slices, and private `DbContext`. API controllers, middleware, and other modules never directly reference another module's `DbContext`. Cross-module communication strictly traverses MediatR request/query contracts in `Normora.Shared.Contracts.*`.
+- **Decoupled Background Worker (`Normora.Worker`)**: Background Hangfire workloads run in an independent generic host process that references `Normora.Infrastructure` instead of the API BFF host, preventing host coupling and deployment friction.
+- **External Provider Pattern**: Business modules are 100% free of external vendor SDKs (no `Minio` packages or vendor client libraries). Modules declare domain contracts (`IDocumentStorageService`, `ITextGenerationService`, `ITextEmbeddingService`, `IDocumentTextExtractor`), while swappable third-party implementations reside in `server/Normora.Infrastructure/Providers/` (`Storage/`, `Gemini/`, `DocumentExtraction/`) wired via dedicated `ProviderServiceExtensions`.
+- **Transactional Outbox for Document Ingestion**: Document uploads commit file metadata, document version, and a `DocumentProcessingOutboxMessage` within a single database transaction, backed by immediate wakeup and recurring Hangfire recovery dispatch to guarantee zero data loss.
 - **Zero-Trust Security (BOLA & BFLA Mitigation)**:
   - **BOLA**: Resource enumeration is prevented by catching missing or unauthorized object access and returning generic 404 responses (`BolaException`).
   - **BFLA**: Unauthorized functional actions are blocked globally with 403 Forbidden envelopes (`BflaException`).

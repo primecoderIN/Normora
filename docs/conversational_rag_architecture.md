@@ -577,11 +577,6 @@ server/Modules/Conversations/
 │   ├── RagConstants.cs
 │   └── SavedAnswer.cs
 ├── Infrastructure/
-│   ├── Llm/
-│   │   ├── GeminiModels.cs
-│   │   ├── GeminiQueryRewriterService.cs
-│   │   ├── GeminiSuggestionsService.cs
-│   │   └── GeminiTextGenerationService.cs
 │   ├── Tools/
 │   │   ├── AgentToolRegistry.cs
 │   │   ├── CalculatePolicyLimitTool.cs
@@ -596,6 +591,8 @@ server/Modules/Conversations/
     ├── MarkdownAnswerExporter.cs
     └── PdfAnswerExporter.cs
 ```
+
+> **Note on External Provider Adapters:** LLM text generation (`GeminiTextGenerationService`), query rewriter (`GeminiQueryRewriterService`), and suggestion generation (`GeminiSuggestionsService`) are decoupled from the module via the **Provider Pattern**. Their adapters live in `server/Normora.Infrastructure/Providers/Gemini/`, implementing the module's provider-neutral contracts (`ITextGenerationService`, `IQueryRewriterService`, `ISuggestionsService`).
 
 ### Shared Tool Abstractions & Cross-Module Contracts
 Shared tool calling contracts and cross-module MediatR queries maintain strict modular boundaries:

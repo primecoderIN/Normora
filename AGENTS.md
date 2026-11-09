@@ -98,4 +98,25 @@ Application/{Feature}/
 - **No Module Internals in Shared**: `Normora.Shared` must remain clean and provider-neutral. Module-specific abstractions (like `ITextEmbeddingService`), domain constants (like `RagConstants`, `ConversationConstants`), and domain entities must reside strictly inside their owning module, not in `Normora.Shared`.
 - **Decoupled External Identity (`ExternalUserId`)**: Always reference external OIDC identity provider subject IDs as `ExternalUserId` (e.g. `currentUser.ExternalUserId`). Never re-introduce vendor-specific names like `KeycloakUserId` in domain entities, CQRS handlers, queries, or audit behaviors.
 
+### Host, Worker & Infrastructure Boundaries
+- **`Normora.Api`**: The HTTP/BFF host. It serves strictly as the application host, managing middleware, authentication pipelines, OpenAPI/Scalar, and root DI composition. Contains NO business controllers.
+- **`Normora.Worker`**: Independent generic host executing Hangfire background jobs (ingestion, embeddings, purge). Must NEVER reference `Normora.Api`. References `Normora.Infrastructure` and necessary module contracts.
+- **`Normora.Infrastructure`**: Host-neutral class library containing cross-cutting infrastructure (Hangfire, Redis distributed caching, OpenTelemetry, SignalR hub adapters, database migration runner) and external third-party provider adapters. Must NEVER reference executable hosts (`Normora.Api`, `Normora.Worker`).
+
+### External Provider Boundary (Provider Pattern)
+- **Zero Third-Party Vendor SDKs in Business Modules**: Business modules (`Documents`, `Conversations`, `Tenants`) must NEVER reference external third-party vendor SDK packages (such as `Minio`, Google AI packages, AWS SDK, Azure SDK).
+- **Domain Interfaces (Ports)**: Modules declare provider-neutral domain contracts:
+  - `Documents`: `IDocumentStorageService`, `IDocumentTextExtractor`, `ITextEmbeddingService`
+  - `Conversations`: `ITextGenerationService`, `IQueryRewriterService`, `ISuggestionsService`
+  - `Tenants`: `IBrandingStorageService`
+- **Infrastructure Adapters (Providers)**: Third-party implementations live strictly in `server/Normora.Infrastructure/Providers/`:
+  - `Storage/`: `MinioDocumentStorageService`, `MinioBrandingStorageService`, `MinioOptions`
+  - `Gemini/`: `GeminiEmbeddingService`, `GeminiTextGenerationService`, `GeminiQueryRewriterService`, `GeminiSuggestionsService`, `GeminiOptions`, `GeminiModels`
+  - `DocumentExtraction/`: `TikaDocumentTextExtractor`, `TikaOptions`
+- **Dedicated Provider DI**: Provider wiring is registered via `ProviderServiceExtensions.cs` (`AddExternalProviders`, `AddStorageProviders`, `AddAiProviders`, `AddDocumentExtractionProviders`), keeping `DatabaseServiceExtensions.cs` strictly focused on PostgreSQL, DbContexts, and Hangfire.
+
+### Transactional Outbox Pattern for Document Uploads
+- **Atomic Metadata & Work Dispatch**: Document upload operations in `UploadDocumentCommandHandler` must insert the document metadata, document version, and a `DocumentProcessingOutboxMessage` in the same database transaction.
+- **Durable Processing**: The handler signals `IDocumentProcessingWakeup` as an asynchronous wake-up. Hangfire enqueues `HangfireDocumentProcessingOutboxDispatcher` to claim and dispatch pending outbox messages, backed by a minutely recurring Hangfire job for automatic recovery. Downstream notification or queue dispatch failures must never fail an already-committed upload.
+
 

@@ -67,6 +67,7 @@ sequenceDiagram
     participant API as Normora.Api
     participant MinIO as MinIO (S3 Storage)
     participant DB as PostgreSQL (documents schema)
+    participant Outbox as Outbox Dispatcher
     participant HF as Hangfire Worker (Normora.Worker)
     participant Tika as Apache Tika
     participant Gemini as Google Gemini API
@@ -74,25 +75,26 @@ sequenceDiagram
 
     Employer->>API: 1. POST /api/documents (Upload File)
     API->>MinIO: 2. Store original binary (Encrypted S3 bucket)
-    API->>DB: 3. Insert Document metadata (Status: Uploaded)
-    API->>HF: 4. Enqueue DocumentProcessingJob
+    API->>DB: 3. Commit Document, Version & Outbox Record (Status: Uploaded)
+    API->>Outbox: 4. Signal processing wakeup
     API-->>Employer: 5. 202 Accepted (Document ID)
+    Outbox->>HF: 6. Enqueue DocumentProcessingJob
 
     Note over HF: Asynchronous Processing in Worker Process
-    HF->>DB: 6. Update Status -> Processing
-    HF->>Hub: 7. Broadcast WebSocket: Processing
-    HF->>MinIO: 8. Download raw file bytes
-    HF->>Tika: 9. Extract clean plain text
-    Tika-->>HF: 10. Normalized text
-    HF->>HF: 11. Normalize & split into bounded chunks (sliding window)
-    HF->>Gemini: 12. Generate 768-dim embeddings in batches
-    Gemini-->>HF: 13. Embedding vectors
-    HF->>DB: 14. Bulk insert DocumentChunks with pgvector HNSW index
-    HF->>DB: 15. Update Status -> Ready
-    HF->>Hub: 16. Broadcast WebSocket: Ready
+    HF->>DB: 7. Update Status -> Processing
+    HF->>Hub: 8. Broadcast WebSocket: Processing
+    HF->>MinIO: 9. Download raw file bytes
+    HF->>Tika: 10. Extract clean plain text
+    Tika-->>HF: 11. Normalized text
+    HF->>HF: 12. Normalize & split into bounded chunks (sliding window)
+    HF->>Gemini: 13. Generate 768-dim embeddings in batches
+    Gemini-->>HF: 14. Embedding vectors
+    HF->>DB: 15. Bulk insert DocumentChunks with pgvector HNSW index
+    HF->>DB: 16. Update Status -> Ready
+    HF->>Hub: 17. Broadcast WebSocket: Ready
 ```
 
-1. **Storage Decoupling**: Original files are saved to MinIO S3 object storage; the API immediately returns `202 Accepted`.
+1. **Transactional Outbox Decoupling**: Original files are saved to MinIO S3 object storage; file metadata, version, and a `DocumentProcessingOutboxMessage` are committed atomically within the same database transaction, ensuring no work is lost even if downstream background dispatch experiences transient faults. The API immediately returns `202 Accepted`.
 2. **Text Normalization**: Apache Tika extracts structured text across file formats, handling headers, footnotes, and tables.
 3. **Bounded Chunking**: Cleaned text is segmented into optimal token chunks with sliding-window overlaps to preserve context.
 4. **HNSW Vector Storage**: 768-dimensional embeddings are indexed in PostgreSQL using pgvector HNSW (`vector_cosine_ops`, `m = 16`, `ef_construction = 64`), enabling sub-millisecond approximate nearest neighbor lookups under enterprise volume.

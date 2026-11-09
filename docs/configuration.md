@@ -13,8 +13,9 @@ We avoid accessing configuration directly through `IConfiguration` or "magic str
 * **Default Values:** We establish default values directly in the Options classes, removing hardcoded defaults from service logic.
 
 ### Organization
-* **Shared Options:** Options that span multiple modules or the API (e.g., `AppOptions`, `GeminiOptions`, `KeycloakOptions`) reside in `Normora.Shared/Options`. 
-* **Registration:** All shared options are registered in `Normora.Api/Extensions/ConfigurationServiceExtensions.cs`.
+* **Shared Options:** Options that span multiple modules or the API (e.g., `AppOptions`, `KeycloakOptions`, `EmailOptions`) reside in `Normora.Shared/Options`.
+* **Provider Options:** Options specific to external infrastructure adapters (e.g., `MinioOptions`, `GeminiOptions`, `TikaOptions`) reside directly alongside their provider implementations in `Normora.Infrastructure/Providers/`.
+* **Registration:** All options are registered in `Normora.Infrastructure/Extensions/ConfigurationServiceExtensions.cs`.
 * **Constants:** Static values that shouldn't be configured by end-users (like claim types, internal cookie names, or known identifiers) are stored in `Constants` classes (e.g., `Normora.Shared/Constants/AuthConstants.cs`).
 
 ### IOptions Interfaces
@@ -26,13 +27,15 @@ We avoid accessing configuration directly through `IConfiguration` or "magic str
 We employ data annotations (e.g., `[Required]`, `[Url]`, `[EmailAddress]`) on our Options classes to ensure configuration integrity. 
 These are validated at application startup using `.ValidateDataAnnotations().ValidateOnStart()`. This fail-fast mechanism ensures that missing API keys or invalid endpoints crash the application immediately during startup rather than throwing a null reference exception mid-request in production.
 
-### Modular Ownership and the Shared Project
-Shared options (such as `GeminiOptions`, `AppOptions`, and `EmailOptions`) reside in `Normora.Shared` to declare cross-cutting schemas across modules. 
+### Modular Ownership and the Infrastructure Provider Layer
+Shared application options (such as `AppOptions` and `EmailOptions`) reside in `Normora.Shared` to declare cross-cutting schemas across modules. 
 
-All infrastructure service implementations have been pushed down into their respective modules:
-* `GeminiEmbeddingService` and Apache Tika client are encapsulated inside `Normora.Modules.Documents`.
-* `GeminiTextGenerationService`, `AgentToolRegistry`, and Agent Tools are encapsulated inside `Normora.Modules.Conversations`.
-* `PayUPaymentService` and `TenantResolutionService` are encapsulated inside `Normora.Modules.Tenants`.
+In accordance with our **Provider Pattern**, external third-party infrastructure adapters and their options reside in `Normora.Infrastructure/Providers/`:
+* `MinioDocumentStorageService`, `MinioBrandingStorageService`, and `MinioOptions` live in `Normora.Infrastructure/Providers/Storage/`.
+* `GeminiEmbeddingService`, `GeminiTextGenerationService`, `GeminiQueryRewriterService`, `GeminiSuggestionsService`, and `GeminiOptions` live in `Normora.Infrastructure/Providers/Gemini/`.
+* `TikaDocumentTextExtractor` and `TikaOptions` live in `Normora.Infrastructure/Providers/DocumentExtraction/`.
+* Business modules (`Documents`, `Conversations`, `Tenants`) declare provider-neutral domain contracts (`IDocumentStorageService`, `ITextGenerationService`, `ITextEmbeddingService`, `IDocumentTextExtractor`, `IBrandingStorageService`) and remain 100% free of external vendor SDKs.
+* `PayUPaymentService` and `TenantResolutionService` remain encapsulated inside `Normora.Modules.Tenants` as domain payment fulfillment is coupled to tenant persistence.
 
 ---
 
@@ -57,7 +60,7 @@ The following options classes are defined in the `Normora.Shared` project. All p
 
 ### `MinioOptions`
 * **Section:** `Minio`
-* **Owner:** `Normora.Shared`
+* **Owner:** `Normora.Infrastructure/Providers/Storage`
 * **Properties:**
   * `Endpoint` (string): Host and port for MinIO/S3 API. Defaults to `localhost:9000`.
   * `AccessKey` (string): Sensitive. 
@@ -66,7 +69,7 @@ The following options classes are defined in the `Normora.Shared` project. All p
 
 ### `GeminiOptions`
 * **Section:** `Gemini`
-* **Owner:** `Normora.Shared`
+* **Owner:** `Normora.Infrastructure/Providers/Gemini`
 * **Properties:**
   * `ApiKey` (string): Sensitive. The API key for Google Gemini.
   * `Endpoint` (string): Base URL for the Gemini API. Defaults to `https://generativelanguage.googleapis.com/v1beta/`.
@@ -75,7 +78,7 @@ The following options classes are defined in the `Normora.Shared` project. All p
 
 ### `TikaOptions`
 * **Section:** `Tika`
-* **Owner:** `Normora.Shared`
+* **Owner:** `Normora.Infrastructure/Providers/DocumentExtraction`
 * **Properties:**
   * `Endpoint` (string): Host for the Apache Tika server. Defaults to `http://localhost:9998/`.
 

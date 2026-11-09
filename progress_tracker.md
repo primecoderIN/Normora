@@ -16,6 +16,13 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - Angular Client container
 - [x] Creation of `start.ps1` and `stop.ps1` automation scripts for local environment spin-up
 
+## ✅ Completed Modular Architecture, Worker Decoupling & Provider Pattern Hardening
+- [x] **Transactional Outbox for Document Ingestion**: Introduced `DocumentProcessingOutboxMessage` entity, EF Core migration, `IDocumentProcessingWakeup`, and Hangfire outbox dispatcher with minutely recovery to eliminate data loss and orphaned storage files on post-commit failures.
+- [x] **Independent Worker Host Decoupling**: Created `Normora.Infrastructure` class library to house shared host composition and adapters. Removed `Normora.Worker`'s direct dependency on `Normora.Api`.
+- [x] **External Provider Pattern Adoption**: Migrated third-party SDK adapters (Google Gemini AI, MinIO object storage, Apache Tika text extraction) out of business modules into `Normora.Infrastructure/Providers/`. Stripped vendor SDK packages from `Documents.csproj` and `Tenants.csproj`.
+- [x] **Dedicated Provider DI Composition**: Created `ProviderServiceExtensions.cs` to cleanly register external storage, AI, and extraction providers, keeping `DatabaseServiceExtensions.cs` strictly focused on PostgreSQL, EF Core, and Hangfire.
+- [x] **Architecture Boundary Fitness Tests**: Added xUnit architecture tests in `ModularMonolithArchitectureTests.cs` verifying that business modules do not reference each other, worker does not reference the API host, business modules contain no vendor provider adapters, and all external providers are owned by `Normora.Infrastructure`.
+
 ## ✅ Completed Enterprise Architecture Hardening & Security Audit Remediation
 - [x] **Middleware Pipeline & Identity Resolution**: Corrected pipeline execution order in `Normora.Api/Program.cs` so `UseRateLimiter()` executes strictly after `UseAuthentication()` and `UseBff()`, enabling user claim (`sub`) rate-limiting partitioning and preventing global DoS.
 - [x] **Broken Function Level Authorization (BFLA) Defense**: Enforced direct tier upgrade guards in `UpdateTenantPlanTierCommandHandler.cs` to prevent unauthorized self-escalation to `Pro`/`Enterprise` tiers without payment gateway checkout.
