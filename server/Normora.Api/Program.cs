@@ -1,55 +1,20 @@
 using Normora.Api.Middleware;
 using Normora.Api.Extensions;
-using Normora.Api.Services;
 using Normora.Infrastructure.Extensions;
 using Normora.Infrastructure.Hubs;
-using Normora.Infrastructure.Services;
-using Normora.Shared.Interfaces;
 using Hangfire;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 using Duende.Bff;
-using Duende.Bff.EntityFramework;
 using System.Net;
 using Normora.Shared.Constants;
 
-var isMigrationRun = args.Contains("--migrate", StringComparer.OrdinalIgnoreCase);
-
-// Migrations run only in a dedicated one-off deployment process:
+// Ephemeral schema migration CLI execution:
 // dotnet Normora.Api.dll --migrate
-// Run via a lean console host to isolate schema migration from web middleware,
-// Kestrel, OpenTelemetry activity listeners, SignalR, and background services
-// which can cause SIGSEGV (exit code 139) during container teardown in Linux Docker.
-if (isMigrationRun)
+if (args.Contains("--migrate", StringComparer.OrdinalIgnoreCase))
 {
-    var migrationBuilder = Host.CreateApplicationBuilder(args);
-    migrationBuilder.Services.AddConfigurationServices(migrationBuilder.Configuration);
-    migrationBuilder.Services.AddDatabaseServices(
-        migrationBuilder.Configuration,
-        migrationBuilder.Environment,
-        migrationMode: true);
-    migrationBuilder.Services.AddScoped<DatabaseMigrationRunner>();
-
-    // Register SessionDbContext strictly for SessionDatabaseMigrator without Duende background processes
-    migrationBuilder.Services.AddDbContext<SessionDbContext>(options =>
-    {
-        options.UseNpgsql(
-            migrationBuilder.Configuration.GetConnectionString("DefaultConnection"),
-            sql => sql.MigrationsAssembly("Normora.Api"));
-    });
-    migrationBuilder.Services.AddScoped<IDatabaseMigrator, SessionDatabaseMigrator>();
-
-    using var migrationHost = migrationBuilder.Build();
-    await using (var scope = migrationHost.Services.CreateAsyncScope())
-    {
-        var runner = scope.ServiceProvider.GetRequiredService<DatabaseMigrationRunner>();
-        await runner.MigrateAsync();
-    }
+    await MigrationHostExtensions.RunMigrationsAsync(args);
     return;
 }
 
