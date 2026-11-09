@@ -67,6 +67,7 @@ public static class DatabaseServiceExtensions
             // In migration mode, provide in-memory cache fallback for any services requiring ICacheService
             services.AddDistributedMemoryCache();
             services.AddSingleton<ICacheService, Normora.Infrastructure.Services.Caching.DistributedCacheService>();
+            services.AddScoped<ITenantContext, Normora.Infrastructure.Services.TenantContext>();
         }
 
         // Delegate to Module Composition Roots

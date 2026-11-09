@@ -289,6 +289,15 @@ In the local Docker Compose stack (`docker-compose.yml`), this migration executi
 ```
 Both `api` and `worker` depend on `migrator` with `condition: service_completed_successfully`.
 
+#### Ephemeral Host Architecture (`MigrationHostExtensions`)
+When `--migrate` is supplied, `Program.cs` branches immediately into [`MigrationHostExtensions.RunMigrationsAsync(args)`](file:///c:/Users/Sanjeev%20Kumar/Codes/Normora/server/Normora.Api/Extensions/MigrationHostExtensions.cs), executing within a minimal `Host.CreateApplicationBuilder`. This isolates schema migration from:
+- Kestrel web server listeners
+- OpenTelemetry EF Core instrumentation and console exporters
+- Duende BFF session background cleanup hosted services
+- MVC Controllers, SignalR hubs, OpenAPI/Scalar routes, and rate limiters
+
+This architectural separation prevents SIGSEGV crashes (exit code 139) during container teardown when running as PID 1 in Linux containers.
+
 #### Why Migrations Are Isolated in a Separate Container
 1. **Prevents Startup Race Conditions**: Scaling out multiple API or Worker replicas in parallel would otherwise result in concurrent schema migrations, database deadlocks, and corrupted `__EFMigrationsHistory` tables.
 2. **Strict Modular Monolith Encapsulation**: Per architectural guidelines, the host API never directly resolves module `DbContext` instances. Instead, each module registers its own `IDatabaseMigrator` implementation:

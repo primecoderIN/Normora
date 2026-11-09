@@ -142,6 +142,13 @@ When unauthenticated users attempt to connect to SignalR Hubs (`/hub/negotiate`)
 app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint();
 ```
 
+### Multi-Host SignalR Redis Backplane
+Because `Normora.Worker` (which executes background ingestion jobs) and `Normora.Api` (which hosts the client WebSocket connections) run in isolated containers, SignalR requires a distributed backplane to route real-time events across process boundaries.
+- **Backplane Package**: `Microsoft.AspNetCore.SignalR.StackExchangeRedis`.
+- **Shared Extension**: `services.AddNormoraSignalR(configuration)` in `Normora.Infrastructure` configures SignalR with Redis pub/sub using `RedisChannel.Literal("normora:signalr")`.
+- **Broadcast Flow**: When `Normora.Worker` publishes a `DocumentStatusChanged` event through `IDocumentNotificationService`, the event is dispatched to the Redis backplane, received by `Normora.Api`, and immediately streamed to the employer's connected browser over WebSocket.
+
+
 ### Token Lifecycle
 - **Access tokens** and **refresh tokens** are encrypted inside the `__Host-spa` cookie by the BFF — the browser never sees them.
 - **Token renewal** is fully automatic. When the access token expires, `Duende.BFF` performs a back-channel refresh with Keycloak and updates the cookie transparently.
@@ -170,6 +177,7 @@ The local stack is containerized. `docker-compose.yml` orchestrates PostgreSQL, 
 
 ### Ephemeral Migration Runner (`migrator`)
 Database migrations run exclusively through a dedicated, ephemeral `migrator` service executing `dotnet Normora.Api.dll --migrate`.
+- **Lean Host Isolation (`MigrationHostExtensions`)**: When invoked with `--migrate`, [`Program.cs`](file:///c:/Users/Sanjeev%20Kumar/Codes/Normora/server/Normora.Api/Program.cs) delegates immediately to [`MigrationHostExtensions.RunMigrationsAsync`](file:///c:/Users/Sanjeev%20Kumar/Codes/Normora/server/Normora.Api/Extensions/MigrationHostExtensions.cs) using a minimal `Host.CreateApplicationBuilder`. This prevents initializing Kestrel, OpenTelemetry diagnostic listeners, or Duende background services, ensuring clean zero-exit container teardown without native SIGSEGV crashes.
 - **Pre-Rollout Dependency**: Both `api` and `worker` depend on `migrator` with `condition: service_completed_successfully`, preventing any HTTP traffic or background jobs from starting until the database schema is confirmed ready.
 - **Race Condition Prevention**: Isolating schema execution in a dedicated one-off container eliminates race conditions and PostgreSQL table lock contention that would otherwise occur if multiple API or worker replicas ran migrations simultaneously upon boot.
 - **Idempotent Pending Checks**: The runner checks `__EFMigrationsHistory` on every startup. If all migrations in the code have already been recorded, EF Core performs a no-op (`No migrations were applied. The database is already up to date.`) and exits cleanly in milliseconds.

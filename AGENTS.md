@@ -103,6 +103,10 @@ Application/{Feature}/
 - **`Normora.Worker`**: Independent generic host executing Hangfire background jobs (ingestion, embeddings, purge). Must NEVER reference `Normora.Api`. References `Normora.Infrastructure` and necessary module contracts.
 - **`Normora.Infrastructure`**: Host-neutral class library containing cross-cutting infrastructure (Hangfire, Redis distributed caching, OpenTelemetry, SignalR hub adapters, database migration runner) and external third-party provider adapters. Must NEVER reference executable hosts (`Normora.Api`, `Normora.Worker`).
 
+### Ephemeral Migration Host Isolation (`--migrate`)
+- **Lean Console Host for Migrations**: Schema migrations invoked via `dotnet Normora.Api.dll --migrate` must execute within a minimal console host via `MigrationHostExtensions.RunMigrationsAsync`. Never initialize Kestrel, OpenTelemetry diagnostic listeners, SignalR hubs, or background hosted services during migration execution. This ensures clean zero-exit container teardown without native SIGSEGV crashes (exit code 139).
+- **Four-Migrator Sequential Pipeline**: `DatabaseMigrationRunner` in `Normora.Infrastructure` executes all 4 `IDatabaseMigrator` implementations sequentially: `TenantsDatabaseMigrator`, `DocumentsDatabaseMigrator`, `ConversationsDatabaseMigrator`, and `SessionDatabaseMigrator`.
+
 ### External Provider Boundary (Provider Pattern)
 - **Zero Third-Party Vendor SDKs in Business Modules**: Business modules (`Documents`, `Conversations`, `Tenants`) must NEVER reference external third-party vendor SDK packages (such as `Minio`, Google AI packages, AWS SDK, Azure SDK).
 - **Domain Interfaces (Ports)**: Modules declare provider-neutral domain contracts:
@@ -118,5 +122,10 @@ Application/{Feature}/
 ### Transactional Outbox Pattern for Document Uploads
 - **Atomic Metadata & Work Dispatch**: Document upload operations in `UploadDocumentCommandHandler` must insert the document metadata, document version, and a `DocumentProcessingOutboxMessage` in the same database transaction.
 - **Durable Processing**: The handler signals `IDocumentProcessingWakeup` as an asynchronous wake-up. Hangfire enqueues `HangfireDocumentProcessingOutboxDispatcher` to claim and dispatch pending outbox messages, backed by a minutely recurring Hangfire job for automatic recovery. Downstream notification or queue dispatch failures must never fail an already-committed upload.
+
+### Multi-Host SignalR Redis Backplane
+- **Cross-Process Real-Time Broadcasting**: Background worker processes (`Normora.Worker`) and HTTP BFF hosts (`Normora.Api`) communicate real-time events (such as document ingestion status changes) via a shared Redis pub/sub backplane configured in `Normora.Infrastructure` via `AddNormoraSignalR`.
+- **Worker-to-Client Relay**: When worker background jobs dispatch events via `IDocumentNotificationService` or `INotificationService`, messages are published to the Redis backplane and fanned out to connected browser WebSockets on the API host.
+
 
 

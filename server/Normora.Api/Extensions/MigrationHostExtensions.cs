@@ -25,6 +25,7 @@ public static class MigrationHostExtensions
             migrationBuilder.Configuration,
             migrationBuilder.Environment,
             migrationMode: true);
+        migrationBuilder.Services.AddScoped<ITenantContext, TenantContext>();
         migrationBuilder.Services.AddScoped<DatabaseMigrationRunner>();
 
         // Register SessionDbContext strictly for SessionDatabaseMigrator without Duende background processes

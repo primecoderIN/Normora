@@ -166,6 +166,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     container_name: normora_worker
+    working_dir: /app/worker
     entrypoint: ["dotnet", "Normora.Worker.dll"]
     environment:
       - DOTNET_ENVIRONMENT=Development

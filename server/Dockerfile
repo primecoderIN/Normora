@@ -28,6 +28,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 COPY --chown=app:app --from=publish /app/publish .
-COPY --chown=app:app --from=publish /app/worker-publish .
+COPY --chown=app:app --from=publish /app/worker-publish ./worker/
 USER app
 ENTRYPOINT ["dotnet", "Normora.Api.dll"]

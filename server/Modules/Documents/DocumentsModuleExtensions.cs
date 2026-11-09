@@ -32,8 +32,9 @@ public static class DocumentsModuleExtensions
         // Encapsulated RRF service combining PostgreSQL full-text search with pgvector cosine distance.
         services.AddScoped<IRetrievalService, RetrievalService>();
 
-        // Background document ingestion handler:
+        // Background document ingestion and maintenance handlers:
         services.AddScoped<DocumentProcessingJob>();
+        services.AddScoped<PurgeDeletedDocumentsJob>();
 
         return services;
     }

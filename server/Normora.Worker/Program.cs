@@ -13,7 +13,7 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddConfigurationServices(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSignalR();
+builder.Services.AddNormoraSignalR(builder.Configuration);
 // Enable Hangfire Server processing exclusively on the worker process:
 builder.Services.AddDatabaseServices(builder.Configuration, builder.Environment, enableHangfireServer: true);
 builder.Services.AddExternalProviders(builder.Configuration, builder.Environment);
@@ -25,14 +25,15 @@ using var host = builder.Build();
 // Recurring Maintenance Job Registration:
 // Runs daily at 03:00 UTC using Hangfire cron expressions.
 // Scans for documents soft-deleted more than 30 days ago, permanently purging MinIO objects and pgvector chunks in batches.
-// Uses JobCancellationToken.Null.ShutdownToken so Hangfire automatically binds the execution cancellation token
-// during runtime, allowing graceful termination if the worker process shuts down mid-batch.
-RecurringJob.AddOrUpdate<HangfirePurgeDeletedDocumentsJob>(
+// Uses IRecurringJobManager service directly to avoid static JobStorage.Current dependency.
+var recurringJobs = host.Services.GetRequiredService<IRecurringJobManager>();
+
+recurringJobs.AddOrUpdate<HangfirePurgeDeletedDocumentsJob>(
     "purge-deleted-documents",
-    job => job.ExecuteAsync(JobCancellationToken.Null.ShutdownToken),
+    job => job.ExecuteAsync(CancellationToken.None),
     Cron.Daily(3, 0));
 
-RecurringJob.AddOrUpdate<HangfireDocumentProcessingOutboxDispatcher>(
+recurringJobs.AddOrUpdate<HangfireDocumentProcessingOutboxDispatcher>(
     "dispatch-document-processing-outbox",
     job => job.DispatchPendingAsync(CancellationToken.None),
     Cron.Minutely());

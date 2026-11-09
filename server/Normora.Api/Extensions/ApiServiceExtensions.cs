@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Api.Middleware;
+using Normora.Infrastructure.Extensions;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -25,7 +26,7 @@ public static class ApiServiceExtensions
             });
 
         services.AddOpenApi();
-        services.AddSignalR();
+        services.AddNormoraSignalR(configuration);
         services.AddHealthChecks();
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
