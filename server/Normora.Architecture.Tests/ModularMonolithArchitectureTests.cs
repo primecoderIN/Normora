@@ -132,6 +132,41 @@ public sealed class ModularMonolithArchitectureTests
     }
 
     [Fact]
+    public void BusinessModules_MustNotContainExternalProviderAdapters()
+    {
+        var providerAdapterTypes = new[] { ConversationsAssembly, DocumentsAssembly, TenantsAssembly }
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(type =>
+                type.Name.StartsWith("Gemini", StringComparison.Ordinal) ||
+                type.Name.StartsWith("Minio", StringComparison.Ordinal) ||
+                string.Equals(type.Name, "TikaDocumentTextExtractor", StringComparison.Ordinal))
+            .Select(type => type.FullName)
+            .ToList();
+
+        Assert.Empty(providerAdapterTypes);
+    }
+
+    [Fact]
+    public void ExternalProviderAdapters_MustBeOwnedByInfrastructure()
+    {
+        var providerAdapterTypes = new[]
+        {
+            typeof(Normora.Infrastructure.Providers.DocumentExtraction.TikaDocumentTextExtractor),
+            typeof(Normora.Infrastructure.Providers.Gemini.GeminiEmbeddingService),
+            typeof(Normora.Infrastructure.Providers.Gemini.GeminiTextGenerationService),
+            typeof(Normora.Infrastructure.Providers.Gemini.GeminiQueryRewriterService),
+            typeof(Normora.Infrastructure.Providers.Gemini.GeminiSuggestionsService),
+            typeof(Normora.Infrastructure.Providers.Gemini.GeminiOptions),
+            typeof(Normora.Infrastructure.Providers.Storage.MinioDocumentStorageService),
+            typeof(Normora.Infrastructure.Providers.Storage.MinioBrandingStorageService),
+            typeof(Normora.Infrastructure.Providers.Storage.MinioOptions),
+            typeof(Normora.Infrastructure.Providers.DocumentExtraction.TikaOptions)
+        };
+
+        Assert.All(providerAdapterTypes, adapterType => Assert.Same(InfrastructureAssembly, adapterType.Assembly));
+    }
+
+    [Fact]
     public void Worker_MustNotReferenceApiHost()
     {
         Assert.DoesNotContain(
