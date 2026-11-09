@@ -137,7 +137,7 @@ services:
       migrator:
         condition: service_completed_successfully
     volumes:
-      - data_protection_keys:/root/.aspnet/DataProtection-Keys
+      - data_protection_keys:/home/app/.aspnet/DataProtection-Keys
 
   migrator:
     build:

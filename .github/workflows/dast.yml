@@ -37,7 +37,13 @@ jobs:
         cp client/src/environments/environment.template.ts client/src/environments/environment.prod.ts
         
         # Start the stack
-        docker compose up -d
+        docker compose up -d || {
+          echo "=== Migrator Logs ==="
+          docker compose logs migrator
+          echo "=== Postgres Logs ==="
+          docker compose logs postgres
+          exit 1
+        }
 
     - name: Wait for services to be healthy
       run: |

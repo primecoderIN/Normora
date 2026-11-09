@@ -1,28 +1,59 @@
 using Normora.Api.Middleware;
 using Normora.Api.Extensions;
+using Normora.Api.Services;
 using Normora.Infrastructure.Extensions;
 using Normora.Infrastructure.Hubs;
+using Normora.Infrastructure.Services;
+using Normora.Shared.Interfaces;
 using Hangfire;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Duende.Bff;
+using Duende.Bff.EntityFramework;
 using System.Net;
 using Normora.Shared.Constants;
 
-var builder = WebApplication.CreateBuilder(args);
 var isMigrationRun = args.Contains("--migrate", StringComparer.OrdinalIgnoreCase);
 
-// Prevent full DI container validation failure when running as a one-off schema migrator
-// where optional runtime services (MinIO, Redis, Hangfire) are deliberately omitted.
+// Migrations run only in a dedicated one-off deployment process:
+// dotnet Normora.Api.dll --migrate
+// Run via a lean console host to isolate schema migration from web middleware,
+// Kestrel, OpenTelemetry activity listeners, SignalR, and background services
+// which can cause SIGSEGV (exit code 139) during container teardown in Linux Docker.
 if (isMigrationRun)
 {
-    builder.Host.UseDefaultServiceProvider(options =>
+    var migrationBuilder = Host.CreateApplicationBuilder(args);
+    migrationBuilder.Services.AddConfigurationServices(migrationBuilder.Configuration);
+    migrationBuilder.Services.AddDatabaseServices(
+        migrationBuilder.Configuration,
+        migrationBuilder.Environment,
+        migrationMode: true);
+    migrationBuilder.Services.AddScoped<DatabaseMigrationRunner>();
+
+    // Register SessionDbContext strictly for SessionDatabaseMigrator without Duende background processes
+    migrationBuilder.Services.AddDbContext<SessionDbContext>(options =>
     {
-        options.ValidateOnBuild = false;
-        options.ValidateScopes = false;
+        options.UseNpgsql(
+            migrationBuilder.Configuration.GetConnectionString("DefaultConnection"),
+            sql => sql.MigrationsAssembly("Normora.Api"));
     });
+    migrationBuilder.Services.AddScoped<IDatabaseMigrator, SessionDatabaseMigrator>();
+
+    using var migrationHost = migrationBuilder.Build();
+    await using (var scope = migrationHost.Services.CreateAsyncScope())
+    {
+        var runner = scope.ServiceProvider.GetRequiredService<DatabaseMigrationRunner>();
+        await runner.MigrateAsync();
+    }
+    return;
 }
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Prevent Kestrel from broadcasting "Server: Kestrel" in HTTP response headers
 builder.WebHost.ConfigureKestrel(options =>
@@ -36,11 +67,8 @@ builder.Services.AddConfigurationServices(builder.Configuration); // Options pat
 builder.Services.AddDatabaseServices(
     builder.Configuration,
     builder.Environment,
-    migrationMode: isMigrationRun); // EF Core
-if (!isMigrationRun)
-{
-    builder.Services.AddExternalProviders(builder.Configuration, builder.Environment); // Storage, Extraction, AI
-}
+    migrationMode: false); // EF Core
+builder.Services.AddExternalProviders(builder.Configuration, builder.Environment); // Storage, Extraction, AI
 builder.Services.AddApplicationServices();                   // MediatR, FluentValidation, Scoped Services
 builder.Services.AddApiServices(builder.Configuration);      // Controllers, CORS, OpenAPI, Exception Handling
 builder.Services.AddIdentityServices(builder.Configuration, builder.Environment); // Keycloak JWT Authentication
@@ -61,17 +89,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference(); // API documentation UI
-}
-
-// Migrations run only in a dedicated one-off deployment process:
-// dotnet Normora.Api.dll --migrate
-if (isMigrationRun)
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    await scope.ServiceProvider
-        .GetRequiredService<Normora.Infrastructure.Services.DatabaseMigrationRunner>()
-        .MigrateAsync();
-    return;
 }
 
 // Global Exception Handler interceptor (returns ProblemDetails JSON instead of crashing)
