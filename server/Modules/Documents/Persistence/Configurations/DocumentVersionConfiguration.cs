@@ -21,7 +21,7 @@ public class DocumentVersionConfiguration : IEntityTypeConfiguration<DocumentVer
         builder.Property(v => v.StorageObjectName).IsRequired().HasMaxLength(500);
 
         // Full Raw Extracted Text:
-        // Text extracted by Apache Tika prior to semantic sliding-window chunking.
+        // Text extracted prior to semantic sliding-window chunking.
         builder.Property(v => v.ExtractedText).HasColumnType("text");
 
         // Relational Parent Link:

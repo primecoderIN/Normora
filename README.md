@@ -60,7 +60,7 @@ flowchart TD
     end
 
     subgraph InfraLib ["Host & Provider Infrastructure (Normora.Infrastructure)"]
-        INF_PROV["External Provider Adapters<br/>(MinIO Storage, Gemini AI, Apache Tika)"]
+        INF_PROV["External Provider Adapters<br/>(MinIO Storage, Gemini AI / Multimodal OCR)"]
         INF_HOST["Shared Host Infrastructure<br/>(Redis Cache, Telemetry, SignalR Hubs, Outbox Dispatcher)"]
     end
 
@@ -73,8 +73,7 @@ flowchart TD
         KC["Keycloak 24 (OIDC / OAuth2)"]
         S3["MinIO (S3 Object Storage)"]
         RD[("Redis Distributed Cache")]
-        GEM["Google Gemini API (Flash)"]
-        TIKA["Apache Tika (Text Extraction)"]
+        GEM["Google Gemini API (Flash Vision, OCR & Embeddings)"]
     end
 
     SPA <-->|Secure Cookies / SSE / WS| Host
@@ -85,7 +84,7 @@ flowchart TD
     DocsMod <-->|MediatR Contracts| ConvsMod
     T_DB & D_DB & C_DB --> PG
     WorkerHost -->|Background Ingestion| PG
-    InfraLib --> S3 & GEM & TIKA & RD
+    InfraLib --> S3 & GEM & RD
     Host -->|OIDC Backchannel| KC
 ```
 

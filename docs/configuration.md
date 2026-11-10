@@ -14,7 +14,7 @@ We avoid accessing configuration directly through `IConfiguration` or "magic str
 
 ### Organization
 * **Shared Options:** Options that span multiple modules or the API (e.g., `AppOptions`, `KeycloakOptions`, `EmailOptions`) reside in `Normora.Shared/Options`.
-* **Provider Options:** Options specific to external infrastructure adapters (e.g., `MinioOptions`, `GeminiOptions`, `TikaOptions`) reside directly alongside their provider implementations in `Normora.Infrastructure/Providers/`.
+* **Provider Options:** Options specific to external infrastructure adapters (e.g., `MinioOptions`, `GeminiOptions`) reside directly alongside their provider implementations in `Normora.Infrastructure/Providers/`.
 * **Registration:** All options are registered in `Normora.Infrastructure/Extensions/ConfigurationServiceExtensions.cs`.
 * **Constants:** Static values that shouldn't be configured by end-users (like claim types, internal cookie names, or known identifiers) are stored in `Constants` classes (e.g., `Normora.Shared/Constants/AuthConstants.cs`).
 
@@ -33,7 +33,7 @@ Shared application options (such as `AppOptions` and `EmailOptions`) reside in `
 In accordance with our **Provider Pattern**, external third-party infrastructure adapters and their options reside in `Normora.Infrastructure/Providers/`:
 * `MinioDocumentStorageService`, `MinioBrandingStorageService`, and `MinioOptions` live in `Normora.Infrastructure/Providers/Storage/`.
 * `GeminiEmbeddingService`, `GeminiTextGenerationService`, `GeminiQueryRewriterService`, `GeminiSuggestionsService`, and `GeminiOptions` live in `Normora.Infrastructure/Providers/Gemini/`.
-* `TikaDocumentTextExtractor` and `TikaOptions` live in `Normora.Infrastructure/Providers/DocumentExtraction/`.
+* `GeminiDocumentTextExtractor` lives in `Normora.Infrastructure/Providers/DocumentExtraction/`, utilizing Gemini multimodal AI for OCR and Markdown table parsing alongside fast in-memory OpenXML/text readers for DOCX and TXT.
 * Business modules (`Documents`, `Conversations`, `Tenants`) declare provider-neutral domain contracts (`IDocumentStorageService`, `ITextGenerationService`, `ITextEmbeddingService`, `IDocumentTextExtractor`, `IBrandingStorageService`) and remain 100% free of external vendor SDKs.
 * `PayUPaymentService` and `TenantResolutionService` remain encapsulated inside `Normora.Modules.Tenants` as domain payment fulfillment is coupled to tenant persistence.
 
@@ -74,13 +74,8 @@ The following options classes are defined in the `Normora.Shared` project. All p
   * `ApiKey` (string): Sensitive. The API key for Google Gemini.
   * `Endpoint` (string): Base URL for the Gemini API. Defaults to `https://generativelanguage.googleapis.com/v1beta/`.
   * `EmbeddingModel` (string): Defaults to `gemini-embedding-001`.
-  * `GenerationModel` (string): Defaults to `gemini-2.0-flash`.
-
-### `TikaOptions`
-* **Section:** `Tika`
-* **Owner:** `Normora.Infrastructure/Providers/DocumentExtraction`
-* **Properties:**
-  * `Endpoint` (string): Host for the Apache Tika server. Defaults to `http://localhost:9998/`.
+  * `GenerationModel` (string): Defaults to `gemini-2.5-flash`.
+  * `ExtractionModel` (string): Defaults to `gemini-2.5-flash`. Model used for multimodal document extraction and OCR.
 
 ### `EmailOptions`
 * **Section:** `Email`
@@ -120,7 +115,6 @@ Notice the **double underscore (`__`)** is used to represent the section hierarc
 ### Docker Compose
 * Inside Docker, services communicate using internal hostnames.
 * For MinIO: `Minio__Endpoint=minio:9000`
-* For Tika: `Tika__Endpoint=http://tika:9998/`
 * For Redis: `ConnectionStrings__Redis=redis:6379`
 * The local API trusts only the pinned client proxy at `172.30.0.10` (`ReverseProxy__KnownProxies__0`). Do not clear the trusted proxy lists.
 * `Minio__UseSsl=false` is for the local Compose network only.
@@ -136,7 +130,7 @@ Notice the **double underscore (`__`)** is used to represent the section hierarc
 * Ensure `App__BaseUrl` points to the actual HTTPS public domain.
 * Set `ReverseProxy__KnownProxies__0`, `ReverseProxy__KnownProxies__1`, etc. to the exact ingress proxy IP addresses.
 * Configure `Minio__UseSsl=true` and a Redis connection. API startup fails when these production requirements are missing.
-* All HTTP internal endpoints (like Tika/MinIO) are fine, but Keycloak external URLs must be HTTPS.
+* All HTTP internal endpoints (like MinIO) are fine, but Keycloak external URLs must be HTTPS.
 
 ### Database Migrations
 Run `dotnet Normora.Api.dll --migrate` once as a serialized release step before starting or rolling out API and worker instances. Normal API startup does not apply schema changes.

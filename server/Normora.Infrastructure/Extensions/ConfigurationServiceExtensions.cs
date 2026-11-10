@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Modules.Tenants.Options;
 using Normora.Shared.Options;
-using Normora.Infrastructure.Providers.DocumentExtraction;
 using Normora.Infrastructure.Providers.Gemini;
 using Normora.Infrastructure.Providers.Storage;
 
@@ -39,12 +38,6 @@ public static class ConfigurationServiceExtensions
         // MinIO object storage options
         services.AddOptions<MinioOptions>()
             .Bind(configuration.GetSection(MinioOptions.SectionName))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-            
-        // Apache Tika document text extraction service
-        services.AddOptions<TikaOptions>()
-            .Bind(configuration.GetSection(TikaOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
             

@@ -23,7 +23,7 @@ public static class ApiMessages
     public const string FileRequired = "No file was uploaded.";
     public const string FileEmpty = "File cannot be empty.";
     public const string FileExceedsLimit = "File exceeds allowed size limit.";
-    public const string InvalidFileType = "Only .pdf, .docx, and .txt files are allowed.";
+    public const string InvalidFileType = "Only .pdf, .docx, .txt, and image files (.png, .jpg, .jpeg, .webp) are allowed.";
     public const string InvalidFileContent = "File content does not match the declared file type.";
     public const string InvalidBrandingFileType = "Only .png, .jpg, .jpeg, .webp, and .ico image files are allowed for branding.";
     public const string BrandingFileExceedsLimit = "Branding image exceeds allowed 5MB limit.";
@@ -42,6 +42,7 @@ public static class ApiMessages
     public const string InvalidTrustedProxy = "A configured trusted reverse proxy IP is invalid.";
     public const string DocumentPurgeIncomplete = "One or more deleted documents could not be purged.";
     public const string LlmGenerationNotConfigured = "Ask Normora requires AI text generation to be configured.";
+    public const string ExtractionServiceNotConfigured = "Document processing requires an AI extraction service to be configured.";
     public const string EmailServiceNotConfigured = "Transactional email delivery is not configured. Set the email API key in your environment or configuration.";
     public const string McpInvalidRequest = "Invalid MCP JSON-RPC request.";
     public const string McpMethodNotFound = "The requested MCP method was not found.";

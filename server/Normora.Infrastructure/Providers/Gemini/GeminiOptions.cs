@@ -23,5 +23,9 @@ public class GeminiOptions
     
     /// <summary>Model identifier used for chat completion and reasoning.</summary>
     [Required]
-    public string GenerationModel { get; set; } = "gemini-2.0-flash";
+    public string GenerationModel { get; set; } = "gemini-2.5-flash";
+
+    /// <summary>Model identifier used for multimodal document text extraction and OCR.</summary>
+    [Required]
+    public string ExtractionModel { get; set; } = "gemini-2.5-flash";
 }

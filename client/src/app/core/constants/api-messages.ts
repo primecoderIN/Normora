@@ -158,6 +158,7 @@ export const ApiMessages = {
   InvalidInvitation: 'Invalid invitation link.',
   InvitationAlreadyAccepted: 'This invitation has already been accepted or is no longer valid.',
   InvitationExpired: 'This invitation link has expired.',
-  InvitationInvalidOrMissing: 'This invitation is invalid or does not exist.'
+  InvitationInvalidOrMissing: 'This invitation is invalid or does not exist.',
+  ExtractionServiceNotConfigured: 'Document processing requires an AI extraction service to be configured.'
 } as const;
 

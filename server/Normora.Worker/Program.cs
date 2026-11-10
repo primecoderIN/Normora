@@ -6,7 +6,7 @@ using Normora.Infrastructure.BackgroundJobs;
 
 // Dedicated Background Worker Host:
 // Runs as a separate micro-process from the API host to isolate heavy CPU/IO background workloads:
-// 1. Apache Tika document text extraction and OCR parsing.
+// 1. Gemini multimodal document text extraction and OCR parsing.
 // 2. High-dimensional vector embedding generation and pgvector indexing.
 // 3. Nightly maintenance routines (purging soft-deleted documents past 30-day grace period).
 var builder = Host.CreateApplicationBuilder(args);

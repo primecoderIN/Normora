@@ -30,6 +30,10 @@ internal sealed record GeminiPart
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Text { get; init; }
 
+    [JsonPropertyName("inlineData")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GeminiInlineData? InlineData { get; init; }
+
     [JsonPropertyName("functionCall")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public GeminiFunctionCall? FunctionCall { get; init; }
@@ -40,7 +44,12 @@ internal sealed record GeminiPart
 
     public GeminiPart() { }
     public GeminiPart(string text) => Text = text;
+    public GeminiPart(GeminiInlineData inlineData) => InlineData = inlineData;
 }
+
+internal sealed record GeminiInlineData(
+    [property: JsonPropertyName("mimeType")] string MimeType,
+    [property: JsonPropertyName("data")] string Data);
 
 internal sealed record GeminiFunctionCall(
     [property: JsonPropertyName("name")] string Name,

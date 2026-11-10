@@ -93,12 +93,6 @@ services:
       timeout: 3s
       retries: 5
 
-  tika:
-    image: apache/tika:3.2.3.0-full
-    container_name: normora_tika
-    ports:
-      - "9998:9998"
-
   api:
     build:
       context: ./server
@@ -120,8 +114,10 @@ services:
       - Email__ResendApiKey=${RESEND_API_KEY:-}
       - Email__FromEmail=${RESEND_FROM_EMAIL:-onboarding@resend.dev}
       - Email__DevOverrideRecipient=${DEV_OVERRIDE_EMAIL:-}
-      - Tika__Endpoint=http://tika:9998/
       - Gemini__ApiKey=${GEMINI_API_KEY:-}
+      - Gemini__EmbeddingModel=${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
+      - Gemini__GenerationModel=${GEMINI_GENERATION_MODEL:-gemini-2.5-flash}
+      - Gemini__ExtractionModel=${GEMINI_EXTRACTION_MODEL:-gemini-2.5-flash}
       - PayU__MerchantKey=${PAYU_MERCHANT_KEY:-gtKFFx}
       - PayU__MerchantSalt=${PAYU_MERCHANT_SALT:-eCwWELxi}
       - PayU__IsProduction=${PAYU_IS_PRODUCTION:-false}
@@ -132,8 +128,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      tika:
-        condition: service_started
       migrator:
         condition: service_completed_successfully
     volumes:
@@ -155,8 +149,10 @@ services:
       - Minio__AccessKey=${MINIO_ROOT_USER:-admin}
       - Minio__SecretKey=${MINIO_ROOT_PASSWORD:-password}
       - Minio__UseSsl=false
-      - Tika__Endpoint=http://tika:9998/
       - Gemini__ApiKey=${GEMINI_API_KEY:-}
+      - Gemini__EmbeddingModel=${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
+      - Gemini__GenerationModel=${GEMINI_GENERATION_MODEL:-gemini-2.5-flash}
+      - Gemini__ExtractionModel=${GEMINI_EXTRACTION_MODEL:-gemini-2.5-flash}
     depends_on:
       postgres:
         condition: service_healthy
@@ -182,8 +178,10 @@ services:
       - Email__ResendApiKey=${RESEND_API_KEY:-}
       - Email__FromEmail=${RESEND_FROM_EMAIL:-onboarding@resend.dev}
       - Email__DevOverrideRecipient=${DEV_OVERRIDE_EMAIL:-}
-      - Tika__Endpoint=http://tika:9998/
       - Gemini__ApiKey=${GEMINI_API_KEY:-}
+      - Gemini__EmbeddingModel=${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
+      - Gemini__GenerationModel=${GEMINI_GENERATION_MODEL:-gemini-2.5-flash}
+      - Gemini__ExtractionModel=${GEMINI_EXTRACTION_MODEL:-gemini-2.5-flash}
       - PayU__MerchantKey=${PAYU_MERCHANT_KEY:-gtKFFx}
       - PayU__MerchantSalt=${PAYU_MERCHANT_SALT:-eCwWELxi}
       - PayU__IsProduction=${PAYU_IS_PRODUCTION:-false}
@@ -194,8 +192,6 @@ services:
         condition: service_completed_successfully
       minio:
         condition: service_healthy
-      tika:
-        condition: service_started
 
   client:
     build:

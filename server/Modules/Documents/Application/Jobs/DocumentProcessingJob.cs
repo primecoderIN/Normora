@@ -7,7 +7,7 @@ using Normora.Shared.Interfaces;
 namespace Normora.Modules.Documents.Application.Jobs;
 
 /// <summary>
-/// Background job orchestrating document ingestion: text extraction (Tika), semantic chunking,
+/// Background job orchestrating document ingestion: text extraction and OCR (Gemini), semantic chunking,
 /// vector embedding generation (Gemini), chunk persistence, cache eviction, and real-time client notifications.
 /// </summary>
 public sealed class DocumentProcessingJob(

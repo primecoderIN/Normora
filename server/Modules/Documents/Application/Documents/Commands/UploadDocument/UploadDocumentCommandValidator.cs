@@ -25,11 +25,11 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
     private static bool BeAValidExtension(IFormFile? file)
     {
         // Extension Allowlist:
-        // Strictly permits only supported enterprise document formats (.pdf, .docx, .txt)
-        // supported by Apache Tika and the semantic text chunking engine.
+        // Strictly permits supported document formats (.pdf, .docx, .txt) and image formats (.png, .jpg, .jpeg, .webp)
+        // supported by the Gemini multimodal text extraction and OCR engine.
         if (file == null) return false;
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        return ext == ".pdf" || ext == ".docx" || ext == ".txt";
+        return ext is ".pdf" or ".docx" or ".txt" or ".png" or ".jpg" or ".jpeg" or ".webp";
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
     {
         // Deep File Inspection (Magic Byte Signature Verification):
         // Prevents extension-spoofing attacks (e.g., an executable malicious binary renamed to 'handbook.pdf').
-        // Uses stackalloc byte[8] for zero heap allocation during stream inspection.
+        // Uses stackalloc byte[12] for zero heap allocation during stream inspection.
         if (file == null || file.Length < 4) return false;
 
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -48,7 +48,7 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
         // Plain text (.txt) files have no standard magic byte header
         if (ext == ".txt") return true;
 
-        Span<byte> header = stackalloc byte[8];
+        Span<byte> header = stackalloc byte[12];
         using var stream = file.OpenReadStream();
         var read = stream.Read(header);
         if (read < 4) return false;
@@ -59,6 +59,14 @@ public sealed class UploadDocumentCommandValidator : AbstractValidator<UploadDoc
             ".pdf" => header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46,
             // DOCX / OOXML Magic Header: PK ZIP Archive (0x50 0x4B 0x03 0x04)
             ".docx" => header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04,
+            // PNG Magic Header: 0x89 0x50 0x4E 0x47 (\x89PNG)
+            ".png" => header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47,
+            // JPEG Magic Header: 0xFF 0xD8 0xFF
+            ".jpg" or ".jpeg" => header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
+            // WEBP Magic Header: "RIFF" .... "WEBP"
+            ".webp" => read >= 12 &&
+                       header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46 &&
+                       header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50,
             _ => false
         };
     }

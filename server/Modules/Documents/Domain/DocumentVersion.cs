@@ -30,7 +30,7 @@ public class DocumentVersion : ITenantEntity
     public string StorageObjectName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Raw full-text extracted by Apache Tika during background ingestion.
+    /// Raw full-text extracted by the document text extractor during background ingestion.
     /// </summary>
     public string? ExtractedText { get; set; }
 

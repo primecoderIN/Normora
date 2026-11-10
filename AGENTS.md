@@ -116,7 +116,7 @@ Application/{Feature}/
 - **Infrastructure Adapters (Providers)**: Third-party implementations live strictly in `server/Normora.Infrastructure/Providers/`:
   - `Storage/`: `MinioDocumentStorageService`, `MinioBrandingStorageService`, `MinioOptions`
   - `Gemini/`: `GeminiEmbeddingService`, `GeminiTextGenerationService`, `GeminiQueryRewriterService`, `GeminiSuggestionsService`, `GeminiOptions`, `GeminiModels`
-  - `DocumentExtraction/`: `TikaDocumentTextExtractor`, `TikaOptions`
+  - `DocumentExtraction/`: `GeminiDocumentTextExtractor`
 - **Dedicated Provider DI**: Provider wiring is registered via `ProviderServiceExtensions.cs` (`AddExternalProviders`, `AddStorageProviders`, `AddAiProviders`, `AddDocumentExtractionProviders`), keeping `DatabaseServiceExtensions.cs` strictly focused on PostgreSQL, DbContexts, and Hangfire.
 
 ### Transactional Outbox Pattern for Document Uploads
@@ -126,6 +126,18 @@ Application/{Feature}/
 ### Multi-Host SignalR Redis Backplane
 - **Cross-Process Real-Time Broadcasting**: Background worker processes (`Normora.Worker`) and HTTP BFF hosts (`Normora.Api`) communicate real-time events (such as document ingestion status changes) via a shared Redis pub/sub backplane configured in `Normora.Infrastructure` via `AddNormoraSignalR`.
 - **Worker-to-Client Relay**: When worker background jobs dispatch events via `IDocumentNotificationService` or `INotificationService`, messages are published to the Redis backplane and fanned out to connected browser WebSockets on the API host.
+
+## 8. Continuous Markdown Documentation Synchronization
+It is a mandatory rule and continuous habit to keep all Markdown documentation in sync with codebase changes:
+- **Synchronize After Every Change**: Whenever any architectural, infrastructure, domain model, configuration, dependency, or API modifications are made, you MUST immediately update all corresponding `.md` files in the same turn. Never leave code implementation and project documentation disconnected.
+- **Target Documentation Mapping**:
+  - **`README.md`**: Update system topology Mermaid diagrams, external provider lists, containerized dependencies, and high-level tech stacks.
+  - **`docs/architecture.md` & `docs/how_normora_works.md`**: Update data flow sequences, subsystem boundaries, Mermaid sequence/flow charts, and lifecycle mechanics.
+  - **`docs/configuration.md` & `docs/backend_onboarding.md`**: Update typed options (`IOptions<T>`), environment variables, Docker service environment bindings, and developer onboarding steps.
+  - **`docs/overview.md`**: Update module capability descriptions, feature highlights, and service responsibilities.
+  - **`AGENTS.md`**: Update agent coding rules, boundary lists, and provider adapter inventories.
+  - **`normora-development-plan.md` & `progress_tracker.md`**: Record completed milestone statuses, phase shifts, and planned roadmap items.
+- **Proactive Discipline**: Do not wait for user prompting to update documentation. Treat documentation updates as an essential, non-negotiable definition of done for every task.
 
 
 

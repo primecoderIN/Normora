@@ -25,7 +25,7 @@ graph LR
 
     subgraph DocumentsContext ["2. Documents Module (schema: documents)"]
         D1["Document Lifecycle"]
-        D2["Apache Tika Extraction"]
+        D2["Gemini Multimodal OCR & Native Parsing"]
         D3["Bounded Text Chunking"]
         D4["pgvector HNSW Embeddings"]
         D5["Hybrid Retrieval (RRF)"]
@@ -54,7 +54,7 @@ graph LR
 
 ### 2. Documents Module (`server/Modules/Documents/`)
 - **Asynchronous Ingestion Pipeline**: Decouples file uploads from heavy text processing. Uploaded files are securely stored in MinIO object storage, while background ingestion jobs run in an independent **Hangfire** worker process (`Normora.Worker`).
-- **Deep Text Extraction**: Utilizes **Apache Tika** to extract clean, normalized text from enterprise file formats (PDF, DOCX, TXT) with magic-byte security validation.
+- **Multimodal Text & OCR Extraction**: Utilizes **Google Gemini Multimodal Vision** to extract verbatim text and structured Markdown tables from PDFs and image scans (PNG, JPG, WEBP), alongside native in-memory OpenXML and stream parsing for DOCX and TXT files, protected by magic-byte security inspection.
 - **Vector Embeddings & HNSW Indexing**: Normalizes extracted content into bounded chunks and generates 768-dimensional embeddings using Google's text-embedding models, indexed in PostgreSQL using `pgvector` HNSW (`vector_cosine_ops`) for sub-millisecond similarity lookups.
 - **Departmental Authorization Filtering**: Vector similarity queries strictly enforce department permissions, physically excluding documents outside the authenticated user's department clearance.
 - **Model Context Protocol (MCP)**: Implements standard JSON-RPC 2.0 endpoints (`/api/mcp`) allowing external agent frameworks to discover verified documents (`resources/list`) and execute approved workspace actions (`tools/call`).

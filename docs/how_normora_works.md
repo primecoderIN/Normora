@@ -20,7 +20,7 @@ flowchart TD
     subgraph Phase2 ["Phase 2: Asynchronous Processing Pipeline"]
         B1["MinIO Object Storage"]
         B2["Hangfire Ingestion Worker"]
-        B3["Apache Tika Text Extraction"]
+        B3["Gemini Multimodal OCR & Native Extraction"]
         B4["Token-Bounded Text Chunking"]
         B5["Gemini Embedding Generation<br/>(768 dimensions)"]
         B6["pgvector HNSW Vector Store<br/>(schema: documents)"]
@@ -70,7 +70,7 @@ sequenceDiagram
     participant Outbox as Outbox Dispatcher
     participant HF as Hangfire Worker (Normora.Worker)
     participant Redis as Redis Backplane
-    participant Tika as Apache Tika
+    participant Extractor as Gemini Multimodal OCR / Native Parser
     participant Gemini as Google Gemini API
     participant Hub as SignalR (API Host)
 
@@ -87,8 +87,8 @@ sequenceDiagram
     Redis->>Hub: 9. Relay to API Host
     Hub-->>Employer: 10. WebSocket: Processing
     HF->>MinIO: 11. Download raw file bytes
-    HF->>Tika: 12. Extract clean plain text
-    Tika-->>HF: 13. Normalized text
+    HF->>Extractor: 12. Extract text & Markdown tables
+    Extractor-->>HF: 13. Normalized text & Markdown tables
     HF->>HF: 14. Normalize & split into bounded chunks (sliding window)
     HF->>Gemini: 15. Generate 768-dim embeddings in batches
     Gemini-->>HF: 16. Embedding vectors
@@ -100,7 +100,7 @@ sequenceDiagram
 ```
 
 1. **Transactional Outbox Decoupling**: Original files are saved to MinIO S3 object storage; file metadata, version, and a `DocumentProcessingOutboxMessage` are committed atomically within the same database transaction, ensuring no work is lost even if downstream background dispatch experiences transient faults. The API immediately returns `202 Accepted`.
-2. **Text Normalization**: Apache Tika extracts structured text across file formats, handling headers, footnotes, and tables.
+2. **Multimodal OCR & Text Normalization**: Gemini Multimodal OCR extracts verbatim text and structured Markdown tables from PDFs and image scans (PNG, JPG, WEBP), while native in-memory OpenXML and stream parsers instantly extract DOCX and TXT files.
 3. **Bounded Chunking**: Cleaned text is segmented into optimal token chunks with sliding-window overlaps to preserve context.
 4. **HNSW Vector Storage**: 768-dimensional embeddings are indexed in PostgreSQL using pgvector HNSW (`vector_cosine_ops`, `m = 16`, `ef_construction = 64`), enabling sub-millisecond approximate nearest neighbor lookups under enterprise volume.
 5. **Real-Time Visibility via Redis Backplane**: `Normora.Worker` pushes lifecycle updates over the Redis SignalR backplane (`Uploaded` ➔ `Processing` ➔ `Ready` / `Failed`). The API host relays these directly to connected browser WebSockets, updating the employer's dashboard live without browser polling.

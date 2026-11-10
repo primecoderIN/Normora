@@ -59,10 +59,10 @@ public static class ProviderServiceExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var tikaOptions = configuration.GetSection(TikaOptions.SectionName).Get<TikaOptions>() ?? new TikaOptions();
-        services.AddHttpClient<IDocumentTextExtractor, TikaDocumentTextExtractor>(client =>
+        var geminiOptions = configuration.GetSection(GeminiOptions.SectionName).Get<GeminiOptions>() ?? new GeminiOptions();
+        services.AddHttpClient<IDocumentTextExtractor, GeminiDocumentTextExtractor>(client =>
         {
-            client.BaseAddress = new Uri(tikaOptions.Endpoint);
+            client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(5);
         });
 

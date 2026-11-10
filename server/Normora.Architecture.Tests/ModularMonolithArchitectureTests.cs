@@ -151,7 +151,7 @@ public sealed class ModularMonolithArchitectureTests
     {
         var providerAdapterTypes = new[]
         {
-            typeof(Normora.Infrastructure.Providers.DocumentExtraction.TikaDocumentTextExtractor),
+            typeof(Normora.Infrastructure.Providers.DocumentExtraction.GeminiDocumentTextExtractor),
             typeof(Normora.Infrastructure.Providers.Gemini.GeminiEmbeddingService),
             typeof(Normora.Infrastructure.Providers.Gemini.GeminiTextGenerationService),
             typeof(Normora.Infrastructure.Providers.Gemini.GeminiQueryRewriterService),
@@ -159,8 +159,7 @@ public sealed class ModularMonolithArchitectureTests
             typeof(Normora.Infrastructure.Providers.Gemini.GeminiOptions),
             typeof(Normora.Infrastructure.Providers.Storage.MinioDocumentStorageService),
             typeof(Normora.Infrastructure.Providers.Storage.MinioBrandingStorageService),
-            typeof(Normora.Infrastructure.Providers.Storage.MinioOptions),
-            typeof(Normora.Infrastructure.Providers.DocumentExtraction.TikaOptions)
+            typeof(Normora.Infrastructure.Providers.Storage.MinioOptions)
         };
 
         Assert.All(providerAdapterTypes, adapterType => Assert.Same(InfrastructureAssembly, adapterType.Assembly));
