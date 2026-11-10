@@ -60,7 +60,9 @@ public sealed class SearchCompanyDocumentsTool(IMediator mediator) : IAgentTool
                 new PerformHybridRetrievalQuery(query, limit, context.PersonalTenantId),
                 cancellationToken);
 
-            var excerpts = retrievalResult.Candidates.Select(c => new
+            var excerpts = retrievalResult.Candidates
+                .Where(c => c.Score >= 0.40)
+                .Select(c => new
             {
                 documentId = c.DocumentId,
                 fileName = c.FileName,

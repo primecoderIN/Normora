@@ -17,5 +17,6 @@ public sealed record AskConversationCitation(
     Guid DocumentId,
     string FileName,
     int ChunkIndex,
-    double Score);
+    double Score,
+    Guid DocumentChunkId = default);
 

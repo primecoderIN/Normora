@@ -24,7 +24,7 @@ internal sealed class AskConversationCommandHandler(
     IAutoTitleService autoTitleService,
     ConversationMetrics metrics) : IRequestHandler<AskConversationCommand, AskConversationResult>
 {
-    private const double MinimumSimilarity = 0.35;
+    private const double MinimumSimilarity = 0.40;
 
     public async Task<AskConversationResult> Handle(
         AskConversationCommand request,
@@ -47,7 +47,12 @@ internal sealed class AskConversationCommandHandler(
             string answerText;
             List<MessageCitation> citations = [];
 
-            if (turn.TopCandidates.Count == 0 ||
+            var topScore = turn.TopCandidates.Count > 0 ? turn.TopCandidates[0].Score : 0.0;
+            var relevantCandidates = turn.TopCandidates
+                .Where(c => c.Score >= MinimumSimilarity && (topScore == 0 || c.Score >= topScore * 0.70))
+                .ToList();
+
+            if (relevantCandidates.Count == 0 ||
                 (turn.VectorSimOfFirst > 0 && turn.VectorSimOfFirst < MinimumSimilarity))
             {
                 answerText = await generationService.GenerateConversationalAnswerAsync(
@@ -55,24 +60,32 @@ internal sealed class AskConversationCommandHandler(
             }
             else
             {
-                var sources = turn.TopCandidates
+                var sources = relevantCandidates
                     .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
                     .ToList();
 
                 answerText = await generationService.GenerateConversationalAnswerAsync(
                     turn.RewrittenQuestion, sources, turn.HistoryTurns, turn.ActiveTenantName, turn.ToolContext, cancellationToken);
 
-                citations = turn.TopCandidates.Select((c, idx) => new MessageCitation
-                {
-                    Id = Guid.NewGuid(),
-                    TenantId = tenantContext.TenantId!.Value,
-                    DocumentId = c.DocumentId,
-                    DocumentChunkId = c.ChunkId,
-                    FileName = c.FileName,
-                    Rank = idx + 1,
-                    Score = c.Score,
-                    RetrievalMethod = RetrievalMethod.Hybrid
-                }).ToList();
+                // Group by document ID to deduplicate citations in the UI, selecting the highest-scoring chunk per document
+                citations = relevantCandidates
+                    .GroupBy(c => c.DocumentId)
+                    .Select((g, idx) =>
+                    {
+                        var best = g.OrderByDescending(c => c.Score).First();
+                        return new MessageCitation
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = tenantContext.TenantId!.Value,
+                            DocumentId = best.DocumentId,
+                            DocumentChunkId = best.ChunkId,
+                            FileName = best.FileName,
+                            Rank = idx + 1,
+                            Score = best.Score,
+                            RetrievalMethod = RetrievalMethod.Hybrid
+                        };
+                    })
+                    .ToList();
             }
 
             // 7. Persist assistant message + citations
@@ -116,11 +129,12 @@ internal sealed class AskConversationCommandHandler(
                 turn.UserMessage.Id,
                 assistantMessage.Id,
                 answerText,
-                turn.TopCandidates.Select((c, idx) => new AskConversationCitation(
+                citations.Select(c => new AskConversationCitation(
                     c.DocumentId,
                     c.FileName,
-                    c.ChunkIndex,
-                    c.Score)).ToList());
+                    0,
+                    c.Score,
+                    c.DocumentChunkId)).ToList());
         }
         finally
         {

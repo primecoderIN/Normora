@@ -62,7 +62,7 @@ graph LR
 ### 3. Conversations Module (`server/Modules/Conversations/`)
 - **Conversational RAG (Multi-Turn Chat)**: Manages persistent multi-turn conversations, maintaining sliding-window message memory and conversational summaries.
 - **Context-Aware Query Rewriter**: Determines whether a follow-up inquiry requires historical context (e.g., *"Does this apply to managers?"* ➔ *"Does the 30-day expense policy apply to managers?"*) using a fast LLM before executing retrieval.
-- **Reciprocal Rank Fusion (RRF)**: Merges semantic vector cosine ranking with full-text keyword search scores to produce a reranked, high-precision candidate chunk pool.
+- **Reciprocal Rank Fusion (RRF) & Calibrated Relevance**: Merges semantic vector cosine ranking with full-text keyword search scores into a calibrated relevance score (0.0 to 1.0), filtering candidate noise with absolute and relative drop-off thresholds.
 - **Autonomous Agent Tool Calling**: Intercepts Gemini function calling turns to execute registered workspace tools:
   - `calculate_policy_limit`: Deterministically calculates expense allowances (hotel caps, per-diem allowances, wellness stipends).
   - `escalate_hr_inquiry`: Dispatches transactional emails to workspace administrators when an inquiry cannot be answered from documentation.

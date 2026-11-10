@@ -327,9 +327,9 @@ export class Conversations implements OnInit, AfterViewChecked {
                     content: '',
                     createdAt: new Date().toISOString(),
                     rewritten: false,
-                    citations: (evt.sources ?? []).map((s: { documentId: string; fileName: string; score: number }) => ({
+                    citations: (evt.sources ?? []).map((s: { documentId: string; documentChunkId?: string; fileName: string; score: number }) => ({
                       documentId: s.documentId,
-                      documentChunkId: '',
+                      documentChunkId: s.documentChunkId || '',
                       fileName: s.fileName,
                       score: s.score
                     }))

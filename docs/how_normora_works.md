@@ -128,12 +128,12 @@ flowchart TD
         Rewriter -->|Standalone Question| RawQuery["Original User Query"]
     end
 
-    subgraph RetrievalLayer ["2. Department-Filtered Hybrid Retrieval"]
+    subgraph RetrievalLayer ["2. Department-Filtered Hybrid Retrieval & Noise Rejection"]
         RawQuery & RewriteLLM --> Hybrid["Hybrid Retrieval Service"]
-        Hybrid --> Vec["pgvector Cosine Similarity<br/>(WHERE DeptId IN UserDepts)"]
-        Hybrid --> FTS["Full-Text Keyword Search<br/>(WHERE DeptId IN UserDepts)"]
-        Vec & FTS --> RRF["Reciprocal Rank Fusion (RRF)<br/>Score = SUM(1 / (60 + Rank))"]
-        RRF --> Rerank["Top Authoritative Chunks Pool"]
+        Hybrid --> Vec["pgvector Cosine Similarity<br/>(Filter: distance <= 0.70)"]
+        Hybrid --> FTS["PostgreSQL Full-Text Search<br/>(plainto_tsquery 'english')"]
+        Vec & FTS --> RRF["Reciprocal Rank Fusion (RRF)<br/>Fuses rank lists & calibrates score (0.0 - 1.0)"]
+        RRF --> Rerank["Quality & Margin Filter<br/>(Score >= 40% AND >= 70% of top match)"]
     end
 
     subgraph GenerationLayer ["3. Autonomous Agent Tools & Streaming"]

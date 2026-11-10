@@ -25,7 +25,7 @@ internal sealed class AskConversationStreamCommandHandler(
     ITokenBudgetService tokenBudget,
     ConversationMetrics metrics) : IStreamRequestHandler<AskConversationStreamCommand, AskConversationStreamEvent>
 {
-    private const double MinimumSimilarity = 0.35;
+    private const double MinimumSimilarity = 0.40;
 
     public async IAsyncEnumerable<AskConversationStreamEvent> Handle(
         AskConversationStreamCommand request,
@@ -58,30 +58,46 @@ internal sealed class AskConversationStreamCommandHandler(
 
             // Pipeline Step 6: Early Citation Emission
             // Citations are emitted to the client SSE stream immediately before LLM generation begins.
-            // This allows the frontend to render document badges and source tabs instantly while text streams.
+            // Citations and LLM context sources are strictly filtered to relevant chunks:
+            // 1. Chunk score must meet absolute MinimumSimilarity (0.40).
+            // 2. Chunk score must not drop below 70% of the top match (rejects unrelated background noise).
             var assistantMessageId = Guid.NewGuid();
             var citations = new List<MessageCitation>();
             var mappedSources = new List<AskConversationCitation>();
 
-            if (turn.TopCandidates.Count > 0 && (turn.VectorSimOfFirst == 0 || turn.VectorSimOfFirst >= MinimumSimilarity))
-            {
-                citations = turn.TopCandidates.Select((c, idx) => new MessageCitation
-                {
-                    Id = Guid.NewGuid(),
-                    TenantId = tenantContext.TenantId!.Value,
-                    DocumentId = c.DocumentId,
-                    DocumentChunkId = c.ChunkId,
-                    FileName = c.FileName,
-                    Rank = idx + 1,
-                    Score = c.Score,
-                    RetrievalMethod = RetrievalMethod.Hybrid
-                }).ToList();
+            var topScore = turn.TopCandidates.Count > 0 ? turn.TopCandidates[0].Score : 0.0;
+            var relevantCandidates = turn.TopCandidates
+                .Where(c => c.Score >= MinimumSimilarity && (topScore == 0 || c.Score >= topScore * 0.70))
+                .ToList();
 
-                mappedSources = turn.TopCandidates.Select(c => new AskConversationCitation(
+            if (relevantCandidates.Count > 0 && (turn.VectorSimOfFirst == 0 || turn.VectorSimOfFirst >= MinimumSimilarity))
+            {
+                // Group by document ID to deduplicate citations in the UI, selecting the highest-scoring chunk per document
+                citations = relevantCandidates
+                    .GroupBy(c => c.DocumentId)
+                    .Select((g, idx) =>
+                    {
+                        var best = g.OrderByDescending(c => c.Score).First();
+                        return new MessageCitation
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = tenantContext.TenantId!.Value,
+                            DocumentId = best.DocumentId,
+                            DocumentChunkId = best.ChunkId,
+                            FileName = best.FileName,
+                            Rank = idx + 1,
+                            Score = best.Score,
+                            RetrievalMethod = RetrievalMethod.Hybrid
+                        };
+                    })
+                    .ToList();
+
+                mappedSources = citations.Select(c => new AskConversationCitation(
                     c.DocumentId,
                     c.FileName,
-                    c.ChunkIndex,
-                    c.Score)).ToList();
+                    0,
+                    c.Score,
+                    c.DocumentChunkId)).ToList();
             }
 
             // Yield CitationsReadyEvent event across SSE stream
@@ -89,11 +105,10 @@ internal sealed class AskConversationStreamCommandHandler(
 
             // Pipeline Step 7: Streaming LLM Answer Generation
             // Grounded RAG with Hallucination Defense:
-            // If top candidate similarity is below MinimumSimilarity threshold (0.35), we return a deterministic
-            // fallback message ("I could not find relevant information in company documents") to prevent hallucinations.
+            // If no relevant candidates meet the threshold, return deterministic fallback message
             var answerBuilder = new System.Text.StringBuilder();
 
-            if (turn.TopCandidates.Count == 0 || (turn.VectorSimOfFirst > 0 && turn.VectorSimOfFirst < MinimumSimilarity))
+            if (relevantCandidates.Count == 0 || (turn.VectorSimOfFirst > 0 && turn.VectorSimOfFirst < MinimumSimilarity))
             {
                 var text = RagConstants.FallbackAnswer;
                 answerBuilder.Append(text);
@@ -101,7 +116,7 @@ internal sealed class AskConversationStreamCommandHandler(
             }
             else
             {
-                var sources = turn.TopCandidates
+                var sources = relevantCandidates
                     .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
                     .ToList();
 
