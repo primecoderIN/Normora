@@ -109,14 +109,14 @@
           <a routerLink="../documents" class="inline-flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold px-3 py-1.5 min-h-8 rounded-lg transition-colors">View all</a>
         </div>
         <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
-          @for (doc of data.recentDocuments; track doc.name) {
+          @for (doc of data.recentDocuments; track $index) {
             <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors">
               <div class="flex items-center justify-center flex-none w-9 h-9 bg-red-50 text-red-600 rounded-md text-[0.7rem] font-extrabold">{{ doc.type }}</div>
               <div class="grid flex-1 min-w-0">
                 <strong class="text-[0.875rem] text-slate-900 dark:text-white truncate font-bold">{{ doc.name }}</strong>
                 <span class="text-[0.75rem] text-slate-500 dark:text-slate-400">{{ doc.category }} / {{ doc.date | date:'mediumDate' }}</span>
               </div>
-              <span class="px-2 py-0.5 text-[0.72rem] font-bold rounded-md" [ngClass]="doc.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'">
+              <span class="px-2 py-0.5 text-[0.72rem] font-bold rounded-md" [ngClass]="doc.status === 'Published' || doc.status === 'Ready' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'">
                 {{ doc.status }}
               </span>
             </div>
@@ -135,7 +135,7 @@
           <a routerLink="../conversations" class="inline-flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold px-3 py-1.5 min-h-8 rounded-lg transition-colors">Review</a>
         </div>
         <div class="grid gap-1.5 max-h-62 overflow-y-auto custom-scrollbar">
-          @for (q of data.topQuestions; track q.question) {
+          @for (q of data.topQuestions; track $index) {
             <div class="flex items-center gap-3 min-h-14 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors">
               <i class="pi pi-question-circle text-slate-400"></i>
               <span class="flex-1 text-[0.875rem] text-slate-900 dark:text-white truncate">{{ q.question }}</span>

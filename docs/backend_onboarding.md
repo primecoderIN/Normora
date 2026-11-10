@@ -258,6 +258,29 @@ modelBuilder.Entity<Document>()
     .HasQueryFilter(d => d.TenantId == _tenantContext.TenantId && d.DeletedAt == null);
 ```
 
+#### Unscoped Identity Root (`TenantsDbContext`) vs. Scoped Contexts
+- **Why `TenantsDbContext` has NO global tenant filter**: `TenantsDbContext` manages cross-workspace user identity, tenant creation, and tenant resolution bootstrapping before any tenant context is selected. A global filter would prevent `TenantResolutionMiddleware` and workspace-switching queries from executing.
+- **Explicit Scoping Required in Tenants**: Any query in `Tenants` accessing tenant-scoped tables (`TenantMemberships`, `Departments`, `UserGroups`, `AuditLogs`) MUST explicitly filter by `m.TenantId == request.TenantId`.
+- **Multi-Tenant Defense-in-Depth**: Relying solely on global query filters is dangerous if `.IgnoreQueryFilters()` is called or if queries run inside background worker tasks (e.g. Hangfire) where `_tenantContext` is unset. Cross-module query contracts (`GetDocumentDashboardMetricsQuery`, `GetTenantDashboardMetricsQuery`, `GetConversationDashboardMetricsQuery`) must explicitly require `Guid TenantId`.
+
+### EF Core LINQ Translation Standards for Aggregations (`GroupBy`)
+When writing group-by and aggregate queries against relational databases in EF Core:
+- **Always Project to Anonymous Types First**: EF Core's SQL generator can only translate aggregate projections into SQL `GROUP BY` when projecting to anonymous types or primitive assignments:
+  ```csharp
+  // 1. Database-side grouping, aggregation, and row limits via anonymous type
+  var raw = await db.Messages
+      .Where(m => m.TenantId == request.TenantId && m.Role == MessageRole.User)
+      .GroupBy(m => m.Content)
+      .Select(g => new { Question = g.Key, Count = g.Count() })
+      .OrderByDescending(x => x.Count)
+      .Take(5)
+      .ToListAsync(cancellationToken);
+
+  // 2. In-memory mapping to domain records or DTOs
+  var topQuestions = raw.Select(x => new TopQuestionData(x.Question, x.Count)).ToList();
+  ```
+- **Never Call Parameterized Record Constructors Inside `GroupBy().Select(...)`**: Calling `new TopQuestionData(g.Key, g.Count())` inside `GroupBy.Select` fails EF Core's relational expression translator, triggering an unhandled `InvalidOperationException` that maps globally to `400 Bad Request`.
+
 ### Migrations
 Because each module owns an isolated schema and DbContext, specify the context when generating migrations:
 ```bash

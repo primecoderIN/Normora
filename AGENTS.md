@@ -90,6 +90,9 @@ Application/{Feature}/
   modelBuilder.ApplyConfigurationsFromAssembly(typeof({ModuleName}DbContext).Assembly);
   ```
 - **100% DbContext Encapsulation**: Module DbContexts are strictly private to their owning module. API controllers, middleware, hubs, and other modules must NEVER inject another module's DbContext. Cross-module reads must use MediatR contracts in `Normora.Shared.Contracts.*`.
+- **Unscoped Multi-Tenancy Root (`TenantsDbContext`) vs Domain DbContexts**: `TenantsDbContext` manages directory, resolution bootstrapping, and cross-workspace memberships, so it does not apply an ambient `TenantId` global filter. Any query against `TenantsDbContext` that retrieves workspace-scoped records (`TenantMemberships`, `Departments`, `UserGroups`, `AuditLogs`) MUST explicitly filter by `m.TenantId == request.TenantId`.
+- **EF Core LINQ Translation Standards for Aggregations (`GroupBy`)**: When querying aggregations with `GroupBy` in EF Core, ALWAYS project to an anonymous type first (e.g. `.Select(g => new { Key = g.Key, Count = g.Count() })`) before projecting in memory to C# records or DTOs. Direct instantiations of parameterized constructors inside `GroupBy().Select(...)` cannot be translated by the EF Core relational compiler and will throw unhandled `InvalidOperationException`s mapped to 400 Bad Request.
+- **Multi-Tenant Defense-in-Depth for Cross-Module Contracts**: Cross-module query contracts in `Normora.Shared.Contracts.*` must explicitly take `Guid TenantId`. This guarantees identical, isolated behavior in both HTTP pipeline requests and non-HTTP background worker contexts.
 
 ### Cross-Module Communication & Boundaries
 - **MediatR Contracts for Cross-Module Calls**: Cross-module operations must strictly communicate using MediatR contracts in `Normora.Shared.Contracts.{ModuleName}`. Never inject internal services or interfaces across module boundaries:

@@ -649,6 +649,16 @@ Following a comprehensive senior architectural audit, the codebase implements st
   - In cross-department joins where `.IgnoreQueryFilters()` is applied to evaluate user permissions, queries explicitly filter `x.doc.DeletedAt == null` to prevent soft-deleted documents from ever entering semantic or keyword retrieval pipelines.
 
 ### 2. Multi-Tenancy & Database Schema Robustness
+- **Unscoped Identity Root vs. Scoped Domain Contexts**:
+  - `DocumentsDbContext` and `ConversationsDbContext` dynamically apply multitenant global query filters (`_tenantContext.TenantId`) to all domain entities.
+  - In contrast, `TenantsDbContext` acts as the system-wide identity and tenancy resolution composition root. It manages cross-tenant entities (`Tenants`, `Users`, `TenantMemberships`), organization switching, and resolution bootstrapping before an active tenant context exists. It applies only soft-delete global filters (`m.RemovedAt == null`).
+  - Consequently, any query in `TenantsDbContext` accessing tenant-specific data (`TenantMemberships`, `Departments`, `UserGroups`, `AuditLogs`) MUST explicitly filter by `TenantId`.
+- **Defense-in-Depth in Cross-Module Contracts**:
+  - Relying exclusively on ambient global query filters is a security risk if handlers or workers invoke `.IgnoreQueryFilters()` to inspect soft-deleted entities or execute in non-HTTP background worker contexts (e.g. Hangfire) where `_tenantContext.TenantId` is null.
+  - Cross-module MediatR query contracts (`GetDocumentDashboardMetricsQuery`, `GetTenantDashboardMetricsQuery`, `GetConversationDashboardMetricsQuery`) explicitly require and enforce `request.TenantId`. EF Core combines ambient filters and explicit LINQ `.Where` clauses via SQL `AND`, guaranteeing identical, tamper-proof data isolation across both HTTP requests and worker tasks.
+- **EF Core LINQ Translation Standards for Aggregations (`GroupBy`)**:
+  - In EF Core, LINQ queries performing grouping and aggregation (`GroupBy`) against relational databases must project to anonymous types (`.Select(g => new { Key = g.Key, Count = g.Count() })`) before mapping in-memory to domain DTOs or record types with parameterized constructors (e.g., `record TopQuestionData(string Question, int Count)`).
+  - Attempting to instantiate parameterized custom constructors directly inside `GroupBy().Select(...)` cannot be translated into SQL by EF Core's relational expression translator, triggering an unhandled `InvalidOperationException` mapped to `400 Bad Request` by `GlobalExceptionHandler`.
 - **Soft-Delete Unique Constraints**:
   - Re-inviting previously removed members cannot trigger duplicate key violations because `TenantMemberships` enforces a partial unique index:
     `HasIndex(m => new { m.TenantId, m.UserId }).IsUnique().HasFilter("\"RemovedAt\" IS NULL")`
@@ -768,7 +778,7 @@ Normora employs Redis via the provider-neutral `ICacheService` abstraction with 
 |---|---|---|---|
 | `tenant:res:{slug}:{userId}` | 30s sliding | Natural expiry | Membership resolution in `TenantResolutionMiddleware` & `DocumentHub` |
 | `branding:{slug}` | 5m sliding | `UpdateTenantBrandingCommand` | Dynamic workspace CSS variables and logo loading |
-| `dashboard:{tenantId}` | 2m sliding | Document uploads, deletions, version changes | Employer telemetry and storage metrics |
+| `dashboard:{tenantId}` | 2m sliding | Document uploads, deletions, version changes, member removals, invitation acceptances | Employer telemetry and storage metrics |
 | `suggested-questions:{tenantId}:{deptKey}` | 6h sliding | Document updates | Pre-computed conversational RAG suggested prompts |
 
 ---

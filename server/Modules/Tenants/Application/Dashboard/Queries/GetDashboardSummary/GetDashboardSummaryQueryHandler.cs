@@ -1,5 +1,6 @@
 using MediatR;
 using Normora.Modules.Tenants.Application.Dashboard.DTOs;
+using Normora.Shared.Constants;
 using Normora.Shared.Contracts.Conversations;
 using Normora.Shared.Contracts.Documents;
 using Normora.Shared.Contracts.Tenants;
@@ -14,25 +15,25 @@ public class GetDashboardSummaryQueryHandler(
 {
     public async Task<DashboardSummaryDto> Handle(GetDashboardSummaryQuery request, CancellationToken cancellationToken)
     {
-        var tenantGuid = tenantContext.TenantId ?? Guid.Empty;
-        var tenantId = tenantContext.TenantId?.ToString() ?? "global";
-        var cacheKey = $"dashboard:{tenantId}";
+        if (!tenantContext.IsTenantResolved || !tenantContext.TenantId.HasValue)
+        {
+            throw new InvalidOperationException(ApiMessages.TenantContextMissing);
+        }
+
+        var tenantGuid = tenantContext.TenantId.Value;
+        var cacheKey = $"dashboard:{tenantGuid}";
 
         return await cache.GetOrCreateAsync(cacheKey, async ct =>
         {
-            // Start independent metrics queries concurrently
-            var docMetricsTask = mediator.Send(new GetDocumentDashboardMetricsQuery(tenantGuid), ct);
-            var convMetricsTask = mediator.Send(new GetConversationDashboardMetricsQuery(tenantGuid), ct);
-
-            // 1. Await document metrics and resolve department IDs
-            var docMetrics = await docMetricsTask;
+            // Execute module metrics queries sequentially to avoid concurrent DbContext execution within the request scope
+            var docMetrics = await mediator.Send(new GetDocumentDashboardMetricsQuery(tenantGuid), ct);
             var deptIds = docMetrics.RecentDocuments.SelectMany(d => d.DepartmentIds).Distinct().ToList();
 
-            // 2. Resolve department names for recent documents via Tenants contract
+            // Resolve department names for recent documents via Tenants contract
             var tenantMetrics = await mediator.Send(new GetTenantDashboardMetricsQuery(tenantGuid, deptIds), ct);
 
-            // 3. Await conversation metrics
-            var convMetrics = await convMetricsTask;
+            // Await conversation metrics
+            var convMetrics = await mediator.Send(new GetConversationDashboardMetricsQuery(tenantGuid), ct);
 
             var recentDocumentsDto = docMetrics.RecentDocuments.Select(d => new RecentDocumentDto
             {
@@ -65,6 +66,7 @@ public class GetDashboardSummaryQueryHandler(
             }).ToList();
 
             var docTypes = docMetrics.FileNames
+                .Where(f => !string.IsNullOrWhiteSpace(f))
                 .GroupBy(f =>
                 {
                     var lastDot = f.LastIndexOf('.');
@@ -88,7 +90,7 @@ public class GetDashboardSummaryQueryHandler(
             }
 
             double answerQuality = convMetrics.TotalQuestions > 0
-                ? Math.Round(((double)convMetrics.TotalSavedAnswers / convMetrics.TotalQuestions) * 100, 1)
+                ? Math.Min(100.0, Math.Round(((double)convMetrics.TotalSavedAnswers / convMetrics.TotalQuestions) * 100, 1))
                 : 100.0;
 
             var kbDescription = docMetrics.FailedDocsCount > 0 ? $"{docMetrics.FailedDocsCount} documents require attention due to processing errors." :

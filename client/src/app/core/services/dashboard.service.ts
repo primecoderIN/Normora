@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
+import { ApiResponse } from '@core/models/api-response.model';
 
 /**
  * Aggregated administrative metrics for the employer dashboard.
@@ -37,8 +38,8 @@ export class DashboardService {
   /**
    * Fetches the dashboard analytics overview.
    */
-  getSummary(): Observable<{ data: DashboardSummaryDto, success: boolean, message: string }> {
-    return this.http.get<{ data: DashboardSummaryDto, success: boolean, message: string }>(this.baseUrl);
+  getSummary(): Observable<ApiResponse<DashboardSummaryDto>> {
+    return this.http.get<ApiResponse<DashboardSummaryDto>>(this.baseUrl);
   }
 }
 

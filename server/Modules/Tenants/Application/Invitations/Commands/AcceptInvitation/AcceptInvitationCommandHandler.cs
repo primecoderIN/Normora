@@ -96,6 +96,7 @@ public class AcceptInvitationCommandHandler(
         if (cache != null && !string.IsNullOrWhiteSpace(currentUser.ExternalUserId))
         {
             await cache.RemoveAsync($"tenant_access:{invitation.TenantId:N}:{currentUser.ExternalUserId}", cancellationToken);
+            await cache.RemoveAsync($"dashboard:{invitation.TenantId}", cancellationToken);
         }
 
         return true;

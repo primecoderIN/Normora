@@ -23,14 +23,23 @@ public sealed class GetDocumentDashboardMetricsQueryHandler(DocumentsDbContext d
         GetDocumentDashboardMetricsQuery request,
         CancellationToken cancellationToken)
     {
+        if (request.TenantId == Guid.Empty)
+        {
+            return new DocumentDashboardMetricsResult(0, 0, Array.Empty<DashboardRecentDocumentItem>(), Array.Empty<string>(), 0, 0);
+        }
+
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
 
-        var totalDocuments = await documentsDb.Documents.CountAsync(cancellationToken);
+        var totalDocuments = await documentsDb.Documents
+            .Where(d => d.TenantId == request.TenantId)
+            .CountAsync(cancellationToken);
+
         var documentsThisMonth = await documentsDb.Documents
-            .Where(d => d.UploadedAt >= thirtyDaysAgo)
+            .Where(d => d.TenantId == request.TenantId && d.UploadedAt >= thirtyDaysAgo)
             .CountAsync(cancellationToken);
 
         var recentDocs = await documentsDb.Documents
+            .Where(d => d.TenantId == request.TenantId)
             .Include(d => d.DocumentDepartments)
             .Include(d => d.Versions)
             .OrderByDescending(d => d.UploadedAt)
@@ -46,13 +55,17 @@ public sealed class GetDocumentDashboardMetricsQueryHandler(DocumentsDbContext d
         )).ToList();
 
         var fileNames = await documentsDb.Documents
+            .Where(d => d.TenantId == request.TenantId)
             .Select(d => d.FileName)
             .ToListAsync(cancellationToken);
 
         var failedDocs = await documentsDb.DocumentVersions
-            .CountAsync(v => v.Status == DocumentStatus.Failed && v.IsActive, cancellationToken);
+            .Where(v => v.TenantId == request.TenantId && v.Status == DocumentStatus.Failed && v.IsActive)
+            .CountAsync(cancellationToken);
+
         var processingDocs = await documentsDb.DocumentVersions
-            .CountAsync(v => v.Status == DocumentStatus.Processing && v.IsActive, cancellationToken);
+            .Where(v => v.TenantId == request.TenantId && v.Status == DocumentStatus.Processing && v.IsActive)
+            .CountAsync(cancellationToken);
 
         return new DocumentDashboardMetricsResult(
             totalDocuments,

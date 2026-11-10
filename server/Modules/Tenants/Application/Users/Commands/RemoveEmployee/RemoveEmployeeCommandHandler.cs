@@ -64,6 +64,7 @@ public class RemoveEmployeeCommandHandler(
         if (cache != null)
         {
             await cache.RemoveAsync($"tenant_access:{tenantId:N}:{membership.User.ExternalUserId}", cancellationToken);
+            await cache.RemoveAsync($"dashboard:{tenantId}", cancellationToken);
         }
 
         // Best-effort external identity sync: local database remains the authoritative source of truth.

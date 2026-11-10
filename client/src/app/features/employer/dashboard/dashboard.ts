@@ -60,9 +60,11 @@ export class Dashboard implements OnInit {
     // whenever documents or memberships are added or removed.
     this.dashboardService.getSummary().subscribe({
       next: (res) => {
-        this.summary.set(res.data);
-        this.initDocumentChart(res.data.documentCoverage);
-        this.initActivityChart(res.data.chatActivity);
+        if (res?.data) {
+          this.summary.set(res.data);
+          this.initDocumentChart(res.data.documentCoverage);
+          this.initActivityChart(res.data.chatActivity);
+        }
         this.isLoading.set(false);
       },
       error: () => {
@@ -77,14 +79,17 @@ export class Dashboard implements OnInit {
   initDocumentChart(coverage: DashboardSummaryDto['documentCoverage']) {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--p-text-color') || '#334155';
+    const items = coverage && coverage.length > 0
+      ? coverage
+      : [{ label: 'No Documents', value: 1, color: '#e2e8f0', hoverColor: '#cbd5e1' }];
 
     this.documentChartData = {
-      labels: coverage.map(c => c.label),
+      labels: items.map(c => c.label),
       datasets: [
         {
-          data: coverage.map(c => c.value),
-          backgroundColor: coverage.map(c => c.color),
-          hoverBackgroundColor: coverage.map(c => c.hoverColor),
+          data: items.map(c => c.value),
+          backgroundColor: items.map(c => c.color),
+          hoverBackgroundColor: items.map(c => c.hoverColor),
           borderWidth: 0
         }
       ]
@@ -114,16 +119,19 @@ export class Dashboard implements OnInit {
 
   initActivityChart(activity: DashboardSummaryDto['chatActivity']) {
     const documentStyle = getComputedStyle(document.documentElement);
-    const textColor = documentStyle.getPropertyValue('--p-text-color') || '#64748b';
     const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color') || '#94a3b8';
     const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color') || '#e2e8f0';
 
+    const labels = activity?.labels ?? [];
+    const data = activity?.data ?? [];
+    const maxVal = data.length > 0 ? Math.max(...data, 10) : 10;
+
     this.activityChartData = {
-      labels: activity.labels,
+      labels: labels,
       datasets: [
         {
           label: 'Conversations',
-          data: activity.data,
+          data: data,
           fill: true,
           borderColor: '#6366f1',
           tension: 0.4,
@@ -176,7 +184,7 @@ export class Dashboard implements OnInit {
             display: false
           },
           min: 0,
-          max: Math.ceil(Math.max(...activity.data, 10) * 1.2)
+          max: Math.ceil(maxVal * 1.2)
         }
       }
     };

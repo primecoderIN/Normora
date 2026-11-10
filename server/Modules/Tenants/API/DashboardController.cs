@@ -22,8 +22,10 @@ public class DashboardController(IMediator mediator) : ControllerBase
     /// <summary>
     /// Retrieves tenant dashboard summary including document counts, pending invites, and active members.
     /// Restricted to Tenant Administrators.
+    /// Supports both GET /api/dashboard and GET /api/dashboard/summary.
     /// </summary>
     [HttpGet]
+    [HttpGet("summary")]
     [RequireTenant(TenantRoles.Admin)]
     public async Task<IActionResult> GetDashboardSummary(CancellationToken cancellationToken)
     {

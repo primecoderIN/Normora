@@ -91,7 +91,7 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `GET` | `/dashboard/summary` | RequireTenant(Employer) | Fetch aggregated workspace dashboard metrics (total documents, members, storage utilization, and conversation volume). MediatR aggregator querying decoupled modules. |
+| `GET` | `/dashboard`, `/dashboard/summary` | RequireTenant(Admin) | Fetch aggregated workspace dashboard metrics (total documents, members, storage utilization, and conversation volume). MediatR aggregator querying decoupled modules. |
 
 ---
 
