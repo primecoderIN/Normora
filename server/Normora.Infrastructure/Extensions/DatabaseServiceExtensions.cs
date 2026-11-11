@@ -8,6 +8,7 @@ using Normora.Modules.Documents;
 using Normora.Modules.Tenants;
 using Normora.Shared.Interfaces;
 using Normora.Shared.Constants;
+using Normora.Infrastructure.Options;
 
 namespace Normora.Infrastructure.Extensions;
 
@@ -39,15 +40,19 @@ public static class DatabaseServiceExtensions
             }
 
             // Distributed Cache (Redis with in-memory fallback for local dev / tests without Redis)
-            var redisConnectionString = configuration.GetConnectionString("Redis")
-                ?? configuration["REDIS_CONNECTION"];
+            var redisOptions = configuration.GetSection(RedisOptions.SectionName).Get<RedisOptions>() ?? new RedisOptions();
+            if (string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
+            {
+                redisOptions.ConnectionString = configuration.GetConnectionString(RedisOptions.SectionName)
+                    ?? configuration[RedisOptions.EnvironmentVariable];
+            }
 
-            if (!string.IsNullOrWhiteSpace(redisConnectionString))
+            if (!string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
             {
                 services.AddStackExchangeRedisCache(options =>
                 {
-                    options.Configuration = redisConnectionString;
-                    options.InstanceName = "normora:";
+                    options.Configuration = redisOptions.ConnectionString;
+                    options.InstanceName = redisOptions.InstanceName;
                 });
             }
             else

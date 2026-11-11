@@ -159,7 +159,8 @@ public sealed class ModularMonolithArchitectureTests
             typeof(Normora.Infrastructure.Providers.Gemini.GeminiOptions),
             typeof(Normora.Infrastructure.Providers.Storage.MinioDocumentStorageService),
             typeof(Normora.Infrastructure.Providers.Storage.MinioBrandingStorageService),
-            typeof(Normora.Infrastructure.Providers.Storage.MinioOptions)
+            typeof(Normora.Infrastructure.Providers.Storage.MinioOptions),
+            typeof(Normora.Infrastructure.Options.RedisOptions)
         };
 
         Assert.All(providerAdapterTypes, adapterType => Assert.Same(InfrastructureAssembly, adapterType.Assembly));
@@ -222,5 +223,33 @@ public sealed class ModularMonolithArchitectureTests
         Assert.Equal(2, parameters.Length);
         Assert.Equal(typeof(Normora.Modules.Documents.Domain.Document), parameters[0].ParameterType);
         Assert.Equal(typeof(Guid), parameters[1].ParameterType);
+    }
+
+    [Fact]
+    public void RedisOptions_DefaultValues_AreStronglyTypedAndConsistent()
+    {
+        var options = new Normora.Infrastructure.Options.RedisOptions();
+
+        Assert.Equal("Redis", Normora.Infrastructure.Options.RedisOptions.SectionName);
+        Assert.Equal("REDIS_CONNECTION", Normora.Infrastructure.Options.RedisOptions.EnvironmentVariable);
+        Assert.Equal("normora:signalr", options.ChannelPrefix);
+        Assert.Equal("normora:", options.InstanceName);
+        Assert.Null(options.ConnectionString);
+    }
+
+    [Fact]
+    public void AddNormoraSignalR_WithIOptions_RegistersSignalRSuccessfully()
+    {
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        var redisOptions = Microsoft.Extensions.Options.Options.Create(new Normora.Infrastructure.Options.RedisOptions
+        {
+            ConnectionString = null
+        });
+
+        services.AddNormoraSignalR(redisOptions);
+
+        var serviceProvider = services.BuildServiceProvider();
+        var hubContext = serviceProvider.GetService<Microsoft.AspNetCore.SignalR.IHubContext<Normora.Infrastructure.Hubs.DocumentHub>>();
+        Assert.NotNull(hubContext);
     }
 }

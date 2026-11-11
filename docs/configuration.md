@@ -97,6 +97,14 @@ The following options classes are defined in the `Normora.Shared` project. All p
   * `IsProduction` (bool): Toggles between PayU sandbox environment (`https://test.payu.in/_payment`) and live production (`https://secure.payu.in/_payment`). Injected via `PAYU_IS_PRODUCTION`. Defaults to `false`.
   * `PaymentUrl` (string, computed): Resolves the active hosted checkout redirect endpoint based on `IsProduction`.
 
+### `RedisOptions`
+* **Section:** `Redis`
+* **Owner:** `Normora.Infrastructure/Options`
+* **Properties:**
+  * `ConnectionString` (string?): Redis connection string or host:port endpoint. Injected via `Redis:ConnectionString`, `ConnectionStrings:Redis` (Docker: `ConnectionStrings__Redis`), or environment variable `REDIS_CONNECTION`.
+  * `ChannelPrefix` (string): Pub/Sub channel prefix for SignalR backplane messaging. Defaults to `normora:signalr`.
+  * `InstanceName` (string): Key prefix for distributed cache entries. Defaults to `normora:`.
+
 ---
 
 ## 3. Environment Configuration Guide

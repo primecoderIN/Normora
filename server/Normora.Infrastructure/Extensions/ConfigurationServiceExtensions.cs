@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Modules.Tenants.Options;
 using Normora.Shared.Options;
+using Normora.Infrastructure.Options;
 using Normora.Infrastructure.Providers.Gemini;
 using Normora.Infrastructure.Providers.Storage;
 
@@ -48,6 +49,19 @@ public static class ConfigurationServiceExtensions
         // SMTP and transactional email settings
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName));
+
+        // Redis distributed caching and SignalR pub/sub backplane options
+        services.AddOptions<RedisOptions>()
+            .Bind(configuration.GetSection(RedisOptions.SectionName))
+            .Configure(options =>
+            {
+                // Fallback to ConnectionStrings:Redis or REDIS_CONNECTION if ConnectionString is not explicitly specified
+                if (string.IsNullOrWhiteSpace(options.ConnectionString))
+                {
+                    options.ConnectionString = configuration.GetConnectionString(RedisOptions.SectionName)
+                        ?? configuration[RedisOptions.EnvironmentVariable];
+                }
+            });
 
         return services;
     }

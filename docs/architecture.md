@@ -145,7 +145,7 @@ app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint();
 ### Multi-Host SignalR Redis Backplane
 Because `Normora.Worker` (which executes background ingestion jobs) and `Normora.Api` (which hosts the client WebSocket connections) run in isolated containers, SignalR requires a distributed backplane to route real-time events across process boundaries.
 - **Backplane Package**: `Microsoft.AspNetCore.SignalR.StackExchangeRedis`.
-- **Shared Extension**: `services.AddNormoraSignalR(configuration)` in `Normora.Infrastructure` configures SignalR with Redis pub/sub using `RedisChannel.Literal("normora:signalr")`.
+- **Shared Extension**: `services.AddNormoraSignalR(...)` in `Normora.Infrastructure` configures SignalR with Redis pub/sub using typed `IOptions<RedisOptions>` and `RedisOptions.ChannelPrefix` (defaulting to `normora:signalr`), eliminating hardcoded magic strings.
 - **Broadcast Flow**: When `Normora.Worker` publishes a `DocumentStatusChanged` event through `IDocumentNotificationService`, the event is dispatched to the Redis backplane, received by `Normora.Api`, and immediately streamed to the employer's connected browser over WebSocket.
 
 
