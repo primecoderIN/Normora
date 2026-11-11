@@ -1,6 +1,8 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Normora.Infrastructure.Extensions;
 using Xunit;
 
 namespace Normora.Architecture.Tests;
@@ -241,6 +243,7 @@ public sealed class ModularMonolithArchitectureTests
     public void AddNormoraSignalR_WithIOptions_RegistersSignalRSuccessfully()
     {
         var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        services.AddLogging();
         var redisOptions = Microsoft.Extensions.Options.Options.Create(new Normora.Infrastructure.Options.RedisOptions
         {
             ConnectionString = null
