@@ -66,6 +66,10 @@ export const ApiMessages = {
     summary: 'Error',
     detail: 'Failed to delete document'
   },
+  DocumentProcessingFailed: {
+    summary: 'Processing Failed',
+    detail: 'Processing was interrupted before the document could be indexed. Please try uploading the file again.'
+  },
   EmployeeRemoved: {
     summary: 'Success',
     detail: 'Employee removed successfully'

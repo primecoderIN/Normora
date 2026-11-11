@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Normora.Shared;
+using Normora.Shared.Constants;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Interfaces;
 
@@ -93,8 +94,8 @@ public sealed class DocumentProcessingJob(
             // Evict cached dashboard metrics on failure
             await cache.RemoveAsync($"dashboard:{tenantId}");
 
-            // Notify employers about the processing failure
-            await NotifyDocumentProcessingFailedAsync(version.Document, tenantId, exception.Message);
+            // Notify employers about the processing failure using safe user guidance (never leak raw exception strings)
+            await NotifyDocumentProcessingFailedAsync(version.Document, tenantId);
 
             throw;
         }
@@ -166,7 +167,7 @@ public sealed class DocumentProcessingJob(
         }
     }
 
-    private async Task NotifyDocumentProcessingFailedAsync(Document document, Guid tenantId, string errorMessage)
+    private async Task NotifyDocumentProcessingFailedAsync(Document document, Guid tenantId)
     {
         try
         {
@@ -180,7 +181,7 @@ public sealed class DocumentProcessingJob(
                 return;
             }
 
-            var html = DocumentEmailTemplates.DocumentProcessingFailedEmail(tenantName, document.FileName, errorMessage);
+            var html = DocumentEmailTemplates.DocumentProcessingFailedEmail(tenantName, document.FileName, ApiMessages.DocumentProcessingFailed);
             var subject = $"[Action Required] Processing failed: {document.FileName}";
 
             foreach (var email in adminEmails)

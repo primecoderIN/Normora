@@ -41,6 +41,7 @@ public static class ApiMessages
     public const string TrustedProxyRequired = "At least one trusted reverse proxy IP must be configured outside development.";
     public const string InvalidTrustedProxy = "A configured trusted reverse proxy IP is invalid.";
     public const string DocumentPurgeIncomplete = "One or more deleted documents could not be purged.";
+    public const string DocumentProcessingFailed = "Processing was interrupted before the document could be indexed. Please try uploading the file again.";
     public const string LlmGenerationNotConfigured = "Ask Normora requires AI text generation to be configured.";
     public const string ExtractionServiceNotConfigured = "Document processing requires an AI extraction service to be configured.";
     public const string EmailServiceNotConfigured = "Transactional email delivery is not configured. Set the email API key in your environment or configuration.";

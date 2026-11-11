@@ -185,4 +185,42 @@ public sealed class ModularMonolithArchitectureTests
 
         Assert.Empty(hostReferences);
     }
+
+    [Fact]
+    public void DocumentProcessingFailedEmail_MustNotExpose_TechnicalErrorDetails_Or_RawStatusCodes()
+    {
+        const string tenantName = "Acme Corp <script>";
+        const string fileName = "policy_handbook.pdf";
+
+        var emailHtml = Normora.Modules.Documents.Application.Jobs.DocumentEmailTemplates.DocumentProcessingFailedEmail(tenantName, fileName);
+
+        // Security check: Raw error detail container must never exist in notification emails (CWE-209 mitigation)
+        Assert.DoesNotContain("Error Details", emailHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("font-family: monospace", emailHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("429 (Too Many Requests)", emailHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("500 (Internal Server Error)", emailHtml, StringComparison.OrdinalIgnoreCase);
+
+        // Security check: Dynamic inputs must be properly HTML escaped
+        Assert.DoesNotContain("<script>", emailHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("&lt;script&gt;", emailHtml, StringComparison.OrdinalIgnoreCase);
+
+        // UX check: Clean, user-friendly status and recommended action present
+        Assert.Contains("Status", emailHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Recommended action:", emailHtml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DocumentProcessingJob_FailureNotifier_MustNotAcceptRawErrorMessageString()
+    {
+        var jobType = typeof(Normora.Modules.Documents.Application.Jobs.DocumentProcessingJob);
+        var notifyMethod = jobType.GetMethod("NotifyDocumentProcessingFailedAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(notifyMethod);
+        var parameters = notifyMethod.GetParameters();
+
+        // Must only receive (Document document, Guid tenantId) - never raw string errorMessage or Exception
+        Assert.Equal(2, parameters.Length);
+        Assert.Equal(typeof(Normora.Modules.Documents.Domain.Document), parameters[0].ParameterType);
+        Assert.Equal(typeof(Guid), parameters[1].ParameterType);
+    }
 }

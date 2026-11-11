@@ -103,7 +103,7 @@ sequenceDiagram
 2. **Multimodal OCR & Text Normalization**: Gemini Multimodal OCR extracts verbatim text and structured Markdown tables from PDFs and image scans (PNG, JPG, WEBP), while native in-memory OpenXML and stream parsers instantly extract DOCX and TXT files.
 3. **Bounded Chunking**: Cleaned text is segmented into optimal token chunks with sliding-window overlaps to preserve context.
 4. **HNSW Vector Storage**: 768-dimensional embeddings are indexed in PostgreSQL using pgvector HNSW (`vector_cosine_ops`, `m = 16`, `ef_construction = 64`), enabling sub-millisecond approximate nearest neighbor lookups under enterprise volume.
-5. **Real-Time Visibility via Redis Backplane**: `Normora.Worker` pushes lifecycle updates over the Redis SignalR backplane (`Uploaded` ➔ `Processing` ➔ `Ready` / `Failed`). The API host relays these directly to connected browser WebSockets, updating the employer's dashboard live without browser polling.
+5. **Real-Time Visibility via Redis Backplane**: `Normora.Worker` pushes lifecycle updates over the Redis SignalR backplane (`Uploaded` ➔ `Processing` ➔ `Ready` / `Failed`). The API host relays these directly to connected browser WebSockets, updating the employer's dashboard live without browser polling. When an unexpected ingestion failure occurs, the document is moved to `Failed`, full stack traces are logged to internal telemetry, and a sanitized alert email is dispatched to tenant administrators using safe user guidance (`DocumentEmailTemplates.DocumentProcessingFailedEmail`) to prevent technical error details or upstream HTTP status codes from leaking (CWE-209).
 
 ---
 

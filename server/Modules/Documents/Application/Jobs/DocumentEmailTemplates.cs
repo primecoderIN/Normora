@@ -10,12 +10,15 @@ public static class DocumentEmailTemplates
 {
     /// <summary>
     /// Generates an alert email when document ingestion/processing fails.
+    /// Strictly renders safe, user-friendly status information and avoids leaking raw technical exception strings, status codes, or stack traces.
     /// </summary>
-    public static string DocumentProcessingFailedEmail(string tenantName, string fileName, string errorMessage)
+    public static string DocumentProcessingFailedEmail(string tenantName, string fileName, string? statusReason = null)
     {
         var safeTenant = WebUtility.HtmlEncode(tenantName);
         var safeFile = WebUtility.HtmlEncode(fileName);
-        var safeError = WebUtility.HtmlEncode(errorMessage);
+        var safeStatus = !string.IsNullOrWhiteSpace(statusReason)
+            ? WebUtility.HtmlEncode(statusReason)
+            : "Processing was interrupted before the document could be indexed.";
 
         var content = $@"
             <div style=""display: inline-block; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 12px; margin-bottom: 16px;"">
@@ -29,14 +32,14 @@ public static class DocumentEmailTemplates
             </p>
             <div style=""background-color: #f8fafc; border: 1px solid {EmailLayout.BorderColor}; border-radius: 8px; padding: 16px; margin: 20px 0;"">
                 <div style=""font-size: 12px; font-weight: 600; text-transform: uppercase; color: {EmailLayout.MutedTextColor}; margin-bottom: 4px;"">
-                    Error Details
+                    Status
                 </div>
-                <div style=""font-family: monospace; font-size: 13px; color: #dc2626; word-break: break-word;"">
-                    {safeError}
+                <div style=""font-size: 14px; color: {EmailLayout.TextColor}; line-height: 20px;"">
+                    {safeStatus}
                 </div>
             </div>
             <p style=""margin: 16px 0 0 0; font-size: 14px; line-height: 22px; color: {EmailLayout.TextColor};"">
-                <strong>Recommended action:</strong> Verify that the file is not password-protected or corrupted, and try uploading it again from your employer dashboard.
+                <strong>Recommended action:</strong> Verify that the file is not password-protected, encrypted, or corrupted, and try uploading it again from your employer dashboard.
             </p>";
 
         return EmailLayout.Wrap($"Alert: Processing failed for {safeFile}", content);

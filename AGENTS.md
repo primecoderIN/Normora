@@ -13,6 +13,7 @@ Security is the highest priority in this codebase. We have strict exception patt
 - **BFLA (Broken Function Level Authorization)**: Whenever a user lacks the permissions to execute an action/endpoint, throw a `BflaException()`. This is mapped globally to a `403 Forbidden`.
 - **Controllers**: Do NOT return explicit `NotFound("Specific item missing")` strings. Always return a generic `ApiMessages.NotFound` to prevent information leakage.
 - **Controllers**: Do NOT return empty `Forbid()` responses. Always return `StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure(ApiMessages.Forbidden));` so the frontend interceptor can parse the structured JSON properly.
+- **Background Workers & Email Notifications (CWE-209)**: Background processing jobs (such as `DocumentProcessingJob`) and transactional email templates must NEVER expose raw exception messages (`exception.Message`), internal HTTP status codes, or infrastructure traces to end-users or workspace administrators. Always map failure notifications to generic, user-friendly constants in `Normora.Shared.Constants.ApiMessages`. Detailed stack traces and error metadata belong strictly in structured application logs.
 
 ## 3. Tailwind CSS v4 Syntax
 This project uses Tailwind CSS v4. Ensure you follow v4 syntax rules.
