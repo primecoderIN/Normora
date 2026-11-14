@@ -84,16 +84,16 @@
         <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Documents</span>
       </a>
 
-      <a 
-        [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'conversations']" 
-        routerLinkActive="bg-primary-500/15! text-white! border-l-primary-500! font-semibold" 
-        class="flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white no-underline border-l-[3px] border-transparent transition-all group" 
+      <button 
+        type="button"
+        (click)="copilotService.openExpanded()" 
+        class="w-full flex items-center gap-3 min-h-10 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white border-l-[3px] border-transparent transition-all group text-left cursor-pointer" 
         [class.justify-center]="!isSidebarExpanded()"
-        title="Conversations"
+        title="Copilot & Conversations"
       >
         <i class="pi pi-comments text-base w-4 text-slate-400 group-hover:text-primary-400 transition-colors"></i>
-        <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Conversations</span>
-      </a>
+        <span [class.hidden]="!isSidebarExpanded()" class="text-xs">Copilot</span>
+      </button>
 
       @if (!activeWorkspace()?.isPersonal) {
         <a 
@@ -282,9 +282,9 @@
         <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'documents']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
           <i class="pi pi-file text-base"></i> Documents
         </a>
-        <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'conversations']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
-          <i class="pi pi-comments text-base"></i> Conversations
-        </a>
+        <button type="button" (click)="copilotService.openExpanded()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 text-sm text-left cursor-pointer">
+          <i class="pi pi-comments text-base"></i> Copilot & Conversations
+        </button>
         <a [routerLink]="['/app/workspaces', activeWorkspace()?.tenantSlug, 'employer', 'employees']" routerLinkActive="bg-primary-600/30! text-white! font-semibold" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 text-sm">
           <i class="pi pi-users text-base"></i> Employees
         </a>

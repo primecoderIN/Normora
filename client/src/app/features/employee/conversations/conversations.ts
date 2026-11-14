@@ -16,6 +16,7 @@ import {
 import { ConversationSidebarComponent } from './components/conversation-sidebar.component';
 import { ConversationChatComponent } from './components/conversation-chat.component';
 import { UserService } from '@core/services/user.service';
+import { CopilotService } from '@core/services/copilot.service';
 
 @Component({
   selector: 'app-conversations',
@@ -64,6 +65,7 @@ import { UserService } from '@core/services/user.service';
 export class Conversations implements OnInit, AfterViewChecked {
   private conversationService = inject(ConversationService);
   private userService = inject(UserService);
+  public copilotService = inject(CopilotService);
   @ViewChild(ConversationChatComponent) private chatComponent!: ConversationChatComponent;
 
   // ─── State ────────────────────────────────────────────────────────────────
@@ -102,6 +104,7 @@ export class Conversations implements OnInit, AfterViewChecked {
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   ngOnInit() {
+    this.copilotService.openExpanded();
     this.startBlankConversation();
     this.loadConversations();
   }

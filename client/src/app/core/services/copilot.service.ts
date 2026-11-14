@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { firstValueFrom, filter } from 'rxjs';
-import { ConversationService, MessageDto } from './conversation.service';
+import { ConversationService, MessageDto, ConversationDto } from './conversation.service';
 import { UserService } from './user.service';
 import { ApiMessages } from '../constants/api-messages';
 
@@ -26,8 +26,12 @@ export class CopilotService {
 
   // ─── Reactive Signals ────────────────────────────────────────────────────────
   readonly isOpen = signal<boolean>(false);
+  readonly isExpanded = signal<boolean>(false);
+  readonly showHistoryPane = signal<boolean>(false);
   readonly isSending = signal<boolean>(false);
+  readonly isLoadingHistory = signal<boolean>(false);
   readonly activeConversationId = signal<string | null>(null);
+  readonly conversations = signal<ConversationDto[]>([]);
   readonly messages = signal<MessageDto[]>([]);
   readonly error = signal<string | null>(null);
   readonly currentRoute = signal<string>(this.router.url);
@@ -123,10 +127,30 @@ export class CopilotService {
   // ─── Actions ───────────────────────────────────────────────────────────────
   toggle(): void {
     this.isOpen.update(v => !v);
+    if (this.isOpen() && this.conversations().length === 0) {
+      this.loadConversations();
+    }
   }
 
   open(): void {
     this.isOpen.set(true);
+    if (this.conversations().length === 0) {
+      this.loadConversations();
+    }
+  }
+
+  openExpanded(): void {
+    this.isOpen.set(true);
+    this.isExpanded.set(true);
+    this.loadConversations();
+  }
+
+  toggleExpanded(): void {
+    this.isExpanded.update(v => !v);
+  }
+
+  toggleHistoryPane(): void {
+    this.showHistoryPane.update(v => !v);
   }
 
   close(): void {
@@ -137,6 +161,45 @@ export class CopilotService {
     this.activeConversationId.set(null);
     this.messages.set([]);
     this.error.set(null);
+  }
+
+  async selectConversation(id: string): Promise<void> {
+    if (this.activeConversationId() === id) return;
+    this.isLoadingHistory.set(true);
+    this.error.set(null);
+    try {
+      const detail = await firstValueFrom(this.conversationService.getConversation(id));
+      this.activeConversationId.set(detail.id);
+      this.messages.set(detail.messages || []);
+    } catch {
+      this.error.set('Failed to load conversation history.');
+    } finally {
+      this.isLoadingHistory.set(false);
+    }
+  }
+
+  async loadConversations(): Promise<void> {
+    this.isLoadingHistory.set(true);
+    try {
+      const list = await firstValueFrom(this.conversationService.getConversations(50, 0));
+      this.conversations.set(list || []);
+    } catch {
+      // Non-critical background retrieval
+    } finally {
+      this.isLoadingHistory.set(false);
+    }
+  }
+
+  async deleteConversation(id: string): Promise<void> {
+    try {
+      await firstValueFrom(this.conversationService.deleteConversation(id));
+      this.conversations.update(list => list.filter(c => c.id !== id));
+      if (this.activeConversationId() === id) {
+        this.resetConversation();
+      }
+    } catch {
+      this.error.set('Could not delete conversation.');
+    }
   }
 
   async sendMessage(prompt: string): Promise<void> {
@@ -342,6 +405,7 @@ export class CopilotService {
       this.error.set(message);
     } finally {
       this.isSending.set(false);
+      this.loadConversations();
     }
   }
 }

@@ -2,6 +2,7 @@ import {
   Component,
   inject,
   signal,
+  computed,
   ViewChild,
   ElementRef,
   AfterViewChecked,
@@ -25,7 +26,7 @@ import { ActionCardDto } from '@core/services/conversation.service';
   imports: [CommonModule, FormsModule, DsTooltipDirective],
   template: `
     <!-- Floating Copilot Launch Trigger Pill -->
-    @if (!copilotService.isOpen() && !copilotService.isFullPageConversation()) {
+    @if (!copilotService.isOpen()) {
       <button
         type="button"
         (click)="copilotService.open()"
@@ -46,7 +47,7 @@ import { ActionCardDto } from '@core/services/conversation.service';
     }
 
     <!-- Mobile Drawer Backdrop -->
-    @if (copilotService.isOpen()) {
+    @if (copilotService.isOpen() && !copilotService.isExpanded()) {
       <div
         (click)="copilotService.close()"
         class="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-xs md:hidden transition-opacity"
@@ -54,61 +55,180 @@ import { ActionCardDto } from '@core/services/conversation.service';
       ></div>
     }
 
-    <!-- Slide-Out Copilot Drawer Panel -->
+    <!-- Slide-Out Copilot Drawer Panel / Fullscreen Workstation -->
     <aside
-      class="fixed top-0 right-0 h-full w-full sm:w-[420px] md:w-[460px] z-50 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out"
+      class="fixed top-0 right-0 h-full z-50 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex transition-all duration-300 ease-in-out"
+      [class.w-full]="copilotService.isExpanded()"
+      [class.inset-0]="copilotService.isExpanded()"
+      [class.sm:w-[460px]]="!copilotService.isExpanded()"
+      [class.md:w-[500px]]="!copilotService.isExpanded()"
       [class.translate-x-0]="copilotService.isOpen()"
       [class.translate-x-full]="!copilotService.isOpen()"
       [class.pointer-events-none]="!copilotService.isOpen()"
       aria-label="Copilot Assistant"
       [attr.aria-hidden]="!copilotService.isOpen()"
     >
-      <!-- Header -->
-      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 backdrop-blur-sm shrink-0">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-linear-to-br from-primary-500 to-indigo-600 text-white shadow-sm shrink-0">
-            <i class="pi pi-sparkles text-sm"></i>
-          </div>
-          <div class="min-w-0">
+      <!-- History Drawer (Always visible in expanded mode, toggleable in docked mode) -->
+      @if (copilotService.isExpanded() || copilotService.showHistoryPane()) {
+        <div class="w-64 sm:w-72 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 flex flex-col h-full transition-all">
+          <!-- History Header -->
+          <div class="flex items-center justify-between p-3.5 border-b border-slate-200/80 dark:border-slate-800">
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Normora Copilot</span>
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                AI
-              </span>
+              <i class="pi pi-history text-primary-600 text-xs"></i>
+              <span class="text-xs font-bold text-slate-800 dark:text-white">Past Threads</span>
             </div>
-            <!-- Context Perception Pill -->
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate mt-0.5">
-              <i class="pi pi-compass text-[10px] text-primary-500"></i>
-              <span class="font-medium text-slate-700 dark:text-slate-300 truncate">{{ copilotService.activeContext().pageTitle }}</span>
+            <button
+              type="button"
+              (click)="resetThread()"
+              class="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-2xs cursor-pointer transition-all"
+            >
+              <i class="pi pi-plus text-[10px]"></i>
+              <span>New</span>
+            </button>
+          </div>
+
+          <!-- Search Threads -->
+          <div class="p-2.5 border-b border-slate-200/60 dark:border-slate-800/80">
+            <div class="relative flex items-center">
+              <i class="pi pi-search absolute left-2.5 text-[11px] text-slate-400"></i>
+              <input
+                type="text"
+                [ngModel]="searchHistoryTerm()"
+                (ngModelChange)="searchHistoryTerm.set($event)"
+                placeholder="Search threads..."
+                class="w-full pl-7 pr-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-primary-500 transition-all"
+              />
             </div>
           </div>
-        </div>
 
-        <!-- Header Action Buttons -->
-        <div class="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            (click)="resetThread()"
-            [dsTooltip]="'New thread'"
-            dsTooltipPosition="bottom"
-            aria-label="Reset Copilot conversation"
-            class="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-          >
-            <i class="pi pi-plus text-xs"></i>
-          </button>
-          <button
-            type="button"
-            (click)="copilotService.close()"
-            [dsTooltip]="'Close (Esc)'"
-            dsTooltipPosition="bottom"
-            aria-label="Close Copilot"
-            class="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-          >
-            <i class="pi pi-times text-xs"></i>
-          </button>
+          <!-- Threads List -->
+          <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+            @if (copilotService.isLoadingHistory() && copilotService.conversations().length === 0) {
+              <div class="flex items-center justify-center py-8 text-xs text-slate-400 gap-2">
+                <i class="pi pi-spin pi-spinner text-primary-500"></i>
+                <span>Loading threads...</span>
+              </div>
+            } @else if (filteredConversations().length === 0) {
+              <div class="text-center py-8 px-4 text-xs text-slate-400">
+                <i class="pi pi-comments text-lg block mb-1 text-slate-300 dark:text-slate-600"></i>
+                <span>No conversation threads found.</span>
+              </div>
+            } @else {
+              @for (conv of filteredConversations(); track conv.id) {
+                <div
+                  (click)="selectThread(conv.id)"
+                  class="group flex items-center justify-between p-2.5 rounded-xl text-xs transition-all cursor-pointer border"
+                  [class.bg-white]="copilotService.activeConversationId() === conv.id"
+                  [class.dark:bg-slate-900]="copilotService.activeConversationId() === conv.id"
+                  [class.border-primary-500]="copilotService.activeConversationId() === conv.id"
+                  [class.shadow-2xs]="copilotService.activeConversationId() === conv.id"
+                  [class.text-primary-700]="copilotService.activeConversationId() === conv.id"
+                  [class.dark:text-primary-300]="copilotService.activeConversationId() === conv.id"
+                  [class.border-transparent]="copilotService.activeConversationId() !== conv.id"
+                  [class.hover:bg-slate-100]="copilotService.activeConversationId() !== conv.id"
+                  [class.dark:hover:bg-slate-800/60]="copilotService.activeConversationId() !== conv.id"
+                  [class.text-slate-700]="copilotService.activeConversationId() !== conv.id"
+                  [class.dark:text-slate-300]="copilotService.activeConversationId() !== conv.id"
+                >
+                  <div class="min-w-0 flex-1 pr-1.5">
+                    <p class="font-medium truncate m-0">{{ conv.title || 'Conversation' }}</p>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">{{ formatRelativeTime(conv.lastMessageAt || conv.createdAt) }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="deleteThread($event, conv.id)"
+                    [dsTooltip]="'Delete thread'"
+                    dsTooltipPosition="left"
+                    class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-all cursor-pointer shrink-0"
+                  >
+                    <i class="pi pi-trash text-[11px]"></i>
+                  </button>
+                </div>
+              }
+            }
+          </div>
         </div>
-      </div>
+      }
+
+      <!-- Main Chat Experience Pane -->
+      <div class="flex-1 flex flex-col h-full min-w-0 bg-white dark:bg-slate-900">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 backdrop-blur-sm shrink-0">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <!-- History Toggle Button in Docked Mode -->
+            @if (!copilotService.isExpanded()) {
+              <button
+                type="button"
+                (click)="copilotService.toggleHistoryPane()"
+                [dsTooltip]="copilotService.showHistoryPane() ? 'Hide past threads' : 'Past threads'"
+                dsTooltipPosition="bottom"
+                class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
+                [class.text-primary-600]="copilotService.showHistoryPane()"
+                [class.bg-primary-50]="copilotService.showHistoryPane()"
+                [class.dark:bg-primary-950/40]="copilotService.showHistoryPane()"
+                [class.text-slate-400]="!copilotService.showHistoryPane()"
+                [class.hover:text-slate-700]="!copilotService.showHistoryPane()"
+                [class.dark:hover:text-slate-200]="!copilotService.showHistoryPane()"
+                [class.hover:bg-slate-200/50]="!copilotService.showHistoryPane()"
+                [class.dark:hover:bg-slate-800]="!copilotService.showHistoryPane()"
+              >
+                <i class="pi pi-history text-xs"></i>
+              </button>
+            }
+
+            <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-linear-to-br from-primary-500 to-indigo-600 text-white shadow-sm shrink-0">
+              <i class="pi pi-sparkles text-sm"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Normora Copilot</span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  AI
+                </span>
+              </div>
+              <!-- Context Perception Pill -->
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate mt-0.5">
+                <i class="pi pi-compass text-[10px] text-primary-500"></i>
+                <span class="font-medium text-slate-700 dark:text-slate-300 truncate">{{ copilotService.activeContext().pageTitle }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header Action Buttons -->
+          <div class="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              (click)="resetThread()"
+              [dsTooltip]="'New conversation'"
+              dsTooltipPosition="bottom"
+              aria-label="Reset Copilot conversation"
+              class="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            >
+              <i class="pi pi-plus text-xs"></i>
+            </button>
+            <button
+              type="button"
+              (click)="copilotService.toggleExpanded()"
+              [dsTooltip]="copilotService.isExpanded() ? 'Dock to sidebar' : 'Expand to full screen'"
+              dsTooltipPosition="bottom"
+              [attr.aria-label]="copilotService.isExpanded() ? 'Dock Copilot to sidebar' : 'Expand Copilot to full screen'"
+              class="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            >
+              <i class="pi text-xs" [class.pi-window-minimize]="copilotService.isExpanded()" [class.pi-window-maximize]="!copilotService.isExpanded()"></i>
+            </button>
+            <button
+              type="button"
+              (click)="copilotService.close()"
+              [dsTooltip]="'Close (Esc)'"
+              dsTooltipPosition="bottom"
+              aria-label="Close Copilot"
+              class="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            >
+              <i class="pi pi-times text-xs"></i>
+            </button>
+          </div>
+        </div>
 
       <!-- Messages Scroll Area -->
       <div
@@ -348,6 +468,7 @@ import { ActionCardDto } from '@core/services/conversation.service';
           </div>
         </form>
       </div>
+      </div>
     </aside>
   `
 })
@@ -359,7 +480,47 @@ export class CopilotSidebarComponent implements AfterViewChecked {
   @ViewChild('inputArea') private inputArea?: ElementRef<HTMLTextAreaElement>;
 
   userInput = '';
+  searchHistoryTerm = signal<string>('');
   private shouldScrollBottom = false;
+
+  filteredConversations = computed(() => {
+    const term = this.searchHistoryTerm().trim().toLowerCase();
+    const list = this.copilotService.conversations();
+    if (!term) return list;
+    return list.filter(c => (c.title || '').toLowerCase().includes(term));
+  });
+
+  selectThread(id: string): void {
+    this.shouldScrollBottom = true;
+    this.copilotService.selectConversation(id);
+    if (!this.copilotService.isExpanded()) {
+      this.copilotService.showHistoryPane.set(false);
+    }
+  }
+
+  deleteThread(event: Event, id: string): void {
+    event.stopPropagation();
+    this.copilotService.deleteConversation(id);
+  }
+
+  formatRelativeTime(isoDate?: string): string {
+    if (!isoDate) return '';
+    try {
+      const now = new Date().getTime();
+      const past = new Date(isoDate).getTime();
+      const diffMs = now - past;
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return new Date(isoDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    } catch {
+      return '';
+    }
+  }
 
   @HostListener('window:keydown', ['$event'])
   handleGlobalShortcuts(event: KeyboardEvent): void {
