@@ -235,8 +235,89 @@ export class CopilotService {
                       fileName: s.fileName,
                       score: s.score,
                       isOutdated: Boolean(s.isOutdated)
-                    }))
+                    })),
+                    tools: []
                   };
+                } else if (evt.type === 'tool_started') {
+                  if (!assistantMsg) {
+                    assistantMsg = {
+                      id: crypto.randomUUID(),
+                      role: 'Assistant',
+                      content: '',
+                      createdAt: new Date().toISOString(),
+                      rewritten: false,
+                      citations: [],
+                      tools: []
+                    };
+                  }
+                  if (!assistantMsg.tools) assistantMsg.tools = [];
+                  const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
+                  if (existing) {
+                    existing.status = 'running';
+                  } else {
+                    assistantMsg.tools = [
+                      ...assistantMsg.tools,
+                      {
+                        toolName: evt.toolName,
+                        toolCallId: evt.toolCallId,
+                        status: 'running'
+                      }
+                    ];
+                  }
+                  this.messages.update(list => {
+                    const exists = list.some(m => m.id === assistantMsg!.id);
+                    if (!exists) return [...list, { ...assistantMsg! }];
+                    return list.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m));
+                  });
+                } else if (evt.type === 'tool_finished') {
+                  if (assistantMsg) {
+                    if (!assistantMsg.tools) assistantMsg.tools = [];
+                    const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
+                    if (existing) {
+                      existing.status = evt.success ? 'completed' : 'failed';
+                      existing.summary = evt.summary;
+                    } else {
+                      assistantMsg.tools = [
+                        ...assistantMsg.tools,
+                        {
+                          toolName: evt.toolName,
+                          toolCallId: evt.toolCallId,
+                          status: evt.success ? 'completed' : 'failed',
+                          summary: evt.summary
+                        }
+                      ];
+                    }
+                    this.messages.update(list => {
+                      const exists = list.some(m => m.id === assistantMsg!.id);
+                      if (!exists) return [...list, { ...assistantMsg! }];
+                      return list.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m));
+                    });
+                  }
+                } else if (evt.type === 'action_card') {
+                  if (!assistantMsg) {
+                    assistantMsg = {
+                      id: crypto.randomUUID(),
+                      role: 'Assistant',
+                      content: '',
+                      createdAt: new Date().toISOString(),
+                      rewritten: false,
+                      citations: [],
+                      tools: []
+                    };
+                  }
+                  assistantMsg.actionCard = {
+                    actionType: evt.actionType,
+                    title: evt.title,
+                    description: evt.description,
+                    parameters: evt.parameters || {},
+                    confirmButtonText: evt.confirmButtonText,
+                    cancelButtonText: evt.cancelButtonText
+                  };
+                  this.messages.update(list => {
+                    const exists = list.some(m => m.id === assistantMsg!.id);
+                    if (!exists) return [...list, { ...assistantMsg! }];
+                    return list.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m));
+                  });
                 } else if (evt.type === 'text') {
                   if (assistantMsg) {
                     assistantMsg.content += evt.text;

@@ -318,8 +318,6 @@ export class Conversations implements OnInit, AfterViewChecked {
                 const evt = JSON.parse(jsonStr);
                 
                 // Event 1: CitationsReadyEvent
-                // Early citation metadata: capture document IDs, file names, and relevance scores.
-                // We defer rendering the bubble until the first text token arrives to avoid empty placeholders.
                 if (evt.type === 'citations') {
                   assistantMsg = {
                     id: evt.assistantMessageId,
@@ -332,8 +330,95 @@ export class Conversations implements OnInit, AfterViewChecked {
                       documentChunkId: s.documentChunkId || '',
                       fileName: s.fileName,
                       score: s.score
-                    }))
+                    })),
+                    tools: []
                   };
+                } else if (evt.type === 'tool_started') {
+                  if (!assistantMsg) {
+                    assistantMsg = {
+                      id: crypto.randomUUID(),
+                      role: 'Assistant',
+                      content: '',
+                      createdAt: new Date().toISOString(),
+                      rewritten: false,
+                      citations: [],
+                      tools: []
+                    };
+                  }
+                  if (!assistantMsg.tools) assistantMsg.tools = [];
+                  const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
+                  if (existing) {
+                    existing.status = 'running';
+                  } else {
+                    assistantMsg.tools = [
+                      ...assistantMsg.tools,
+                      {
+                        toolName: evt.toolName,
+                        toolCallId: evt.toolCallId,
+                        status: 'running'
+                      }
+                    ];
+                  }
+                  this.activeConversation.update(c => {
+                    if (!c) return c;
+                    const exists = c.messages.some(m => m.id === assistantMsg!.id);
+                    if (!exists) return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
+                    return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
+                  });
+                  this.shouldScrollToBottom = true;
+                } else if (evt.type === 'tool_finished') {
+                  if (assistantMsg) {
+                    if (!assistantMsg.tools) assistantMsg.tools = [];
+                    const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
+                    if (existing) {
+                      existing.status = evt.success ? 'completed' : 'failed';
+                      existing.summary = evt.summary;
+                    } else {
+                      assistantMsg.tools = [
+                        ...assistantMsg.tools,
+                        {
+                          toolName: evt.toolName,
+                          toolCallId: evt.toolCallId,
+                          status: evt.success ? 'completed' : 'failed',
+                          summary: evt.summary
+                        }
+                      ];
+                    }
+                    this.activeConversation.update(c => {
+                      if (!c) return c;
+                      const exists = c.messages.some(m => m.id === assistantMsg!.id);
+                      if (!exists) return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
+                      return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
+                    });
+                    this.shouldScrollToBottom = true;
+                  }
+                } else if (evt.type === 'action_card') {
+                  if (!assistantMsg) {
+                    assistantMsg = {
+                      id: crypto.randomUUID(),
+                      role: 'Assistant',
+                      content: '',
+                      createdAt: new Date().toISOString(),
+                      rewritten: false,
+                      citations: [],
+                      tools: []
+                    };
+                  }
+                  assistantMsg.actionCard = {
+                    actionType: evt.actionType,
+                    title: evt.title,
+                    description: evt.description,
+                    parameters: evt.parameters || {},
+                    confirmButtonText: evt.confirmButtonText,
+                    cancelButtonText: evt.cancelButtonText
+                  };
+                  this.activeConversation.update(c => {
+                    if (!c) return c;
+                    const exists = c.messages.some(m => m.id === assistantMsg!.id);
+                    if (!exists) return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
+                    return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
+                  });
+                  this.shouldScrollToBottom = true;
                 } else if (evt.type === 'text') {
                   // Event 2: TextChunkEvent
                   // Incrementally append new text tokens to assistantMsg.content

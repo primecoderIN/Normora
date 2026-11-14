@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { DsTooltipDirective } from '@design-system';
 import { CopilotService } from '@core/services/copilot.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
+import { ActionCardDto } from '@core/services/conversation.service';
 
 /**
  * Omnipresent Copilot Sidebar component implementing the CopilotKit / AG-UI architecture.
@@ -177,6 +178,104 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
               }
             </div>
 
+            <!-- Autonomous Agent Tool Chips -->
+            @if (message.role === 'Assistant' && message.tools && message.tools.length > 0) {
+              <div class="flex flex-wrap gap-1.5 px-1 max-w-[92%]">
+                @for (tool of message.tools; track tool.toolCallId) {
+                  <div
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium border shadow-2xs transition-all"
+                    [class.bg-primary-50]="tool.status === 'running'"
+                    [class.dark:bg-primary-950/40]="tool.status === 'running'"
+                    [class.text-primary-700]="tool.status === 'running'"
+                    [class.dark:text-primary-300]="tool.status === 'running'"
+                    [class.border-primary-200]="tool.status === 'running'"
+                    [class.dark:border-primary-800]="tool.status === 'running'"
+                    [class.bg-emerald-50]="tool.status === 'completed'"
+                    [class.dark:bg-emerald-950/30]="tool.status === 'completed'"
+                    [class.text-emerald-700]="tool.status === 'completed'"
+                    [class.dark:text-emerald-300]="tool.status === 'completed'"
+                    [class.border-emerald-200]="tool.status === 'completed'"
+                    [class.dark:border-emerald-800]="tool.status === 'completed'"
+                    [class.bg-amber-50]="tool.status === 'failed'"
+                    [class.dark:bg-amber-950/30]="tool.status === 'failed'"
+                    [class.text-amber-700]="tool.status === 'failed'"
+                    [class.dark:text-amber-300]="tool.status === 'failed'"
+                    [class.border-amber-200]="tool.status === 'failed'"
+                    [class.dark:border-amber-800]="tool.status === 'failed'"
+                  >
+                    @if (tool.status === 'running') {
+                      <i class="pi pi-spin pi-spinner text-[10px] text-primary-500"></i>
+                      <span>{{ getToolLabel(tool.toolName) }}...</span>
+                    } @else if (tool.status === 'completed') {
+                      <i class="pi pi-check text-[10px] text-emerald-500"></i>
+                      <span>{{ tool.summary || getToolLabel(tool.toolName) }}</span>
+                    } @else {
+                      <i class="pi pi-exclamation-triangle text-[10px] text-amber-500"></i>
+                      <span>{{ tool.summary || 'Tool execution failed' }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Interactive A2UI Action Card -->
+            @if (message.role === 'Assistant' && message.actionCard && !message.actionCard.isDismissed) {
+              <div class="p-3 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 max-w-[92%] shadow-xs space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="flex items-center justify-center w-5 h-5 rounded-md bg-primary-100 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 shrink-0">
+                      <i class="pi pi-bolt text-[10px]"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ message.actionCard.title }}</span>
+                  </div>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200/60 dark:border-primary-800/60 shrink-0">
+                    Action
+                  </span>
+                </div>
+
+                <p class="text-[11px] text-slate-600 dark:text-slate-300 m-0 leading-relaxed">{{ message.actionCard.description }}</p>
+
+                @if (getParamEntries(message.actionCard.parameters).length > 0) {
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
+                    @for (param of getParamEntries(message.actionCard.parameters); track param.key) {
+                      <div class="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 text-[10px]">
+                        <span class="text-slate-400 dark:text-slate-500 block font-medium truncate">{{ param.key }}</span>
+                        <span class="text-slate-800 dark:text-slate-200 font-semibold break-all">{{ param.value }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                  @if (message.actionCard.isConfirmed) {
+                    <div class="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <i class="pi pi-check-circle text-xs"></i>
+                      <span>Confirmed</span>
+                    </div>
+                  } @else {
+                    @if (message.actionCard.confirmButtonText) {
+                      <button
+                        type="button"
+                        (click)="confirmAction(message.actionCard)"
+                        class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs"
+                      >
+                        {{ message.actionCard.confirmButtonText }}
+                      </button>
+                    }
+                    @if (message.actionCard.cancelButtonText) {
+                      <button
+                        type="button"
+                        (click)="dismissAction(message.actionCard)"
+                        class="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer"
+                      >
+                        {{ message.actionCard.cancelButtonText }}
+                      </button>
+                    }
+                  }
+                </div>
+              </div>
+            }
+
             <!-- Citations / Sources -->
             @if (message.role === 'Assistant' && message.citations.length > 0) {
               <div class="flex flex-wrap items-center gap-1.5 px-1 max-w-[92%]">
@@ -312,6 +411,32 @@ export class CopilotSidebarComponent implements AfterViewChecked {
   resetThread(): void {
     this.copilotService.resetConversation();
     setTimeout(() => this.inputArea?.nativeElement?.focus(), 100);
+  }
+
+  getToolLabel(toolName: string): string {
+    switch (toolName) {
+      case 'calculate_policy_limit':
+        return 'Calculating Policy Limit';
+      case 'escalate_hr_inquiry':
+        return 'Dispatching HR Escalation';
+      case 'search_company_documents':
+        return 'Retrieving Policy Sources';
+      default:
+        return toolName.replace(/_/g, ' ');
+    }
+  }
+
+  getParamEntries(params?: Record<string, string>): { key: string; value: string }[] {
+    if (!params) return [];
+    return Object.entries(params).map(([key, value]) => ({ key, value }));
+  }
+
+  confirmAction(card: ActionCardDto): void {
+    card.isConfirmed = true;
+  }
+
+  dismissAction(card: ActionCardDto): void {
+    card.isDismissed = true;
   }
 
   ngAfterViewChecked(): void {

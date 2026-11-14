@@ -70,6 +70,8 @@ graph LR
   - `escalate_hr_inquiry`: Dispatches transactional emails to workspace administrators when an inquiry cannot be answered from documentation.
   - `search_company_documents`: Performs deep cross-module retrieval via MediatR.
 - **Grounded Streaming & Citations**: Streams real-time token buffers to the client via Server-Sent Events (SSE) alongside verified, clickable document chunk citations.
+- **Live Agent Tool Execution Lifecycle**: Streams real-time `tool_started` and `tool_finished` SSE events, rendering animated execution chips with live progress and completion summaries in the chat feed.
+- **Interactive A2UI Action Cards**: Synthesizes structured `action_card` events (e.g. `policy_limit_card`, `hr_escalation_card`) with parameterized metadata grids, dark mode styling, and interactive action buttons (`Confirm` / `Dismiss`).
 - **Omnipresent Copilot & AG-UI Perception**: Integrates the CopilotKit architectural pattern across the Angular SPA via `CopilotSidebarComponent` and `CopilotService`, enabling keyboard-driven (`Ctrl+J`) in-app copilot assistance with route-aware suggested prompts across all employer and employee management views.
 
 ---

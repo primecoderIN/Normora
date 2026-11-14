@@ -28,6 +28,24 @@ export interface MessageCitationDto {
   isOutdated: boolean;
 }
 
+export interface ToolExecutionDto {
+  toolName: string;
+  toolCallId: string;
+  status: 'running' | 'completed' | 'failed';
+  summary?: string;
+}
+
+export interface ActionCardDto {
+  actionType: string;
+  title: string;
+  description: string;
+  parameters: Record<string, string>;
+  confirmButtonText?: string;
+  cancelButtonText?: string;
+  isConfirmed?: boolean;
+  isDismissed?: boolean;
+}
+
 export interface MessageDto {
   id: string;
   role: 'User' | 'Assistant';
@@ -36,6 +54,8 @@ export interface MessageDto {
   rewritten: boolean;
   citations: MessageCitationDto[];
   feedback?: 1 | 2;
+  tools?: ToolExecutionDto[];
+  actionCard?: ActionCardDto;
 }
 
 export interface ConversationDetailDto extends ConversationDto {

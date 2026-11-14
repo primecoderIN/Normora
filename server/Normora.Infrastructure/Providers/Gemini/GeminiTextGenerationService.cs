@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
@@ -75,6 +76,24 @@ public sealed class GeminiTextGenerationService(
         ToolExecutionContext? toolContext,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        await foreach (var item in StreamConversationalEventsAsync(question, sources, history, companyName, toolContext, cancellationToken))
+        {
+            if (item is TextDeltaItem delta)
+            {
+                yield return delta.Text;
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<TextGenerationStreamItem> StreamConversationalEventsAsync(
+        string question,
+        IReadOnlyList<AskSource> sources,
+        IReadOnlyList<ConversationTurn> history,
+        string companyName,
+        ToolExecutionContext? toolContext,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
         EnsureConfigured();
 
         var fullPrompt = BuildFullPrompt(question, sources, history, companyName);
@@ -82,8 +101,10 @@ public sealed class GeminiTextGenerationService(
         // If tools are registered and available in the workspace context, evaluate tool calls first
         if (toolContext != null && toolRegistry.Tools.Count > 0)
         {
-            var toolAnswer = await ExecuteToolCallingLoopAsync(fullPrompt, toolContext, temperature: 0.1, cancellationToken);
-            yield return toolAnswer;
+            await foreach (var item in ExecuteStreamingToolCallingLoopAsync(fullPrompt, toolContext, temperature: 0.1, cancellationToken))
+            {
+                yield return item;
+            }
             yield break;
         }
 
@@ -91,12 +112,12 @@ public sealed class GeminiTextGenerationService(
         await foreach (var chunk in StreamGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken))
         {
             anyChunks = true;
-            yield return chunk;
+            yield return new TextDeltaItem(chunk);
         }
 
         if (!anyChunks)
         {
-            yield return RagConstants.FallbackAnswer;
+            yield return new TextDeltaItem(RagConstants.FallbackAnswer);
         }
     }
 
@@ -205,6 +226,167 @@ public sealed class GeminiTextGenerationService(
         }
 
         return RagConstants.FallbackAnswer;
+    }
+
+    private async IAsyncEnumerable<TextGenerationStreamItem> ExecuteStreamingToolCallingLoopAsync(
+        string prompt,
+        ToolExecutionContext toolContext,
+        double temperature,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var contents = new List<GeminiContent>
+        {
+            new([new GeminiPart(prompt)], role: "user")
+        };
+
+        var toolsPayload = new List<object>
+        {
+            toolRegistry.GetToolDeclarations()
+        };
+
+        const int maxTurns = 3;
+        var answered = false;
+
+        for (var turn = 0; turn < maxTurns; turn++)
+        {
+            var request = new GeminiGenerateRequest(
+                contents,
+                new GeminiGenerationConfig(temperature),
+                toolsPayload);
+
+            using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request);
+            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
+            var candidateContent = result?.Candidates?.FirstOrDefault()?.Content;
+            if (candidateContent?.Parts == null || candidateContent.Parts.Count == 0)
+            {
+                break;
+            }
+
+            var functionCallPart = candidateContent.Parts.FirstOrDefault(p => p.FunctionCall != null);
+            if (functionCallPart?.FunctionCall != null)
+            {
+                var functionCall = functionCallPart.FunctionCall;
+                var callId = Guid.NewGuid().ToString("N")[..8];
+                var argsJson = functionCall.Args.HasValue
+                    ? functionCall.Args.Value.GetRawText()
+                    : "{}";
+
+                yield return new ToolStartedItem(functionCall.Name, callId);
+
+                var toolResult = await toolRegistry.ExecuteToolAsync(
+                    functionCall.Name,
+                    argsJson,
+                    toolContext,
+                    cancellationToken);
+
+                var summary = toolResult.Success
+                    ? (!string.IsNullOrWhiteSpace(toolResult.Output) && toolResult.Output.Length > 80
+                        ? toolResult.Output[..80] + "..."
+                        : toolResult.Output)
+                    : toolResult.Error;
+
+                yield return new ToolFinishedItem(functionCall.Name, callId, toolResult.Success, summary);
+
+                var card = TryCreateActionCard(functionCall.Name, argsJson, toolResult);
+                if (card != null)
+                {
+                    yield return card;
+                }
+
+                contents.Add(new GeminiContent([functionCallPart], role: "model"));
+
+                var functionResponsePart = new GeminiPart
+                {
+                    FunctionResponse = new GeminiFunctionResponse(
+                        functionCall.Name,
+                        new { output = toolResult.Output, error = toolResult.Error, success = toolResult.Success })
+                };
+                contents.Add(new GeminiContent([functionResponsePart], role: "function"));
+                continue;
+            }
+
+            var text = candidateContent.Parts.FirstOrDefault(p => !string.IsNullOrEmpty(p.Text))?.Text;
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                answered = true;
+                yield return new TextDeltaItem(text.Trim());
+                yield break;
+            }
+        }
+
+        if (!answered)
+        {
+            yield return new TextDeltaItem(RagConstants.FallbackAnswer);
+        }
+    }
+
+    private static ActionCardItem? TryCreateActionCard(string toolName, string argsJson, AgentToolResult toolResult)
+    {
+        try
+        {
+            if (toolName == "calculate_policy_limit" && toolResult.Success && !string.IsNullOrWhiteSpace(toolResult.Output))
+            {
+                using var doc = JsonDocument.Parse(toolResult.Output);
+                var root = doc.RootElement;
+                var policy = root.TryGetProperty("policy", out var p) ? p.GetString() : "Policy Limit";
+                var tier = root.TryGetProperty("tier", out var t) ? t.GetString() : null;
+                var guideline = root.TryGetProperty("guideline", out var g) ? g.GetString() : null;
+
+                var parameters = new Dictionary<string, string>();
+                if (tier != null) parameters["Location Tier"] = tier;
+                if (root.TryGetProperty("totalMaxAllowanceUsd", out var a))
+                    parameters["Total Max Allowance"] = $"${a.GetDecimal():N0}";
+                if (root.TryGetProperty("nightlyCapUsd", out var n))
+                    parameters["Nightly Cap"] = $"${n.GetDecimal():N0}/night";
+                if (root.TryGetProperty("dailyAllowanceUsd", out var d))
+                    parameters["Daily Allowance"] = $"${d.GetDecimal():N0}/day";
+                if (guideline != null) parameters["Policy Guideline"] = guideline;
+
+                return new ActionCardItem(
+                    ActionType: "policy_limit_card",
+                    Title: policy ?? "Expense Policy Calculation",
+                    Description: $"Deterministic corporate limit calculation for {tier ?? "requested expense"}.",
+                    Parameters: parameters,
+                    ConfirmButtonText: "Apply Limit",
+                    CancelButtonText: "Dismiss");
+            }
+
+            if (toolName == "escalate_hr_inquiry")
+            {
+                using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(argsJson) ? "{}" : argsJson);
+                var root = doc.RootElement;
+                var inquiry = root.TryGetProperty("inquiry", out var inq) ? inq.GetString() : "Employee Policy Clarification";
+                var category = root.TryGetProperty("category", out var cat) ? cat.GetString() : "General";
+                var urgency = root.TryGetProperty("urgency", out var urg) ? urg.GetString() : "Normal";
+
+                var parameters = new Dictionary<string, string>
+                {
+                    ["Inquiry Subject"] = inquiry ?? "Policy Inquiry",
+                    ["Department Category"] = category ?? "General",
+                    ["Urgency Level"] = urgency ?? "Normal",
+                    ["Dispatch Status"] = toolResult.Success ? "Successfully Sent to HR" : "Failed to Send"
+                };
+
+                return new ActionCardItem(
+                    ActionType: "hr_escalation_card",
+                    Title: "HR Administration Escalation",
+                    Description: toolResult.Success
+                        ? "Notification dispatched to workspace HR administrators for review."
+                        : "Escalation notification could not be delivered.",
+                    Parameters: parameters,
+                    ConfirmButtonText: "View Inquiry Status",
+                    CancelButtonText: "Dismiss");
+            }
+        }
+        catch
+        {
+            // If output parsing fails, fail silently without breaking the stream
+        }
+
+        return null;
     }
 
     // ─── Shared helpers ──────────────────────────────────────────────────────────

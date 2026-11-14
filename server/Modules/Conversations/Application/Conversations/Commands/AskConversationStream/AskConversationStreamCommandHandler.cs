@@ -120,12 +120,32 @@ internal sealed class AskConversationStreamCommandHandler(
                     .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
                     .ToList();
 
-                // Stream token chunks as they arrive from Gemini API (with agent tool support)
-                await foreach (var chunk in generationService.StreamConversationalAnswerAsync(
+                // Stream token chunks, live tool execution lifecycle, and interactive action cards as they arrive from Gemini API
+                await foreach (var item in generationService.StreamConversationalEventsAsync(
                     turn.RewrittenQuestion, sources, turn.HistoryTurns, turn.ActiveTenantName, turn.ToolContext, cancellationToken))
                 {
-                    answerBuilder.Append(chunk);
-                    yield return new TextChunkEvent(chunk);
+                    switch (item)
+                    {
+                        case TextDeltaItem delta:
+                            answerBuilder.Append(delta.Text);
+                            yield return new TextChunkEvent(delta.Text);
+                            break;
+                        case ToolStartedItem started:
+                            yield return new ToolStartedEvent(started.ToolName, started.CallId);
+                            break;
+                        case ToolFinishedItem finished:
+                            yield return new ToolFinishedEvent(finished.ToolName, finished.CallId, finished.Success, finished.Summary);
+                            break;
+                        case ActionCardItem card:
+                            yield return new ActionCardEvent(
+                                card.ActionType,
+                                card.Title,
+                                card.Description,
+                                card.Parameters,
+                                card.ConfirmButtonText,
+                                card.CancelButtonText);
+                            break;
+                    }
                 }
             }
 
