@@ -16,6 +16,15 @@ public sealed class SearchCompanyDocumentsTool(IMediator mediator) : IAgentTool
     public string Description =>
         "Performs a targeted semantic and keyword search across the workspace's company policy documents to discover relevant sections and excerpts.";
 
+    public ToolCategory Category => ToolCategory.ReadOnly;
+
+    public bool RequiresApproval => false;
+
+    public ToolChipDescriptor ChipDescriptor => new(
+        StartLabel: "Searching workspace documents...",
+        CompletedLabel: "Document excerpts retrieved",
+        FailedLabel: "Failed to search workspace documents");
+
     public object ParameterSchema => new
     {
         type = "object",
@@ -63,13 +72,13 @@ public sealed class SearchCompanyDocumentsTool(IMediator mediator) : IAgentTool
             var excerpts = retrievalResult.Candidates
                 .Where(c => c.Score >= 0.40)
                 .Select(c => new
-            {
-                documentId = c.DocumentId,
-                fileName = c.FileName,
-                chunkIndex = c.ChunkIndex,
-                relevanceScore = Math.Round(c.Score, 3),
-                content = c.Content
-            }).ToList();
+                {
+                    documentId = c.DocumentId,
+                    fileName = c.FileName,
+                    chunkIndex = c.ChunkIndex,
+                    relevanceScore = Math.Round(c.Score, 3),
+                    content = c.Content
+                }).ToList();
 
             var result = new
             {
@@ -79,7 +88,7 @@ public sealed class SearchCompanyDocumentsTool(IMediator mediator) : IAgentTool
             };
 
             var outputJson = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            return new AgentToolResult(true, outputJson);
+            return new AgentToolResult(true, outputJson, StructuredData: result);
         }
         catch (Exception)
         {

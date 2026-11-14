@@ -118,4 +118,8 @@ public static class ApiMessages
     public const string PayUPaymentFailed = PaymentProcessingFailed;
     public const string PayUHashMismatch = PaymentSignatureMismatch;
     public const string AnswerSaved = "Answer saved successfully.";
+    public const string ActionApproved = "Action approved and executed successfully.";
+    public const string ActionDismissed = "Action dismissed.";
+    public const string ApprovalExpired = "This approval request has expired and can no longer be executed.";
+    public const string ApprovalAlreadyDecided = "This action request has already been decided.";
 }

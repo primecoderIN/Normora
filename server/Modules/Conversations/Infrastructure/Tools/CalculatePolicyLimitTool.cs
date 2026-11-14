@@ -13,6 +13,15 @@ public sealed class CalculatePolicyLimitTool : IAgentTool
     public string Description =>
         "Calculates standard corporate expense limits, travel per-diem allowances, hotel night caps, meal allowances, and equipment stipends.";
 
+    public ToolCategory Category => ToolCategory.ReadOnly;
+
+    public bool RequiresApproval => false;
+
+    public ToolChipDescriptor ChipDescriptor => new(
+        StartLabel: "Calculating corporate policy limits...",
+        CompletedLabel: "Policy limit calculation completed",
+        FailedLabel: "Failed to calculate policy limits");
+
     public object ParameterSchema => new
     {
         type = "object",
@@ -77,7 +86,7 @@ public sealed class CalculatePolicyLimitTool : IAgentTool
             };
 
             var outputJson = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            return Task.FromResult(new AgentToolResult(true, outputJson));
+            return Task.FromResult(new AgentToolResult(true, outputJson, StructuredData: result));
         }
         catch (Exception ex)
         {

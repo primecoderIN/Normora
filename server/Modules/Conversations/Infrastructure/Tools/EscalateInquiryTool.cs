@@ -23,6 +23,15 @@ public sealed class EscalateInquiryTool(
     public string Description =>
         "Escalates an unanswered or complex employee inquiry to the workspace HR/People administrators by dispatching an email notification when company policy documents do not have the answer or human review is needed.";
 
+    public ToolCategory Category => ToolCategory.Mutation;
+
+    public bool RequiresApproval => false;
+
+    public ToolChipDescriptor ChipDescriptor => new(
+        StartLabel: "Notifying HR administrators...",
+        CompletedLabel: "HR escalation notification dispatched",
+        FailedLabel: "Failed to notify HR administrators");
+
     public object ParameterSchema => new
     {
         type = "object",
@@ -150,7 +159,11 @@ public sealed class EscalateInquiryTool(
                 message
             };
 
-            return new AgentToolResult(true, JsonSerializer.Serialize(responseObj, new JsonSerializerOptions { WriteIndented = true }));
+            return new AgentToolResult(
+                true,
+                JsonSerializer.Serialize(responseObj, new JsonSerializerOptions { WriteIndented = true }),
+                StructuredData: responseObj,
+                ChangedData: true);
         }
         catch (Exception)
         {

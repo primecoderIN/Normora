@@ -22,12 +22,32 @@ public interface IAgentTool
     object ParameterSchema { get; }
 
     /// <summary>
+    /// Operational category indicating whether the tool is read-only, mutating, or destructive.
+    /// </summary>
+    ToolCategory Category => ToolCategory.ReadOnly;
+
+    /// <summary>
+    /// Indicates whether human-in-the-loop confirmation is required before execution.
+    /// </summary>
+    bool RequiresApproval => Category == ToolCategory.Destructive;
+
+    /// <summary>
+    /// Optional JSON schema describing the tool's structured output.
+    /// </summary>
+    object? OutputSchema => null;
+
+    /// <summary>
+    /// Human-friendly localized labels for real-time streaming progress chips.
+    /// </summary>
+    ToolChipDescriptor? ChipDescriptor => null;
+
+    /// <summary>
     /// Executes the tool with the given JSON arguments string in the context of the calling user and workspace.
     /// </summary>
     /// <param name="argumentsJson">Raw JSON arguments payload passed by the caller or model.</param>
     /// <param name="context">Tenant and user contextual metadata.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Result containing formatted textual response.</returns>
+    /// <returns>Result containing formatted textual response and optional structured data.</returns>
     Task<AgentToolResult> ExecuteAsync(
         string argumentsJson,
         ToolExecutionContext context,

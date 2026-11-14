@@ -14,6 +14,9 @@ public sealed class AgentToolRegistry(IEnumerable<IAgentTool> tools) : IAgentToo
     public IAgentTool? FindTool(string name) =>
         _toolsList.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase));
 
+    public ToolChipDescriptor? GetChipDescriptor(string name) =>
+        FindTool(name)?.ChipDescriptor;
+
     public object GetToolDeclarations()
     {
         return new

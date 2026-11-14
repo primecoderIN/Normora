@@ -9,10 +9,12 @@ namespace Normora.Shared.Interfaces;
 /// <param name="UserEmail">The email address of the executing user.</param>
 /// <param name="UserDisplayName">The display name of the executing user.</param>
 /// <param name="PersonalTenantId">The user's personal tenant identifier, if any.</param>
+/// <param name="ConversationId">The optional conversation thread identifier where tool calling occurred.</param>
 public sealed record ToolExecutionContext(
     Guid TenantId,
     string TenantName,
     string? UserId,
     string? UserEmail,
     string? UserDisplayName,
-    Guid? PersonalTenantId);
+    Guid? PersonalTenantId,
+    Guid? ConversationId = null);

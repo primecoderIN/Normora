@@ -17,6 +17,11 @@ public interface IAgentToolRegistry
     IAgentTool? FindTool(string name);
 
     /// <summary>
+    /// Returns the streaming progress chip descriptor for the given tool, if defined.
+    /// </summary>
+    ToolChipDescriptor? GetChipDescriptor(string name);
+
+    /// <summary>
     /// Returns the provider-agnostic tool declarations object used when attaching tools to an LLM generate request.
     /// </summary>
     object GetToolDeclarations();
