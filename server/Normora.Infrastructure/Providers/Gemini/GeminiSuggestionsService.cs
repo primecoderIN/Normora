@@ -1,20 +1,16 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Normora.Modules.Conversations.Application.Services;
 
 namespace Normora.Infrastructure.Providers.Gemini;
 
 /// <summary>
-/// Calls Gemini to generate a short list of questions an employee might ask
-/// based on the document file names available in their effective departments.
-/// This is a lightweight generation call — no embedding or retrieval involved.
+/// Calls <see cref="IChatClient"/> to generate question suggestions based on accessible document names.
+/// Uses standardized AI client abstractions without direct HTTP or credential handling.
 /// </summary>
-public class GeminiSuggestionsService(
-    HttpClient httpClient,
-    IOptions<GeminiOptions> options,
+public sealed class GeminiSuggestionsService(
+    IChatClient chatClient,
     ILogger<GeminiSuggestionsService> logger) : ISuggestionsService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -26,15 +22,6 @@ public class GeminiSuggestionsService(
         IReadOnlyList<string> documentNames,
         CancellationToken cancellationToken = default)
     {
-        var apiKey = options.Value.ApiKey;
-        var model = options.Value.GenerationModel;
-
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            logger.LogWarning("Gemini API key is not configured. Suggestions will be empty.");
-            return [];
-        }
-
         if (documentNames.Count == 0)
         {
             return [];
@@ -42,7 +29,6 @@ public class GeminiSuggestionsService(
 
         var documentList = string.Join("\n", documentNames.Select(n => $"- {n}"));
 
-        // Low-temperature prompt: we want consistent, sensible suggestions, not creative ones.
         var prompt = $"""
             You are an assistant helping employees explore their company's document knowledge base.
             Based on the following list of company document names, generate exactly 5 short, natural-language questions that an employee might realistically ask.
@@ -60,55 +46,33 @@ public class GeminiSuggestionsService(
             JSON array:
             """;
 
-        var requestBody = new GeminiGenerateRequest(
-            [new GeminiContent([new GeminiPart(prompt)])],
-            new GeminiGenerationConfig(0.2));
-
         try
         {
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:generateContent")
-            {
-                Content = JsonContent.Create(requestBody)
-            };
-            httpRequest.Headers.Add("x-goog-api-key", apiKey);
-
-            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(
-                JsonOptions, cancellationToken);
-
-            var raw = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+            var options = new ChatOptions { Temperature = 0.2f };
+            var response = await chatClient.GetResponseAsync([new ChatMessage(ChatRole.User, prompt)], options, cancellationToken);
+            var raw = response.Text?.Trim();
 
             if (string.IsNullOrWhiteSpace(raw))
             {
-                logger.LogWarning("Gemini returned an empty suggestions response.");
+                logger.LogWarning("LLM returned an empty suggestions response.");
                 return [];
             }
 
-            // Strip markdown code fences if the model wraps the JSON anyway
-            raw = raw.Trim();
+            // Strip markdown code fences if wrapped
             if (raw.StartsWith("```"))
             {
                 raw = raw.Split('\n').Skip(1).TakeWhile(l => !l.StartsWith("```")).Aggregate((a, b) => $"{a}\n{b}");
             }
 
             var parsed = JsonSerializer.Deserialize<List<string>>(raw, JsonOptions);
-            if (parsed is null || parsed.Count == 0)
-            {
-                logger.LogWarning("Gemini suggestions response could not be parsed as a string array.");
-                return [];
-            }
-
-            return parsed
+            return parsed?
                 .Where(q => !string.IsNullOrWhiteSpace(q))
                 .Take(5)
-                .ToList()
-                .AsReadOnly();
+                .ToList() ?? [];
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to generate suggestions from Gemini.");
+            logger.LogError(ex, "Failed to generate suggestions from LLM chat client.");
             return [];
         }
     }

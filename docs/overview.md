@@ -55,12 +55,14 @@ graph LR
 ### 2. Documents Module (`server/Modules/Documents/`)
 - **Asynchronous Ingestion Pipeline**: Decouples file uploads from heavy text processing. Uploaded files are securely stored in MinIO object storage, while background ingestion jobs run in an independent **Hangfire** worker process (`Normora.Worker`).
 - **Multimodal Text & OCR Extraction**: Utilizes **Google Gemini Multimodal Vision** to extract verbatim text and structured Markdown tables from PDFs and image scans (PNG, JPG, WEBP), alongside native in-memory OpenXML and stream parsing for DOCX and TXT files, protected by magic-byte security inspection.
-- **Vector Embeddings & HNSW Indexing**: Normalizes extracted content into bounded chunks and generates 768-dimensional embeddings using Google's text-embedding models, indexed in PostgreSQL using `pgvector` HNSW (`vector_cosine_ops`) for sub-millisecond similarity lookups.
+- **Markdown & Table-Aware Chunking Engine**: Tracks heading hierarchies (`#`, `##`, `###`), prepends contextual breadcrumbs to chunks, preserves Markdown tables atomically without mid-table slicing, and splits oversized tables row-by-row while repeating column headers.
+- **Batch Embeddings & HNSW Indexing**: Generates 768-dimensional embeddings via high-throughput batch embedding requests (`batchEmbedContents`, up to 100 texts/call) backed by `IEmbeddingGenerator<string, Embedding<float>>` from `Microsoft.Extensions.AI`, indexed in PostgreSQL using `pgvector` HNSW (`vector_cosine_ops`) for sub-millisecond similarity lookups.
 - **Departmental Authorization Filtering**: Vector similarity queries strictly enforce department permissions, physically excluding documents outside the authenticated user's department clearance.
 - **Model Context Protocol (MCP)**: Implements standard JSON-RPC 2.0 endpoints (`/api/mcp`) allowing external agent frameworks to discover verified documents (`resources/list`) and execute approved workspace actions (`tools/call`).
 
 ### 3. Conversations Module (`server/Modules/Conversations/`)
 - **Conversational RAG (Multi-Turn Chat)**: Manages persistent multi-turn conversations, maintaining sliding-window message memory and conversational summaries.
+- **Standardized Microsoft.Extensions.AI Pipeline**: LLM interactions (generation, streaming, query rewriting, suggestions) are unified through `IChatClient` (`GeminiChatClient`), eliminating custom HTTP clients, duplicate SSE parsers, and custom JSON schemas across infrastructure providers.
 - **Context-Aware Query Rewriter**: Determines whether a follow-up inquiry requires historical context (e.g., *"Does this apply to managers?"* ➔ *"Does the 30-day expense policy apply to managers?"*) using a fast LLM before executing retrieval.
 - **Reciprocal Rank Fusion (RRF) & Calibrated Relevance**: Merges semantic vector cosine ranking with full-text keyword search scores into a calibrated relevance score (0.0 to 1.0), filtering candidate noise with absolute and relative drop-off thresholds.
 - **Autonomous Agent Tool Calling**: Intercepts Gemini function calling turns to execute registered workspace tools:

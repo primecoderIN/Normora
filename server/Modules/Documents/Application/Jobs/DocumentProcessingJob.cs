@@ -119,20 +119,17 @@ public sealed class DocumentProcessingJob(
             Content = content
         }).ToList();
 
-        if (embeddingService.IsConfigured)
+        if (embeddingService.IsConfigured && documentChunks.Count > 0)
         {
-            // Bounded parallel embedding generation avoids upstream Gemini rate-limiting while maintaining high ingestion throughput.
-            var parallelOptions = new ParallelOptions
+            // High-throughput batch embedding generation:
+            // Dispatches chunks in single-roundtrip batches (up to 100/batch) via batchEmbedContents,
+            // avoiding upstream Gemini rate-limiting while drastically cutting ingestion latency.
+            var chunkTexts = documentChunks.Select(c => c.Content).ToList();
+            var vectors = await embeddingService.CreateBatchEmbeddingsAsync(chunkTexts, cancellationToken);
+            for (var i = 0; i < documentChunks.Count; i++)
             {
-                MaxDegreeOfParallelism = 5,
-                CancellationToken = cancellationToken
-            };
-
-            await Parallel.ForEachAsync(documentChunks, parallelOptions, async (chunk, ct) =>
-            {
-                var vector = await embeddingService.CreateEmbeddingAsync(chunk.Content, ct);
-                chunk.Embedding = new Pgvector.Vector(vector);
-            });
+                documentChunks[i].Embedding = new Pgvector.Vector(vectors[i]);
+            }
         }
 
         return documentChunks;

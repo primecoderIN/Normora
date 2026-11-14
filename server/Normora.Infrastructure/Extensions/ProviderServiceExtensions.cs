@@ -1,3 +1,4 @@
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -81,23 +82,26 @@ public static class ProviderServiceExtensions
             client.Timeout = TimeSpan.FromMinutes(2);
         });
 
+        // Register Microsoft.Extensions.AI IEmbeddingGenerator interface forwarding to GeminiEmbeddingService
+        services.AddScoped<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
+            (GeminiEmbeddingService)sp.GetRequiredService<ITextEmbeddingService>());
+
+        // Register Microsoft.Extensions.AI IChatClient standardized interface using GeminiChatClient
+        services.AddHttpClient<IChatClient, GeminiChatClient>(client =>
+        {
+            client.BaseAddress = new Uri(geminiOptions.Endpoint);
+            client.Timeout = TimeSpan.FromMinutes(2);
+        });
+
         services.AddHttpClient<ITextGenerationService, GeminiTextGenerationService>(client =>
         {
             client.BaseAddress = new Uri(geminiOptions.Endpoint);
             client.Timeout = TimeSpan.FromMinutes(2);
         });
 
-        services.AddHttpClient<IQueryRewriterService, GeminiQueryRewriterService>(client =>
-        {
-            client.BaseAddress = new Uri(geminiOptions.Endpoint);
-            client.Timeout = TimeSpan.FromMinutes(2);
-        });
-
-        services.AddHttpClient<ISuggestionsService, GeminiSuggestionsService>(client =>
-        {
-            client.BaseAddress = new Uri(geminiOptions.Endpoint);
-            client.Timeout = TimeSpan.FromSeconds(30);
-        });
+        // Query rewriting and question suggestions delegate directly to standardized IChatClient
+        services.AddScoped<IQueryRewriterService, GeminiQueryRewriterService>();
+        services.AddScoped<ISuggestionsService, GeminiSuggestionsService>();
 
         return services;
     }

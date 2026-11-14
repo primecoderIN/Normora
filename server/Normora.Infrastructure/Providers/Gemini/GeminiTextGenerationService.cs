@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Normora.Modules.Conversations.Application.Services;
 using Normora.Modules.Conversations.Domain;
@@ -10,10 +11,11 @@ using Normora.Shared.Interfaces;
 namespace Normora.Infrastructure.Providers.Gemini;
 
 /// <summary>
-/// Implementation of <see cref="ITextGenerationService"/> that uses Google's Gemini API.
-/// Supports stateless grounded answering, multi-turn conversational RAG, and Gemini Tool Calling (Function Calling).
+/// Implementation of <see cref="ITextGenerationService"/> that leverages <see cref="IChatClient"/>
+/// for conversational answering and streaming, combined with Gemini function calling for workspace agent tools.
 /// </summary>
 public sealed class GeminiTextGenerationService(
+    IChatClient chatClient,
     HttpClient httpClient,
     IOptions<GeminiOptions> options,
     IAgentToolRegistry toolRegistry) : ITextGenerationService
@@ -261,16 +263,9 @@ public sealed class GeminiTextGenerationService(
         double temperature,
         CancellationToken cancellationToken)
     {
-        var request = new GeminiGenerateRequest(
-            [new GeminiContent([new GeminiPart(prompt)], role: "user")],
-            new GeminiGenerationConfig(temperature));
-
-        using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request);
-        using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
-        var text = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+        var chatOptions = new ChatOptions { Temperature = (float)temperature };
+        var response = await chatClient.GetResponseAsync([new ChatMessage(ChatRole.User, prompt)], chatOptions, cancellationToken);
+        var text = response.Text;
         return string.IsNullOrWhiteSpace(text)
             ? RagConstants.FallbackAnswer
             : text.Trim();
@@ -301,38 +296,12 @@ public sealed class GeminiTextGenerationService(
         double temperature,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var request = new GeminiGenerateRequest(
-            [new GeminiContent([new GeminiPart(prompt)], role: "user")],
-            new GeminiGenerationConfig(temperature));
-
-        using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:streamGenerateContent?alt=sse", request);
-
-        using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        string? line;
-        while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+        var chatOptions = new ChatOptions { Temperature = (float)temperature };
+        await foreach (var update in chatClient.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, prompt)], chatOptions, cancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data: ")) continue;
-
-            var json = line["data: ".Length..];
-            GeminiGenerateResponse? result = null;
-            try
+            if (!string.IsNullOrEmpty(update.Text))
             {
-                result = System.Text.Json.JsonSerializer.Deserialize<GeminiGenerateResponse>(json);
-            }
-            catch
-            {
-                // Ignore parsing errors for partial/invalid chunks
-            }
-            
-            var text = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
-            if (!string.IsNullOrEmpty(text))
-            {
-                yield return text;
+                yield return update.Text;
             }
         }
     }

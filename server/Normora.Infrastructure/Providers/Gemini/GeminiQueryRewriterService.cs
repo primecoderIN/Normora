@@ -1,16 +1,15 @@
-using System.Net.Http.Json;
-using System.Text.Json.Serialization;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Normora.Shared.Constants;
 using Normora.Modules.Conversations.Application.Services;
 
 namespace Normora.Infrastructure.Providers.Gemini;
 
-/// <summary>Adapts the Gemini API to the application query-rewriting contract.</summary>
-public class GeminiQueryRewriterService(
-    HttpClient httpClient,
-    IOptions<GeminiOptions> options,
+/// <summary>
+/// Adapts the standardized <see cref="IChatClient"/> to the application query-rewriting contract.
+/// Rewrites follow-up conversation turns into standalone retrieval queries for vector similarity search.
+/// </summary>
+public sealed class GeminiQueryRewriterService(
+    IChatClient chatClient,
     ILogger<GeminiQueryRewriterService> logger) : IQueryRewriterService
 {
     public async Task<string> RewriteQueryAsync(
@@ -18,24 +17,14 @@ public class GeminiQueryRewriterService(
         IReadOnlyList<ConversationMessageContext> conversationHistory,
         CancellationToken cancellationToken = default)
     {
-        var geminiOptions = options.Value;
-        var apiKey = geminiOptions.ApiKey;
-        var model = geminiOptions.GenerationModel;
-
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            throw new InvalidOperationException(ApiMessages.LlmGenerationNotConfigured);
-        }
-
-        // Skip rewriting if this is the very first question in the conversation since there's no context yet
+        // Skip rewriting if this is the very first question since there's no prior context
         if (conversationHistory.Count == 0)
         {
-            return currentQuestion; // No history to rewrite from
+            return currentQuestion;
         }
 
         var historyText = string.Join("\n", conversationHistory.Select(m => $"{m.Role}: {m.Content}"));
 
-        // Ask the LLM to rewrite the user's latest query into a standalone question using the chat history so we can search the vector DB effectively
         var prompt = $"""
             Given the following conversation history and a follow-up user question, rephrase the follow-up question to be a standalone question that can be used to query a vector database.
             Do NOT answer the question. Only return the standalone question. If the question does not need rewriting, return it exactly as is.
@@ -49,23 +38,11 @@ public class GeminiQueryRewriterService(
             Standalone Question:
             """;
 
-        var request = new GeminiGenerateRequest(
-            [new GeminiContent([new GeminiPart(prompt)])],
-            new GeminiGenerationConfig(0.0)); // low temperature for consistent rewrites
+        var options = new ChatOptions { Temperature = 0.0f };
+        var response = await chatClient.GetResponseAsync([new ChatMessage(ChatRole.User, prompt)], options, cancellationToken);
+        var rewritten = response.Text;
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:generateContent")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("x-goog-api-key", apiKey);
-
-        using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
-        var rewritten = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
         logger.LogDebug("Query rewritten from '{Original}' to '{Rewritten}'", currentQuestion, rewritten);
-        
         return string.IsNullOrWhiteSpace(rewritten) ? currentQuestion : rewritten.Trim();
     }
 }

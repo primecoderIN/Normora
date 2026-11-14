@@ -19,4 +19,13 @@ public interface ITextEmbeddingService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A float array of length 768 representing the dense vector coordinates.</returns>
     Task<float[]> CreateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Generates dense 768-dimensional vector embeddings for a batch of textual passages.
+    /// Enables high-throughput ingestion without single-chunk HTTP roundtrip overhead.
+    /// </summary>
+    /// <param name="texts">The list of chunk texts to vectorize.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of float arrays, each representing a dense vector.</returns>
+    Task<IReadOnlyList<float[]>> CreateBatchEmbeddingsAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken = default);
 }
