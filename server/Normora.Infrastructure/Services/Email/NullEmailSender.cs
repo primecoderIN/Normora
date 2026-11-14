@@ -11,8 +11,8 @@ public class NullEmailSender(ILogger<NullEmailSender> logger) : IEmailSender
 {
     public Task SendAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("[NullEmailSender] Suppressed email to '{Recipient}' with subject '{Subject}' (Body length: {Length} characters)",
-            to, subject, htmlBody.Length);
+        logger.LogInformation("[NullEmailSender] Suppressed email (Body length: {Length} characters)",
+            htmlBody.Length);
         return Task.CompletedTask;
     }
 }
