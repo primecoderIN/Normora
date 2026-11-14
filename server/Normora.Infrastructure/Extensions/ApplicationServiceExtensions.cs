@@ -86,6 +86,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<IEmailService, BackgroundEmailService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IDocumentNotificationService, SignalRDocumentNotificationService>();
+        services.AddScoped<IWorkspaceStateSynchronizer, WorkspaceStateSynchronizer>();
         services.AddScoped<IDocumentProcessingWakeup, HangfireDocumentProcessingWakeup>();
         services.AddScoped<HangfireDocumentProcessingOutboxDispatcher>();
         services.AddScoped<HangfireDocumentProcessingJob>();

@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DepartmentService, Department } from '@core/services/department.service';
+import { RealtimeStateService } from '@core/services/realtime-state.service';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { DepartmentListComponent } from './components/department-list.component';
@@ -21,6 +22,16 @@ import { DsSkeletonComponent, DsInputComponent } from '@design-system';
 })
 export class Departments implements OnInit {
   private deptService = inject(DepartmentService);
+  private realtimeStateService = inject(RealtimeStateService);
+
+  constructor() {
+    effect(() => {
+      const version = this.realtimeStateService.dataVersion();
+      if (version > 1) {
+        this.loadDepartments();
+      }
+    });
+  }
 
   departments = signal<Department[]>([]);
   isLoading = signal(true);

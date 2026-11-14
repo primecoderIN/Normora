@@ -12,6 +12,7 @@ namespace Normora.Modules.Conversations.Application.Conversations.DTOs;
 [JsonDerivedType(typeof(ToolStartedEvent), "tool_started")]
 [JsonDerivedType(typeof(ToolFinishedEvent), "tool_finished")]
 [JsonDerivedType(typeof(ActionCardEvent), "action_card")]
+[JsonDerivedType(typeof(StateSnapshotEvent), "state_snapshot")]
 [JsonDerivedType(typeof(StreamFinishedEvent), "finished")]
 public abstract record AskConversationStreamEvent;
 
@@ -59,9 +60,15 @@ public sealed record ActionCardEvent(
     string Description,
     IReadOnlyDictionary<string, string> Parameters,
     string? ConfirmButtonText = null,
-    string? CancelButtonText = null) : AskConversationStreamEvent;
+    string? CancelButtonText = null,
+    string? ApprovalId = null) : AskConversationStreamEvent;
 
 /// <summary>
 /// Event emitted when answer streaming is complete and database persistence has finalized.
 /// </summary>
 public sealed record StreamFinishedEvent() : AskConversationStreamEvent;
+
+/// <summary>
+/// Event emitted when an autonomous tool mutates workspace data, notifying the client of the updated version.
+/// </summary>
+public sealed record StateSnapshotEvent(long DataVersion) : AskConversationStreamEvent;

@@ -15,6 +15,7 @@ import { DocumentUploadModalComponent } from './components/document-upload-modal
 import { UserService } from '@core/services/user.service';
 import { DocumentRealtimeService, DocumentStatusChanged } from '@core/services/document-realtime.service';
 import { DepartmentService, Department } from '@core/services/department.service';
+import { RealtimeStateService } from '@core/services/realtime-state.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import { DsSkeletonComponent, DsToastComponent, DsToastService, DsInputComponent } from '@design-system';
 
@@ -44,6 +45,7 @@ export class Documents implements OnInit, OnDestroy {
   private departmentService = inject(DepartmentService);
   public userService = inject(UserService);
   public copilotService = inject(CopilotService);
+  private realtimeStateService = inject(RealtimeStateService);
 
   constructor() {
     effect(() => {
@@ -51,6 +53,13 @@ export class Documents implements OnInit, OnDestroy {
       if (modal === 'upload_document') {
         this.showUploadDialog.set(true);
         this.copilotService.clearModalActuation();
+      }
+    });
+
+    effect(() => {
+      const version = this.realtimeStateService.dataVersion();
+      if (version > 1) {
+        this.loadDocuments();
       }
     });
   }

@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { DatePipe, CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { InvitationService } from '@core/services/invitation.service';
 import { TenantService, TenantEmployeeDto } from '@core/services/tenant.service';
 import { DepartmentService, Department } from '@core/services/department.service';
+import { RealtimeStateService } from '@core/services/realtime-state.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import {
   DsButtonComponent,
@@ -38,6 +39,17 @@ export class Employees implements OnInit {
   private tenantService = inject(TenantService);
   private departmentService = inject(DepartmentService);
   private messageService = inject(DsToastService);
+  private realtimeStateService = inject(RealtimeStateService);
+
+  constructor() {
+    effect(() => {
+      const version = this.realtimeStateService.dataVersion();
+      if (version > 1) {
+        this.loadEmployees();
+        this.loadStats();
+      }
+    });
+  }
 
   inviteForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],

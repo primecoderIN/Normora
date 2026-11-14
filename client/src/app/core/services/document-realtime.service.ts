@@ -1,6 +1,7 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { environment } from '@env/environment';
+import { RealtimeStateService } from './realtime-state.service';
 
 export interface DocumentStatusChanged {
   documentId: string;
@@ -16,6 +17,7 @@ export interface DocumentStatusChanged {
  */
 @Injectable({ providedIn: 'root' })
 export class DocumentRealtimeService implements OnDestroy {
+  private realtimeStateService = inject(RealtimeStateService);
   private connection?: HubConnection;
 
   /**
@@ -49,6 +51,11 @@ export class DocumentRealtimeService implements OnDestroy {
     if (onDocumentDeleted) {
       this.connection.on('DocumentDeleted', onDocumentDeleted);
     }
+    this.connection.on('WorkspaceStateUpdated', (snapshot: { dataVersion: number }) => {
+      if (snapshot && typeof snapshot.dataVersion === 'number') {
+        this.realtimeStateService.handleStateSnapshot(snapshot.dataVersion);
+      }
+    });
 
     await this.connection.start();
 

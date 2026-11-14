@@ -143,7 +143,11 @@ internal sealed class AskConversationStreamCommandHandler(
                                 card.Description,
                                 card.Parameters,
                                 card.ConfirmButtonText,
-                                card.CancelButtonText);
+                                card.CancelButtonText,
+                                card.ApprovalId);
+                            break;
+                        case StateSnapshotItem state:
+                            yield return new StateSnapshotEvent(state.DataVersion);
                             break;
                     }
                 }

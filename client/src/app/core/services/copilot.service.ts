@@ -3,6 +3,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { firstValueFrom, filter } from 'rxjs';
 import { ConversationService, MessageDto, ConversationDto } from './conversation.service';
 import { UserService } from './user.service';
+import { RealtimeStateService } from './realtime-state.service';
 import { ApiMessages } from '../constants/api-messages';
 
 export type PersonaId = 'general' | 'hr' | 'finance' | 'it';
@@ -95,6 +96,7 @@ export class CopilotService {
   private router = inject(Router);
   private conversationService = inject(ConversationService);
   private userService = inject(UserService);
+  private realtimeStateService = inject(RealtimeStateService);
 
   // ─── Reactive Signals ────────────────────────────────────────────────────────
   readonly isOpen = signal<boolean>(false);
@@ -483,17 +485,21 @@ export class CopilotService {
                   }
                   assistantMsg.actionCard = {
                     actionType: evt.actionType,
+                    cardType: evt.actionType,
                     title: evt.title,
                     description: evt.description,
                     parameters: evt.parameters || {},
                     confirmButtonText: evt.confirmButtonText,
-                    cancelButtonText: evt.cancelButtonText
+                    cancelButtonText: evt.cancelButtonText,
+                    approvalId: evt.approvalId
                   };
                   this.messages.update(list => {
                     const exists = list.some(m => m.id === assistantMsg!.id);
                     if (!exists) return [...list, { ...assistantMsg! }];
                     return list.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m));
                   });
+                } else if (evt.type === 'state_snapshot') {
+                  this.realtimeStateService.handleStateSnapshot(evt.dataVersion);
                 } else if (evt.type === 'text') {
                   if (assistantMsg) {
                     assistantMsg.content += evt.text;

@@ -17,6 +17,7 @@ import { ConversationSidebarComponent } from './components/conversation-sidebar.
 import { ConversationChatComponent } from './components/conversation-chat.component';
 import { UserService } from '@core/services/user.service';
 import { CopilotService } from '@core/services/copilot.service';
+import { RealtimeStateService } from '@core/services/realtime-state.service';
 
 @Component({
   selector: 'app-conversations',
@@ -66,6 +67,7 @@ export class Conversations implements OnInit, AfterViewChecked {
   private conversationService = inject(ConversationService);
   private userService = inject(UserService);
   public copilotService = inject(CopilotService);
+  private realtimeStateService = inject(RealtimeStateService);
   @ViewChild(ConversationChatComponent) private chatComponent!: ConversationChatComponent;
 
   // ─── State ────────────────────────────────────────────────────────────────
@@ -409,11 +411,13 @@ export class Conversations implements OnInit, AfterViewChecked {
                   }
                   assistantMsg.actionCard = {
                     actionType: evt.actionType,
+                    cardType: evt.actionType,
                     title: evt.title,
                     description: evt.description,
                     parameters: evt.parameters || {},
                     confirmButtonText: evt.confirmButtonText,
-                    cancelButtonText: evt.cancelButtonText
+                    cancelButtonText: evt.cancelButtonText,
+                    approvalId: evt.approvalId
                   };
                   this.activeConversation.update(c => {
                     if (!c) return c;
@@ -422,6 +426,8 @@ export class Conversations implements OnInit, AfterViewChecked {
                     return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
                   });
                   this.shouldScrollToBottom = true;
+                } else if (evt.type === 'state_snapshot') {
+                  this.realtimeStateService.handleStateSnapshot(evt.dataVersion);
                 } else if (evt.type === 'text') {
                   // Event 2: TextChunkEvent
                   // Incrementally append new text tokens to assistantMsg.content

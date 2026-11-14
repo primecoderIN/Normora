@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserGroupService, UserGroup, UserGroupDetail } from '@core/services/user-group.service';
 import { DepartmentService, Department } from '@core/services/department.service';
 import { TenantService, TenantEmployeeDto } from '@core/services/tenant.service';
+import { RealtimeStateService } from '@core/services/realtime-state.service';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { UserGroupListComponent } from './components/user-group-list.component';
@@ -22,6 +23,16 @@ export class UserGroups implements OnInit {
   private groupService = inject(UserGroupService);
   private deptService = inject(DepartmentService);
   private tenantService = inject(TenantService);
+  private realtimeStateService = inject(RealtimeStateService);
+
+  constructor() {
+    effect(() => {
+      const version = this.realtimeStateService.dataVersion();
+      if (version > 1) {
+        this.loadGroups();
+      }
+    });
+  }
 
   groups = signal<UserGroup[]>([]);
   allDepartments = signal<Department[]>([]);
