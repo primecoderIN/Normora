@@ -1,9 +1,11 @@
 using FluentValidation;
 using Hangfire;
 using MediatR;
+using Microsoft.Agents.AI.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Normora.Infrastructure.Agents;
 using Normora.Infrastructure.Features.Email;
 using Normora.Infrastructure.BackgroundJobs;
 using Normora.Infrastructure.Services;
@@ -88,6 +90,11 @@ public static class ApplicationServiceExtensions
         services.AddScoped<HangfireDocumentProcessingOutboxDispatcher>();
         services.AddScoped<HangfireDocumentProcessingJob>();
         services.AddScoped<HangfirePurgeDeletedDocumentsJob>();
+
+        // Microsoft Agent Framework & AG-UI Hosting (CopilotKit protocol integration):
+        services.AddAGUIServer();
+        services.AddScoped<AgentIsolationKeyProvider, NormoraAgentIsolationKeyProvider>();
+        services.AddScoped<NormoraWorkplaceAgent>();
 
         return services;
     }

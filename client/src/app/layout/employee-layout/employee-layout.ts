@@ -9,10 +9,12 @@ import { InvitationService } from '@core/services/invitation.service';
 import { TenantService } from '@core/services/tenant.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
+import { CopilotService } from '@core/services/copilot.service';
+import { CopilotSidebarComponent } from '@shared/components/copilot-sidebar/copilot-sidebar.component';
 import { signal, computed } from '@angular/core';
 import { ApiMessages } from '@core/constants/api-messages';
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, DsSelectComponent, FormsModule, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DsSelectComponent, FormsModule, CommonModule, CopilotSidebarComponent],
   selector: 'app-employee-layout',
 
   templateUrl: './employee-layout.html',
@@ -23,6 +25,7 @@ export class EmployeeLayout {
   public tenantService = inject(TenantService);
   public themeService = inject(ThemeService);
   public brandingService = inject(TenantBrandingService);
+  public copilotService = inject(CopilotService);
   private invitationService = inject(InvitationService);
   private toastService = inject(DsToastService);
   isAccepting = signal(false);

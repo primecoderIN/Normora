@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./design-system/tokens/tokens.css";
 @import "primeicons/primeicons.css";
+@import "@copilotkit/angular/styles.css";
 
 @source "./app/**/*.{html,ts}";
 @source "./design-system/**/*.{html,ts}";

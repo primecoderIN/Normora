@@ -158,3 +158,16 @@ flowchart TD
    If a junior engineer asks about Executive Financials, the database query physically ignores executive documents, guaranteeing that unauthorized chunks are never read into memory or passed to the LLM.
 2. **Autonomous Tool Calling**: When the user's inquiry requires policy computations (e.g. travel limits) or human intervention (e.g. escalating an unanswered question), Gemini autonomously triggers registered agent tools (`calculate_policy_limit`, `escalate_hr_inquiry`) inside the user's tenant context.
 3. **Transparent Citations**: Every generated answer streams alongside verified **Message Citations** (document title, chunk ID, relevance rank, and preview text), allowing employees to audit and verify source material.
+
+---
+
+## 5. Phase 4: Omnipresent Copilot & Agentic Workplace Intelligence (CopilotKit + Microsoft Agent Framework AG-UI)
+
+Normora elevates beyond static question-answering with an omnipresent Copilot accessible across all application screens:
+
+1. **Omnipresent Access**: Pressing `Ctrl+J` / `Cmd+J` or clicking the floating AI spark pill opens the slide-out Copilot sidebar without disrupting the user's current workflow.
+2. **Real-Time Context Perception (AG-UI)**: The client's `CopilotService` observes the active router state and workspace context. If an administrator is on `/employer/documents`, the Copilot automatically suggests document governance prompts; if an employee is on `/employee/departments`, it suggests departmental clearance prompts.
+3. **AG-UI Protocol Endpoint (`/api/copilotkit`)**: `@copilotkit/angular` communicates directly with Normora's ASP.NET Core backend over the AG-UI protocol, hosted by `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore`.
+4. **Microsoft Agent Framework (`NormoraWorkplaceAgent`)**: The backend hosts an `AIAgent` that bridges AG-UI runs to MediatR's `AskConversationStreamCommand`, streaming tokens back to the UI in real-time.
+5. **Caller-Scoped Session Isolation**: `NormoraAgentIsolationKeyProvider` partitions session threads by `{TenantId}:{ExternalUserId}`, preventing thread hijacking and ensuring multi-tenant BOLA isolation.
+

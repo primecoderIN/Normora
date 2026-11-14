@@ -1,0 +1,53 @@
+# PROPRIETARY & SOURCE-AVAILABLE LICENSE
+
+**Copyright (c) 2026 Sanjeev Kumar. All rights reserved.**
+
+---
+
+### IMPORTANT NOTICE: THIS IS NOT AN OPEN-SOURCE SOFTWARE LICENSE
+
+This repository and all associated materials (including, without limitation, source code, documentation, architecture diagrams, data models, database schemas, and assets) constitute proprietary intellectual property of Sanjeev Kumar ("Author").
+
+By accessing, viewing, downloading, cloning, or inspecting this repository, you agree to be bound by the terms and conditions set forth below. If you do not agree to these terms, you must immediately delete any copies of this repository and cease all use.
+
+---
+
+### 1. Limited Grant of Rights (Personal Evaluation Only)
+Subject to your compliance with this License, the Author grants you a personal, revocable, non-exclusive, non-transferable, and non-sublicensable limited license solely to:
+1. **View and inspect** the source code on GitHub for personal learning, educational assessment, or portfolio review.
+2. **Execute and test** the software solely on your personal local workstation (`localhost`) for non-commercial evaluation purposes.
+
+---
+
+### 2. Strict Restrictions & Prohibitions
+Unless you have obtained express prior written consent from the Author, you are **STRICTLY PROHIBITED** from:
+1. **Commercial Exploitation:** You may NOT use, deploy, or run this software, in whole or in part, for any commercial enterprise, business operation, revenue-generating activity, or paid engagement.
+2. **Hosting as a Service (SaaS):** You may NOT offer, host, or provide this software—or any modified derivative thereof—as a cloud service, Software-as-a-Service (SaaS), Platform-as-a-Service (PaaS), managed service, or network-accessible application to third parties.
+3. **Public Duplication & Cloning:** You may NOT re-host, mirror, re-license, redistribute, or publish copies or clones of this codebase, whether modified or unmodified, on public or private code hosting platforms, forums, or package registries.
+4. **Derivative Works & White-Labeling:** You may NOT create derivative products, reverse engineer architectures to build competing platforms, or strip, modify, or conceal copyright notices, author attributions, or brand identifiers.
+5. **Trademark & Branding:** No rights are granted to use the **"Normora"** trademark, logo, name, domain names, or associated trade dress.
+
+---
+
+### 3. Intellectual Property Rights & Ownership
+All title, ownership rights, patents, copyrights, and intellectual property rights in and to the software (and any improvements or derivative works created) remain exclusively with Sanjeev Kumar. This agreement does not convey any ownership interest in or to the software.
+
+---
+
+### 4. Enforcement & Legal Remedies
+Unauthorized duplication, distribution, commercial deployment, or breach of these terms constitutes willful copyright infringement under international copyright treaties (including the Berne Convention and the Digital Millennium Copyright Act - DMCA). The Author reserves all legal rights to:
+- Issue immediate DMCA takedown notices to hosting providers and code platforms.
+- Seek statutory damages, injunctive relief, and recovery of legal fees against infringing parties.
+
+---
+
+### 5. Disclaimer of Warranty
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+### Inquiries & Commercial Licensing
+For commercial licensing inquiries, enterprise deployment permissions, or partnership questions, contact:
+- **Author:** Sanjeev Kumar
+- **Email:** sanjeev2856@gmail.com
+

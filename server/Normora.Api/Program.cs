@@ -117,4 +117,9 @@ app.MapBffManagementEndpoints(); // Adds /bff/login, /bff/logout, /bff/user
 app.MapHub<DocumentHub>("/hubs/documents").AsBffApiEndpoint().SkipAntiforgery();
 app.MapHub<NotificationHub>("/hubs/notifications").AsBffApiEndpoint().SkipAntiforgery();
 
+// Microsoft Agent Framework AG-UI endpoint for CopilotKit Workplace Intelligence:
+app.MapNormoraAguiServer()
+    .RequireAuthorization()
+    .AsBffApiEndpoint();
+
 app.Run();

@@ -3,9 +3,9 @@
 Normora follows a **Modular Monolith** architecture on the backend and an Angular **hybrid-rendered application** on the frontend (server-rendered root route with client-rendered application routes). The API, background worker, and one-off migration runner are independently deployable processes built from the same server solution.
 
 ## High-Level Tech Stack
-- **Frontend**: Angular, TypeScript, Nginx
-- **Backend**: .NET 10 (ASP.NET Core Web API)
-- **Database**: PostgreSQL 15 (managed via pgAdmin 4)
+- **Frontend**: Angular 22, TypeScript, Tailwind CSS v4, PrimeNG, `@copilotkit/angular`, Nginx
+- **Backend**: .NET 10 (ASP.NET Core Web API), Microsoft Agent Framework (`Microsoft.Agents.AI.Hosting.AGUI.AspNetCore`)
+- **Database**: PostgreSQL 15 + pgvector (managed via pgAdmin 4)
 - **Identity Provider**: Keycloak 24 (with Google and GitHub Sign-In Integrations)
 - **Object Storage**: MinIO
 - **Infrastructure**: Docker & Docker Compose
@@ -235,6 +235,71 @@ BOLA occurs when an application does not properly validate that the user is auth
 - **Entity Boundary Stamping on Sub-Aggregates**: All entities implementing `ITenantEntity` (such as `ConversationShare`, `MessageFeedback`, and `DocumentDepartment`) are explicitly stamped with `TenantId` upon instantiation rather than relying solely on change-tracking defaults. In `ShareConversationCommandHandler`, initializing `TenantId = conversation.TenantId;` guarantees that public share verification in `GetSharedConversationQueryHandler` performs deterministic tenant boundary checks.
 - **Example**: In the `SuspendTenant` endpoint, the `{id}` from the route is validated against `_tenantContext.TenantId`. This prevents a malicious tenant admin from suspending *another* tenant by injecting their own valid `X-Tenant-Id` header while manipulating the target `{id}` in the URL.
 - **Generic 404 Response Mappings**: When a BOLA violation occurs, `BolaException` maps to a standard 404 Not Found response (`ApiMessages.NotFound`), preventing attackers from enumerating resource identifiers across foreign tenants.
+
+## Agentic Workplace Intelligence (CopilotKit & Microsoft Agent Framework AG-UI)
+
+Normora integrates Microsoft Agent Framework (.NET 10) with CopilotKit (Angular 22) to expose an omnipresent, context-aware workplace AI assistant.
+
+### Architecture Overview
+
+```mermaid
+flowchart LR
+    subgraph Client ["Angular 22 SPA"]
+        CSB["CopilotSidebarComponent<br/>(Ctrl+J shortcut)"]
+        CPS["CopilotService<br/>(Route & Workspace Perception)"]
+        CKA["@copilotkit/angular<br/>(provideCopilotKit)"]
+    end
+
+    subgraph Host ["Normora.Api Host"]
+        AGUI["MapNormoraAguiServer<br/>(/api/copilotkit)"]
+        BFF["Duende BFF Auth & Anti-Forgery"]
+    end
+
+    subgraph Infra ["Normora.Infrastructure"]
+        AIA["NormoraWorkplaceAgent<br/>(Microsoft.Agents.AI.AIAgent)"]
+        ISO["NormoraAgentIsolationKeyProvider<br/>(TenantId:UserId Session Isolation)"]
+    end
+
+    subgraph Business ["Conversations & Documents Modules"]
+        CQRS["AskConversationStreamCommand<br/>(MediatR SSE Stream)"]
+        RAG["Hybrid Retrieval & Agent Tools"]
+    end
+
+    CSB --> CPS
+    CPS --> CKA
+    CKA -- "AG-UI Protocol (JSON RunAgentInput)" --> AGUI
+    AGUI --> BFF
+    BFF --> ISO
+    ISO --> AIA
+    AIA -- "MediatR Stream" --> CQRS
+    CQRS --> RAG
+    RAG -- "Token Chunks" --> AIA
+    AIA -- "AG-UI Event Stream (SSE)" --> CKA
+    CKA -- "Render Tokens & Widgets" --> CSB
+```
+
+### Key Components
+
+1. **`@copilotkit/angular` Integration (`client/src/app/app.config.ts`)**:
+   - Registered globally via `provideCopilotKit({ runtimeUrl: '/api/copilotkit', credentials: 'same-origin', headers: ... })`.
+   - Uses a dynamic header factory that synchronously resolves `X-CSRF: 1` and `X-Tenant-Id` from browser session storage.
+   - Automatically updated whenever `tenantInterceptor` processes workspace route transitions.
+
+2. **Microsoft Agent Framework AG-UI Hosting (`server/Normora.Infrastructure/Extensions/AguiEndpointExtensions.cs`)**:
+   - Hosted via `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore`.
+   - Mapped to `/api/copilotkit` with `.RequireAuthorization()` and `.AsBffApiEndpoint()` in `Program.cs`.
+   - Automatically handles JSON serialization and deserialization of AG-UI wire protocols and Agent Framework models.
+
+3. **`NormoraWorkplaceAgent` (`server/Normora.Infrastructure/Agents/NormoraWorkplaceAgent.cs`)**:
+   - Inherits from `Microsoft.Agents.AI.AIAgent`.
+   - Implements `RunCoreStreamingAsync` to consume MediatR's `AskConversationStreamCommand` and stream `AgentResponseUpdate` chunks.
+   - Implements `RunCoreAsync` for non-streaming invocation fallback.
+   - Manages persistent conversation threads using `NormoraAgentSession` backed by `AgentSessionStateBag`.
+
+4. **Multi-Tenant Caller Session Isolation (`NormoraAgentIsolationKeyProvider`)**:
+   - Derived from `AgentIsolationKeyProvider`.
+   - Computes an isolation key formatted as `{TenantId}:{ExternalUserId}`.
+   - Prevents cross-tenant and cross-user thread enumeration or session leakage, ensuring full compliance with Normora's BOLA/BFLA security rules.
 
 ## Enterprise Security & Runtime Hardening
 

@@ -3,6 +3,7 @@
 <div align="center">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Angular-22.1-DD0031?logo=angular&logoColor=white" alt="Angular" />
+  <img src="https://img.shields.io/badge/CopilotKit-Angular_22-6366F1?logo=angular&logoColor=white" alt="CopilotKit" />
   <img src="https://img.shields.io/badge/PostgreSQL-15_+_pgvector-336791?logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Keycloak-24.0-0096D6?logo=keycloak&logoColor=white" alt="Keycloak" />
   <img src="https://img.shields.io/badge/MinIO-S3_Storage-C72C48?logo=minio&logoColor=white" alt="MinIO" />
@@ -11,6 +12,7 @@
   <img src="https://img.shields.io/badge/Duende_BFF-Cookie_Session-000000?logo=csharp&logoColor=white" alt="Duende BFF" />
   <img src="https://img.shields.io/badge/EF_Core-10.0-512BD4?logo=nuget&logoColor=white" alt="Entity Framework Core" />
   <img src="https://img.shields.io/badge/OpenTelemetry-Tracing_&_Metrics-000000?logo=opentelemetry&logoColor=white" alt="OpenTelemetry" />
+  <img src="https://img.shields.io/badge/License-Proprietary_&_Source--Available-red" alt="License: Proprietary" />
 </div>
 <br>
 
@@ -18,6 +20,12 @@
   <img src="./docs/hero.png" alt="Normora Dashboard Highlight" width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
 </div>
 <br>
+
+> [!IMPORTANT]
+> **Proprietary & Source-Available Codebase (All Rights Reserved)**
+> Normora is published publicly strictly for educational review, architectural assessment, and portfolio evaluation. 
+> **Commercial exploitation, SaaS hosting, unauthorized redistribution, white-labeling, or public duplicate cloning is strictly prohibited.** 
+> For full legal terms, see the [LICENSE](./LICENSE) file.
 
 **Normora** is an enterprise-grade, multi-tenant knowledge management and conversational AI platform. Architected as a **.NET 10 Modular Monolith** coupled with an **Angular 22 SPA**, Normora enables organizations to securely ingest company policies, compartmentalize access via departmental RBAC, and converse with grounded AI agents using hybrid semantic retrieval and autonomous tool calling.
 
@@ -105,6 +113,11 @@ flowchart TD
   - **Hybrid Search**: Combines pgvector cosine similarity (HNSW index) with full-text keyword search using Reciprocal Rank Fusion (RRF).
   - **Multi-Turn Function Calling**: Integrated Gemini Flash tool calling loop for deterministic corporate expense calculations (`calculate_policy_limit`), HR email escalations (`escalate_hr_inquiry`), and cross-module document search (`search_company_documents`).
   - **Model Context Protocol (MCP)**: Implements standard JSON-RPC 2.0 MCP endpoints (`/api/mcp`) exposing corporate knowledge resources and tools to external AI agent frameworks.
+- **Agentic Workplace Intelligence (CopilotKit & Microsoft Agent Framework AG-UI)**:
+  - **Omnipresent Copilot Sidebar**: Instant slide-out AI assistant (`Ctrl+J` / `Cmd+J`) available across all employer and employee interfaces.
+  - **AG-UI Protocol Hosting**: Native AG-UI endpoint (`/api/copilotkit`) hosted via `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore` with BFF authentication and anti-CSRF protection.
+  - **`NormoraWorkplaceAgent`**: Microsoft Agent Framework (`AIAgent`) implementation executing MediatR conversational RAG pipelines with real-time SSE token streaming.
+  - **Caller Session Isolation**: `NormoraAgentIsolationKeyProvider` enforces `{TenantId}:{ExternalUserId}` session partitioning, preventing cross-tenant thread leaks.
 - **Provider-Neutral Abstractions**: Domain models reference neutral interfaces for payment processing (`IPaymentService`), transactional emails (`IEmailSender`), and external identity (`ExternalUserId` mapping OIDC subjects), completely decoupling business logic from third-party vendors.
 - **High-Performance Distributed Caching**: Multi-tenant resolution, role checks, and branding lookups are cached in Redis with short sliding expirations (30s–5m), eliminating redundant database queries per HTTP request while ensuring immediate revocation propagation.
 
@@ -125,8 +138,10 @@ flowchart TD
 | | [**Database Schema & Relationships**](./docs/database_schema.md) | PostgreSQL schemas (`tenants`, `documents`, `conversations`), pgvector HNSW indexes, and soft-delete filters. |
 | | [**Security Headers & Hardening**](./docs/security_headers.md) | Defense-in-depth specifications: CSP, HSTS, frame protection, anti-CSRF, and cookie session security. |
 | | [**Configuration Reference**](./docs/configuration.md) | Strongly-typed Options pattern, startup validation (`ValidateOnStart`), and environment variable overrides. |
-| **Governance & Roadmaps** | [**Progress Tracker**](./progress_tracker.md) | Authoritative roadmap and changelog tracking completed phases (Phases 1–28) and upcoming milestones. |
+| **Governance & Security** | [**Progress Tracker**](./progress_tracker.md) | Authoritative roadmap and changelog tracking completed phases (Phases 1–28) and upcoming milestones. |
 | | [**Agent Coding Guidelines**](./AGENTS.md) | Strict engineering rules, architectural conventions, and coding patterns enforced across the repository. |
+| | [**Security Policy**](./SECURITY.md) | Responsible vulnerability disclosure program, reporting channels, and research boundaries. |
+| | [**Legal & DMCA Guide**](./docs/LEGAL_AND_DMCA.md) | Copyright protection, commercial restrictions, and ready-to-use DMCA takedown notice template. |
 
 ---
 
@@ -164,3 +179,18 @@ To stop all containers without losing data volumes:
 | **MinIO Console** | `http://localhost:9001` | `minioadmin` / `minioadmin` (S3 object browser) |
 | **pgAdmin (PostgreSQL UI)** | `http://localhost:5050` | `admin@normora.local` / `admin` |
 | **Hangfire Dashboard** | `http://localhost:5000/hangfire` | Background job execution and retry monitor |
+
+---
+
+## ⚖️ Intellectual Property & Licensing
+
+Copyright © 2026 **Sanjeev Kumar**. All rights reserved.
+
+This codebase is **proprietary and source-available**. It is published publicly on GitHub strictly for educational review, architectural assessment, and portfolio evaluation.
+
+- 🚫 **No Commercial Use:** Running, deploying, or monetizing this codebase or its architectural design in any commercial or revenue-generating capacity without a commercial license is strictly prohibited.
+- 🚫 **No SaaS or Managed Service Hosting:** Hosting this platform or any derivative work as a multi-tenant or single-tenant cloud service is not permitted.
+- 🚫 **No Unauthorized Duplication or Cloning:** Mirroring, white-labeling, redistributing, or publishing duplicate forks/clones for non-contributory or competing purposes constitutes copyright infringement.
+
+For commercial licensing, enterprise deployment rights, or partnership inquiries, please refer to the [LICENSE](./LICENSE) or contact **Sanjeev Kumar** directly at `sanjeev2856@gmail.com`.
+

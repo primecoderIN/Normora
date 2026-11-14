@@ -68,6 +68,7 @@ graph LR
   - `escalate_hr_inquiry`: Dispatches transactional emails to workspace administrators when an inquiry cannot be answered from documentation.
   - `search_company_documents`: Performs deep cross-module retrieval via MediatR.
 - **Grounded Streaming & Citations**: Streams real-time token buffers to the client via Server-Sent Events (SSE) alongside verified, clickable document chunk citations.
+- **Omnipresent Copilot & AG-UI Perception**: Integrates the CopilotKit architectural pattern across the Angular SPA via `CopilotSidebarComponent` and `CopilotService`, enabling keyboard-driven (`Ctrl+J`) in-app copilot assistance with route-aware suggested prompts across all employer and employee management views.
 
 ---
 
@@ -100,3 +101,4 @@ flowchart TD
 
 - **Enterprise Organizations**: Requiring private, tenant-isolated knowledge management that respects strict departmental boundaries.
 - **Full-Stack & Systems Engineers**: Serving as a blueprint for production-ready .NET 10 Modular Monolith and Angular 22 architecture, exhibiting primary constructors, standalone components, Angular Signals, and MediatR CQRS patterns.
+- **Agentic AI Architects**: Transforming Normora into an Agentic Enterprise Operating System (AEOS) powered natively by Microsoft Semantic Kernel, Microsoft.Extensions.AI, and C# Model Context Protocol (MCP). See [docs/agentic_ai_architecture.md](file:///c:/Users/Sanjeev%20Kumar/Codes/Normora/docs/agentic_ai_architecture.md).

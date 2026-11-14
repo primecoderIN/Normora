@@ -159,6 +159,9 @@ export const ApiMessages = {
   InvitationAlreadyAccepted: 'This invitation has already been accepted or is no longer valid.',
   InvitationExpired: 'This invitation link has expired.',
   InvitationInvalidOrMissing: 'This invitation is invalid or does not exist.',
-  ExtractionServiceNotConfigured: 'Document processing requires an AI extraction service to be configured.'
+  ExtractionServiceNotConfigured: 'Document processing requires an AI extraction service to be configured.',
+  CopilotUnavailable: 'Copilot is unavailable in this workspace.',
+  CopilotStreamFailed: 'Failed to stream response from Copilot. Please try again.',
+  CopilotRateLimited: 'You are sending messages too fast. Please wait a moment and try again.'
 } as const;
 

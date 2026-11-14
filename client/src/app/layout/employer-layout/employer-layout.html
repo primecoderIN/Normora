@@ -333,6 +333,15 @@
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
           Knowledge Engine Online
         </div>
+        <button
+          type="button"
+          (click)="copilotService.open()"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-linear-to-r from-primary-600 via-indigo-600 to-purple-600 hover:from-primary-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-xs hover:shadow-primary-500/20 cursor-pointer transition-all duration-200 border border-white/10"
+        >
+          <i class="pi pi-sparkles text-xs"></i>
+          <span>Ask Copilot</span>
+          <kbd class="hidden lg:inline-block px-1 py-0.2 bg-white/20 rounded text-[9px] font-mono">Ctrl+J</kbd>
+        </button>
       </div>
     </header>
 
@@ -368,4 +377,7 @@
       <router-outlet></router-outlet>
     </main>
   </div>
+
+  <!-- Omnipresent AI Copilot Sidebar -->
+  <app-copilot-sidebar></app-copilot-sidebar>
 </div>

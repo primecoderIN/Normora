@@ -32,6 +32,9 @@ export const tenantInterceptor: HttpInterceptorFn = (req, next) => {
                          (Boolean(environment.apiUrl) && req.url.startsWith(environment.apiUrl));
 
     if (isApiRequest) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('normora_tenant_id', tenantId);
+      }
       const tenantReq = req.clone({
         headers: req.headers.set('X-Tenant-Id', tenantId)
       });

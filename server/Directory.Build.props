@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <Company>Normora</Company>
+    <Authors>Sanjeev Kumar</Authors>
+    <Copyright>Copyright © 2026 Sanjeev Kumar. All rights reserved. Proprietary and Source-Available.</Copyright>
+    <Product>Normora Workplace Intelligence Platform</Product>
+    <RepositoryUrl>https://github.com/primecoderIN/Normora</RepositoryUrl>
+  </PropertyGroup>
+</Project>

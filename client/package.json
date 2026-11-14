@@ -10,6 +10,8 @@
     "serve:ssr:client": "node dist/client/server/server.mjs"
   },
   "private": true,
+  "author": "Sanjeev Kumar <sanjeev2856@gmail.com>",
+  "license": "UNLICENSED",
   "packageManager": "npm@11.12.1",
   "dependencies": {
     "@angular/animations": "^22.2.0",
@@ -22,6 +24,7 @@
     "@angular/platform-server": "^22.1.0",
     "@angular/router": "^22.1.0",
     "@angular/ssr": "^22.1.6",
+    "@copilotkit/angular": "^0.6.0",
     "@floating-ui/dom": "^1.8.0",
     "@internationalized/date": "^3.12.4",
     "@internationalized/number": "^3.6.9",

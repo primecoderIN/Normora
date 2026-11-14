@@ -7,6 +7,7 @@ import {
   withPreloading,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideCopilotKit } from '@copilotkit/angular';
 import { routes } from './app.routes';
 import { tenantInterceptor } from '@core/interceptors/tenant.interceptor';
 import { apiInterceptor } from '@core/interceptors/api.interceptor';
@@ -33,5 +34,23 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([csrfInterceptor, tenantInterceptor, apiInterceptor])),
 
     provideClientHydration(),
+
+    // Registers the CopilotKit Angular runtime configuration pointing to Normora's AG-UI backend endpoint.
+    provideCopilotKit({
+      runtimeUrl: '/api/copilotkit',
+      credentials: 'same-origin',
+      headers: () => {
+        const headers: Record<string, string> = {
+          'X-CSRF': '1',
+        };
+        if (typeof sessionStorage !== 'undefined') {
+          const tenantId = sessionStorage.getItem('normora_tenant_id');
+          if (tenantId) {
+            headers['X-Tenant-Id'] = tenantId;
+          }
+        }
+        return headers;
+      },
+    }),
   ],
 };

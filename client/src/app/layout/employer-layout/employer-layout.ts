@@ -9,12 +9,14 @@ import { TenantService } from '../../core/services/tenant.service';
 import { InvitationService } from '@core/services/invitation.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
+import { CopilotService } from '@core/services/copilot.service';
+import { CopilotSidebarComponent } from '@shared/components/copilot-sidebar/copilot-sidebar.component';
 import { ApiMessages } from '@core/constants/api-messages';
 
 @Component({
   selector: 'app-employer-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, DsSelectComponent, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, DsSelectComponent, FormsModule, CopilotSidebarComponent],
   templateUrl: './employer-layout.html',
 })
 export class EmployerLayout {
@@ -24,6 +26,7 @@ export class EmployerLayout {
   private invitationService = inject(InvitationService);
   public themeService = inject(ThemeService);
   public brandingService = inject(TenantBrandingService);
+  public copilotService = inject(CopilotService);
   private toastService = inject(DsToastService);
   isAccepting = signal(false);
   isSidebarExpanded = signal(true);
