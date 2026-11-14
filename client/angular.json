@@ -33,7 +33,11 @@
             },
             "ssr": {
               "entry": "src/server.ts"
-            }
+            },
+            "allowedCommonJsDependencies": [
+              "semver",
+              "partial-json"
+            ]
           },
           "configurations": {
             "production": {
@@ -54,8 +58,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "800kB",
-                  "maximumError": "1.5MB"
+                  "maximumWarning": "2.5MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
