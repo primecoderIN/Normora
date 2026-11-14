@@ -43,7 +43,7 @@ jobs:
       if: matrix.language == 'csharp'
       run: |
         cd server
-        dotnet build
+        dotnet build Normora.slnx
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

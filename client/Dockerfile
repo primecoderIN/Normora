@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 COPY . .
+RUN if [ ! -f src/environments/environment.ts ]; then cp src/environments/environment.template.ts src/environments/environment.ts; fi
+RUN if [ ! -f src/environments/environment.prod.ts ]; then cp src/environments/environment.template.ts src/environments/environment.prod.ts; fi
 RUN npm run build -- --configuration production
 
 # Serve stage

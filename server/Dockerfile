@@ -3,6 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy csproj files for restoring
+COPY ["Directory.Build.props", "./"]
 COPY ["Normora.Api/Normora.Api.csproj", "Normora.Api/"]
 COPY ["Normora.Worker/Normora.Worker.csproj", "Normora.Worker/"]
 COPY ["Normora.Infrastructure/Normora.Infrastructure.csproj", "Normora.Infrastructure/"]
