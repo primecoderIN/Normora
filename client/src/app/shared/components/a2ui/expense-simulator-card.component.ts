@@ -2,7 +2,6 @@ import { Component, input, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActionCardDto } from '@core/services/conversation.service';
-import { DsTooltipDirective } from '@design-system';
 
 /**
  * Interactive A2UI Expense & Policy Limit Simulator Card.
@@ -12,7 +11,7 @@ import { DsTooltipDirective } from '@design-system';
 @Component({
   selector: 'app-expense-simulator-card',
   standalone: true,
-  imports: [CommonModule, FormsModule, DsTooltipDirective],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 max-w-[95%] shadow-sm space-y-3">
       <!-- Card Header -->
@@ -149,9 +148,9 @@ export class ExpenseSimulatorCardComponent {
   readonly card = input.required<ActionCardDto>();
 
   readonly tiers = [
-    { id: 'Tier 1', label: 'Tier 1 (Metro)' },
-    { id: 'Tier 2', label: 'Tier 2 (Regional)' },
-    { id: 'Tier 3', label: 'Tier 3 (Standard)' }
+    { id: 'Tier 1' as const, label: 'Tier 1 (Metro)' },
+    { id: 'Tier 2' as const, label: 'Tier 2 (Regional)' },
+    { id: 'Tier 3' as const, label: 'Tier 3 (Standard)' }
   ];
 
   selectedTier = signal<'Tier 1' | 'Tier 2' | 'Tier 3'>('Tier 1');
@@ -201,3 +200,4 @@ Estimated Max Allowance: \$${this.totalAllowance()}`;
     setTimeout(() => this.isCopied.set(false), 2500);
   }
 }
+

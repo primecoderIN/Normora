@@ -13,10 +13,11 @@ import { FormsModule } from '@angular/forms';
 import { DsTooltipDirective } from '@design-system';
 import { CopilotService } from '@core/services/copilot.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
-import { ActionCardDto } from '@core/services/conversation.service';
+import { ActionCardDto, ConversationService } from '@core/services/conversation.service';
 import { ChunkPreviewDrawerComponent } from '../chunk-preview-drawer/chunk-preview-drawer.component';
 import { ExpenseSimulatorCardComponent } from '../a2ui/expense-simulator-card.component';
 import { HrEscalationCardComponent } from '../a2ui/hr-escalation-card.component';
+import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
 
 /**
  * Omnipresent Copilot Sidebar component implementing the CopilotKit / AG-UI architecture.
@@ -32,7 +33,8 @@ import { HrEscalationCardComponent } from '../a2ui/hr-escalation-card.component'
     DsTooltipDirective, 
     ChunkPreviewDrawerComponent,
     ExpenseSimulatorCardComponent,
-    HrEscalationCardComponent
+    HrEscalationCardComponent,
+    IntakeFormCardComponent
   ],
   template: `
     <!-- Floating Copilot Launch Trigger Pill -->
@@ -378,10 +380,12 @@ import { HrEscalationCardComponent } from '../a2ui/hr-escalation-card.component'
 
             <!-- Interactive A2UI Action Card -->
             @if (message.role === 'Assistant' && message.actionCard && !message.actionCard.isDismissed) {
-              @if (message.actionCard.cardType === 'policy_limit_card') {
+              @if (message.actionCard.actionType === 'policy_limit_card' || message.actionCard.cardType === 'policy_limit_card') {
                 <app-expense-simulator-card [card]="message.actionCard" />
-              } @else if (message.actionCard.cardType === 'hr_escalation_card') {
+              } @else if (message.actionCard.actionType === 'hr_escalation_card' || message.actionCard.cardType === 'hr_escalation_card') {
                 <app-hr-escalation-card [card]="message.actionCard" />
+              } @else if (message.actionCard.actionType === 'intake_form_card') {
+                <app-intake-form-card [card]="message.actionCard" />
               } @else {
                 <div class="p-3 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 max-w-[92%] shadow-xs space-y-2">
                   <div class="flex items-center justify-between gap-2">
@@ -413,26 +417,41 @@ import { HrEscalationCardComponent } from '../a2ui/hr-escalation-card.component'
                     @if (message.actionCard.isConfirmed) {
                       <div class="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                         <i class="pi pi-check-circle text-xs"></i>
-                        <span>Confirmed</span>
+                        <span>Confirmed & Executed</span>
+                      </div>
+                    } @else if (message.actionCard.isDismissed) {
+                      <div class="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        <i class="pi pi-times-circle text-xs"></i>
+                        <span>Dismissed</span>
                       </div>
                     } @else {
                       @if (message.actionCard.confirmButtonText) {
                         <button
                           type="button"
+                          [disabled]="message.actionCard.isExecuting"
                           (click)="confirmAction(message.actionCard)"
-                          class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs"
+                          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {{ message.actionCard.confirmButtonText }}
+                          @if (message.actionCard.isExecuting) {
+                            <i class="pi pi-spin pi-spinner text-[10px]"></i>
+                          }
+                          <span>{{ message.actionCard.confirmButtonText }}</span>
                         </button>
                       }
                       @if (message.actionCard.cancelButtonText) {
                         <button
                           type="button"
+                          [disabled]="message.actionCard.isExecuting"
                           (click)="dismissAction(message.actionCard)"
-                          class="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer"
+                          class="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {{ message.actionCard.cancelButtonText }}
                         </button>
+                      }
+                      @if (message.actionCard.executionError) {
+                        <span class="text-[10px] text-red-500 dark:text-red-400 font-medium">
+                          {{ message.actionCard.executionError }}
+                        </span>
                       }
                     }
                   </div>
@@ -523,6 +542,7 @@ import { HrEscalationCardComponent } from '../a2ui/hr-escalation-card.component'
 })
 export class CopilotSidebarComponent implements AfterViewChecked {
   public copilotService = inject(CopilotService);
+  public conversationService = inject(ConversationService);
   public sanitizer = inject(MarkdownSanitizerService);
 
   @ViewChild('messageFeed') private messageFeed?: ElementRef<HTMLDivElement>;
@@ -647,7 +667,31 @@ export class CopilotSidebarComponent implements AfterViewChecked {
   }
 
   confirmAction(card: ActionCardDto): void {
-    card.isConfirmed = true;
+    if (card.approvalId) {
+      card.isExecuting = true;
+      card.executionError = undefined;
+      this.conversationService.confirmApproval(card.approvalId).subscribe({
+        next: (res) => {
+          card.isExecuting = false;
+          if (res.success) {
+            card.isConfirmed = true;
+            this.handleActuationTriggers(card);
+          } else {
+            card.executionError = res.message || 'Execution failed.';
+          }
+        },
+        error: (err) => {
+          card.isExecuting = false;
+          card.executionError = err?.error?.message || 'Authorization failed.';
+        }
+      });
+    } else {
+      card.isConfirmed = true;
+      this.handleActuationTriggers(card);
+    }
+  }
+
+  private handleActuationTriggers(card: ActionCardDto): void {
     if (card.parameters && card.parameters['route']) {
       this.copilotService.navigateActuation(card.parameters['route']);
     } else if (card.parameters && card.parameters['modal']) {
@@ -656,7 +700,21 @@ export class CopilotSidebarComponent implements AfterViewChecked {
   }
 
   dismissAction(card: ActionCardDto): void {
-    card.isDismissed = true;
+    if (card.approvalId) {
+      card.isExecuting = true;
+      this.conversationService.dismissApproval(card.approvalId).subscribe({
+        next: () => {
+          card.isExecuting = false;
+          card.isDismissed = true;
+        },
+        error: () => {
+          card.isExecuting = false;
+          card.isDismissed = true;
+        }
+      });
+    } else {
+      card.isDismissed = true;
+    }
   }
 
   ngAfterViewChecked(): void {

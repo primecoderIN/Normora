@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { DsTooltipDirective } from '@design-system';
-import { MessageDto, ActionCardDto } from '@core/services/conversation.service';
+import { MessageDto, ActionCardDto, ConversationService } from '@core/services/conversation.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
 import { ExpenseSimulatorCardComponent } from '@shared/components/a2ui/expense-simulator-card.component';
 import { HrEscalationCardComponent } from '@shared/components/a2ui/hr-escalation-card.component';
+import { IntakeFormCardComponent } from '@shared/components/a2ui/intake-form-card.component';
 
 /**
  * Component responsible solely for presenting an individual chat message bubble (User or Assistant),
@@ -18,7 +19,8 @@ import { HrEscalationCardComponent } from '@shared/components/a2ui/hr-escalation
     DsTooltipDirective, 
     DatePipe,
     ExpenseSimulatorCardComponent,
-    HrEscalationCardComponent
+    HrEscalationCardComponent,
+    IntakeFormCardComponent
   ],
   template: `
     <div
@@ -77,10 +79,12 @@ import { HrEscalationCardComponent } from '@shared/components/a2ui/hr-escalation
 
         <!-- Interactive A2UI Action Card -->
         @if (message.role === 'Assistant' && message.actionCard && !message.actionCard.isDismissed) {
-          @if (message.actionCard.cardType === 'policy_limit_card') {
+          @if (message.actionCard.actionType === 'policy_limit_card' || message.actionCard.cardType === 'policy_limit_card') {
             <app-expense-simulator-card [card]="message.actionCard" />
-          } @else if (message.actionCard.cardType === 'hr_escalation_card') {
+          } @else if (message.actionCard.actionType === 'hr_escalation_card' || message.actionCard.cardType === 'hr_escalation_card') {
             <app-hr-escalation-card [card]="message.actionCard" />
+          } @else if (message.actionCard.actionType === 'intake_form_card') {
+            <app-intake-form-card [card]="message.actionCard" />
           } @else {
             <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm space-y-2.5">
               <div class="flex items-center justify-between gap-2">
@@ -112,26 +116,41 @@ import { HrEscalationCardComponent } from '@shared/components/a2ui/hr-escalation
                 @if (message.actionCard.isConfirmed) {
                   <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                     <i class="pi pi-check-circle text-sm"></i>
-                    <span>Action Confirmed</span>
+                    <span>Action Confirmed & Executed</span>
+                  </div>
+                } @else if (message.actionCard.isDismissed) {
+                  <div class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <i class="pi pi-times-circle text-sm"></i>
+                    <span>Action Dismissed</span>
                   </div>
                 } @else {
                   @if (message.actionCard.confirmButtonText) {
                     <button
                       type="button"
+                      [disabled]="message.actionCard.isExecuting"
                       (click)="confirmAction(message.actionCard)"
-                      class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {{ message.actionCard.confirmButtonText }}
+                      @if (message.actionCard.isExecuting) {
+                        <i class="pi pi-spin pi-spinner text-xs"></i>
+                      }
+                      <span>{{ message.actionCard.confirmButtonText }}</span>
                     </button>
                   }
                   @if (message.actionCard.cancelButtonText) {
                     <button
                       type="button"
+                      [disabled]="message.actionCard.isExecuting"
                       (click)="dismissAction(message.actionCard)"
-                      class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer"
+                      class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {{ message.actionCard.cancelButtonText }}
                     </button>
+                  }
+                  @if (message.actionCard.executionError) {
+                    <span class="text-xs text-red-500 dark:text-red-400 font-medium">
+                      {{ message.actionCard.executionError }}
+                    </span>
                   }
                 }
               </div>
@@ -358,11 +377,46 @@ export class ChatMessageBubbleComponent {
     return Object.entries(params).map(([key, value]) => ({ key, value }));
   }
 
+  private conversationService = inject(ConversationService);
+
   confirmAction(card: ActionCardDto): void {
-    card.isConfirmed = true;
+    if (card.approvalId) {
+      card.isExecuting = true;
+      card.executionError = undefined;
+      this.conversationService.confirmApproval(card.approvalId).subscribe({
+        next: (res) => {
+          card.isExecuting = false;
+          if (res.success) {
+            card.isConfirmed = true;
+          } else {
+            card.executionError = res.message || 'Execution failed.';
+          }
+        },
+        error: (err) => {
+          card.isExecuting = false;
+          card.executionError = err?.error?.message || 'Authorization failed.';
+        }
+      });
+    } else {
+      card.isConfirmed = true;
+    }
   }
 
   dismissAction(card: ActionCardDto): void {
-    card.isDismissed = true;
+    if (card.approvalId) {
+      card.isExecuting = true;
+      this.conversationService.dismissApproval(card.approvalId).subscribe({
+        next: () => {
+          card.isExecuting = false;
+          card.isDismissed = true;
+        },
+        error: () => {
+          card.isExecuting = false;
+          card.isDismissed = true;
+        }
+      });
+    } else {
+      card.isDismissed = true;
+    }
   }
 }

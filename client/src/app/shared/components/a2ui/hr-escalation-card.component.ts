@@ -1,7 +1,6 @@
 import { Component, input, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActionCardDto } from '@core/services/conversation.service';
-import { DsTooltipDirective } from '@design-system';
 
 /**
  * Interactive A2UI HR Escalation Stepper Card.
@@ -11,7 +10,7 @@ import { DsTooltipDirective } from '@design-system';
 @Component({
   selector: 'app-hr-escalation-card',
   standalone: true,
-  imports: [CommonModule, DsTooltipDirective],
+  imports: [CommonModule],
   template: `
     <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 max-w-[95%] shadow-sm space-y-3">
       <!-- Card Header -->
@@ -172,3 +171,4 @@ Status: Under Review (People Ops Administration)`;
     setTimeout(() => this.isCopied.set(false), 2500);
   }
 }
+
