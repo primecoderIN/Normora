@@ -3,6 +3,8 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { DsTooltipDirective } from '@design-system';
 import { MessageDto, ActionCardDto } from '@core/services/conversation.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
+import { ExpenseSimulatorCardComponent } from '@shared/components/a2ui/expense-simulator-card.component';
+import { HrEscalationCardComponent } from '@shared/components/a2ui/hr-escalation-card.component';
 
 /**
  * Component responsible solely for presenting an individual chat message bubble (User or Assistant),
@@ -11,7 +13,13 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
 @Component({
   selector: 'app-chat-message-bubble',
   standalone: true,
-  imports: [CommonModule, DsTooltipDirective, DatePipe],
+  imports: [
+    CommonModule, 
+    DsTooltipDirective, 
+    DatePipe,
+    ExpenseSimulatorCardComponent,
+    HrEscalationCardComponent
+  ],
   template: `
     <div
       class="flex items-end gap-2.5 max-w-[85%] md:max-w-[75%] msg-enter"
@@ -69,60 +77,66 @@ import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.serv
 
         <!-- Interactive A2UI Action Card -->
         @if (message.role === 'Assistant' && message.actionCard && !message.actionCard.isDismissed) {
-          <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm space-y-2.5">
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 min-w-0">
-                <div class="flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 shrink-0">
-                  <i class="pi pi-bolt text-xs"></i>
-                </div>
-                <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ message.actionCard.title }}</span>
-              </div>
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200/60 dark:border-primary-800/60 shrink-0">
-                Action Card
-              </span>
-            </div>
-
-            <p class="text-xs text-slate-600 dark:text-slate-300 m-0 leading-relaxed">{{ message.actionCard.description }}</p>
-
-            @if (getParamEntries(message.actionCard.parameters).length > 0) {
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                @for (param of getParamEntries(message.actionCard.parameters); track param.key) {
-                  <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 text-xs">
-                    <span class="text-slate-400 dark:text-slate-500 block font-medium truncate">{{ param.key }}</span>
-                    <span class="text-slate-800 dark:text-slate-200 font-bold break-all">{{ param.value }}</span>
+          @if (message.actionCard.cardType === 'policy_limit_card') {
+            <app-expense-simulator-card [card]="message.actionCard" />
+          } @else if (message.actionCard.cardType === 'hr_escalation_card') {
+            <app-hr-escalation-card [card]="message.actionCard" />
+          } @else {
+            <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="flex items-center justify-center w-6 h-6 rounded-lg bg-primary-100 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 shrink-0">
+                    <i class="pi pi-bolt text-xs"></i>
                   </div>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ message.actionCard.title }}</span>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200/60 dark:border-primary-800/60 shrink-0">
+                  Action Card
+                </span>
+              </div>
+
+              <p class="text-xs text-slate-600 dark:text-slate-300 m-0 leading-relaxed">{{ message.actionCard.description }}</p>
+
+              @if (getParamEntries(message.actionCard.parameters).length > 0) {
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  @for (param of getParamEntries(message.actionCard.parameters); track param.key) {
+                    <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 text-xs">
+                      <span class="text-slate-400 dark:text-slate-500 block font-medium truncate">{{ param.key }}</span>
+                      <span class="text-slate-800 dark:text-slate-200 font-bold break-all">{{ param.value }}</span>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="flex items-center gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                @if (message.actionCard.isConfirmed) {
+                  <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <i class="pi pi-check-circle text-sm"></i>
+                    <span>Action Confirmed</span>
+                  </div>
+                } @else {
+                  @if (message.actionCard.confirmButtonText) {
+                    <button
+                      type="button"
+                      (click)="confirmAction(message.actionCard)"
+                      class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs"
+                    >
+                      {{ message.actionCard.confirmButtonText }}
+                    </button>
+                  }
+                  @if (message.actionCard.cancelButtonText) {
+                    <button
+                      type="button"
+                      (click)="dismissAction(message.actionCard)"
+                      class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer"
+                    >
+                      {{ message.actionCard.cancelButtonText }}
+                    </button>
+                  }
                 }
               </div>
-            }
-
-            <div class="flex items-center gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
-              @if (message.actionCard.isConfirmed) {
-                <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                  <i class="pi pi-check-circle text-sm"></i>
-                  <span>Action Confirmed</span>
-                </div>
-              } @else {
-                @if (message.actionCard.confirmButtonText) {
-                  <button
-                    type="button"
-                    (click)="confirmAction(message.actionCard)"
-                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs"
-                  >
-                    {{ message.actionCard.confirmButtonText }}
-                  </button>
-                }
-                @if (message.actionCard.cancelButtonText) {
-                  <button
-                    type="button"
-                    (click)="dismissAction(message.actionCard)"
-                    class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer"
-                  >
-                    {{ message.actionCard.cancelButtonText }}
-                  </button>
-                }
-              }
             </div>
-          </div>
+          }
         }
 
         <!-- Bubble Content -->

@@ -290,10 +290,15 @@ flowchart LR
    - Mapped to `/api/copilotkit` with `.RequireAuthorization()` and `.AsBffApiEndpoint()` in `Program.cs`.
    - Automatically handles JSON serialization and deserialization of AG-UI wire protocols and Agent Framework models.
 
-3. **Autonomous Agent Tool Lifecycle & Interactive A2UI Action Cards**:
+3. **Autonomous Agent Tool Lifecycle & Generative A2UI Action Cards**:
    - `AskConversationStreamCommandHandler` multiplexes real-time Server-Sent Events (SSE) including `tool_started`, `tool_finished`, and `action_card` events alongside `citations` and `text` token chunks.
    - Autonomous tools (`calculate_policy_limit`, `escalate_hr_inquiry`, `search_company_documents`) stream status chips with live progress and completion summaries into the Copilot sidebar and main conversation feed.
-   - Structured `action_card` events (e.g. `policy_limit_card`, `hr_escalation_card`) render rich parameter badges and interactive action buttons (`Confirm` / `Dismiss`) with full Tailwind CSS v4 dark mode styling.
+   - **Interactive A2UI Simulators & Steppers**:
+     - `ExpenseSimulatorCardComponent` (`policy_limit_card`): Interactive client-side trip calculator with location tiers, hotel night steppers, and real-time total allowance estimation.
+     - `HrEscalationCardComponent` (`hr_escalation_card`): Interactive 3-stage visual progress timeline (`Dispatched ➔ Under Review ➔ Resolution`), inquiry reference hashing, and one-click clipboard copying.
+   - **Unified Copilot Workstation (Dock / Expand Architecture)**: Unifies the dual chat interfaces into an omnipresent assistant (`Ctrl+J` / `Cmd+J`) featuring threaded conversation history, client-side search, and seamless sidebar navigation integration across employer and employee views.
+   - **Agent UI Actuation & Co-Browsing**: Programmatic routing (`navigateActuation`) and modal triggers (`modalActuation`), alongside clickable citation badges opening `ChunkPreviewDrawerComponent` with markdown rendering and one-click `Locate in Documents` co-browsing.
+   - **Multi-Agent Mesh Persona Switching**: Dynamically adapts agent personas directly in the Copilot interface (`All-Rounder`, `HR & People Ops`, `Finance & Travel`, `IT & Security`), reconfiguring contextual suggestions and framing conversational prompts with domain-specialized personas.
 
 4. **`NormoraWorkplaceAgent` (`server/Normora.Infrastructure/Agents/NormoraWorkplaceAgent.cs`)**:
    - Inherits from `Microsoft.Agents.AI.AIAgent`.

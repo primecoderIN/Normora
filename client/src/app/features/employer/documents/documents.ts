@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DocumentService, Document } from '@core/services/document.service';
 import { AuthService } from '@core/services/auth.service';
 import { environment } from '@env/environment';
+import { CopilotService } from '@core/services/copilot.service';
 
 import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
 import { DocumentListComponent } from '@shared/components/document-list/document-list.component';
@@ -39,8 +40,20 @@ export class Documents implements OnInit, OnDestroy {
   private messageService = inject(DsToastService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private departmentService = inject(DepartmentService);
   public userService = inject(UserService);
+  public copilotService = inject(CopilotService);
+
+  constructor() {
+    effect(() => {
+      const modal = this.copilotService.modalActuation();
+      if (modal === 'upload_document') {
+        this.showUploadDialog.set(true);
+        this.copilotService.clearModalActuation();
+      }
+    });
+  }
 
   departments = signal<Department[]>([]);
 
@@ -76,6 +89,12 @@ export class Documents implements OnInit, OnDestroy {
   failedCount = computed(() => this.countByStatus('Failed'));
 
   ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      if (params['search']) {
+        this.searchTerm.set(params['search']);
+      }
+    });
+
     this.loadDocuments();
     this.loadDepartments();
 

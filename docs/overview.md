@@ -71,8 +71,12 @@ graph LR
   - `search_company_documents`: Performs deep cross-module retrieval via MediatR.
 - **Grounded Streaming & Citations**: Streams real-time token buffers to the client via Server-Sent Events (SSE) alongside verified, clickable document chunk citations.
 - **Live Agent Tool Execution Lifecycle**: Streams real-time `tool_started` and `tool_finished` SSE events, rendering animated execution chips with live progress and completion summaries in the chat feed.
-- **Interactive A2UI Action Cards**: Synthesizes structured `action_card` events (e.g. `policy_limit_card`, `hr_escalation_card`) with parameterized metadata grids, dark mode styling, and interactive action buttons (`Confirm` / `Dismiss`).
-- **Omnipresent Copilot & AG-UI Perception**: Integrates the CopilotKit architectural pattern across the Angular SPA via `CopilotSidebarComponent` and `CopilotService`, enabling keyboard-driven (`Ctrl+J`) in-app copilot assistance with route-aware suggested prompts across all employer and employee management views.
+- **Interactive A2UI Action Cards & Simulators**: Synthesizes structured `action_card` events into rich interactive client components:
+  - `ExpenseSimulatorCardComponent` (`policy_limit_card`): Interactive trip calculator with location tiers, hotel night steppers, and real-time total allowance estimation.
+  - `HrEscalationCardComponent` (`hr_escalation_card`): Interactive 3-stage visual progress timeline (`Dispatched ➔ Under Review ➔ Resolution`), inquiry reference hashing, and one-click clipboard copying.
+- **Unified Copilot Workstation (Dock / Expand Architecture)**: Unifies conversation and copilot experiences into a single omnipresent workstation with instant Dock / Expand full-screen toggling, threaded conversation drawer, search history filter, and seamless navigation integration across employer and employee views.
+- **Agent UI Actuation & Co-Browsing**: Enables the Copilot agent and action cards to actuate client routes (`navigateActuation`) and trigger modals (`modalActuation`), alongside interactive citation clicking that opens `ChunkPreviewDrawerComponent` with markdown formatting and a one-click `Locate in Documents` co-browsing transition.
+- **Multi-Agent Mesh Persona Switching**: Dynamically adapts agent personas directly in the Copilot interface (`All-Rounder`, `HR & People Ops`, `Finance & Travel`, `IT & Security`), reconfiguring contextual suggestions and framing conversational prompts with domain-specialized personas.
 
 ---
 

@@ -14,6 +14,9 @@ import { DsTooltipDirective } from '@design-system';
 import { CopilotService } from '@core/services/copilot.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
 import { ActionCardDto } from '@core/services/conversation.service';
+import { ChunkPreviewDrawerComponent } from '../chunk-preview-drawer/chunk-preview-drawer.component';
+import { ExpenseSimulatorCardComponent } from '../a2ui/expense-simulator-card.component';
+import { HrEscalationCardComponent } from '../a2ui/hr-escalation-card.component';
 
 /**
  * Omnipresent Copilot Sidebar component implementing the CopilotKit / AG-UI architecture.
@@ -23,7 +26,14 @@ import { ActionCardDto } from '@core/services/conversation.service';
 @Component({
   selector: 'app-copilot-sidebar',
   standalone: true,
-  imports: [CommonModule, FormsModule, DsTooltipDirective],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    DsTooltipDirective, 
+    ChunkPreviewDrawerComponent,
+    ExpenseSimulatorCardComponent,
+    HrEscalationCardComponent
+  ],
   template: `
     <!-- Floating Copilot Launch Trigger Pill -->
     @if (!copilotService.isOpen()) {
@@ -230,6 +240,34 @@ import { ActionCardDto } from '@core/services/conversation.service';
           </div>
         </div>
 
+        <!-- Persona Quick Selector Strip (Multi-Agent Mesh) -->
+        <div class="px-3.5 py-1.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center gap-1.5 overflow-x-auto custom-scrollbar flex-none">
+          @for (persona of copilotService.personas; track persona.id) {
+            <button
+              type="button"
+              (click)="copilotService.setPersona(persona.id)"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer shrink-0"
+              [class.bg-white]="copilotService.activePersonaId() === persona.id"
+              [class.dark:bg-slate-800]="copilotService.activePersonaId() === persona.id"
+              [class.border-slate-300]="copilotService.activePersonaId() === persona.id"
+              [class.dark:border-slate-600]="copilotService.activePersonaId() === persona.id"
+              [class.shadow-2xs]="copilotService.activePersonaId() === persona.id"
+              [class.text-slate-900]="copilotService.activePersonaId() === persona.id"
+              [class.dark:text-white]="copilotService.activePersonaId() === persona.id"
+              [class.border-transparent]="copilotService.activePersonaId() !== persona.id"
+              [class.text-slate-500]="copilotService.activePersonaId() !== persona.id"
+              [class.dark:text-slate-400]="copilotService.activePersonaId() !== persona.id"
+              [class.hover:bg-slate-200/50]="copilotService.activePersonaId() !== persona.id"
+              [class.dark:hover:bg-slate-800/50]="copilotService.activePersonaId() !== persona.id"
+              [dsTooltip]="persona.description"
+              dsTooltipPosition="bottom"
+            >
+              <i [class]="persona.icon + ' text-[10px] ' + persona.colorClass"></i>
+              <span>{{ persona.name }}</span>
+            </button>
+          }
+        </div>
+
       <!-- Messages Scroll Area -->
       <div
         #messageFeed
@@ -340,60 +378,66 @@ import { ActionCardDto } from '@core/services/conversation.service';
 
             <!-- Interactive A2UI Action Card -->
             @if (message.role === 'Assistant' && message.actionCard && !message.actionCard.isDismissed) {
-              <div class="p-3 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 max-w-[92%] shadow-xs space-y-2">
-                <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <div class="flex items-center justify-center w-5 h-5 rounded-md bg-primary-100 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 shrink-0">
-                      <i class="pi pi-bolt text-[10px]"></i>
-                    </div>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ message.actionCard.title }}</span>
-                  </div>
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200/60 dark:border-primary-800/60 shrink-0">
-                    Action
-                  </span>
-                </div>
-
-                <p class="text-[11px] text-slate-600 dark:text-slate-300 m-0 leading-relaxed">{{ message.actionCard.description }}</p>
-
-                @if (getParamEntries(message.actionCard.parameters).length > 0) {
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
-                    @for (param of getParamEntries(message.actionCard.parameters); track param.key) {
-                      <div class="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 text-[10px]">
-                        <span class="text-slate-400 dark:text-slate-500 block font-medium truncate">{{ param.key }}</span>
-                        <span class="text-slate-800 dark:text-slate-200 font-semibold break-all">{{ param.value }}</span>
+              @if (message.actionCard.cardType === 'policy_limit_card') {
+                <app-expense-simulator-card [card]="message.actionCard" />
+              } @else if (message.actionCard.cardType === 'hr_escalation_card') {
+                <app-hr-escalation-card [card]="message.actionCard" />
+              } @else {
+                <div class="p-3 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 max-w-[92%] shadow-xs space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <div class="flex items-center justify-center w-5 h-5 rounded-md bg-primary-100 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 shrink-0">
+                        <i class="pi pi-bolt text-[10px]"></i>
                       </div>
+                      <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ message.actionCard.title }}</span>
+                    </div>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200/60 dark:border-primary-800/60 shrink-0">
+                      Action
+                    </span>
+                  </div>
+
+                  <p class="text-[11px] text-slate-600 dark:text-slate-300 m-0 leading-relaxed">{{ message.actionCard.description }}</p>
+
+                  @if (getParamEntries(message.actionCard.parameters).length > 0) {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
+                      @for (param of getParamEntries(message.actionCard.parameters); track param.key) {
+                        <div class="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 text-[10px]">
+                          <span class="text-slate-400 dark:text-slate-500 block font-medium truncate">{{ param.key }}</span>
+                          <span class="text-slate-800 dark:text-slate-200 font-semibold break-all">{{ param.value }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                    @if (message.actionCard.isConfirmed) {
+                      <div class="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <i class="pi pi-check-circle text-xs"></i>
+                        <span>Confirmed</span>
+                      </div>
+                    } @else {
+                      @if (message.actionCard.confirmButtonText) {
+                        <button
+                          type="button"
+                          (click)="confirmAction(message.actionCard)"
+                          class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs"
+                        >
+                          {{ message.actionCard.confirmButtonText }}
+                        </button>
+                      }
+                      @if (message.actionCard.cancelButtonText) {
+                        <button
+                          type="button"
+                          (click)="dismissAction(message.actionCard)"
+                          class="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer"
+                        >
+                          {{ message.actionCard.cancelButtonText }}
+                        </button>
+                      }
                     }
                   </div>
-                }
-
-                <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
-                  @if (message.actionCard.isConfirmed) {
-                    <div class="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <i class="pi pi-check-circle text-xs"></i>
-                      <span>Confirmed</span>
-                    </div>
-                  } @else {
-                    @if (message.actionCard.confirmButtonText) {
-                      <button
-                        type="button"
-                        (click)="confirmAction(message.actionCard)"
-                        class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs"
-                      >
-                        {{ message.actionCard.confirmButtonText }}
-                      </button>
-                    }
-                    @if (message.actionCard.cancelButtonText) {
-                      <button
-                        type="button"
-                        (click)="dismissAction(message.actionCard)"
-                        class="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer"
-                      >
-                        {{ message.actionCard.cancelButtonText }}
-                      </button>
-                    }
-                  }
                 </div>
-              </div>
+              }
             }
 
             <!-- Citations / Sources -->
@@ -401,15 +445,17 @@ import { ActionCardDto } from '@core/services/conversation.service';
               <div class="flex flex-wrap items-center gap-1.5 px-1 max-w-[92%]">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sources:</span>
                 @for (cite of message.citations; track cite.documentId + cite.fileName) {
-                  <span
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shadow-2xs max-w-40 truncate"
-                    [dsTooltip]="cite.fileName"
+                  <button
+                    type="button"
+                    (click)="openCitation(cite.documentChunkId)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-primary-400 dark:hover:border-primary-500 text-slate-600 dark:text-slate-300 shadow-2xs max-w-44 truncate cursor-pointer transition-colors"
+                    [dsTooltip]="'Preview source chunk from ' + cite.fileName"
                     dsTooltipPosition="top"
                   >
-                    <i class="pi pi-file-pdf text-[10px] text-slate-400 flex-none"></i>
+                    <i class="pi pi-file-pdf text-[10px] text-primary-500 flex-none"></i>
                     <span class="truncate">{{ cite.fileName }}</span>
                     <span class="text-primary-600 dark:text-primary-400 font-bold flex-none">{{ (cite.score * 100).toFixed(0) }}%</span>
-                  </span>
+                  </button>
                 }
               </div>
             }
@@ -469,6 +515,9 @@ import { ActionCardDto } from '@core/services/conversation.service';
         </form>
       </div>
       </div>
+
+      <!-- Document Chunk Preview Drawer -->
+      <app-chunk-preview-drawer #chunkDrawer />
     </aside>
   `
 })
@@ -478,10 +527,15 @@ export class CopilotSidebarComponent implements AfterViewChecked {
 
   @ViewChild('messageFeed') private messageFeed?: ElementRef<HTMLDivElement>;
   @ViewChild('inputArea') private inputArea?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('chunkDrawer') private chunkDrawer?: ChunkPreviewDrawerComponent;
 
   userInput = '';
   searchHistoryTerm = signal<string>('');
   private shouldScrollBottom = false;
+
+  openCitation(chunkId: string): void {
+    this.chunkDrawer?.open(chunkId);
+  }
 
   filteredConversations = computed(() => {
     const term = this.searchHistoryTerm().trim().toLowerCase();
@@ -594,6 +648,11 @@ export class CopilotSidebarComponent implements AfterViewChecked {
 
   confirmAction(card: ActionCardDto): void {
     card.isConfirmed = true;
+    if (card.parameters && card.parameters['route']) {
+      this.copilotService.navigateActuation(card.parameters['route']);
+    } else if (card.parameters && card.parameters['modal']) {
+      this.copilotService.triggerModal(card.parameters['modal']);
+    }
   }
 
   dismissAction(card: ActionCardDto): void {

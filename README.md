@@ -114,8 +114,14 @@ flowchart TD
   - **Hybrid Search**: Combines pgvector cosine similarity (HNSW index) with full-text keyword search using Reciprocal Rank Fusion (RRF).
   - **Multi-Turn Function Calling**: Integrated Gemini Flash tool calling loop for deterministic corporate expense calculations (`calculate_policy_limit`), HR email escalations (`escalate_hr_inquiry`), and cross-module document search (`search_company_documents`).
   - **Model Context Protocol (MCP)**: Implements standard JSON-RPC 2.0 MCP endpoints (`/api/mcp`) exposing corporate knowledge resources and tools to external AI agent frameworks.
-- **Agentic Workplace Intelligence (CopilotKit & Microsoft Agent Framework AG-UI)**:
-  - **Omnipresent Copilot Sidebar**: Instant slide-out AI assistant (`Ctrl+J` / `Cmd+J`) available across all employer and employee interfaces.
+- **Agentic Workplace Intelligence (CopilotKit, Microsoft Agent Framework AG-UI & A2UI)**:
+  - **Unified Copilot Workstation**: Dock & Expand architecture unifying the dual chat interfaces into an omnipresent assistant (`Ctrl+J` / `Cmd+J`) featuring threaded conversation history, client-side search, and seamless sidebar integration.
+  - **Live Autonomous Tool Lifecycle Chips**: Real-time streaming (`tool_started`, `tool_finished`) displaying active tool execution badges and completion summaries.
+  - **Interactive A2UI Action Cards & Simulators**: Dynamic generative UI components in chat:
+    - `ExpenseSimulatorCardComponent` (`policy_limit_card`): Interactive trip calculator with location tiers, hotel night steppers, and real-time total allowance estimation.
+    - `HrEscalationCardComponent` (`hr_escalation_card`): Interactive 3-stage visual progress timeline (`Dispatched ➔ Under Review ➔ Resolution`), inquiry reference hashing, and one-click clipboard copying.
+  - **Agent UI Actuation & Co-Browsing**: Programmatic routing (`navigateActuation`) and modal triggers (`modalActuation`), alongside clickable citation badges opening `ChunkPreviewDrawerComponent` with markdown rendering and one-click `Locate in Documents` co-browsing.
+  - **Multi-Agent Mesh Persona Switching**: Dynamically adapts agent personas directly in the Copilot interface (`All-Rounder`, `HR & People Ops`, `Finance & Travel`, `IT & Security`), reconfiguring contextual suggestions and framing conversational prompts with domain-specialized personas.
   - **AG-UI Protocol Hosting**: Native AG-UI endpoint (`/api/copilotkit`) hosted via `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore` with BFF authentication and anti-CSRF protection.
   - **`NormoraWorkplaceAgent`**: Microsoft Agent Framework (`AIAgent`) implementation executing MediatR conversational RAG pipelines with real-time SSE token streaming.
   - **Caller Session Isolation**: `NormoraAgentIsolationKeyProvider` enforces `{TenantId}:{ExternalUserId}` session partitioning, preventing cross-tenant thread leaks.

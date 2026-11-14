@@ -5,6 +5,78 @@ import { ConversationService, MessageDto, ConversationDto } from './conversation
 import { UserService } from './user.service';
 import { ApiMessages } from '../constants/api-messages';
 
+export type PersonaId = 'general' | 'hr' | 'finance' | 'it';
+
+export interface AgentPersona {
+  id: PersonaId;
+  name: string;
+  roleTitle: string;
+  icon: string;
+  colorClass: string;
+  badgeClass: string;
+  description: string;
+  suggestedPrompts: string[];
+}
+
+export const AGENT_PERSONAS: AgentPersona[] = [
+  {
+    id: 'general',
+    name: 'All-Rounder',
+    roleTitle: 'Workplace Copilot',
+    icon: 'pi pi-sparkles',
+    colorClass: 'text-primary-600 dark:text-primary-400',
+    badgeClass: 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border-primary-500/20',
+    description: 'Comprehensive enterprise knowledge assistant across all policies and systems.',
+    suggestedPrompts: [
+      'What is our company travel and hotel reimbursement cap?',
+      'What are the guidelines for remote work and equipment?',
+      'How do I escalate an inquiry to HR administration?'
+    ]
+  },
+  {
+    id: 'hr',
+    name: 'HR & People Ops',
+    roleTitle: 'People Ops Specialist',
+    icon: 'pi pi-users',
+    colorClass: 'text-indigo-600 dark:text-indigo-400',
+    badgeClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+    description: 'Expert on employee benefits, paid leave, wellness stipends, and conflict escalation.',
+    suggestedPrompts: [
+      'What are our parental, sick, and bereavement leave entitlements?',
+      'How do I submit an ergonomic workspace allowance request?',
+      'Escalate an inquiry regarding confidential HR administration'
+    ]
+  },
+  {
+    id: 'finance',
+    name: 'Finance & Travel',
+    roleTitle: 'Finance Specialist',
+    icon: 'pi pi-wallet',
+    colorClass: 'text-emerald-600 dark:text-emerald-400',
+    badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    description: 'Expert on per-diem caps, expense reports, corporate card rules, and invoices.',
+    suggestedPrompts: [
+      'Calculate travel reimbursement limit for 4 nights in a Metro city',
+      'What receipts are required for client dinner entertainment expenses?',
+      'What are the submission deadlines for monthly expense reports?'
+    ]
+  },
+  {
+    id: 'it',
+    name: 'IT & Security',
+    roleTitle: 'Security Specialist',
+    icon: 'pi pi-shield',
+    colorClass: 'text-amber-600 dark:text-amber-400',
+    badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+    description: 'Expert on password policies, device encryption, VPN, phishing alerts, and access keys.',
+    suggestedPrompts: [
+      'What are our company password strength and rotation policies?',
+      'How do I request elevated GitHub and cloud repository access?',
+      'How do I report a suspected phishing email or compromised credential?'
+    ]
+  }
+];
+
 export interface CopilotContext {
   pageTitle: string;
   pageCategory: 'documents' | 'departments' | 'user-groups' | 'dashboard' | 'employees' | 'settings' | 'general';
@@ -35,6 +107,17 @@ export class CopilotService {
   readonly messages = signal<MessageDto[]>([]);
   readonly error = signal<string | null>(null);
   readonly currentRoute = signal<string>(this.router.url);
+  readonly modalActuation = signal<string | null>(null);
+  readonly activePersonaId = signal<PersonaId>('general');
+  readonly personas = AGENT_PERSONAS;
+
+  readonly activePersona = computed<AgentPersona>(() => {
+    return this.personas.find(p => p.id === this.activePersonaId()) || this.personas[0];
+  });
+
+  setPersona(id: PersonaId): void {
+    this.activePersonaId.set(id);
+  }
 
   constructor() {
     this.router.events
@@ -46,6 +129,15 @@ export class CopilotService {
 
   // ─── Context Awareness (AG-UI Perception) ──────────────────────────────────
   readonly activeContext = computed<CopilotContext>(() => {
+    if (this.activePersonaId() !== 'general') {
+      const persona = this.activePersona();
+      return {
+        pageTitle: persona.roleTitle,
+        pageCategory: 'general',
+        suggestedPrompts: persona.suggestedPrompts
+      };
+    }
+
     const url = this.currentRoute().toLowerCase();
 
     if (url.includes('/employer/documents')) {
@@ -202,6 +294,23 @@ export class CopilotService {
     }
   }
 
+  // ─── Agent UI Actuation ───────────────────────────────────────────────────
+  triggerModal(modalName: string): void {
+    this.modalActuation.set(modalName);
+  }
+
+  clearModalActuation(): void {
+    this.modalActuation.set(null);
+  }
+
+  navigateActuation(path: string | any[], queryParams?: Record<string, any>): void {
+    if (this.isExpanded()) {
+      this.isExpanded.set(false);
+    }
+    const commands = Array.isArray(path) ? path : [path];
+    void this.router.navigate(commands, { queryParams });
+  }
+
   async sendMessage(prompt: string): Promise<void> {
     const text = prompt.trim();
     if (!text || this.isSending()) return;
@@ -247,11 +356,15 @@ export class CopilotService {
         headers['X-Tenant-Id'] = tenantId;
       }
 
+      const questionPayload = this.activePersonaId() !== 'general'
+        ? `[Persona: ${this.activePersona().roleTitle}] ${text}`
+        : text;
+
       // Stream Server-Sent Events (SSE) from the backend
       const response = await fetch(`${this.conversationService.baseUrl}/${conversationId}/messages/stream`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ question: text, limit: 5 })
+        body: JSON.stringify({ question: questionPayload, limit: 5 })
       });
 
       if (!response.ok) {

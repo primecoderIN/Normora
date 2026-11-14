@@ -1,8 +1,10 @@
-import { Component, EventEmitter, Input, Output, inject, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal, computed, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DsDrawerComponent } from '@design-system';
 import { DocumentService, DocumentChunkPreviewDto } from '@core/services/document.service';
 import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
+import { UserService } from '@core/services/user.service';
 import { ApiMessages } from '@core/constants/api-messages';
 
 /**
@@ -50,6 +52,19 @@ import { ApiMessages } from '@core/constants/api-messages';
             class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-serif"
             [innerHTML]="sanitizer.render(previewData()!.text)"
           ></div>
+          @if (canLocateInDocuments()) {
+            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span class="text-xs text-slate-400">Source Passage Citation</span>
+              <button
+                type="button"
+                (click)="locateInDocuments()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-xs transition-colors cursor-pointer"
+              >
+                <i class="pi pi-compass text-[11px]"></i>
+                <span>Locate in Documents</span>
+              </button>
+            </div>
+          }
         </div>
       }
     </ds-drawer>
@@ -57,6 +72,8 @@ import { ApiMessages } from '@core/constants/api-messages';
 })
 export class ChunkPreviewDrawerComponent {
   private documentService = inject(DocumentService);
+  private router = inject(Router);
+  public userService = inject(UserService);
   private cdr = inject(ChangeDetectorRef);
   public sanitizer = inject(MarkdownSanitizerService);
 
@@ -64,8 +81,27 @@ export class ChunkPreviewDrawerComponent {
   @Output() visibleChange = new EventEmitter<boolean>();
 
   previewData = signal<DocumentChunkPreviewDto | null>(null);
+  currentChunkId = signal<string | null>(null);
   isLoading = signal(false);
   error = signal('');
+
+  readonly canLocateInDocuments = computed(() => {
+    return this.userService.activeTenant()?.role?.toLowerCase() === 'admin';
+  });
+
+  locateInDocuments(): void {
+    const data = this.previewData();
+    if (!data) return;
+    const slug = this.userService.activeTenant()?.tenantSlug;
+    if (!slug) return;
+    this.close();
+    void this.router.navigate(['/app/workspaces', slug, 'employer', 'documents'], {
+      queryParams: {
+        search: data.documentName,
+        highlightChunk: this.currentChunkId()
+      }
+    });
+  }
 
   /**
    * Opens the drawer and retrieves the document chunk citation preview.
@@ -76,10 +112,12 @@ export class ChunkPreviewDrawerComponent {
     if (!chunkId) {
       this.error.set(ApiMessages.ChunkMissing);
       this.previewData.set(null);
+      this.currentChunkId.set(null);
       this.setVisible(true);
       return;
     }
 
+    this.currentChunkId.set(chunkId);
     this.setVisible(true);
     this.isLoading.set(true);
     this.error.set('');
