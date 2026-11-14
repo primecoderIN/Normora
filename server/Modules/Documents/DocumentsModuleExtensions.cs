@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Modules.Documents.Application.Jobs;
 using Normora.Modules.Documents.Application.Services;
+using Normora.Modules.Documents.Infrastructure.Tools;
 using Normora.Modules.Documents.Persistence;
 using Normora.Shared.Interfaces;
 
@@ -35,6 +36,12 @@ public static class DocumentsModuleExtensions
         // Background document ingestion and maintenance handlers:
         services.AddScoped<DocumentProcessingJob>();
         services.AddScoped<PurgeDeletedDocumentsJob>();
+
+        // Autonomous Document Agent Tools:
+        services.AddScoped<IAgentTool, DocumentsSearchTool>();
+        services.AddScoped<IAgentTool, DocumentsListTool>();
+        services.AddScoped<IAgentTool, DocumentsGetMetricsTool>();
+        services.AddScoped<IAgentTool, DocumentsDeleteTool>();
 
         return services;
     }

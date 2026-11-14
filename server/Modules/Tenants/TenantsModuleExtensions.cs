@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Modules.Tenants.Application.Audit;
 using Normora.Modules.Tenants.Application.Subscription;
+using Normora.Modules.Tenants.Infrastructure.Tools;
 using Normora.Modules.Tenants.Persistence;
 using Normora.Shared.Interfaces;
 
@@ -39,6 +40,16 @@ public static class TenantsModuleExtensions
         // Payment Gateway Integration:
         // Registers PayU India hosted checkout integration for subscription plans, renewals, and webhook processing.
         services.AddScoped<IPaymentService, PayUPaymentService>();
+
+        // Autonomous Workspace Agent Tools:
+        services.AddScoped<IAgentTool, WorkspaceListDepartmentsTool>();
+        services.AddScoped<IAgentTool, WorkspaceCreateDepartmentTool>();
+        services.AddScoped<IAgentTool, WorkspaceListEmployeesTool>();
+        services.AddScoped<IAgentTool, WorkspaceInviteEmployeeTool>();
+        services.AddScoped<IAgentTool, WorkspaceListUserGroupsTool>();
+        services.AddScoped<IAgentTool, WorkspaceCreateUserGroupTool>();
+        services.AddScoped<IAgentTool, WorkspaceGetDashboardSummaryTool>();
+        services.AddScoped<IAgentTool, WorkspaceGetAuditLogsTool>();
 
         return services;
     }

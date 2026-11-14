@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Normora.Modules.Conversations.Application.Exports;
 using Normora.Modules.Conversations.Application.Services;
+using Normora.Modules.Conversations.Infrastructure.Cards;
 using Normora.Modules.Conversations.Infrastructure.Tools;
 using Normora.Modules.Conversations.Persistence;
 using Normora.Shared.Interfaces;
@@ -43,7 +44,33 @@ public static class ConversationsModuleExtensions
         services.AddScoped<IAgentTool, CalculatePolicyLimitTool>();
         services.AddScoped<IAgentTool, EscalateInquiryTool>();
         services.AddScoped<IAgentTool, SearchCompanyDocumentsTool>();
+        services.AddScoped<IAgentTool, SavedAnswersListTool>();
+        services.AddScoped<IAgentTool, SavedAnswersSaveTool>();
+        services.AddScoped<IAgentTool, ConversationsListTool>();
+        services.AddScoped<IAgentTool, SuggestionsGetPopularTool>();
+        services.AddScoped<IAgentTool, WorkspaceRequestFormTool>();
         services.AddScoped<IAgentToolRegistry, AgentToolRegistry>();
+
+        // A2UI Dynamic Action Card Builders & Factory
+        services.AddScoped<IActionCardBuilder, CalculatePolicyLimitCardBuilder>();
+        services.AddScoped<IActionCardBuilder, EscalateInquiryCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceDepartmentsCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceEmployeesCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceInvitationsCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceUserGroupsCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceDashboardSummaryCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceAuditLogsCardBuilder>();
+        services.AddScoped<IActionCardBuilder, DocumentsSearchCardBuilder>();
+        services.AddScoped<IActionCardBuilder, DocumentsListCardBuilder>();
+        services.AddScoped<IActionCardBuilder, DocumentsMetricsCardBuilder>();
+        services.AddScoped<IActionCardBuilder, DocumentsDeleteCardBuilder>();
+        services.AddScoped<IActionCardBuilder, IntakeFormCardBuilder>();
+        services.AddScoped<IActionCardBuilder, SavedAnswersCardBuilder>();
+        services.AddScoped<IActionCardBuilder, ConversationsCardBuilder>();
+        services.AddScoped<IActionCardFactory, ActionCardFactory>();
+
+        // Human-In-The-Loop (HITL) Agent Approval Service
+        services.AddScoped<IAgentApprovalService, Normora.Modules.Conversations.Infrastructure.Services.AgentApprovalService>();
 
         return services;
     }
