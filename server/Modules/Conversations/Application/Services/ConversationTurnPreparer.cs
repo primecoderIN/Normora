@@ -105,7 +105,8 @@ internal sealed class ConversationTurnPreparer(
             currentUser.ExternalUserId,
             currentUser.Email,
             currentUser.DisplayName,
-            personalTenantId);
+            personalTenantId,
+            conversationId);
 
         return new ConversationTurnContext(
             conversation,

@@ -37,6 +37,7 @@ export interface ToolExecutionDto {
 
 export interface ActionCardDto {
   actionType: string;
+  cardType?: string;
   title: string;
   description: string;
   parameters: Record<string, string>;
@@ -44,6 +45,23 @@ export interface ActionCardDto {
   cancelButtonText?: string;
   isConfirmed?: boolean;
   isDismissed?: boolean;
+  approvalId?: string;
+  isExecuting?: boolean;
+  executionError?: string;
+}
+
+export interface ConfirmApprovalResultDto {
+  success: boolean;
+  toolName: string;
+  output?: string;
+  errorMessage?: string;
+  changedData: boolean;
+  structuredData?: unknown;
+}
+
+export interface DismissApprovalResultDto {
+  success: boolean;
+  message: string;
 }
 
 export interface MessageDto {
@@ -81,7 +99,7 @@ export interface SendMessageResult {
 
 // ─── API wrapper ──────────────────────────────────────────────────────────────
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
@@ -170,5 +188,21 @@ export class ConversationService {
     return this.http
       .get<ApiResponse<SharedConversationDetailDto>>(`${this.baseUrl}/shared/${token}`)
       .pipe(map(r => r.data));
+  }
+
+  /** Confirms and executes a pending autonomous agent action. */
+  confirmApproval(approvalId: string): Observable<ApiResponse<ConfirmApprovalResultDto>> {
+    return this.http.post<ApiResponse<ConfirmApprovalResultDto>>(
+      `${this.baseUrl}/approvals/${approvalId}/confirm`,
+      {}
+    );
+  }
+
+  /** Dismisses a pending autonomous agent action without executing. */
+  dismissApproval(approvalId: string): Observable<ApiResponse<DismissApprovalResultDto>> {
+    return this.http.post<ApiResponse<DismissApprovalResultDto>>(
+      `${this.baseUrl}/approvals/${approvalId}/dismiss`,
+      {}
+    );
   }
 }

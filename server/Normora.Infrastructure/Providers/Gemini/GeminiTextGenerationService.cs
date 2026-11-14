@@ -19,7 +19,10 @@ public sealed class GeminiTextGenerationService(
     IChatClient chatClient,
     HttpClient httpClient,
     IOptions<GeminiOptions> options,
-    IAgentToolRegistry toolRegistry) : ITextGenerationService
+    IAgentToolRegistry toolRegistry,
+    IActionCardFactory actionCardFactory,
+    IAgentApprovalService? approvalService = null,
+    IWorkspaceStateSynchronizer? stateSynchronizer = null) : ITextGenerationService
 {
     private readonly string? _apiKey = options.Value.ApiKey;
     private readonly string _model = options.Value.GenerationModel;
@@ -200,6 +203,25 @@ public sealed class GeminiTextGenerationService(
                     ? functionCall.Args.Value.GetRawText()
                     : "{}";
 
+                var targetTool = toolRegistry.FindTool(functionCall.Name);
+                if (targetTool != null && targetTool.RequiresApproval)
+                {
+                    if (approvalService != null)
+                    {
+                        await approvalService.RequestApprovalAsync(
+                            toolContext.TenantId,
+                            toolContext.UserId ?? string.Empty,
+                            toolContext.ConversationId,
+                            targetTool.Name,
+                            argsJson,
+                            null,
+                            null,
+                            cancellationToken);
+                    }
+
+                    return $"I have prepared the `{functionCall.Name.Replace('_', ' ')}` action for you. Because this operation requires explicit human confirmation, please review and approve it using the action card below.";
+                }
+
                 var toolResult = await toolRegistry.ExecuteToolAsync(
                     functionCall.Name,
                     argsJson,
@@ -274,6 +296,61 @@ public sealed class GeminiTextGenerationService(
                     ? functionCall.Args.Value.GetRawText()
                     : "{}";
 
+                var targetTool = toolRegistry.FindTool(functionCall.Name);
+                if (targetTool != null && targetTool.RequiresApproval)
+                {
+                    Guid? approvalId = null;
+                    if (approvalService != null)
+                    {
+                        approvalId = await approvalService.RequestApprovalAsync(
+                            toolContext.TenantId,
+                            toolContext.UserId ?? string.Empty,
+                            toolContext.ConversationId,
+                            targetTool.Name,
+                            argsJson,
+                            null,
+                            null,
+                            cancellationToken);
+                    }
+
+                    yield return new ToolStartedItem(functionCall.Name, callId);
+                    yield return new ToolFinishedItem(
+                        functionCall.Name,
+                        callId,
+                        true,
+                        "Authorization required: awaiting confirmation");
+
+                    var pendingResult = new AgentToolResult(
+                        Success: true,
+                        Output: "{\"status\":\"pending_approval\",\"approvalId\":\"" + (approvalId?.ToString() ?? "") + "\"}",
+                        StructuredData: new { approvalId, status = "pending_approval" });
+
+                    var approvalCard = actionCardFactory.CreateCard(functionCall.Name, argsJson, pendingResult);
+                    if (approvalCard != null)
+                    {
+                        yield return approvalCard with { ApprovalId = approvalId?.ToString() };
+                    }
+                    else
+                    {
+                        yield return new ActionCardItem(
+                            ActionType: "pending_approval_card",
+                            Title: $"Approval Required: {functionCall.Name.Replace('_', ' ')}",
+                            Description: "This action requires explicit authorization before execution.",
+                            Parameters: new Dictionary<string, string>
+                            {
+                                ["Action"] = functionCall.Name,
+                                ["Status"] = "Awaiting Confirmation"
+                            },
+                            ConfirmButtonText: "Confirm Action",
+                            CancelButtonText: "Cancel",
+                            ApprovalId: approvalId?.ToString());
+                    }
+
+                    yield return new TextDeltaItem($"I have prepared this operation for you. Because `{functionCall.Name.Replace('_', ' ')}` is an impactful action, please review the parameters and confirm below to proceed.");
+                    answered = true;
+                    break;
+                }
+
                 yield return new ToolStartedItem(functionCall.Name, callId);
 
                 var toolResult = await toolRegistry.ExecuteToolAsync(
@@ -282,18 +359,29 @@ public sealed class GeminiTextGenerationService(
                     toolContext,
                     cancellationToken);
 
+                var descriptor = toolRegistry.GetChipDescriptor(functionCall.Name);
                 var summary = toolResult.Success
-                    ? (!string.IsNullOrWhiteSpace(toolResult.Output) && toolResult.Output.Length > 80
-                        ? toolResult.Output[..80] + "..."
-                        : toolResult.Output)
-                    : toolResult.Error;
+                    ? (!string.IsNullOrWhiteSpace(descriptor?.CompletedLabel)
+                        ? descriptor.CompletedLabel
+                        : (!string.IsNullOrWhiteSpace(toolResult.Output) && toolResult.Output.Length > 80
+                            ? toolResult.Output[..80] + "..."
+                            : toolResult.Output))
+                    : (!string.IsNullOrWhiteSpace(descriptor?.FailedLabel)
+                        ? descriptor.FailedLabel
+                        : toolResult.Error);
 
                 yield return new ToolFinishedItem(functionCall.Name, callId, toolResult.Success, summary);
 
-                var card = TryCreateActionCard(functionCall.Name, argsJson, toolResult);
+                var card = actionCardFactory.CreateCard(functionCall.Name, argsJson, toolResult);
                 if (card != null)
                 {
                     yield return card;
+                }
+
+                if (toolResult.Success && toolResult.ChangedData && stateSynchronizer != null)
+                {
+                    var newVersion = await stateSynchronizer.IncrementVersionAsync(toolContext.TenantId, functionCall.Name, cancellationToken);
+                    yield return new StateSnapshotItem(newVersion);
                 }
 
                 contents.Add(new GeminiContent([functionCallPart], role: "model"));
@@ -321,72 +409,6 @@ public sealed class GeminiTextGenerationService(
         {
             yield return new TextDeltaItem(RagConstants.FallbackAnswer);
         }
-    }
-
-    private static ActionCardItem? TryCreateActionCard(string toolName, string argsJson, AgentToolResult toolResult)
-    {
-        try
-        {
-            if (toolName == "calculate_policy_limit" && toolResult.Success && !string.IsNullOrWhiteSpace(toolResult.Output))
-            {
-                using var doc = JsonDocument.Parse(toolResult.Output);
-                var root = doc.RootElement;
-                var policy = root.TryGetProperty("policy", out var p) ? p.GetString() : "Policy Limit";
-                var tier = root.TryGetProperty("tier", out var t) ? t.GetString() : null;
-                var guideline = root.TryGetProperty("guideline", out var g) ? g.GetString() : null;
-
-                var parameters = new Dictionary<string, string>();
-                if (tier != null) parameters["Location Tier"] = tier;
-                if (root.TryGetProperty("totalMaxAllowanceUsd", out var a))
-                    parameters["Total Max Allowance"] = $"${a.GetDecimal():N0}";
-                if (root.TryGetProperty("nightlyCapUsd", out var n))
-                    parameters["Nightly Cap"] = $"${n.GetDecimal():N0}/night";
-                if (root.TryGetProperty("dailyAllowanceUsd", out var d))
-                    parameters["Daily Allowance"] = $"${d.GetDecimal():N0}/day";
-                if (guideline != null) parameters["Policy Guideline"] = guideline;
-
-                return new ActionCardItem(
-                    ActionType: "policy_limit_card",
-                    Title: policy ?? "Expense Policy Calculation",
-                    Description: $"Deterministic corporate limit calculation for {tier ?? "requested expense"}.",
-                    Parameters: parameters,
-                    ConfirmButtonText: "Apply Limit",
-                    CancelButtonText: "Dismiss");
-            }
-
-            if (toolName == "escalate_hr_inquiry")
-            {
-                using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(argsJson) ? "{}" : argsJson);
-                var root = doc.RootElement;
-                var inquiry = root.TryGetProperty("inquiry", out var inq) ? inq.GetString() : "Employee Policy Clarification";
-                var category = root.TryGetProperty("category", out var cat) ? cat.GetString() : "General";
-                var urgency = root.TryGetProperty("urgency", out var urg) ? urg.GetString() : "Normal";
-
-                var parameters = new Dictionary<string, string>
-                {
-                    ["Inquiry Subject"] = inquiry ?? "Policy Inquiry",
-                    ["Department Category"] = category ?? "General",
-                    ["Urgency Level"] = urgency ?? "Normal",
-                    ["Dispatch Status"] = toolResult.Success ? "Successfully Sent to HR" : "Failed to Send"
-                };
-
-                return new ActionCardItem(
-                    ActionType: "hr_escalation_card",
-                    Title: "HR Administration Escalation",
-                    Description: toolResult.Success
-                        ? "Notification dispatched to workspace HR administrators for review."
-                        : "Escalation notification could not be delivered.",
-                    Parameters: parameters,
-                    ConfirmButtonText: "View Inquiry Status",
-                    CancelButtonText: "Dismiss");
-            }
-        }
-        catch
-        {
-            // If output parsing fails, fail silently without breaking the stream
-        }
-
-        return null;
     }
 
     // ─── Shared helpers ──────────────────────────────────────────────────────────

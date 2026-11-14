@@ -16,6 +16,7 @@ public class ConversationsDbContext(DbContextOptions<ConversationsDbContext> opt
     public DbSet<SavedAnswer> SavedAnswers { get; set; } = null!;
     public DbSet<MessageFeedback> MessageFeedbacks { get; set; } = null!;
     public DbSet<ConversationShare> ConversationShares { get; set; } = null!;
+    public DbSet<PendingApproval> PendingApprovals { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +31,7 @@ public class ConversationsDbContext(DbContextOptions<ConversationsDbContext> opt
         modelBuilder.Entity<SavedAnswer>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
         modelBuilder.Entity<MessageFeedback>().HasQueryFilter(f => f.TenantId == _tenantContext.TenantId);
         modelBuilder.Entity<ConversationShare>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId);
+        modelBuilder.Entity<PendingApproval>().HasQueryFilter(p => p.TenantId == _tenantContext.TenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

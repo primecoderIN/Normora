@@ -117,7 +117,13 @@ public sealed record ActionCardItem(
     string Description,
     IReadOnlyDictionary<string, string> Parameters,
     string? ConfirmButtonText = null,
-    string? CancelButtonText = null) : TextGenerationStreamItem;
+    string? CancelButtonText = null,
+    string? ApprovalId = null) : TextGenerationStreamItem;
+
+/// <summary>
+/// Streamed state snapshot event indicating workspace data version changed.
+/// </summary>
+public sealed record StateSnapshotItem(long DataVersion) : TextGenerationStreamItem;
 
 /// <summary>
 /// A prior turn in the conversation: the user's question and the assistant's answer.
