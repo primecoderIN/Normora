@@ -639,5 +639,24 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - **Employees**: Replaced placeholder toast with real browser CSV export and direct routing to User Groups for employee assignments.
   - **Dashboard**: Replaced hardcoded quality trend with real rolling calculations and added search and audit log routing.
 
+## ✅ Completed Live Tool-Aware Status Streaming & Intelligent Route Actuation
+- [x] **Polymorphic SSE Agent Status Event Protocol**:
+  - Introduced `AgentStatusEvent` (`"status"`) to `AskConversationStreamEvent` polymorphic discriminator with stages: `thinking`, `retrieval`, `reasoning`, `tool_calling`, `tool_evaluating`, and `answering`.
+  - Added initial `"thinking"` status event immediately upon request submission, resolving static spinner feedback.
+  - Added enriched `ToolStartedEvent` and `ToolStartedItem` with human-friendly `Label` derived from `ToolChipDescriptor.StartLabel`.
+- [x] **End-to-End Dynamic Status Streaming in Gemini Tool Calling Loop**:
+  - Emits real-time lifecycle status updates during Gemini reasoning, tool invocation, and tool output evaluation.
+  - Dynamically synthesizes findings labels upon tool completion before generating conversational replies.
+- [x] **Omnipresent Copilot & Full Chat View Indicators**:
+  - Replaced hardcoded `"Consulting company documents..."` in `CopilotSidebarComponent` with a dynamic, animated status pill.
+  - Replaced generic bouncing dots in `ConversationChatComponent` with a real-time status banner displaying live agent thinking, retrieval, and tool execution stages.
+  - Expanded `getToolLabel()` across all 34 domain tools with comprehensive user-friendly names.
+- [x] **Universal Workspace Route Actuation Service (`WorkspaceRouteService`)**:
+  - Built centralized route resolver injecting active workspace slug (`/app/workspaces/:slug/...`) into all tool actuation buttons.
+  - Enforced role-sensitive route normalization (BFLA defense) preventing unauthorized employee access to administrator routes and gracefully redirecting shared features (`conversations`, `profile`, `saved-answers`).
+  - Added `saved-answers` route under employer layout for complete workspace parity.
+  - Wired navigation actuation in `ChatMessageBubbleComponent` so action card buttons in the main chat view trigger immediate, accurate routing.
+
+
 
 

@@ -108,16 +108,17 @@
         }
       }
 
-      <!-- Typing Indicator -->
+      <!-- Dynamic Live Agent Status Indicator -->
       @if (isSending) {
         <div class="flex items-end gap-2.5 max-w-[85%] self-start msg-enter">
           <div class="flex items-center justify-center flex-none w-8 h-8 bg-linear-to-br from-primary-50 to-purple-50 text-primary-600 rounded-full text-base shadow-sm">
             <i class="pi pi-sparkles"></i>
           </div>
-          <div class="flex items-center gap-1.5 px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-sm shadow-sm">
-            <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce animate-delay-none"></span>
-            <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-            <span class="w-1.5 h-1.5 bg-primary-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+          <div class="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-900 border border-primary-200/80 dark:border-primary-800/60 rounded-2xl rounded-bl-sm shadow-xs animate-pulse">
+            <i class="pi pi-spin pi-spinner text-primary-600 dark:text-primary-400 text-xs"></i>
+            <span class="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {{ currentLiveStatus?.message || 'Thinking . . .' }}
+            </span>
           </div>
         </div>
       }

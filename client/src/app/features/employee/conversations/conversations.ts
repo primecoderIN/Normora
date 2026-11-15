@@ -16,7 +16,7 @@ import {
 import { ConversationSidebarComponent } from './components/conversation-sidebar.component';
 import { ConversationChatComponent } from './components/conversation-chat.component';
 import { UserService } from '@core/services/user.service';
-import { CopilotService } from '@core/services/copilot.service';
+import { CopilotService, AgentLiveStatus } from '@core/services/copilot.service';
 import { RealtimeStateService } from '@core/services/realtime-state.service';
 
 @Component({
@@ -54,6 +54,7 @@ import { RealtimeStateService } from '@core/services/realtime-state.service';
         [conversation]="activeConversation()!"
         [isLoading]="isLoadingMessages()"
         [isSending]="isSending()"
+        [currentLiveStatus]="currentLiveStatus()"
         [error]="chatError()"
         (onNewConversation)="startBlankConversation()"
         (onSendMessage)="sendMessage($event)"
@@ -85,6 +86,7 @@ export class Conversations implements OnInit, AfterViewChecked {
   isLoadingList = signal(false);
   isLoadingMessages = signal(false);
   isSending = signal(false);
+  currentLiveStatus = signal<AgentLiveStatus | null>(null);
   isDeletingId = signal<string | null>(null);
   
   listError = signal('');
@@ -223,6 +225,7 @@ export class Conversations implements OnInit, AfterViewChecked {
     if (!conv || this.isSending()) return;
 
     this.isSending.set(true);
+    this.currentLiveStatus.set({ stage: 'thinking', message: 'Thinking . . .' });
     this.chatError.set('');
     this.lastSentText = text;
 
@@ -322,8 +325,15 @@ export class Conversations implements OnInit, AfterViewChecked {
               try {
                 const evt = JSON.parse(jsonStr);
                 
-                // Event 1: CitationsReadyEvent
-                if (evt.type === 'citations') {
+                // Event 0: AgentStatusEvent
+                if (evt.type === 'status') {
+                  this.currentLiveStatus.set({
+                    stage: evt.stage,
+                    message: evt.message,
+                    toolName: evt.toolName,
+                    detail: evt.detail
+                  });
+                } else if (evt.type === 'citations') {
                   assistantMsg = {
                     id: evt.assistantMessageId,
                     role: 'Assistant',
@@ -339,6 +349,13 @@ export class Conversations implements OnInit, AfterViewChecked {
                     tools: []
                   };
                 } else if (evt.type === 'tool_started') {
+                  if (evt.label) {
+                    this.currentLiveStatus.set({
+                      stage: 'tool_calling',
+                      message: evt.label,
+                      toolName: evt.toolName
+                    });
+                  }
                   if (!assistantMsg) {
                     assistantMsg = {
                       id: crypto.randomUUID(),
@@ -354,13 +371,15 @@ export class Conversations implements OnInit, AfterViewChecked {
                   const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
                   if (existing) {
                     existing.status = 'running';
+                    if (evt.label) existing.label = evt.label;
                   } else {
                     assistantMsg.tools = [
                       ...assistantMsg.tools,
                       {
                         toolName: evt.toolName,
                         toolCallId: evt.toolCallId,
-                        status: 'running'
+                        status: 'running',
+                        label: evt.label
                       }
                     ];
                   }
@@ -372,6 +391,13 @@ export class Conversations implements OnInit, AfterViewChecked {
                   });
                   this.shouldScrollToBottom = true;
                 } else if (evt.type === 'tool_finished') {
+                  if (evt.summary) {
+                    this.currentLiveStatus.set({
+                      stage: 'tool_evaluating',
+                      message: `Synthesizing results from ${evt.summary}...`,
+                      toolName: evt.toolName
+                    });
+                  }
                   if (assistantMsg) {
                     if (!assistantMsg.tools) assistantMsg.tools = [];
                     const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
@@ -429,6 +455,7 @@ export class Conversations implements OnInit, AfterViewChecked {
                 } else if (evt.type === 'state_snapshot') {
                   this.realtimeStateService.handleStateSnapshot(evt.dataVersion);
                 } else if (evt.type === 'text') {
+                  this.currentLiveStatus.set(null);
                   // Event 2: TextChunkEvent
                   // Incrementally append new text tokens to assistantMsg.content
                   // and update the reactive Signal in-place to trigger partial DOM re-renders.
@@ -471,6 +498,7 @@ export class Conversations implements OnInit, AfterViewChecked {
       );
     } finally {
       this.isSending.set(false);
+      this.currentLiveStatus.set(null);
     }
   }
 }

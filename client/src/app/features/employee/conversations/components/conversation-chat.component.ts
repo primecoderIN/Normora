@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, 
 import { CommonModule } from '@angular/common';
 import { DsTooltipDirective, DsToastService } from '@design-system';
 import { ConversationDetailDto, MessageDto, ConversationService, SuggestedQuestionDto } from '@core/services/conversation.service';
+import { AgentLiveStatus } from '@core/services/copilot.service';
 import { DocumentService } from '@core/services/document.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { ApiMessages } from '@core/constants/api-messages';
@@ -35,6 +36,7 @@ export class ConversationChatComponent implements OnInit {
   @Input({ required: true }) conversation: ConversationDetailDto | null = null;
   @Input({ required: true }) isLoading = false;
   @Input({ required: true }) isSending = false;
+  @Input() currentLiveStatus: AgentLiveStatus | null = null;
   @Input({ required: true }) error = '';
 
   @Output() onNewConversation = new EventEmitter<void>();

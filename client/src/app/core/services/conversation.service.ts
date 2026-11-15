@@ -33,6 +33,7 @@ export interface ToolExecutionDto {
   toolCallId: string;
   status: 'running' | 'completed' | 'failed';
   summary?: string;
+  label?: string;
 }
 
 export interface ActionCardDto {

@@ -4,9 +4,17 @@ import { firstValueFrom, filter } from 'rxjs';
 import { ConversationService, MessageDto, ConversationDto } from './conversation.service';
 import { UserService } from './user.service';
 import { RealtimeStateService } from './realtime-state.service';
+import { WorkspaceRouteService } from './workspace-route.service';
 import { ApiMessages } from '../constants/api-messages';
 
 export type PersonaId = 'general' | 'hr' | 'finance' | 'it';
+
+export interface AgentLiveStatus {
+  stage: 'thinking' | 'retrieval' | 'reasoning' | 'tool_calling' | 'tool_evaluating' | 'answering';
+  message: string;
+  toolName?: string;
+  detail?: string;
+}
 
 export interface AgentPersona {
   id: PersonaId;
@@ -97,12 +105,14 @@ export class CopilotService {
   private conversationService = inject(ConversationService);
   private userService = inject(UserService);
   private realtimeStateService = inject(RealtimeStateService);
+  private workspaceRouteService = inject(WorkspaceRouteService);
 
   // ─── Reactive Signals ────────────────────────────────────────────────────────
   readonly isOpen = signal<boolean>(false);
   readonly isExpanded = signal<boolean>(false);
   readonly showHistoryPane = signal<boolean>(false);
   readonly isSending = signal<boolean>(false);
+  readonly currentLiveStatus = signal<AgentLiveStatus | null>(null);
   readonly isLoadingHistory = signal<boolean>(false);
   readonly activeConversationId = signal<string | null>(null);
   readonly conversations = signal<ConversationDto[]>([]);
@@ -309,8 +319,8 @@ export class CopilotService {
     if (this.isExpanded()) {
       this.isExpanded.set(false);
     }
-    const commands = Array.isArray(path) ? path : [path];
-    void this.router.navigate(commands, { queryParams });
+    const target = Array.isArray(path) ? path.join('/') : (path || '');
+    this.workspaceRouteService.resolveAndNavigate(target, queryParams);
   }
 
   async sendMessage(prompt: string): Promise<void> {
@@ -319,6 +329,7 @@ export class CopilotService {
 
     this.error.set(null);
     this.isSending.set(true);
+    this.currentLiveStatus.set({ stage: 'thinking', message: 'Thinking . . .' });
 
     // Ensure an active conversation thread exists
     let conversationId = this.activeConversationId();
@@ -400,7 +411,14 @@ export class CopilotService {
               try {
                 const evt = JSON.parse(jsonStr);
 
-                if (evt.type === 'citations') {
+                if (evt.type === 'status') {
+                  this.currentLiveStatus.set({
+                    stage: evt.stage,
+                    message: evt.message,
+                    toolName: evt.toolName,
+                    detail: evt.detail
+                  });
+                } else if (evt.type === 'citations') {
                   assistantMsg = {
                     id: evt.assistantMessageId,
                     role: 'Assistant',
@@ -417,6 +435,13 @@ export class CopilotService {
                     tools: []
                   };
                 } else if (evt.type === 'tool_started') {
+                  if (evt.label) {
+                    this.currentLiveStatus.set({
+                      stage: 'tool_calling',
+                      message: evt.label,
+                      toolName: evt.toolName
+                    });
+                  }
                   if (!assistantMsg) {
                     assistantMsg = {
                       id: crypto.randomUUID(),
@@ -432,13 +457,15 @@ export class CopilotService {
                   const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
                   if (existing) {
                     existing.status = 'running';
+                    if (evt.label) existing.label = evt.label;
                   } else {
                     assistantMsg.tools = [
                       ...assistantMsg.tools,
                       {
                         toolName: evt.toolName,
                         toolCallId: evt.toolCallId,
-                        status: 'running'
+                        status: 'running',
+                        label: evt.label
                       }
                     ];
                   }
@@ -448,6 +475,13 @@ export class CopilotService {
                     return list.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m));
                   });
                 } else if (evt.type === 'tool_finished') {
+                  if (evt.summary) {
+                    this.currentLiveStatus.set({
+                      stage: 'tool_evaluating',
+                      message: `Synthesizing results from ${evt.summary}...`,
+                      toolName: evt.toolName
+                    });
+                  }
                   if (assistantMsg) {
                     if (!assistantMsg.tools) assistantMsg.tools = [];
                     const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
@@ -501,6 +535,7 @@ export class CopilotService {
                 } else if (evt.type === 'state_snapshot') {
                   this.realtimeStateService.handleStateSnapshot(evt.dataVersion);
                 } else if (evt.type === 'text') {
+                  this.currentLiveStatus.set(null);
                   if (assistantMsg) {
                     assistantMsg.content += evt.text;
                     this.messages.update(list => {
@@ -524,6 +559,7 @@ export class CopilotService {
       this.error.set(message);
     } finally {
       this.isSending.set(false);
+      this.currentLiveStatus.set(null);
       this.loadConversations();
     }
   }

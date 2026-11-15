@@ -365,7 +365,7 @@ import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
                   >
                     @if (tool.status === 'running') {
                       <i class="pi pi-spin pi-spinner text-[10px] text-primary-500"></i>
-                      <span>{{ getToolLabel(tool.toolName) }}...</span>
+                      <span>{{ tool.label || getToolLabel(tool.toolName) }}...</span>
                     } @else if (tool.status === 'completed') {
                       <i class="pi pi-check text-[10px] text-emerald-500"></i>
                       <span>{{ tool.summary || getToolLabel(tool.toolName) }}</span>
@@ -483,9 +483,9 @@ import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
 
         <!-- Streaming Indicator -->
         @if (copilotService.isSending() && !isReceivingTokens()) {
-          <div class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 w-fit text-xs text-slate-500 shadow-2xs">
-            <i class="pi pi-spin pi-spinner text-primary-600"></i>
-            <span>Consulting company documents...</span>
+          <div class="flex items-center gap-2.5 px-3.5 py-2 bg-white dark:bg-slate-800 rounded-xl border border-primary-200/80 dark:border-primary-800/60 w-fit text-xs text-slate-700 dark:text-slate-300 shadow-2xs animate-pulse">
+            <i class="pi pi-spin pi-spinner text-primary-600 dark:text-primary-400"></i>
+            <span class="font-medium">{{ copilotService.currentLiveStatus()?.message || 'Thinking . . .' }}</span>
           </div>
         }
 
@@ -649,16 +649,48 @@ export class CopilotSidebarComponent implements AfterViewChecked {
   }
 
   getToolLabel(toolName: string): string {
-    switch (toolName) {
-      case 'calculate_policy_limit':
-        return 'Calculating Policy Limit';
-      case 'escalate_hr_inquiry':
-        return 'Dispatching HR Escalation';
-      case 'search_company_documents':
-        return 'Retrieving Policy Sources';
-      default:
-        return toolName.replace(/_/g, ' ');
-    }
+    const labels: Record<string, string> = {
+      // Conversations
+      calculate_policy_limit: 'Calculating Policy Limit',
+      escalate_hr_inquiry: 'Dispatching HR Escalation',
+      search_company_documents: 'Retrieving Policy Sources',
+      workspace_navigate: 'Navigating Workspace Portal',
+      workspace_request_form: 'Requesting Input Parameters',
+      suggestions_get_popular: 'Fetching Suggested Queries',
+      conversations_list: 'Retrieving Conversations',
+      conversations_share: 'Generating Shareable Link',
+      conversations_delete: 'Deleting Conversation Thread',
+      saved_answers_list: 'Retrieving Saved Answers',
+      saved_answers_save: 'Saving Answer to Notebook',
+      saved_answers_unsave: 'Removing Saved Answer',
+      // Documents
+      documents_search: 'Searching Documents',
+      documents_list: 'Listing Workspace Documents',
+      documents_get_metrics: 'Checking Storage & Metrics',
+      documents_delete: 'Deleting Document',
+      documents_upload_guide: 'Opening Document Uploader',
+      // Tenants & Workspace Admin
+      workspace_list_departments: 'Listing Departments',
+      workspace_create_department: 'Creating Department',
+      workspace_update_department: 'Updating Department',
+      workspace_delete_department: 'Deleting Department',
+      workspace_list_employees: 'Listing Workspace Employees',
+      workspace_invite_employee: 'Inviting Employee',
+      workspace_remove_employee: 'Revoking Employee Access',
+      workspace_update_employee_assignments: 'Updating Employee Assignments',
+      workspace_list_user_groups: 'Listing User Security Groups',
+      workspace_create_user_group: 'Creating User Group',
+      workspace_update_user_group: 'Updating User Group',
+      workspace_delete_user_group: 'Deleting User Group',
+      workspace_update_group_members: 'Synchronizing Group Members',
+      workspace_get_dashboard_summary: 'Loading Dashboard Analytics',
+      workspace_get_audit_logs: 'Reviewing Audit Logs',
+      workspace_get_subscription_usage: 'Checking Plan & Quotas',
+      workspace_get_branding: 'Inspecting White-Label Branding',
+      user_get_profile: 'Retrieving User Profile'
+    };
+
+    return labels[toolName] || toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
   getParamEntries(params?: Record<string, string>): { key: string; value: string }[] {
@@ -692,8 +724,9 @@ export class CopilotSidebarComponent implements AfterViewChecked {
   }
 
   private handleActuationTriggers(card: ActionCardDto): void {
-    if (card.parameters && card.parameters['route']) {
-      this.copilotService.navigateActuation(card.parameters['route']);
+    const route = card.parameters?.['route'] || card.parameters?.['shareUrl'];
+    if (route) {
+      this.copilotService.navigateActuation(route);
     } else if (card.parameters && card.parameters['modal']) {
       this.copilotService.triggerModal(card.parameters['modal']);
     }
