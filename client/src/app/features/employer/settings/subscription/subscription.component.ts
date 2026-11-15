@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SubscriptionService, SubscriptionUsageDto, PlanTierType } from '@core/services/subscription.service';
+import { SubscriptionService, SubscriptionUsageDto, PlanTierType, TenantInvoiceDto, TenantBillingDetailsDto } from '@core/services/subscription.service';
 import { UserService } from '@core/services/user.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import { DsToastService } from '@design-system';
@@ -201,7 +201,7 @@ export class SubscriptionComponent implements OnInit {
   supportMessage = signal('');
   isSubmittingSupport = signal(false);
 
-  // Simulated / Mock Invoices for rich UX
+  // Initial fallback invoices (overridden dynamically by backend via loadInvoices())
   readonly invoices = signal<BillingInvoiceItem[]>([
     {
       id: 'inv_101',
@@ -406,9 +406,22 @@ export class SubscriptionComponent implements OnInit {
     if (user) {
       this.billingEmail.set(user.email || '');
       this.companyLegalName.set(this.userService.activeTenantName() || 'Normora Technologies Inc.');
-      this.taxId.set('GSTIN29ABCDE1234F1Z5');
-      this.billingAddress.set('Level 4, Prestige Tech Park, Bangalore 560103, India');
     }
+
+    this.subscriptionService.getBillingDetails().subscribe({
+      next: (details) => {
+        if (details) {
+          if (details.billingEmail) this.billingEmail.set(details.billingEmail);
+          if (details.companyLegalName) this.companyLegalName.set(details.companyLegalName);
+          if (details.taxId) this.taxId.set(details.taxId);
+          if (details.billingAddress) this.billingAddress.set(details.billingAddress);
+        }
+      },
+      error: () => {
+        if (!this.taxId()) this.taxId.set('GSTIN29ABCDE1234F1Z5');
+        if (!this.billingAddress()) this.billingAddress.set('Level 4, Prestige Tech Park, Bangalore 560103, India');
+      }
+    });
   }
 
   setTab(tab: SubscriptionTab): void {
@@ -573,6 +586,30 @@ export class SubscriptionComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
+
+    this.loadInvoices();
+  }
+
+  loadInvoices(): void {
+    this.subscriptionService.getInvoices().subscribe({
+      next: (invoiceList) => {
+        if (invoiceList && invoiceList.length > 0) {
+          this.invoices.set(invoiceList.map(inv => ({
+            id: inv.id,
+            invoiceNumber: inv.invoiceNumber,
+            date: new Date(inv.date),
+            tier: inv.tier,
+            amount: inv.amount,
+            currency: inv.currency,
+            cycle: inv.cycle,
+            status: inv.status
+          })));
+        }
+      },
+      error: () => {
+        // Retain default demo invoices if network error
+      }
+    });
   }
 
   selectPlan(tier: PlanTierType): void {
@@ -665,10 +702,38 @@ export class SubscriptionComponent implements OnInit {
   }
 
   downloadInvoice(invoice: BillingInvoiceItem): void {
+    const targetId = invoice.id || 'latest';
+    const invoiceNum = invoice.invoiceNumber || 'INV-Latest';
+
     this.messageService.add({
-      severity: 'success',
-      summary: 'Invoice Download Started',
-      detail: `Downloading PDF invoice ${invoice.invoiceNumber}...`
+      severity: 'info',
+      summary: 'Preparing Invoice',
+      detail: `Fetching ${invoiceNum}...`
+    });
+
+    this.subscriptionService.downloadInvoiceFile(targetId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${invoiceNum}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Invoice Downloaded',
+          detail: `Invoice ${invoiceNum} downloaded successfully.`
+        });
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Download Failed',
+          detail: 'Unable to download tax invoice at this time.'
+        });
+      }
     });
   }
 
@@ -676,19 +741,67 @@ export class SubscriptionComponent implements OnInit {
     const latest = this.invoices()[0];
     if (latest) {
       this.downloadInvoice(latest);
+    } else {
+      this.subscriptionService.downloadInvoiceFile('latest').subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'tax-invoice-latest.html';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Invoice Downloaded',
+            detail: 'Latest tax invoice downloaded successfully.'
+          });
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Download Failed',
+            detail: 'Unable to download tax invoice at this time.'
+          });
+        }
+      });
     }
   }
 
   saveBillingSettings(): void {
     this.isSavingSettings.set(true);
-    setTimeout(() => {
-      this.isSavingSettings.set(false);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Settings Saved',
-        detail: 'Billing contact details and tax preferences updated.'
-      });
-    }, 600);
+    const payload: TenantBillingDetailsDto = {
+      billingEmail: this.billingEmail(),
+      companyLegalName: this.companyLegalName(),
+      taxId: this.taxId(),
+      billingAddress: this.billingAddress()
+    };
+
+    this.subscriptionService.updateBillingDetails(payload).subscribe({
+      next: (updated) => {
+        this.isSavingSettings.set(false);
+        if (updated) {
+          this.billingEmail.set(updated.billingEmail);
+          this.companyLegalName.set(updated.companyLegalName);
+          this.taxId.set(updated.taxId);
+          this.billingAddress.set(updated.billingAddress);
+        }
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Settings Saved',
+          detail: 'Billing contact details and tax preferences updated successfully.'
+        });
+      },
+      error: () => {
+        this.isSavingSettings.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Save Failed',
+          detail: 'Failed to update billing details. Please try again.'
+        });
+      }
+    });
   }
 
   submitSupportRequest(): void {

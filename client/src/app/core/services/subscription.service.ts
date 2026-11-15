@@ -35,6 +35,25 @@ export interface CustomerPortalResult {
   portalUrl: string;
 }
 
+export interface TenantInvoiceDto {
+  id: string;
+  invoiceNumber: string;
+  date: string;
+  tier: string;
+  amount: string;
+  currency: string;
+  cycle: string;
+  status: 'Paid' | 'Pending' | 'Failed';
+  transactionId?: string;
+}
+
+export interface TenantBillingDetailsDto {
+  billingEmail: string;
+  companyLegalName: string;
+  taxId: string;
+  billingAddress: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
   private http = inject(HttpClient);
@@ -122,6 +141,42 @@ export class SubscriptionService {
 
     return this.http
       .post<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/tier`, { tier: tierEnumMap[tier] })
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * Retrieves official itemized billing invoices for the current tenant.
+   */
+  getInvoices(): Observable<TenantInvoiceDto[]> {
+    return this.http
+      .get<ApiResponse<TenantInvoiceDto[]>>(`${this.apiUrl}/invoices`)
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * Downloads an official tax invoice document (HTML or PDF) as a binary Blob.
+   */
+  downloadInvoiceFile(invoiceId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/invoices/${invoiceId}/download`, {
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Retrieves workspace billing contact, company legal name, and tax ID (GSTIN).
+   */
+  getBillingDetails(): Observable<TenantBillingDetailsDto> {
+    return this.http
+      .get<ApiResponse<TenantBillingDetailsDto>>(`${this.apiUrl}/billing-details`)
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * Updates workspace billing contact and tax details.
+   */
+  updateBillingDetails(details: TenantBillingDetailsDto): Observable<TenantBillingDetailsDto> {
+    return this.http
+      .put<ApiResponse<TenantBillingDetailsDto>>(`${this.apiUrl}/billing-details`, details)
       .pipe(map(res => res.data));
   }
 }
