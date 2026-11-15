@@ -44,12 +44,22 @@ public static class TenantsModuleExtensions
         // Autonomous Workspace Agent Tools:
         services.AddScoped<IAgentTool, WorkspaceListDepartmentsTool>();
         services.AddScoped<IAgentTool, WorkspaceCreateDepartmentTool>();
+        services.AddScoped<IAgentTool, WorkspaceUpdateDepartmentTool>();
+        services.AddScoped<IAgentTool, WorkspaceDeleteDepartmentTool>();
         services.AddScoped<IAgentTool, WorkspaceListEmployeesTool>();
         services.AddScoped<IAgentTool, WorkspaceInviteEmployeeTool>();
+        services.AddScoped<IAgentTool, WorkspaceRemoveEmployeeTool>();
+        services.AddScoped<IAgentTool, WorkspaceUpdateEmployeeAssignmentsTool>();
         services.AddScoped<IAgentTool, WorkspaceListUserGroupsTool>();
         services.AddScoped<IAgentTool, WorkspaceCreateUserGroupTool>();
+        services.AddScoped<IAgentTool, WorkspaceUpdateUserGroupTool>();
+        services.AddScoped<IAgentTool, WorkspaceDeleteUserGroupTool>();
+        services.AddScoped<IAgentTool, WorkspaceUpdateGroupMembersTool>();
         services.AddScoped<IAgentTool, WorkspaceGetDashboardSummaryTool>();
         services.AddScoped<IAgentTool, WorkspaceGetAuditLogsTool>();
+        services.AddScoped<IAgentTool, WorkspaceGetSubscriptionUsageTool>();
+        services.AddScoped<IAgentTool, WorkspaceGetBrandingTool>();
+        services.AddScoped<IAgentTool, UserGetProfileTool>();
 
         return services;
     }

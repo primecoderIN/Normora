@@ -10,7 +10,7 @@ namespace Normora.Modules.Conversations.Infrastructure.Cards;
 public sealed class ConversationsCardBuilder : IActionCardBuilder
 {
     public bool CanHandle(string toolName) =>
-        toolName is "conversations_list" or "suggestions_get_popular";
+        toolName is "conversations_list" or "suggestions_get_popular" or "conversations_share" or "conversations_delete";
 
     public ActionCardItem? BuildCard(string toolName, string argumentsJson, AgentToolResult result)
     {
@@ -23,6 +23,44 @@ public sealed class ConversationsCardBuilder : IActionCardBuilder
         {
             using var doc = JsonDocument.Parse(result.Output);
             var root = doc.RootElement;
+
+            if (toolName == "conversations_share")
+            {
+                var shareUrl = root.TryGetProperty("shareUrl", out var sProp) ? sProp.GetString() : "";
+                var token = root.TryGetProperty("shareToken", out var tProp) ? tProp.GetString() : "";
+
+                return new ActionCardItem(
+                    ActionType: "conversation_shared_card",
+                    Title: "Conversation Link Ready",
+                    Description: "Anyone in your organization with this link can view this conversation thread.",
+                    Parameters: new Dictionary<string, string>
+                    {
+                        ["Share Link"] = shareUrl ?? "",
+                        ["Token"] = token ?? "",
+                        ["Access Scope"] = "Workspace Authorized",
+                        ["route"] = shareUrl ?? "/employee/conversations"
+                    },
+                    ConfirmButtonText: "Open Shared View",
+                    CancelButtonText: "Dismiss");
+            }
+
+            if (toolName == "conversations_delete")
+            {
+                var convId = root.TryGetProperty("conversationId", out var cProp) ? cProp.GetString() : "";
+
+                return new ActionCardItem(
+                    ActionType: "conversation_deleted_card",
+                    Title: "Conversation Deleted",
+                    Description: "The conversation thread and message turns have been removed.",
+                    Parameters: new Dictionary<string, string>
+                    {
+                        ["Conversation ID"] = convId ?? "",
+                        ["Status"] = "Deleted",
+                        ["route"] = "/employee/conversations"
+                    },
+                    ConfirmButtonText: "New Conversation",
+                    CancelButtonText: "Dismiss");
+            }
 
             if (toolName == "suggestions_get_popular")
             {
@@ -48,7 +86,8 @@ public sealed class ConversationsCardBuilder : IActionCardBuilder
             var total = root.TryGetProperty("totalConversations", out var t) ? t.GetInt32() : 0;
             var convParameters = new Dictionary<string, string>
             {
-                ["Recent Threads"] = total.ToString()
+                ["Recent Threads"] = total.ToString(),
+                ["route"] = "/employee/conversations"
             };
 
             if (root.TryGetProperty("conversations", out var convArray) && convArray.ValueKind == JsonValueKind.Array)

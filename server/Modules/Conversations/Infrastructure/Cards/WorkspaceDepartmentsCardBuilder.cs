@@ -10,7 +10,7 @@ namespace Normora.Modules.Conversations.Infrastructure.Cards;
 public sealed class WorkspaceDepartmentsCardBuilder : IActionCardBuilder
 {
     public bool CanHandle(string toolName) =>
-        toolName is "workspace_list_departments" or "workspace_create_department";
+        toolName is "workspace_list_departments" or "workspace_create_department" or "workspace_update_department" or "workspace_delete_department";
 
     public ActionCardItem? BuildCard(string toolName, string argumentsJson, AgentToolResult result)
     {
@@ -36,7 +36,45 @@ public sealed class WorkspaceDepartmentsCardBuilder : IActionCardBuilder
                     Parameters: new Dictionary<string, string>
                     {
                         ["Department Name"] = name ?? "Department",
-                        ["Status"] = "Active"
+                        ["Status"] = "Active",
+                        ["route"] = "/employer/settings/departments"
+                    },
+                    ConfirmButtonText: "View Departments",
+                    CancelButtonText: "Dismiss");
+            }
+
+            if (toolName == "workspace_update_department")
+            {
+                var name = root.TryGetProperty("name", out var n) ? n.GetString() : "Department";
+                var description = root.TryGetProperty("description", out var d) ? d.GetString() : null;
+
+                return new ActionCardItem(
+                    ActionType: "department_updated_card",
+                    Title: $"Department Updated: {name}",
+                    Description: description ?? "Department details updated.",
+                    Parameters: new Dictionary<string, string>
+                    {
+                        ["Department Name"] = name ?? "Department",
+                        ["Status"] = "Updated",
+                        ["route"] = "/employer/settings/departments"
+                    },
+                    ConfirmButtonText: "View Departments",
+                    CancelButtonText: "Dismiss");
+            }
+
+            if (toolName == "workspace_delete_department")
+            {
+                var deptId = root.TryGetProperty("departmentId", out var idProp) ? idProp.GetString() : "";
+
+                return new ActionCardItem(
+                    ActionType: "department_deleted_card",
+                    Title: "Department Deleted",
+                    Description: "The department was removed from the organization.",
+                    Parameters: new Dictionary<string, string>
+                    {
+                        ["Department ID"] = deptId ?? "",
+                        ["Status"] = "Deleted",
+                        ["route"] = "/employer/settings/departments"
                     },
                     ConfirmButtonText: "View Departments",
                     CancelButtonText: "Dismiss");
@@ -46,7 +84,8 @@ public sealed class WorkspaceDepartmentsCardBuilder : IActionCardBuilder
             var total = root.TryGetProperty("totalDepartments", out var t) ? t.GetInt32() : 0;
             var parameters = new Dictionary<string, string>
             {
-                ["Total Departments"] = total.ToString()
+                ["Total Departments"] = total.ToString(),
+                ["route"] = "/employer/settings/departments"
             };
 
             if (root.TryGetProperty("departments", out var deptsProp) && deptsProp.ValueKind == JsonValueKind.Array)

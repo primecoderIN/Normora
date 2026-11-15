@@ -42,3 +42,4 @@ public sealed class DocumentsUploadGuideTool : IAgentTool
         return Task.FromResult(new AgentToolResult(true, output, StructuredData: data));
     }
 }
+

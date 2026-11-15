@@ -46,9 +46,13 @@ public static class ConversationsModuleExtensions
         services.AddScoped<IAgentTool, SearchCompanyDocumentsTool>();
         services.AddScoped<IAgentTool, SavedAnswersListTool>();
         services.AddScoped<IAgentTool, SavedAnswersSaveTool>();
+        services.AddScoped<IAgentTool, SavedAnswersUnsaveTool>();
         services.AddScoped<IAgentTool, ConversationsListTool>();
+        services.AddScoped<IAgentTool, ConversationsShareTool>();
+        services.AddScoped<IAgentTool, ConversationsDeleteTool>();
         services.AddScoped<IAgentTool, SuggestionsGetPopularTool>();
         services.AddScoped<IAgentTool, WorkspaceRequestFormTool>();
+        services.AddScoped<IAgentTool, WorkspaceNavigateTool>();
         services.AddScoped<IAgentToolRegistry, AgentToolRegistry>();
 
         // A2UI Dynamic Action Card Builders & Factory
@@ -60,6 +64,10 @@ public static class ConversationsModuleExtensions
         services.AddScoped<IActionCardBuilder, WorkspaceUserGroupsCardBuilder>();
         services.AddScoped<IActionCardBuilder, WorkspaceDashboardSummaryCardBuilder>();
         services.AddScoped<IActionCardBuilder, WorkspaceAuditLogsCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceSubscriptionCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceBrandingCardBuilder>();
+        services.AddScoped<IActionCardBuilder, UserProfileCardBuilder>();
+        services.AddScoped<IActionCardBuilder, WorkspaceNavigateCardBuilder>();
         services.AddScoped<IActionCardBuilder, DocumentsSearchCardBuilder>();
         services.AddScoped<IActionCardBuilder, DocumentsListCardBuilder>();
         services.AddScoped<IActionCardBuilder, DocumentsMetricsCardBuilder>();

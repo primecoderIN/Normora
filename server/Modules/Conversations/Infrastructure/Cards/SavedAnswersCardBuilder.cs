@@ -10,7 +10,7 @@ namespace Normora.Modules.Conversations.Infrastructure.Cards;
 public sealed class SavedAnswersCardBuilder : IActionCardBuilder
 {
     public bool CanHandle(string toolName) =>
-        toolName is "saved_answers_list" or "saved_answers_save";
+        toolName is "saved_answers_list" or "saved_answers_save" or "saved_answers_unsave";
 
     public ActionCardItem? BuildCard(string toolName, string argumentsJson, AgentToolResult result)
     {
@@ -35,7 +35,26 @@ public sealed class SavedAnswersCardBuilder : IActionCardBuilder
                     Parameters: new Dictionary<string, string>
                     {
                         ["Message ID"] = msgId ?? "",
-                        ["Notebook Status"] = "Bookmarked"
+                        ["Notebook Status"] = "Bookmarked",
+                        ["route"] = "/employee/saved-answers"
+                    },
+                    ConfirmButtonText: "Open Notebook",
+                    CancelButtonText: "Dismiss");
+            }
+
+            if (toolName == "saved_answers_unsave")
+            {
+                var msgId = root.TryGetProperty("messageId", out var m) ? m.GetString() : "Answer";
+
+                return new ActionCardItem(
+                    ActionType: "answer_unsaved_card",
+                    Title: "Bookmark Removed",
+                    Description: "Answer removed from your personal notebook.",
+                    Parameters: new Dictionary<string, string>
+                    {
+                        ["Message ID"] = msgId ?? "",
+                        ["Notebook Status"] = "Removed",
+                        ["route"] = "/employee/saved-answers"
                     },
                     ConfirmButtonText: "Open Notebook",
                     CancelButtonText: "Dismiss");
@@ -44,7 +63,8 @@ public sealed class SavedAnswersCardBuilder : IActionCardBuilder
             var total = root.TryGetProperty("totalSavedAnswers", out var t) ? t.GetInt32() : 0;
             var parameters = new Dictionary<string, string>
             {
-                ["Bookmarked Answers"] = total.ToString()
+                ["Bookmarked Answers"] = total.ToString(),
+                ["route"] = "/employee/saved-answers"
             };
 
             if (root.TryGetProperty("items", out var itemsArray) && itemsArray.ValueKind == JsonValueKind.Array)

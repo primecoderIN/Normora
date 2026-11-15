@@ -576,6 +576,49 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] **Zero-Candidate Query Tool Execution in SSE Streaming**:
   - Refactored `AskConversationStreamCommandHandler.cs` to pass empty sources `[]` into `generationService.StreamConversationalEventsAsync` when no document chunks match the query, allowing autonomous agent tools (e.g. workspace creation, department listing, document upload navigation) to trigger seamlessly during streaming.
 - [x] **Document Ingestion Guidance Tool & Navigation Actuation**:
-  - Created `DocumentsUploadGuideTool` in `Normora.Modules.Documents` (bringing the tool catalog to 20 tools) and `DocumentsUploadGuideCardBuilder` in `Normora.Modules.Conversations`.
+  - Created `DocumentsUploadGuideTool` in `Normora.Modules.Documents` and `DocumentsUploadGuideCardBuilder` in `Normora.Modules.Conversations`.
   - Configured 1-click UI actuation via `route: "/employer/documents"` so users inquiring about uploading documents receive clear specifications (PDF, DOCX, TXT, images up to 50MB, department clearances, background OCR/embedding) along with a 1-click `[Go to Document Upload]` button.
+
+## ✅ Completed Agentic AI Action Coverage: Phase 6 — 100% Platform Coverage Across All Commands, Queries & Pages
+- [x] **Comprehensive 34-Tool Domain Action Inventory**:
+  - *Tenants Domain Tools (18 tools)*:
+    - `workspace_list_departments`: List departments with active member and group counts.
+    - `workspace_create_department`: Create new organizational department.
+    - `workspace_update_department`: Rename department and edit description.
+    - `workspace_delete_department`: Soft-delete department with server-enforced HITL approval.
+    - `workspace_list_employees`: Search and filter employee roster with roles.
+    - `workspace_invite_employee`: Send email invitations with department/group scopes.
+    - `workspace_remove_employee`: Revoke workspace access with server-enforced HITL approval.
+    - `workspace_update_employee_assignments`: Configure direct department clearances and security groups.
+    - `workspace_list_user_groups`: List security groups with clearance counts.
+    - `workspace_create_user_group`: Create security groups with department clearances.
+    - `workspace_update_user_group`: Rename security groups and edit description.
+    - `workspace_delete_user_group`: Delete security groups with server-enforced HITL approval.
+    - `workspace_update_group_members`: Synchronize employee members and department scopes.
+    - `workspace_get_dashboard_summary`: Aggregate tenant health metrics and quick links.
+    - `workspace_get_audit_logs`: Query administrative and security change trails.
+    - `workspace_get_subscription_usage`: Inspect tier quotas, document limits, storage volume, and billing details with 1-click navigation actuation to `/employer/settings/subscription`.
+    - `workspace_get_branding`: Inspect workspace white-label branding, logo URLs, and primary/secondary hex themes with 1-click navigation actuation to `/employer/settings/branding`.
+    - `user_get_profile`: Inspect authenticated profile, active roles, and tenant memberships with 1-click navigation actuation to `/employer/profile`.
+  - *Documents Domain Tools (5 tools)*:
+    - `documents_search`: Hybrid RAG search across organization documents.
+    - `documents_list`: List active knowledge base documents with statuses.
+    - `documents_get_metrics`: Aggregate catalog volume, storage consumption, and OCR counts.
+    - `documents_delete`: Soft-delete document with server-enforced HITL approval.
+    - `documents_upload_guide`: Ingestion guidance with 1-click navigation actuation to `/employer/documents`.
+  - *Conversations Domain Tools (11 tools)*:
+    - `saved_answers_list`: List bookmarked policy answers in notebook.
+    - `saved_answers_save`: Bookmark assistant answers to notebook.
+    - `saved_answers_unsave`: Remove bookmarked answers from notebook.
+    - `conversations_list`: List past conversation threads.
+    - `conversations_share`: Generate secure shareable link and token with 1-click shared view actuation.
+    - `conversations_delete`: Permanently delete conversation thread with server-enforced HITL approval.
+    - `suggestions_get_popular`: Retrieve trending starter queries.
+    - `calculate_policy_limit`: Interactive expense and travel calculator.
+    - `escalate_hr_inquiry`: Dispatch formal escalation to workspace administrators.
+    - `workspace_request_form`: Surface dynamic reactive intake forms for missing parameters.
+    - `workspace_navigate`: Universal 1-click client navigation across all app pages (`dashboard`, `documents`, `employees`, `departments`, `user_groups`, `branding`, `audit_logs`, `subscription`, `conversations`, `saved_answers`, `profile`).
+- [x] **Full A2UI Action Card Builders**:
+  - Registered 17 specialized `IActionCardBuilder` instances routing structured results to rich client cards with instant 1-click UI actuation buttons.
+
 
