@@ -139,12 +139,26 @@
       <div #messagesEnd></div>
     </div>
 
+    <!-- Uploading File Progress Banner -->
+    @if (isUploadingFile()) {
+      <div class="px-6 py-2.5 bg-primary-50/90 dark:bg-primary-950/50 border-t border-primary-200 dark:border-primary-800 flex items-center justify-between text-xs text-primary-700 dark:text-primary-300">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-spin pi-spinner text-sm"></i>
+          <span>Uploading and indexing document to knowledge base...</span>
+        </div>
+        <span class="font-bold">{{ uploadPercent() ?? 0 }}%</span>
+      </div>
+    }
+
+    <!-- Hidden file input for attachment -->
+    <input #fileInput type="file" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx" class="hidden">
+
     <!-- Input Bar -->
     <app-chat-input-bar
       #chatInputBar
-      [isSending]="isSending"
+      [isSending]="isSending || isUploadingFile()"
       (onSendMessage)="onSendMessage.emit($event)"
-      (onAttachFile)="showComingSoon()"
+      (onAttachFile)="onAttachClick()"
     />
   }
 </section>

@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, 
 import { CommonModule } from '@angular/common';
 import { DsTooltipDirective, DsToastService } from '@design-system';
 import { ConversationDetailDto, MessageDto, ConversationService, SuggestedQuestionDto } from '@core/services/conversation.service';
+import { DocumentService } from '@core/services/document.service';
 import { SavedAnswerService } from '@core/services/saved-answer.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import { ChatMessageBubbleComponent } from './chat-message-bubble.component';
@@ -28,6 +29,7 @@ import { ChunkPreviewDrawerComponent } from '@shared/components/chunk-preview-dr
 export class ConversationChatComponent implements OnInit {
   private savedAnswerService = inject(SavedAnswerService);
   private conversationService = inject(ConversationService);
+  private documentService = inject(DocumentService);
   private messageService = inject(DsToastService);
 
   @Input({ required: true }) conversation: ConversationDetailDto | null = null;
@@ -43,10 +45,13 @@ export class ConversationChatComponent implements OnInit {
   @ViewChild('messagesEnd') private messagesEnd!: ElementRef<HTMLDivElement>;
   @ViewChild('chatInputBar') private chatInputBar!: ChatInputBarComponent;
   @ViewChild('chunkDrawer') private chunkDrawer!: ChunkPreviewDrawerComponent;
+  @ViewChild('fileInput') private fileInput!: ElementRef<HTMLInputElement>;
 
   suggestions = signal<SuggestedQuestionDto[]>([]);
   isLoadingSuggestions = signal<boolean>(false);
   isSharing = signal<boolean>(false);
+  isUploadingFile = signal<boolean>(false);
+  uploadPercent = signal<number | null>(null);
 
   /** Set of message IDs that the current user has saved. */
   private savedMessageIds = signal(new Set<string>());
@@ -168,11 +173,52 @@ export class ConversationChatComponent implements OnInit {
     } catch {}
   }
 
-  showComingSoon(): void {
+  onAttachClick(): void {
+    this.fileInput?.nativeElement?.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    input.value = '';
+
+    this.isUploadingFile.set(true);
+    this.uploadPercent.set(0);
+
     this.messageService.add({
       severity: 'info',
-      summary: ApiMessages.ComingSoon.summary,
-      detail: ApiMessages.ComingSoon.detail
+      summary: 'Uploading Document',
+      detail: `Uploading ${file.name} to workspace knowledge base...`
+    });
+
+    this.documentService.uploadDocument(file).subscribe({
+      next: (progress) => {
+        this.uploadPercent.set(progress.percent);
+        if (progress.document) {
+          this.isUploadingFile.set(false);
+          this.uploadPercent.set(null);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Document Uploaded',
+            detail: `${file.name} uploaded and is being processed for AI retrieval.`
+          });
+          const currentVal = this.chatInputBar?.question?.trim() || '';
+          const prompt = currentVal
+            ? `${currentVal} (regarding ${file.name})`
+            : `Summarize the key information in ${file.name}`;
+          this.chatInputBar?.setValue(prompt);
+        }
+      },
+      error: () => {
+        this.isUploadingFile.set(false);
+        this.uploadPercent.set(null);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Upload Failed',
+          detail: 'Unable to upload file to knowledge base. Please check file format.'
+        });
+      }
     });
   }
 }
