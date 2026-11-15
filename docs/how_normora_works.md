@@ -171,3 +171,132 @@ Normora elevates beyond static question-answering with an omnipresent Copilot ac
 4. **Microsoft Agent Framework (`NormoraWorkplaceAgent`)**: The backend hosts an `AIAgent` that bridges AG-UI runs to MediatR's `AskConversationStreamCommand`, streaming tokens back to the UI in real-time.
 5. **Caller-Scoped Session Isolation**: `NormoraAgentIsolationKeyProvider` partitions session threads by `{TenantId}:{ExternalUserId}`, preventing thread hijacking and ensuring multi-tenant BOLA isolation.
 
+---
+
+## 6. Phase 5: 100% Domain Action Tool Coverage & A2UI Dynamic Cards
+
+Normora provides complete agentic action coverage across all three bounded modules. Rather than merely answering questions passively, the conversational AI can orchestrate operations across the entire application domain:
+
+### Tool Inventory & Categorization
+| Module | Tool Name | Category | Description |
+|---|---|---|---|
+| **Tenants** | `workspace_list_departments` | `ReadOnly` | List all departments with member counts |
+| **Tenants** | `workspace_create_department` | `Mutation` | Create a new organizational department |
+| **Tenants** | `workspace_list_employees` | `ReadOnly` | Query employee directory with roles & departments |
+| **Tenants** | `workspace_invite_employee` | `Mutation` | Invite new members with assigned departments |
+| **Tenants** | `workspace_list_user_groups` | `ReadOnly` | Query user groups and mapped access boundaries |
+| **Tenants** | `workspace_create_user_group` | `Mutation` | Create user groups with department permissions |
+| **Tenants** | `workspace_get_dashboard_summary` | `ReadOnly` | Aggregated tenant health & capacity metrics |
+| **Tenants** | `workspace_get_audit_logs` | `ReadOnly` | Audit log inquiry for security and governance |
+| **Documents** | `documents_search` | `ReadOnly` | Grounded hybrid search across authorized documents |
+| **Documents** | `documents_list` | `ReadOnly` | Retrieve documents, versions, and ingestion status |
+| **Documents** | `documents_get_metrics` | `ReadOnly` | Operational metrics on vector indices and chunks |
+| **Documents** | `documents_delete` | `Destructive` | Remove documents (**Requires HITL Approval**) |
+| **Conversations** | `saved_answers_list` | `ReadOnly` | Browse bookmarked high-value answers |
+| **Conversations** | `saved_answers_save` | `Mutation` | Save/bookmark answer with custom question title |
+| **Conversations** | `conversations_list` | `ReadOnly` | Browse chat conversation history |
+| **Conversations** | `suggestions_get_popular` | `ReadOnly` | Discover trending questions and quick prompts |
+| **Conversations** | `calculate_policy_limit` | `ReadOnly` | Travel, per-diem, and expense calculations |
+| **Conversations** | `escalate_hr_inquiry` | `Mutation` | Route unanswered inquiries to HR representatives |
+| **Conversations** | `workspace_request_form` | `ReadOnly` | Solicit missing parameters through dynamic forms |
+
+### A2UI Dynamic Action Cards
+Tool outputs do not dump raw JSON. `IActionCardFactory` routes `AgentToolResult.StructuredData` to specialized card builders, emitting typed A2UI cards (`departments_card`, `employees_card`, `audit_logs_card`, `documents_list_card`, `expense_simulator_card`, `hr_escalation_card`, `intake_form_card`).
+
+---
+
+## 7. Phase 6: Server-Enforced Human-In-The-Loop (HITL) Approvals
+
+Destructive actions (such as `documents_delete`) require explicit human authorization before execution. Normora enforces HITL at the backend infrastructure layer:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / Admin
+    participant Chat as Angular Chat UI
+    participant Gen as GeminiTextGenerationService
+    participant ApprovalSvc as AgentApprovalService
+    participant DB as PostgreSQL (conversations schema)
+    participant ApprovalsCtrl as ApprovalsController
+    participant Mediator as MediatR Pipeline
+
+    User->>Chat: "Delete the outdated 2024 Travel Policy document"
+    Chat->>Gen: Stream prompt
+    Gen->>Gen: Gemini selects tool: documents_delete (RequiresApproval = true)
+    
+    Note over Gen, ApprovalSvc: Interception & Approval Persistence
+    Gen->>ApprovalSvc: CreatePendingApprovalAsync(tool, params, 15m TTL)
+    ApprovalSvc->>DB: INSERT PendingApproval (Status: Pending)
+    ApprovalSvc-->>Gen: Return approvalId
+    Gen-->>Chat: Stream A2UI Action Card (with approvalId, Confirm & Dismiss actions)
+    
+    Note over User, Chat: User Reviews Action Card in Chat Bubble
+    User->>Chat: Clicks "Confirm Execution"
+    Chat->>ApprovalsCtrl: POST /api/approvals/{approvalId}/confirm
+    ApprovalsCtrl->>Mediator: ConfirmPendingApprovalCommand
+    Mediator->>DB: Verify BOLA/BFLA, check TTL, load payload
+    Mediator->>Mediator: Dispatch target command (DeleteDocumentCommand)
+    Mediator->>DB: UPDATE PendingApproval (Status: Confirmed)
+    Mediator-->>ApprovalsCtrl: Success response
+    ApprovalsCtrl-->>Chat: 200 OK (Action Approved)
+    Chat->>Chat: Card updates to "Action Confirmed" badge with timestamp
+```
+
+1. **Tamper-Proof Authorization**: Approvals are tracked server-side in `PendingApproval` records with strict BOLA checks (verifying the current user belongs to the target tenant and possesses matching permissions).
+2. **TTL Expiration**: Pending approvals automatically expire after 15 minutes, preventing stale or forgotten tickets from executing unexpectedly.
+3. **Auditability**: Every confirmation or dismissal is permanently recorded and logged for organizational compliance.
+
+---
+
+## 8. Phase 7: Dynamic Missing-Parameter Intake Forms
+
+When an agent needs more information to fulfill an action (e.g. creating a department without providing a name), it invokes `workspace_request_form`:
+
+```mermaid
+flowchart LR
+    A["User: 'Create a new department for mobile apps'"] --> B["LLM identifies missing parameters<br/>(e.g., Code, Description)"]
+    B --> C["LLM invokes workspace_request_form"]
+    C --> D["A2UI streams intake_form_card with form schema"]
+    D --> E["Angular IntakeFormCardComponent renders Reactive Form"]
+    E --> F["User fills missing fields & clicks Submit"]
+    F --> G["Form sends structured prompt to AI to complete creation"]
+```
+
+---
+
+## 9. Phase 8: Reactive State Synchronization (`dataVersion`)
+
+Whenever an agent tool modifies workspace state (e.g., creating a department or deleting a document), Normora prevents client UI staleness via reactive monotonic state synchronization:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Tool as Agent Tool Execution
+    participant Sync as WorkspaceStateSynchronizer
+    participant Redis as Redis Backplane
+    participant Hub as SignalR Hub
+    participant SSE as Chat SSE Stream
+    participant RealtimeSvc as Angular RealtimeStateService
+    participant EmployerUI as Employer Management Page (e.g. Departments)
+
+    Tool->>Sync: IncrementVersionAsync(tenantId)
+    Sync->>Sync: dataVersion = dataVersion + 1
+    
+    par SignalR Broadcast
+        Sync->>Redis: Publish WorkspaceStateUpdated(tenantId, dataVersion)
+        Redis->>Hub: Relay to API Host
+        Hub-->>RealtimeSvc: SignalR onWorkspaceStateUpdated(dataVersion)
+    and SSE Stream Event
+        Tool-->>SSE: event: state_snapshot\ndata: {"dataVersion": 2}
+        SSE-->>RealtimeSvc: updateDataVersion(2)
+    end
+
+    RealtimeSvc->>RealtimeSvc: dataVersion.set(2)
+    Note over RealtimeSvc, EmployerUI: Angular Signal Effect Triggers
+    RealtimeSvc-->>EmployerUI: effect() triggers on dataVersion change
+    EmployerUI->>EmployerUI: Automatically re-fetches loadDepartments() in place!
+```
+
+1. **Zero Manual Refresh**: The employer's open browser tabs automatically reload data in place without disturbing the user's ongoing interaction.
+2. **Dual-Channel Delivery**: Updates propagate through both the real-time SignalR WebSocket connection and the active SSE chat stream for instantaneous reactivity.
+

@@ -109,10 +109,16 @@ flowchart TD
   - **BFLA**: Unauthorized functional actions are blocked globally with 403 Forbidden envelopes (`BflaException`).
   - **Dynamic Multitenant Query Filters**: All database queries are automatically filtered by `TenantId` via EF Core global query filters dynamically bound to the DbContext's tenant context.
 - **Backend-For-Frontend (BFF) Pattern**: Browser clients never receive, handle, or store access/refresh tokens. Sessions are anchored by encrypted `HttpOnly`, `SameSite=Strict`, `Secure` cookies with anti-CSRF protection via Duende BFF.
-- **Conversational RAG with Autonomous Agent Tools & MCP**:
+- **Conversational RAG with 100% Domain Action Tool Coverage & MCP**:
+  - **Comprehensive 19-Tool Agentic Inventory**: AI agents can inspect, execute, or escalate actions across all modules via `IAgentToolRegistry`:
+    - *Tenants*: `workspace_list_departments`, `workspace_create_department`, `workspace_list_employees`, `workspace_invite_employee`, `workspace_list_user_groups`, `workspace_create_user_group`, `workspace_get_dashboard_summary`, `workspace_get_audit_logs`.
+    - *Documents*: `documents_search`, `documents_list`, `documents_get_metrics`, and `documents_delete` (server-enforced HITL approval).
+    - *Conversations*: `saved_answers_list`, `saved_answers_save`, `conversations_list`, `suggestions_get_popular`, `calculate_policy_limit`, `escalate_hr_inquiry`, and `workspace_request_form`.
+  - **Server-Enforced Human-In-The-Loop (HITL) Approvals**: Two-phase authorization model for destructive actions. Intercepts execution, records `PendingApproval` in PostgreSQL with 15-minute TTL, streams an interactive A2UI confirmation card, and completes execution via `ApprovalsController` upon explicit user consent.
+  - **Dynamic Missing-Parameter Intake Forms**: When agent tools require additional inputs, `workspace_request_form` dynamically streams an `intake_form_card` rendered by Angular Reactive Forms to collect missing parameters inline.
+  - **Reactive State Synchronization (`dataVersion`)**: Tracks monotonic workspace versions per tenant via `IWorkspaceStateSynchronizer`. State mutations broadcast over SignalR and SSE streams, triggering Angular `effect()` observers to automatically reload employer management tables without page reloads.
   - **Markdown-Aware Chunking & Batch Embeddings**: `DocumentChunker` tracks Markdown heading hierarchy (`#`, `##`, `###`), preserves tables atomically, and prepends section breadcrumbs. Ingestion leverages Gemini's native `batchEmbedContents` API (up to 100 chunks/call) to eliminate single-roundtrip latency.
   - **Hybrid Search**: Combines pgvector cosine similarity (HNSW index) with full-text keyword search using Reciprocal Rank Fusion (RRF).
-  - **Multi-Turn Function Calling**: Integrated Gemini Flash tool calling loop for deterministic corporate expense calculations (`calculate_policy_limit`), HR email escalations (`escalate_hr_inquiry`), and cross-module document search (`search_company_documents`).
   - **Model Context Protocol (MCP)**: Implements standard JSON-RPC 2.0 MCP endpoints (`/api/mcp`) exposing corporate knowledge resources and tools to external AI agent frameworks.
 - **Agentic Workplace Intelligence (CopilotKit, Microsoft Agent Framework AG-UI & A2UI)**:
   - **Unified Copilot Workstation**: Dock & Expand architecture unifying the dual chat interfaces into an omnipresent assistant (`Ctrl+J` / `Cmd+J`) featuring threaded conversation history, client-side search, and seamless sidebar integration.
