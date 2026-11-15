@@ -184,9 +184,20 @@ public sealed class GeminiTextGenerationService(
                 new GeminiGenerationConfig(temperature),
                 toolsPayload);
 
-            using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request);
-            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            using var response = await GeminiRetryHelper.SendWithRetryAsync(
+                httpClient,
+                () => CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request),
+                cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                return ApiMessages.RateLimitExceeded;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiMessages.AiServiceUnavailable;
+            }
 
             var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
             var candidateContent = result?.Candidates?.FirstOrDefault()?.Content;
@@ -276,9 +287,22 @@ public sealed class GeminiTextGenerationService(
                 new GeminiGenerationConfig(temperature),
                 toolsPayload);
 
-            using var httpRequest = CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request);
-            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            using var response = await GeminiRetryHelper.SendWithRetryAsync(
+                httpClient,
+                () => CreateGeminiRequest(HttpMethod.Post, $"models/{_model}:generateContent", request),
+                cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                yield return new TextDeltaItem(ApiMessages.RateLimitExceeded);
+                yield break;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                yield return new TextDeltaItem(ApiMessages.AiServiceUnavailable);
+                yield break;
+            }
 
             var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
             var candidateContent = result?.Candidates?.FirstOrDefault()?.Content;

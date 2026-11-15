@@ -58,6 +58,8 @@ public static class ApiMessages
     public const string ToolSummaryAndUrgencyRequired = "The 'summary' and 'urgency' parameters are required.";
     public const string DocumentSearchFailed = "Document search failed. Please try again later.";
     public const string InquiryEscalationFailed = "Failed to escalate inquiry. Please try again later.";
+    public const string RateLimitExceeded = "You are sending messages too fast. Please wait a moment and try again.";
+    public const string AiServiceUnavailable = "The AI service is temporarily unavailable. Please try again in a few moments.";
     
     // Actions
     public const string CannotRemoveLastAdmin = "Cannot remove the last administrator from the workspace.";

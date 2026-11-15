@@ -34,8 +34,19 @@ public sealed class GeminiChatClient(HttpClient httpClient, IOptions<GeminiOptio
         var temperature = options?.Temperature ?? 0.1;
         var request = new GeminiGenerateRequest(contents, new GeminiGenerationConfig(temperature));
 
-        using var httpRequest = CreateRequest(HttpMethod.Post, $"models/{_model}:generateContent", request);
-        using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
+        using var response = await GeminiRetryHelper.SendWithRetryAsync(
+            httpClient,
+            () => CreateRequest(HttpMethod.Post, $"models/{_model}:generateContent", request),
+            cancellationToken);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+        {
+            return new ChatResponse([new ChatMessage(ChatRole.Assistant, ApiMessages.RateLimitExceeded)])
+            {
+                ModelId = _model
+            };
+        }
+
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(cancellationToken);
@@ -58,8 +69,18 @@ public sealed class GeminiChatClient(HttpClient httpClient, IOptions<GeminiOptio
         var temperature = options?.Temperature ?? 0.1;
         var request = new GeminiGenerateRequest(contents, new GeminiGenerationConfig(temperature));
 
-        using var httpRequest = CreateRequest(HttpMethod.Post, $"models/{_model}:streamGenerateContent?alt=sse", request);
-        using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await GeminiRetryHelper.SendStreamingWithRetryAsync(
+            httpClient,
+            () => CreateRequest(HttpMethod.Post, $"models/{_model}:streamGenerateContent?alt=sse", request),
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+        {
+            yield return new ChatResponseUpdate(ChatRole.Assistant, ApiMessages.RateLimitExceeded);
+            yield break;
+        }
+
         response.EnsureSuccessStatusCode();
 
         using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);

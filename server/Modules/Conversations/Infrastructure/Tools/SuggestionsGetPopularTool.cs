@@ -25,12 +25,7 @@ public sealed class SuggestionsGetPopularTool(IMediator mediator) : IAgentTool
         CompletedLabel: "Suggested questions assembled",
         FailedLabel: "Failed to assemble suggestions");
 
-    public object ParameterSchema => new
-    {
-        type = "object",
-        properties = new { },
-        required = Array.Empty<string>()
-    };
+    public object? ParameterSchema => null;
 
     public async Task<AgentToolResult> ExecuteAsync(
         string argumentsJson,

@@ -25,12 +25,7 @@ public sealed class DocumentsListTool(IMediator mediator) : IAgentTool
         CompletedLabel: "Document catalog retrieved",
         FailedLabel: "Failed to list documents");
 
-    public object ParameterSchema => new
-    {
-        type = "object",
-        properties = new { },
-        required = Array.Empty<string>()
-    };
+    public object? ParameterSchema => null;
 
     public async Task<AgentToolResult> ExecuteAsync(
         string argumentsJson,

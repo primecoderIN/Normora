@@ -18,8 +18,9 @@ public interface IAgentTool
 
     /// <summary>
     /// JSON schema describing the function's parameters, compatible with OpenAPI / Gemini FunctionDeclaration.
+    /// May be null or omitted if the function accepts no parameters.
     /// </summary>
-    object ParameterSchema { get; }
+    object? ParameterSchema => null;
 
     /// <summary>
     /// Operational category indicating whether the tool is read-only, mutating, or destructive.

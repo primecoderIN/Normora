@@ -25,12 +25,7 @@ public sealed class DocumentsGetMetricsTool(IMediator mediator) : IAgentTool
         CompletedLabel: "Document metrics assembled",
         FailedLabel: "Failed to assemble document metrics");
 
-    public object ParameterSchema => new
-    {
-        type = "object",
-        properties = new { },
-        required = Array.Empty<string>()
-    };
+    public object? ParameterSchema => null;
 
     public async Task<AgentToolResult> ExecuteAsync(
         string argumentsJson,

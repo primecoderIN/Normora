@@ -21,12 +21,18 @@ public sealed class AgentToolRegistry(IEnumerable<IAgentTool> tools) : IAgentToo
     {
         return new
         {
-            functionDeclarations = _toolsList.Select(t => new
-            {
-                name = t.Name,
-                description = t.Description,
-                parameters = t.ParameterSchema
-            }).ToList()
+            functionDeclarations = _toolsList.Select(t => t.ParameterSchema != null
+                ? (object)new
+                {
+                    name = t.Name,
+                    description = t.Description,
+                    parameters = t.ParameterSchema
+                }
+                : new
+                {
+                    name = t.Name,
+                    description = t.Description
+                }).ToList()
         };
     }
 
@@ -46,5 +52,5 @@ public sealed class AgentToolRegistry(IEnumerable<IAgentTool> tools) : IAgentToo
     }
 
     public IReadOnlyList<McpToolDefinition> GetMcpToolDefinitions() =>
-        _toolsList.Select(t => new McpToolDefinition(t.Name, t.Description, t.ParameterSchema)).ToList();
+        _toolsList.Select(t => new McpToolDefinition(t.Name, t.Description, t.ParameterSchema ?? new { type = "object" })).ToList();
 }

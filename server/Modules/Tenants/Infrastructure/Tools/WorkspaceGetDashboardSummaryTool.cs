@@ -25,12 +25,7 @@ public sealed class WorkspaceGetDashboardSummaryTool(IMediator mediator) : IAgen
         CompletedLabel: "Workspace summary metrics assembled",
         FailedLabel: "Failed to assemble workspace summary");
 
-    public object ParameterSchema => new
-    {
-        type = "object",
-        properties = new { },
-        required = Array.Empty<string>()
-    };
+    public object? ParameterSchema => null;
 
     public async Task<AgentToolResult> ExecuteAsync(
         string argumentsJson,

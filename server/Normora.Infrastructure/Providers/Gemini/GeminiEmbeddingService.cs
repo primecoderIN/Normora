@@ -37,13 +37,24 @@ public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<Gemin
             new GeminiContent([new GeminiPart(text)]),
             EmbeddingDimensions);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:embedContent")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("x-goog-api-key", apiKey);
+        using var response = await GeminiRetryHelper.SendWithRetryAsync(
+            httpClient,
+            () =>
+            {
+                var req = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:embedContent")
+                {
+                    Content = JsonContent.Create(request)
+                };
+                req.Headers.Add("x-goog-api-key", apiKey);
+                return req;
+            },
+            cancellationToken);
 
-        using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+        {
+            throw new HttpRequestException(ApiMessages.RateLimitExceeded, null, System.Net.HttpStatusCode.TooManyRequests);
+        }
+
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<GeminiEmbeddingResponse>(cancellationToken);
@@ -76,13 +87,24 @@ public sealed class GeminiEmbeddingService(HttpClient httpClient, IOptions<Gemin
 
             var requestPayload = new GeminiBatchEmbeddingRequest(batchRequests);
 
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:batchEmbedContents")
-            {
-                Content = JsonContent.Create(requestPayload)
-            };
-            httpRequest.Headers.Add("x-goog-api-key", apiKey);
+            using var response = await GeminiRetryHelper.SendWithRetryAsync(
+                httpClient,
+                () =>
+                {
+                    var req = new HttpRequestMessage(HttpMethod.Post, $"models/{model}:batchEmbedContents")
+                    {
+                        Content = JsonContent.Create(requestPayload)
+                    };
+                    req.Headers.Add("x-goog-api-key", apiKey);
+                    return req;
+                },
+                cancellationToken);
 
-            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                throw new HttpRequestException(ApiMessages.RateLimitExceeded, null, System.Net.HttpStatusCode.TooManyRequests);
+            }
+
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<GeminiBatchEmbeddingResponse>(cancellationToken);

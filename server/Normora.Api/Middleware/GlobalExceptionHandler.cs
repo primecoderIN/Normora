@@ -118,7 +118,24 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             return true;
         }
 
-        // 7. Handle generic unexpected exceptions (e.g. database failure, unhandled runtime errors)
+        // 7. Handle upstream HTTP dependency exceptions (e.g. Google Gemini API 429 Too Many Requests)
+        if (exception is HttpRequestException httpException)
+        {
+            if (httpException.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                logger.LogWarning("Upstream AI dependency rate limit encountered (429).");
+                httpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(ApiMessages.RateLimitExceeded), cancellationToken);
+                return true;
+            }
+
+            logger.LogError(httpException, "Upstream HTTP dependency error occurred.");
+            httpContext.Response.StatusCode = StatusCodes.Status502BadGateway;
+            await httpContext.Response.WriteAsJsonAsync(ApiResponse.Failure(ApiMessages.AiServiceUnavailable), cancellationToken);
+            return true;
+        }
+
+        // 8. Handle generic unexpected exceptions (e.g. database failure, unhandled runtime errors)
         logger.LogError(exception, "An unhandled exception occurred.");
         
         var serverErrorMessage = env.IsProduction() ? ApiMessages.InternalServerError : exception.Message;
