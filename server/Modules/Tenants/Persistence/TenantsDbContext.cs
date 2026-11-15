@@ -22,6 +22,8 @@ public class TenantsDbContext(DbContextOptions<TenantsDbContext> options) : DbCo
     public DbSet<UserGroupDepartment> UserGroupDepartments { get; set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<TenantPlan> TenantPlans { get; set; } = null!;
+    public DbSet<TenantInvoice> TenantInvoices { get; set; } = null!;
+    public DbSet<TenantBillingDetail> TenantBillingDetails { get; set; } = null!;
 
     /// <summary>
     /// Configures the relational mappings and strict uniqueness constraints required for multi-tenancy.

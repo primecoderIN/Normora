@@ -5,8 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Normora.Shared.Authorization;
 using Normora.Modules.Tenants.Application.Subscription.Commands;
+using Normora.Modules.Tenants.Application.Subscription.Commands.UpdateTenantBillingDetails;
 using Normora.Modules.Tenants.Application.Subscription.DTOs;
 using Normora.Modules.Tenants.Application.Subscription.Queries;
+using Normora.Modules.Tenants.Application.Subscription.Queries.DownloadInvoice;
+using Normora.Modules.Tenants.Application.Subscription.Queries.GetTenantBillingDetails;
+using Normora.Modules.Tenants.Application.Subscription.Queries.GetTenantInvoices;
 using Normora.Modules.Tenants.Application.Subscription;
 using Normora.Modules.Tenants.Domain;
 using Normora.Shared;
@@ -160,5 +164,64 @@ public class SubscriptionController(
         // Directly updates tenant plan limits and returns freshly computed usage metrics
         var result = await mediator.Send(new UpdateTenantPlanTierCommand(request.Tier), cancellationToken);
         return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, ApiMessages.SubscriptionUpdated));
+    }
+
+    /// <summary>
+    /// Retrieves historical itemized tax invoices for the active tenant.
+    /// </summary>
+    [HttpGet("invoices")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<List<TenantInvoiceDto>>))]
+    public async Task<IActionResult> GetInvoices(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetTenantInvoicesQuery(), cancellationToken);
+        return Ok(ApiResponse<List<TenantInvoiceDto>>.Ok(result));
+    }
+
+    /// <summary>
+    /// Downloads an official tax invoice document for an invoice ID (or latest if unspecified/invalid).
+    /// BOLA protected: enforces tenant workspace boundary.
+    /// </summary>
+    [HttpGet("invoices/{id}/download")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    public async Task<IActionResult> DownloadInvoice(string id, CancellationToken cancellationToken)
+    {
+        Guid? invoiceGuid = Guid.TryParse(id, out var parsed) ? parsed : null;
+        var result = await mediator.Send(new DownloadInvoiceQuery(invoiceGuid), cancellationToken);
+        return File(result.Content, result.ContentType, result.FileName);
+    }
+
+    /// <summary>
+    /// Retrieves current workspace billing contact and tax details.
+    /// </summary>
+    [HttpGet("billing-details")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantBillingDetailsDto>))]
+    public async Task<IActionResult> GetBillingDetails(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetTenantBillingDetailsQuery(), cancellationToken);
+        return Ok(ApiResponse<TenantBillingDetailsDto>.Ok(result));
+    }
+
+    /// <summary>
+    /// Updates workspace billing contact, legal company name, and tax ID (GSTIN).
+    /// </summary>
+    [HttpPut("billing-details")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<TenantBillingDetailsDto>))]
+    public async Task<IActionResult> UpdateBillingDetails([FromBody] UpdateTenantBillingDetailsRequest request, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new UpdateTenantBillingDetailsCommand(
+            request.BillingEmail,
+            request.CompanyLegalName,
+            request.TaxId,
+            request.BillingAddress
+        ), cancellationToken);
+
+        return Ok(ApiResponse<TenantBillingDetailsDto>.Ok(result, "Billing details updated successfully."));
     }
 }

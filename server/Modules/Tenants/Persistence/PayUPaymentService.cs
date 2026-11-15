@@ -218,6 +218,22 @@ public class PayUPaymentService(
             plan.UpdatedAt = DateTime.UtcNow;
         }
 
+        // Record itemized paid invoice
+        context.TenantInvoices.Add(new TenantInvoice
+        {
+            TenantId = tenantId,
+            InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMM}-{txnid[..Math.Min(txnid.Length, 8)]}",
+            InvoiceDate = DateTime.UtcNow,
+            PlanTier = tier.ToString(),
+            Amount = parsedAmount,
+            Currency = (string.IsNullOrWhiteSpace(udf3) ? "inr" : udf3).ToUpperInvariant(),
+            BillingCycle = "Monthly",
+            Status = "Paid",
+            PaymentTransactionId = txnid,
+            CustomerName = firstname,
+            CustomerEmail = email
+        });
+
         // Record immutable audit log
         context.AuditLogs.Add(new AuditLog
         {

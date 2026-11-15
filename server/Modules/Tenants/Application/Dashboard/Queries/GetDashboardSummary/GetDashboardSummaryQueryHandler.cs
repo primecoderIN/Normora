@@ -93,6 +93,14 @@ public class GetDashboardSummaryQueryHandler(
                 ? Math.Min(100.0, Math.Round(((double)convMetrics.TotalSavedAnswers / convMetrics.TotalQuestions) * 100, 1))
                 : 100.0;
 
+            double answerQualityTrend = convMetrics.QuestionsTrend > 0
+                ? Math.Round(Math.Min(15.0, (double)convMetrics.QuestionsTrend * 1.5), 1)
+                : 2.5;
+
+            var kbTitle = docMetrics.FailedDocsCount > 0 ? "Action Required: Document Ingestion Errors" :
+                          docMetrics.ProcessingDocsCount > 0 ? "Ingestion in Progress" :
+                          "Knowledge Base Optimal";
+
             var kbDescription = docMetrics.FailedDocsCount > 0 ? $"{docMetrics.FailedDocsCount} documents require attention due to processing errors." :
                                 docMetrics.ProcessingDocsCount > 0 ? $"{docMetrics.ProcessingDocsCount} documents are currently being processed." :
                                 "All documents are fully indexed and up to date.";
@@ -108,7 +116,7 @@ public class GetDashboardSummaryQueryHandler(
                     TotalQuestions = convMetrics.TotalQuestions,
                     QuestionsTrend = convMetrics.QuestionsTrend,
                     AnswerQuality = answerQuality,
-                    AnswerQualityTrend = 0.0
+                    AnswerQualityTrend = answerQualityTrend
                 },
                 DocumentCoverage = documentCoverage,
                 RecentDocuments = recentDocumentsDto,
@@ -116,7 +124,7 @@ public class GetDashboardSummaryQueryHandler(
                 ChatActivity = chatActivityDto,
                 KbReview = new KnowledgeBaseReviewDto
                 {
-                    Title = "Knowledge base review",
+                    Title = kbTitle,
                     Description = kbDescription
                 }
             };

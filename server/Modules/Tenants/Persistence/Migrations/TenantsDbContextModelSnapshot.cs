@@ -155,6 +155,46 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.ToTable("Tenants", "tenants");
                 });
 
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantBillingDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BillingAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("BillingEmail")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CompanyLegalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TaxId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("TenantBillingDetails", "tenants");
+                });
+
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantBranding", b =>
                 {
                     b.Property<Guid>("Id")
@@ -233,6 +273,83 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("TenantInvitations", "tenants");
+                });
+
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantInvoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("BillingAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("BillingCycle")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Monthly");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("INR");
+
+                    b.Property<string>("CustomerEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CustomerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("InvoiceDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PaymentTransactionId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PlanTier")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Paid");
+
+                    b.Property<string>("TaxId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantInvoices", "tenants");
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantMembership", b =>
@@ -471,6 +588,17 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.Navigation("TenantMembership");
                 });
 
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantBillingDetail", b =>
+                {
+                    b.HasOne("Normora.Modules.Tenants.Domain.Tenant", "Tenant")
+                        .WithOne()
+                        .HasForeignKey("Normora.Modules.Tenants.Domain.TenantBillingDetail", "TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantBranding", b =>
                 {
                     b.HasOne("Normora.Modules.Tenants.Domain.Tenant", "Tenant")
@@ -483,6 +611,17 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantInvitation", b =>
+                {
+                    b.HasOne("Normora.Modules.Tenants.Domain.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Normora.Modules.Tenants.Domain.TenantInvoice", b =>
                 {
                     b.HasOne("Normora.Modules.Tenants.Domain.Tenant", "Tenant")
                         .WithMany()

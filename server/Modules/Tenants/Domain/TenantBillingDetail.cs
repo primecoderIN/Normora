@@ -16,3 +16,4 @@ public class TenantBillingDetail : Normora.Shared.Interfaces.ITenantEntity
 
     public Tenant? Tenant { get; set; }
 }
+
