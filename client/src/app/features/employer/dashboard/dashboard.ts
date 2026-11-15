@@ -1,11 +1,13 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ChartData, ChartOptions } from 'chart.js';
 
 import { StatCardComponent } from '@shared/components/stat-card/stat-card.component';
 import { UserService } from '@core/services/user.service';
 import { DashboardService, DashboardSummaryDto } from '@core/services/dashboard.service';
+import { CopilotService } from '@core/services/copilot.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import {
   DsChartComponent,
@@ -27,6 +29,7 @@ import {
   imports: [
     CommonModule,
     DatePipe,
+    FormsModule,
     RouterLink,
     DsChartComponent,
     StatCardComponent,
@@ -40,9 +43,13 @@ export class Dashboard implements OnInit {
   public userService = inject(UserService);
   private dashboardService = inject(DashboardService);
   private messageService = inject(DsToastService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  public copilotService = inject(CopilotService);
   
   summary = signal<DashboardSummaryDto | null>(null);
   isLoading = signal(true);
+  searchWorkspaceQuery = signal('');
 
   documentChartData: ChartData<'doughnut'> | null = null;
   documentChartOptions: ChartOptions<'doughnut'> | null = null;
@@ -190,7 +197,41 @@ export class Dashboard implements OnInit {
     };
   }
 
+  onSearchWorkspace(): void {
+    const q = this.searchWorkspaceQuery().trim();
+    if (q) {
+      this.router.navigate(['../documents'], { relativeTo: this.route, queryParams: { search: q } });
+    }
+  }
+
+  goToAuditLogs(): void {
+    this.router.navigate(['../settings/audit-logs'], { relativeTo: this.route });
+  }
+
+  reviewKnowledgeBase(): void {
+    const desc = this.summary()?.kbReview?.description?.toLowerCase() || '';
+    if (desc.includes('attention') || desc.includes('error')) {
+      this.router.navigate(['../documents'], { relativeTo: this.route, queryParams: { status: 'Failed' } });
+    } else if (desc.includes('processed') || desc.includes('processing')) {
+      this.router.navigate(['../documents'], { relativeTo: this.route, queryParams: { status: 'Processing' } });
+    } else {
+      this.copilotService.open();
+    }
+  }
+
+  getDocumentTypeClass(type: string): string {
+    const t = (type || '').toLowerCase();
+    if (t.includes('pdf')) return 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
+    if (t.includes('doc') || t.includes('docx') || t.includes('word')) return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20';
+    if (t.includes('xls') || t.includes('csv') || t.includes('sheet')) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+    return 'bg-purple-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20';
+  }
+
   showComingSoon() {
-    this.messageService.add({ severity: 'info', summary: ApiMessages.ComingSoon.summary, detail: ApiMessages.ComingSoon.detail });
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Trailing Rolling Activity',
+      detail: 'Conversational metrics are automatically aggregated over the trailing 7-day rolling window.'
+    });
   }
 }

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { DatePipe, CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { InvitationService } from '@core/services/invitation.service';
 import { TenantService, TenantEmployeeDto } from '@core/services/tenant.service';
@@ -40,6 +41,7 @@ export class Employees implements OnInit {
   private departmentService = inject(DepartmentService);
   private messageService = inject(DsToastService);
   private realtimeStateService = inject(RealtimeStateService);
+  private router = inject(Router);
 
   constructor() {
     effect(() => {
@@ -103,7 +105,12 @@ export class Employees implements OnInit {
         label: 'Manage Assignments',
         icon: 'pi pi-sitemap',
         command: () => {
-          this.messageService.add({ severity: 'info', summary: ApiMessages.ComingSoon.summary, detail: ApiMessages.ComingSoon.detail });
+          this.router.navigate(['../settings/user-groups']);
+          this.messageService.add({
+            severity: 'info',
+            summary: 'User Assignments',
+            detail: 'Manage department and user group access in the User Groups settings.'
+          });
         }
       },
       {
@@ -278,6 +285,40 @@ export class Employees implements OnInit {
   }
 
   exportEmployees() {
-    this.messageService.add({ severity: 'info', summary: ApiMessages.ExportStarted.summary, detail: ApiMessages.ExportStarted.detail });
+    const list = this.employees();
+    if (!list || list.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Export Notice',
+        detail: 'No employee records currently available to export.'
+      });
+      return;
+    }
+
+    const headers = ['Name', 'Email', 'Role', 'Department', 'Joined Date'];
+    const rows = list.map(e => [
+      `"${(e.displayName || '').replace(/"/g, '""')}"`,
+      `"${(e.email || '').replace(/"/g, '""')}"`,
+      `"${(e.role || '').replace(/"/g, '""')}"`,
+      `"${(e.departments?.map(d => d.name).join('; ') || 'Unassigned').replace(/"/g, '""')}"`,
+      `"${e.joinedAt ? new Date(e.joinedAt).toLocaleDateString() : ''}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `normora_employees_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Export Complete',
+      detail: `Successfully downloaded CSV report with ${list.length} employee records.`
+    });
   }
 }

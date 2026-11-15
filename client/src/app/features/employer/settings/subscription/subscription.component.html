@@ -1,487 +1,1394 @@
-<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
-  <!-- Header Section -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-    <div>
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
-          <i class="pi pi-sparkles text-xl"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Subscription & Plans</h1>
-            @if (usage(); as u) {
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
-                {{ u.planTier }} Plan
-              </span>
-              @if (u.subscriptionStatus) {
-                <span
-                  class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border"
-                  [ngClass]="{
-                    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20': u.subscriptionStatus === 'active' || u.subscriptionStatus === 'trialing',
-                    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20': u.subscriptionStatus === 'past_due' || u.subscriptionStatus === 'unpaid',
-                    'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20': u.subscriptionStatus === 'canceled'
-                  }">
-                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="{
-                    'bg-emerald-500': u.subscriptionStatus === 'active' || u.subscriptionStatus === 'trialing',
-                    'bg-amber-500': u.subscriptionStatus === 'past_due' || u.subscriptionStatus === 'unpaid',
-                    'bg-rose-500': u.subscriptionStatus === 'canceled'
-                  }"></span>
-                  {{ u.subscriptionStatus }}
-                </span>
-              }
-            }
-          </div>
-          <p class="text-sm text-slate-500 dark:text-slate-400">
-            Monitor real-time resource quotas and choose the right plan for your team.
-          </p>
-        </div>
+<div class="w-full space-y-6">
+
+  <!-- ========================================== -->
+  <!-- Top Header with Actions & User Avatar      -->
+  <!-- ========================================== -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+    <div class="flex items-center gap-3.5">
+      <div class="w-11 h-11 rounded-2xl bg-linear-to-br from-primary-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-primary-500/20 shrink-0">
+        <i class="pi pi-users text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+          Subscription &amp; Billing
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          Manage your organization's subscription, usage, and billing details.
+        </p>
       </div>
     </div>
-    <div class="flex items-center gap-3 flex-wrap">
-      @if (usage()?.hasActiveSubscription) {
-        <button
-          type="button"
-          (click)="openCustomerPortal()"
-          [disabled]="isOpeningPortal()"
-          class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg text-white bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white transition-colors shadow-xs">
-          <i class="pi pi-credit-card" [class.animate-pulse]="isOpeningPortal()"></i>
-          @if (isOpeningPortal()) {
-            <span>Opening Portal...</span>
-          } @else {
-            <span>Manage Billing</span>
-            <i class="pi pi-external-link text-xs"></i>
-          }
-        </button>
-      }
+
+    <!-- Header Right Icons: Notification Bell & Profile Initials -->
+    <div class="flex items-center gap-3 self-end sm:self-auto">
       <button
         type="button"
-        (click)="loadUsage()"
-        [disabled]="isLoading()"
-        class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs">
-        <i class="pi pi-refresh" [class.animate-spin]="isLoading()"></i>
-        <span>Refresh Quotas</span>
+        (click)="setTab('history')"
+        title="Billing notifications"
+        class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center relative transition-colors cursor-pointer">
+        <i class="pi pi-bell text-sm"></i>
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900"></span>
       </button>
+
+      <div
+        class="w-9 h-9 rounded-full bg-linear-to-br from-primary-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs select-none"
+        [title]="userService.currentUser()?.displayName || 'User'">
+        {{ userInitials() }}
+      </div>
     </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- Sub-Navigation Tabs Bar                   -->
+  <!-- ========================================== -->
+  <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto custom-scrollbar pt-1">
+    <button
+      type="button"
+      (click)="setTab('overview')"
+      class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap cursor-pointer"
+      [ngClass]="activeTab() === 'overview'
+        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 font-bold'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+      <i class="pi pi-th-large text-xs"></i>
+      <span>Overview</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('history')"
+      class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap cursor-pointer"
+      [ngClass]="activeTab() === 'history'
+        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 font-bold'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+      <i class="pi pi-receipt text-xs"></i>
+      <span>Billing History</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('payment-methods')"
+      class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap cursor-pointer"
+      [ngClass]="activeTab() === 'payment-methods'
+        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 font-bold'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+      <i class="pi pi-credit-card text-xs"></i>
+      <span>Payment Methods</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('invoices')"
+      class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap cursor-pointer"
+      [ngClass]="activeTab() === 'invoices'
+        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 font-bold'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+      <i class="pi pi-file text-xs"></i>
+      <span>Invoices</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="setTab('settings')"
+      class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap cursor-pointer"
+      [ngClass]="activeTab() === 'settings'
+        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 font-bold'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+      <i class="pi pi-cog text-xs"></i>
+      <span>Settings</span>
+    </button>
   </div>
 
   <!-- Error Alert -->
   @if (errorMessage()) {
-    <div class="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 p-4 flex items-center justify-between">
+    <div class="rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 p-4 flex items-center justify-between shadow-xs">
       <div class="flex items-center gap-3">
         <i class="pi pi-exclamation-circle text-rose-500 text-lg"></i>
-        <span class="text-sm font-medium text-rose-700 dark:text-rose-300">{{ errorMessage() }}</span>
+        <span class="text-xs sm:text-sm font-medium text-rose-700 dark:text-rose-300">{{ errorMessage() }}</span>
       </div>
-      <button type="button" (click)="loadUsage()" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">
+      <button type="button" (click)="loadUsage()" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer">
         Try Again
       </button>
     </div>
   }
 
-  <!-- Cancellation Warning Alert -->
+  <!-- Cancellation Scheduled Banner -->
   @if (usage(); as u) {
     @if (u.cancelAtPeriodEnd && u.currentPeriodEndUtc) {
-      <div class="rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-5 shadow-xs">
+      <div class="rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 sm:p-5 shadow-xs">
         <div class="flex items-start gap-4">
-          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-none mt-0.5">
-            <i class="pi pi-calendar-times text-lg"></i>
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="pi pi-calendar-times text-base"></i>
           </div>
           <div class="space-y-1 flex-1">
-            <h3 class="text-sm font-bold text-amber-900 dark:text-amber-200">Subscription Cancellation Scheduled</h3>
+            <h3 class="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">Subscription Cancellation Scheduled</h3>
             <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
               Your subscription is scheduled to cancel on <strong class="font-semibold">{{ u.currentPeriodEndUtc | date:'longDate' }}</strong>.
-              Your team will retain full access until then, after which your workspace will revert to the Starter plan.
+              Your team will retain full access until then, after which your workspace will revert to Starter.
             </p>
           </div>
           <button
             type="button"
             (click)="openCustomerPortal()"
             [disabled]="isOpeningPortal()"
-            class="text-xs font-semibold text-amber-900 dark:text-amber-100 underline hover:opacity-80">
-            Resume via Portal
+            class="text-xs font-semibold text-amber-900 dark:text-amber-100 underline hover:opacity-80 cursor-pointer">
+            Resume
           </button>
         </div>
       </div>
     }
   }
 
-  <!-- Quota Warning Banner -->
-  @if (usage(); as u) {
-    @if (u.isDocumentLimitReached || u.isEmployeeLimitReached || u.isStorageLimitReached) {
-      <div class="rounded-2xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-5 shadow-xs">
-        <div class="flex items-start gap-4">
-          <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-700 dark:text-rose-300 flex items-center justify-center flex-none mt-0.5">
-            <i class="pi pi-exclamation-triangle text-lg"></i>
-          </div>
-          <div class="space-y-1 flex-1">
-            <h3 class="text-sm font-bold text-rose-900 dark:text-rose-200">Workspace Resource Limit Reached</h3>
-            <p class="text-xs text-rose-800 dark:text-rose-300 leading-relaxed">
-              Your workspace has exhausted one or more plan limits:
-              @if (u.isDocumentLimitReached) { <span class="font-semibold block">• Document storage limit reached ({{ u.currentDocuments }}/{{ u.maxDocuments }}).</span> }
-              @if (u.isEmployeeLimitReached) { <span class="font-semibold block">• Team member seat quota reached ({{ u.currentEmployees }}/{{ u.maxEmployees }}).</span> }
-              @if (u.isStorageLimitReached) { <span class="font-semibold block">• Byte storage capacity exceeded ({{ formatBytes(u.currentStorageBytes) }}/{{ formatBytes(u.maxStorageBytes) }}).</span> }
-              Please upgrade to a higher tier below to unlock additional capacity.
-            </p>
-          </div>
-        </div>
-      </div>
-    }
-  }
+  <!-- ========================================== -->
+  <!-- TAB 1: OVERVIEW (Main High-Fidelity View)  -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'overview') {
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
-  <!-- Billing Cycle Info Box (if active subscription) -->
-  @if (usage(); as u) {
-    @if (u.hasActiveSubscription && u.currentPeriodEndUtc) {
-      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3.5">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-none">
-            <i class="pi pi-verified text-xl"></i>
-          </div>
-          <div>
-            <div class="text-sm font-bold text-slate-900 dark:text-white">Active Subscription</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">
-              Current billing period renews on <span class="font-semibold text-slate-700 dark:text-slate-200">{{ u.currentPeriodEndUtc | date:'longDate' }}</span>.
+      <!-- LEFT COLUMN: Hero + Utilization + Tiers (8 cols) -->
+      <div class="xl:col-span-8 space-y-6">
+
+        <!-- 1. Current Plan Hero Card -->
+        <div class="relative overflow-hidden rounded-3xl p-6 sm:p-7 border border-purple-200/80 dark:border-purple-800/60 bg-linear-to-r from-purple-50/90 via-indigo-50/40 to-purple-100/60 dark:from-purple-950/40 dark:via-slate-900 dark:to-indigo-950/30 shadow-xs">
+          <!-- Subtle Decorative Crown Watermark -->
+          <svg class="opacity-10 dark:opacity-5 text-primary-600 dark:text-primary-400 absolute right-4 -bottom-6 w-36 h-36 pointer-events-none select-none" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+          </svg>
+
+          <div class="relative z-10 flex flex-col gap-6">
+            <!-- Top Row: Icon + Title + Status + Action Buttons -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <!-- Left: Crown Icon & Plan Name -->
+              <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-linear-to-br from-primary-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-primary-500/25 shrink-0">
+                  <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                    Current Plan
+                  </span>
+                  <div class="flex items-center gap-2.5 flex-wrap mt-0.5">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                      {{ currentPlanName() }}
+                    </h2>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                      <i class="pi pi-check text-[10px]"></i>
+                      <span>Active</span>
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                    {{ currentPlanDescription() }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Right: Hero Action Buttons -->
+              <div class="flex items-center gap-2.5 self-start lg:self-auto flex-wrap">
+                <button
+                  type="button"
+                  (click)="openCustomerPortal()"
+                  [disabled]="isOpeningPortal()"
+                  class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all shadow-xs cursor-pointer">
+                  Manage Subscription
+                </button>
+
+                <button
+                  type="button"
+                  (click)="scrollToPlanTiers()"
+                  class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 transition-all shadow-xs flex items-center gap-2 cursor-pointer">
+                  <i class="pi pi-arrow-right-arrow-left text-xs"></i>
+                  <span>Change Plan</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-purple-200/60 dark:border-purple-800/40"></div>
+
+            <!-- Bottom Row: Metadata Columns (Billing Cycle, Amount, Next Renewal) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Billing Cycle -->
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+                  <i class="pi pi-calendar text-base"></i>
+                </div>
+                <div>
+                  <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Billing Cycle</span>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white capitalize">
+                    {{ billingCycle() }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Amount -->
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+                  <i class="pi pi-wallet text-base"></i>
+                </div>
+                <div>
+                  <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Amount</span>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white">
+                    {{ currentPlanPriceFormatted() }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Next Renewal -->
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+                  <i class="pi pi-calendar-plus text-base"></i>
+                </div>
+                <div>
+                  <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Next Renewal</span>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white">
+                    {{ renewalDateFormatted() | date:'mediumDate' }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div>
-          <button
-            type="button"
-            (click)="openCustomerPortal()"
-            [disabled]="isOpeningPortal()"
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-            <i class="pi pi-receipt"></i>
-            <span>View Invoices & Payment Methods</span>
-          </button>
-        </div>
-      </div>
-    }
-  }
 
-  <!-- Current Resource Usage Cards -->
-  <div>
-    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Resource Utilization</h2>
-    @if (isLoading()) {
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        @for (i of [1,2,3]; track i) {
-          <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
-            <div class="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-            <div class="h-8 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-            <div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-          </div>
-        }
-      </div>
-    } @else if (usage(); as u) {
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <!-- Documents Quota Card -->
-        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-all hover:shadow-md">
-          <div class="flex items-center justify-between mb-3">
+        <!-- 2. Resource Utilization Section -->
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <i class="pi pi-file text-slate-400"></i>
-              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Documents</span>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Resource Utilization</h2>
+              <button
+                type="button"
+                (click)="showQuotaDetails.set(true)"
+                title="View quota metrics definition"
+                class="w-4 h-4 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center justify-center cursor-pointer">
+                <i class="pi pi-info-circle text-xs"></i>
+              </button>
             </div>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(docPercent())">
-              {{ docPercent() }}%
-            </span>
-          </div>
-          <div class="flex items-baseline gap-2 mb-4">
-            <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ u.currentDocuments }}</span>
-            <span class="text-sm font-medium text-slate-500 dark:text-slate-400">/ {{ u.maxDocuments }} docs</span>
-          </div>
-          <!-- Progress Track -->
-          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-            <div
-              class="h-full rounded-full transition-all duration-500"
-              [ngClass]="getBarColorClass(docPercent())"
-              [style.width.%]="docPercent()"></div>
-          </div>
-          <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
-            <span>{{ u.maxDocuments - u.currentDocuments }} remaining</span>
-            <span>Limit: {{ u.maxDocuments }}</span>
-          </div>
-        </div>
-
-        <!-- Team Members Quota Card -->
-        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-all hover:shadow-md">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <i class="pi pi-users text-slate-400"></i>
-              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Team Members</span>
-            </div>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(empPercent())">
-              {{ empPercent() }}%
-            </span>
-          </div>
-          <div class="flex items-baseline gap-2 mb-4">
-            <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ u.currentEmployees }}</span>
-            <span class="text-sm font-medium text-slate-500 dark:text-slate-400">/ {{ u.maxEmployees }} seats</span>
-          </div>
-          <!-- Progress Track -->
-          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-            <div
-              class="h-full rounded-full transition-all duration-500"
-              [ngClass]="getBarColorClass(empPercent())"
-              [style.width.%]="empPercent()"></div>
-          </div>
-          <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
-            <span>{{ u.maxEmployees - u.currentEmployees }} remaining</span>
-            <span>Limit: {{ u.maxEmployees }}</span>
-          </div>
-        </div>
-
-        <!-- Storage Quota Card -->
-        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-all hover:shadow-md">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <i class="pi pi-database text-slate-400"></i>
-              <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Object Storage</span>
-            </div>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(storagePercent())">
-              {{ storagePercent() }}%
-            </span>
-          </div>
-          <div class="flex items-baseline gap-2 mb-4">
-            <span class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ formatBytes(u.currentStorageBytes) }}</span>
-            <span class="text-sm font-medium text-slate-500 dark:text-slate-400">/ {{ formatBytes(u.maxStorageBytes) }}</span>
-          </div>
-          <!-- Progress Track -->
-          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-            <div
-              class="h-full rounded-full transition-all duration-500"
-              [ngClass]="getBarColorClass(storagePercent())"
-              [style.width.%]="storagePercent()"></div>
-          </div>
-          <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
-            <span>{{ formatBytes(u.maxStorageBytes - u.currentStorageBytes) }} free</span>
-            <span>Limit: {{ formatBytes(u.maxStorageBytes) }}</span>
-          </div>
-        </div>
-      </div>
-    }
-  </div>
-
-  <!-- Plan Tiers Comparison Grid -->
-  <div class="pt-4">
-    <div class="text-center max-w-xl mx-auto mb-8 space-y-2">
-      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Choose Your Workspace Tier</h2>
-      <p class="text-sm text-slate-500 dark:text-slate-400">
-        Instantly scale storage, team seats, and document boundaries to fit your organization's needs.
-      </p>
-    </div>
-
-    <!-- Currency Selector Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs mb-8">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center flex-none">
-          <i class="pi pi-globe text-base"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Billing Currency</span>
-            @if (isWorkspaceCurrency()) {
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 flex items-center gap-1">
-                <i class="pi pi-building text-[10px]"></i>
-                <span>Workspace Default ({{ activeCurrencyConfig().code }})</span>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 hidden sm:inline">
+                {{ activePlanTier() }} Quotas
               </span>
-            } @else if (isDetectedCurrency()) {
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>Auto-detected for your region ({{ activeCurrencyConfig().code }})</span>
-              </span>
-            }
+              <button
+                type="button"
+                (click)="showQuotaDetails.set(true)"
+                class="text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 cursor-pointer">
+                <span>View Details</span>
+                <i class="pi pi-arrow-right text-[10px]"></i>
+              </button>
+            </div>
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
-            Select your preferred currency. Prices and PayU Checkout automatically update in real-time.
-          </p>
-        </div>
-      </div>
 
-      <!-- Currency Pills -->
-      <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
-        @for (curr of currencies; track curr.code) {
-          <button
-            type="button"
-            (click)="setCurrency(curr.code)"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer whitespace-nowrap"
-            [ngClass]="selectedCurrency() === curr.code
-              ? 'bg-primary-600 text-white border-primary-600 shadow-xs scale-105'
-              : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'">
-            <span>{{ curr.flag }}</span>
-            <span>{{ curr.code }}</span>
-            <span class="opacity-75">({{ curr.symbol }})</span>
-          </button>
-        }
-      </div>
-    </div>
+          <!-- 3 Resource Cards in Row -->
+          @if (usage(); as u) {
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Documents Quota Card -->
+              <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-all hover:shadow-md">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <i class="pi pi-file text-sm"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">Documents</span>
+                  </div>
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(docPercent())">
+                    {{ formatPercent(u.currentDocuments, u.maxDocuments) }}
+                  </span>
+                </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      @for (plan of planDefinitions(); track plan.tier) {
-        <div
-          class="rounded-3xl p-6 sm:p-8 flex flex-col justify-between border transition-all duration-300 relative"
-          [ngClass]="[
-            isTierCurrent(plan.tier)
-              ? 'bg-white dark:bg-slate-900 border-primary-500 ring-2 ring-primary-500/20 shadow-lg'
-              : plan.isPopular
-                ? 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 shadow-md hover:border-primary-400'
-                : 'bg-slate-50/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-          ]">
-          
-          <!-- Popular Ribbon -->
-          @if (plan.isPopular) {
-            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-linear-to-r from-primary-600 to-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-sm">
-              Most Popular
+                <div class="flex items-baseline gap-1.5 mb-3">
+                  <span class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ u.currentDocuments }}</span>
+                  <span class="text-xs font-medium text-slate-500 dark:text-slate-400">/ {{ u.maxDocuments | number }} docs</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    [ngClass]="getBarColorClass(docPercent())"
+                    [style.width.%]="docPercent()"></div>
+                </div>
+
+                <div class="mt-3 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  {{ (u.maxDocuments - u.currentDocuments) | number }} remaining
+                </div>
+              </div>
+
+              <!-- Team Members Quota Card -->
+              <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-all hover:shadow-md">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+                      <i class="pi pi-users text-sm"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">Team Members</span>
+                  </div>
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(empPercent())">
+                    {{ formatPercent(u.currentEmployees, u.maxEmployees) }}
+                  </span>
+                </div>
+
+                <div class="flex items-baseline gap-1.5 mb-3">
+                  <span class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ u.currentEmployees }}</span>
+                  <span class="text-xs font-medium text-slate-500 dark:text-slate-400">/ {{ u.maxEmployees | number }} seats</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    [ngClass]="getBarColorClass(empPercent())"
+                    [style.width.%]="empPercent()"></div>
+                </div>
+
+                <div class="mt-3 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  {{ (u.maxEmployees - u.currentEmployees) | number }} remaining
+                </div>
+              </div>
+
+              <!-- Object Storage Quota Card -->
+              <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-all hover:shadow-md">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <i class="pi pi-database text-sm"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">Object Storage</span>
+                  </div>
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-full border" [ngClass]="getBadgeClass(storagePercent())">
+                    {{ formatPercent(u.currentStorageBytes, u.maxStorageBytes) }}
+                  </span>
+                </div>
+
+                <div class="flex items-baseline gap-1.5 mb-3">
+                  <span class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ formatBytes(u.currentStorageBytes) }}</span>
+                  <span class="text-xs font-medium text-slate-500 dark:text-slate-400">/ {{ formatBytes(u.maxStorageBytes) }}</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    [ngClass]="getBarColorClass(storagePercent())"
+                    [style.width.%]="storagePercent()"></div>
+                </div>
+
+                <div class="mt-3 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  {{ formatBytes(u.maxStorageBytes - u.currentStorageBytes) }} available
+                </div>
+              </div>
             </div>
           }
+        </div>
 
-          <div class="space-y-6">
-            <!-- Header -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ plan.name }}</h3>
-                @if (isTierCurrent(plan.tier)) {
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
-                    <i class="pi pi-check text-[10px]"></i> Current
-                  </span>
-                }
-              </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 min-h-8">{{ plan.description }}</p>
+        <!-- 3. Choose Your Workspace Tier Section -->
+        <div id="workspace-tiers" class="space-y-4 pt-2">
+          <!-- Section Header + Monthly/Annual Toggle -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white m-0">
+                Choose Your Workspace Tier
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                Upgrade or downgrade your plan based on your organization's needs.
+              </p>
             </div>
 
-            <!-- Price -->
-            <div class="flex items-baseline gap-1 border-b border-slate-100 dark:border-slate-800 pb-5">
-              <span class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ plan.price }}</span>
-              <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">/ month</span>
-            </div>
-
-            <!-- Quota Highlights -->
-            <div class="space-y-2 py-1">
-              <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
-                <i class="pi pi-file text-primary-500"></i>
-                <span>{{ plan.maxDocs }}</span>
-              </div>
-              <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
-                <i class="pi pi-users text-primary-500"></i>
-                <span>{{ plan.maxMembers }}</span>
-              </div>
-              <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
-                <i class="pi pi-database text-primary-500"></i>
-                <span>{{ plan.maxStorage }}</span>
-              </div>
-            </div>
-
-            <!-- Feature Bullet Points -->
-            <div class="space-y-2.5 border-t border-slate-100 dark:border-slate-800 pt-5">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Included Features</div>
-              @for (feat of plan.features; track feat) {
-                <div class="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300">
-                  <i class="pi pi-check-circle text-emerald-500 text-xs mt-0.5 flex-none"></i>
-                  <span>{{ feat }}</span>
-                </div>
-              }
+            <!-- Billing Cycle Segmented Switch -->
+            <div class="inline-flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
+              <button
+                type="button"
+                (click)="setBillingCycle('monthly')"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                [ngClass]="billingCycle() === 'monthly'
+                  ? 'bg-primary-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'">
+                Monthly
+              </button>
+              <button
+                type="button"
+                (click)="setBillingCycle('annual')"
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                [ngClass]="billingCycle() === 'annual'
+                  ? 'bg-primary-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'">
+                <span>Annual</span>
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-500 text-white">
+                  Save 20%
+                </span>
+              </button>
             </div>
           </div>
 
-          <!-- Plan Action Button -->
-          <div class="pt-8">
-            @if (isTierCurrent(plan.tier)) {
-              <button
-                type="button"
-                disabled
-                class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-default">
-                Current Plan
-              </button>
-            } @else if (isTierDowngrade(plan.tier)) {
-              <button
-                type="button"
-                disabled
-                class="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800/60 cursor-not-allowed flex items-center justify-center gap-1.5 opacity-75">
-                <i class="pi pi-check text-[11px] text-slate-400"></i>
-                <span>Included in {{ usage()?.planTier }}</span>
-              </button>
-            } @else {
-              <button
-                type="button"
-                (click)="selectPlan(plan.tier)"
-                [disabled]="isUpdating() || isOpeningPortal()"
-                class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-xs cursor-pointer disabled:cursor-not-allowed"
-                [ngClass]="plan.isPopular ? 'bg-primary-600 hover:bg-primary-700' : 'bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white'">
-                @if (selectedTierLoading() === plan.tier) {
-                  <i class="pi pi-spin pi-spinner mr-2"></i>
-                  <span>Redirecting to Checkout...</span>
-                } @else {
-                  <span>Upgrade to {{ plan.tier }}</span>
+          <!-- 3 Tier Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            @for (plan of planDefinitions(); track plan.tier) {
+              <div
+                class="rounded-3xl p-6 flex flex-col justify-between border transition-all duration-300 relative bg-white dark:bg-slate-900"
+                [ngClass]="[
+                  isTierCurrent(plan.tier)
+                    ? 'border-2 border-purple-400 dark:border-purple-600 ring-2 ring-purple-500/20 shadow-md'
+                    : plan.isPopular
+                      ? 'border-slate-300 dark:border-slate-700 shadow-sm hover:border-primary-400 hover:shadow-md'
+                      : 'border-slate-200 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700'
+                ]">
+
+                <!-- Most Popular Top Ribbon -->
+                @if (plan.isPopular) {
+                  <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-linear-to-r from-primary-600 to-indigo-600 text-white text-[10px] font-extrabold uppercase tracking-widest py-1 px-3.5 rounded-full shadow-sm">
+                    Most Popular
+                  </div>
                 }
-              </button>
+
+                <div class="space-y-5">
+                  <!-- Header: Icon + Name + Current Badge -->
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                      <!-- Icon Box -->
+                      <div
+                        class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                        [ngClass]="{
+                          'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400': plan.tier === 'Free',
+                          'bg-blue-500/10 text-blue-600 dark:text-blue-400': plan.tier === 'Pro',
+                          'bg-pink-500/10 text-pink-600 dark:text-pink-400': plan.tier === 'Enterprise'
+                        }">
+                        @if (plan.tier === 'Free') {
+                          <i class="pi pi-compass text-base"></i>
+                        } @else if (plan.tier === 'Pro') {
+                          <i class="pi pi-server text-base"></i>
+                        } @else {
+                          <i class="pi pi-crown text-base"></i>
+                        }
+                      </div>
+                      <div>
+                        <h3 class="text-base font-extrabold text-slate-900 dark:text-white m-0">
+                          {{ plan.name }}
+                        </h3>
+                      </div>
+                    </div>
+
+                    @if (isTierCurrent(plan.tier)) {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
+                        <i class="pi pi-check text-[9px]"></i>
+                        <span>Current Plan</span>
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Description -->
+                  <p class="text-xs text-slate-500 dark:text-slate-400 min-h-8 leading-relaxed m-0">
+                    {{ plan.description }}
+                  </p>
+
+                  <!-- Price -->
+                  <div class="flex items-baseline gap-1.5 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                      {{ plan.price }}
+                    </span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      / month
+                    </span>
+                  </div>
+
+                  <!-- Quota Highlights (Checkmarks) -->
+                  <div class="space-y-2.5">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <i class="pi pi-check-circle text-emerald-500 text-xs shrink-0"></i>
+                      <span>{{ plan.maxDocs }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <i class="pi pi-check-circle text-emerald-500 text-xs shrink-0"></i>
+                      <span>{{ plan.maxMembers }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      <i class="pi pi-check-circle text-emerald-500 text-xs shrink-0"></i>
+                      <span>{{ plan.maxStorage }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Button at Bottom -->
+                <div class="pt-6">
+                  @if (isTierCurrent(plan.tier)) {
+                    <button
+                      type="button"
+                      disabled
+                      class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-default">
+                      Current Plan
+                    </button>
+                  } @else if (isTierDowngrade(plan.tier)) {
+                    <button
+                      type="button"
+                      (click)="selectPlan(plan.tier)"
+                      class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-xs cursor-pointer">
+                      Downgrade
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="selectPlan(plan.tier)"
+                      [disabled]="isUpdating() || isOpeningPortal()"
+                      class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-xs cursor-pointer bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 disabled:opacity-50">
+                      @if (selectedTierLoading() === plan.tier) {
+                        <i class="pi pi-spin pi-spinner mr-2"></i>
+                        <span>Redirecting...</span>
+                      } @else {
+                        <span>Upgrade</span>
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
             }
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sidebar Cards (4 cols) -->
+      <div class="xl:col-span-4 space-y-6">
+
+        <!-- Card 1: Billing & Payment -->
+        <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+              <i class="pi pi-credit-card text-sm"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white m-0">Billing &amp; Payment</h3>
+          </div>
+
+          <!-- Default Currency Selector -->
+          <div class="space-y-1.5">
+            <label for="currency-select" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Default Currency
+            </label>
+            <div class="relative">
+              <select
+                id="currency-select"
+                [ngModel]="selectedCurrency()"
+                (ngModelChange)="setCurrency($event)"
+                class="w-full appearance-none px-3.5 py-2.5 pr-8 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 cursor-pointer">
+                @for (c of currencies; track c.code) {
+                  <option [value]="c.code">
+                    {{ c.flag }} {{ c.label }}
+                  </option>
+                }
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                <i class="pi pi-chevron-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method Preview Card -->
+          <div class="space-y-1.5">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              Payment Method
+            </span>
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <!-- Visa Logo Badge -->
+                <div class="px-2 py-1 rounded bg-blue-600 text-white font-extrabold text-[10px] tracking-wider uppercase shadow-xs">
+                  VISA
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">Visa •••• 4242</span>
+                    <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
+                      Default
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3 Dots Menu Button -->
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="showCardMenu.update(v => !v)"
+                  class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 flex items-center justify-center transition-colors cursor-pointer">
+                  <i class="pi pi-ellipsis-v text-xs"></i>
+                </button>
+
+                @if (showCardMenu()) {
+                  <div class="absolute right-0 top-8 w-44 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 shadow-lg py-1 z-20 text-xs">
+                    <button
+                      type="button"
+                      (click)="setTab('payment-methods'); showCardMenu.set(false)"
+                      class="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer">
+                      <i class="pi pi-credit-card text-xs"></i>
+                      <span>Payment Details</span>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="openCustomerPortal(); showCardMenu.set(false)"
+                      class="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer">
+                      <i class="pi pi-external-link text-xs"></i>
+                      <span>Manage via Portal</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Manage Link -->
+          <button
+            type="button"
+            (click)="setTab('payment-methods')"
+            class="w-full text-left text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 cursor-pointer pt-1">
+            <i class="pi pi-cog text-xs"></i>
+            <span>Manage Payment Methods &gt;</span>
+          </button>
+        </div>
+
+        <!-- Card 2: Quick Actions -->
+        <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+              <i class="pi pi-bolt text-sm"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white m-0">Quick Actions</h3>
+          </div>
+
+          <div class="space-y-1">
+            <!-- 1. Download Latest Invoice -->
+            <button
+              type="button"
+              (click)="downloadLatestInvoice()"
+              class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-download text-primary-600 dark:text-primary-400 text-sm"></i>
+                <span>Download Latest Invoice</span>
+              </div>
+              <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+            </button>
+
+            <!-- 2. View Billing History -->
+            <button
+              type="button"
+              (click)="setTab('history')"
+              class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-receipt text-primary-600 dark:text-primary-400 text-sm"></i>
+                <span>View Billing History</span>
+              </div>
+              <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+            </button>
+
+            <!-- 3. Update Billing Information -->
+            <button
+              type="button"
+              (click)="setTab('settings')"
+              class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-pencil text-primary-600 dark:text-primary-400 text-sm"></i>
+                <span>Update Billing Information</span>
+              </div>
+              <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+            </button>
+
+            <!-- 4. Cancel Subscription -->
+            <button
+              type="button"
+              (click)="showCancelModal.set(true)"
+              class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-times-circle text-rose-500 text-sm"></i>
+                <span>Cancel Subscription</span>
+              </div>
+              <i class="pi pi-chevron-right text-[10px] text-rose-400 group-hover:translate-x-0.5 transition-transform"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 3: Need Help? -->
+        <div class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-3.5">
+          <!-- Subtle Purple Wave Background in Corner -->
+          <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-linear-to-br from-purple-500/10 to-indigo-500/15 pointer-events-none blur-lg"></div>
+
+          <div class="relative z-10 space-y-3.5">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+                <i class="pi pi-headphones text-sm"></i>
+              </div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white m-0">Need Help?</h3>
+            </div>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400 m-0 leading-relaxed">
+              Contact our support team for any subscription or billing queries.
+            </p>
+
+            <button
+              type="button"
+              (click)="showSupportModal.set(true)"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-xs cursor-pointer">
+              <i class="pi pi-envelope text-primary-600 dark:text-primary-400"></i>
+              <span>Contact Support</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 2: BILLING HISTORY                    -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'history') {
+    <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Billing &amp; Transaction History</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+            Review your past invoices, receipts, and payment transactions.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="setTab('overview')"
+          class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline self-start sm:self-auto cursor-pointer">
+          <i class="pi pi-arrow-left text-[10px]"></i>
+          <span>Back to Overview</span>
+        </button>
+      </div>
+
+      <!-- Invoices Table -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider font-bold">
+              <th class="py-3 px-4">Invoice #</th>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4">Plan Tier</th>
+              <th class="py-3 px-4">Amount</th>
+              <th class="py-3 px-4">Billing Cycle</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Receipt</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-200 font-medium">
+            @for (inv of invoices(); track inv.id) {
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                  {{ inv.invoiceNumber }}
+                </td>
+                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">
+                  {{ inv.date | date:'mediumDate' }}
+                </td>
+                <td class="py-3.5 px-4">
+                  {{ inv.tier }}
+                </td>
+                <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                  {{ inv.amount }}
+                </td>
+                <td class="py-3.5 px-4">
+                  {{ inv.cycle }}
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <i class="pi pi-check text-[9px]"></i>
+                    {{ inv.status }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <button
+                    type="button"
+                    (click)="downloadInvoice(inv)"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer">
+                    <i class="pi pi-download text-[10px]"></i>
+                    <span>PDF</span>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 3: PAYMENT METHODS                    -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'payment-methods') {
+    <div class="space-y-6">
+      <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Payment Methods</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+              Securely manage your credit/debit cards, UPI addresses, and primary billing method.
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="setTab('overview')"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline self-start sm:self-auto cursor-pointer">
+            <i class="pi pi-arrow-left text-[10px]"></i>
+            <span>Back to Overview</span>
+          </button>
+        </div>
+
+        <!-- Cards List -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Primary Card -->
+          <div class="p-5 rounded-2xl border-2 border-primary-500/40 bg-linear-to-br from-primary-50/20 via-white to-purple-50/30 dark:from-primary-950/20 dark:via-slate-900 dark:to-purple-950/30 shadow-xs relative space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="px-2.5 py-1 rounded bg-blue-600 text-white font-extrabold text-[10px] tracking-wider uppercase shadow-xs">
+                VISA
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/15 text-primary-600 dark:text-primary-400 border border-primary-500/25">
+                Primary Payment Method
+              </span>
+            </div>
+
+            <div class="space-y-0.5">
+              <div class="text-base font-extrabold text-slate-900 dark:text-white tracking-widest">
+                •••• •••• •••• 4242
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Expires 12 / 2028 &bull; Sanjeev Kumar
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <span class="text-slate-400">Default for all recurring renewals</span>
+              <button
+                type="button"
+                (click)="openCustomerPortal()"
+                class="font-bold text-primary-600 dark:text-primary-400 hover:underline cursor-pointer">
+                Edit Card
+              </button>
+            </div>
+          </div>
+
+          <!-- Add New Card Placeholder -->
+          <div
+            (click)="showAddPaymentModal.set(true)"
+            class="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary-500 dark:hover:border-primary-500 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer min-h-36">
+            <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+              <i class="pi pi-plus text-sm"></i>
+            </div>
+            <div class="text-center">
+              <div class="text-xs font-bold text-slate-900 dark:text-white">Add Payment Method</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Credit/Debit Card, UPI, Netbanking</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accepted Payment Methods Trust Card -->
+      <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div class="space-y-1.5 max-w-xl">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Accepted Payment Methods</span>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white m-0">Supported Gateways &amp; Security</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 m-0 leading-relaxed">
+              All transactions are encrypted with 256-bit TLS and processed securely via PayU India with PCI-DSS Level 1 compliance.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-none lg:w-[48%]">
+            <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <i class="pi pi-qrcode text-sm"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">UPI (India)</span>
+                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">INR</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Google Pay, PhonePe, Paytm, BHIM</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <div class="w-8 h-8 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+                <i class="pi pi-credit-card text-sm"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Cards</span>
+                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400">Global</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Visa, Mastercard, RuPay, Amex</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 4: INVOICES                           -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'invoices') {
+    <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Invoices &amp; Tax Documents</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+            Download official GST and itemized tax invoices for accounting and audits.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="setTab('overview')"
+          class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline self-start sm:self-auto cursor-pointer">
+          <i class="pi pi-arrow-left text-[10px]"></i>
+          <span>Back to Overview</span>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        @for (inv of invoices(); track inv.id) {
+          <div class="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+                <i class="pi pi-file-pdf text-base"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">{{ inv.invoiceNumber }}</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                  Issued on {{ inv.date | date:'mediumDate' }} &bull; {{ inv.tier }} &bull; {{ inv.amount }}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 self-end sm:self-auto">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                Paid
+              </span>
+              <button
+                type="button"
+                (click)="downloadInvoice(inv)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-xs cursor-pointer">
+                <i class="pi pi-download text-xs"></i>
+                <span>Download PDF</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 5: SETTINGS (Billing Contacts & Tax)   -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'settings') {
+    <div class="space-y-6">
+      <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Billing Settings &amp; Invoicing Details</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+              Configure company legal name, tax identification (GSTIN/VAT), and billing notification recipients.
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="setTab('overview')"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline self-start sm:self-auto cursor-pointer">
+            <i class="pi pi-arrow-left text-[10px]"></i>
+            <span>Back to Overview</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- Billing Email -->
+          <div class="space-y-1.5">
+            <label for="billing-email-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Billing Email Address
+            </label>
+            <input
+              id="billing-email-input"
+              type="email"
+              [ngModel]="billingEmail()"
+              (ngModelChange)="billingEmail.set($event)"
+              placeholder="billing@yourcompany.com"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+            <p class="text-[11px] text-slate-400">All recurring payment invoices will be automatically dispatched to this address.</p>
+          </div>
+
+          <!-- Company Legal Name -->
+          <div class="space-y-1.5">
+            <label for="company-legal-name-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Organization Legal Name
+            </label>
+            <input
+              id="company-legal-name-input"
+              type="text"
+              [ngModel]="companyLegalName()"
+              (ngModelChange)="companyLegalName.set($event)"
+              placeholder="e.g. Normora Technologies Pvt Ltd"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+            <p class="text-[11px] text-slate-400">Printed on official tax receipts and legal invoices.</p>
+          </div>
+
+          <!-- Tax ID / GSTIN -->
+          <div class="space-y-1.5">
+            <label for="tax-id-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Tax ID / GSTIN / VAT Number
+            </label>
+            <input
+              id="tax-id-input"
+              type="text"
+              [ngModel]="taxId()"
+              (ngModelChange)="taxId.set($event)"
+              placeholder="e.g. 29ABCDE1234F1Z5"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+            <p class="text-[11px] text-slate-400">Used for input tax credit claims.</p>
+          </div>
+
+          <!-- Billing Address -->
+          <div class="space-y-1.5">
+            <label for="billing-address-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Registered Billing Address
+            </label>
+            <input
+              id="billing-address-input"
+              type="text"
+              [ngModel]="billingAddress()"
+              (ngModelChange)="billingAddress.set($event)"
+              placeholder="Street, City, Postal Code, Country"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button
+            type="button"
+            (click)="saveBillingSettings()"
+            [disabled]="isSavingSettings()"
+            class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 shadow-xs transition-all cursor-pointer disabled:opacity-50">
+            @if (isSavingSettings()) {
+              <i class="pi pi-spin pi-spinner mr-2"></i>
+              <span>Saving Changes...</span>
+            } @else {
+              <span>Save Invoicing Settings</span>
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Danger Zone: Cancellation -->
+      <div class="rounded-3xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 p-6 sm:p-7 shadow-xs space-y-4">
+        <div>
+          <h3 class="text-base font-bold text-rose-900 dark:text-rose-200 m-0">Subscription Cancellation</h3>
+          <p class="text-xs text-rose-800/80 dark:text-rose-300/80 m-0 mt-0.5">
+            Cancelling your subscription will schedule reversion to the Free Starter plan at the end of your billing cycle.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="showCancelModal.set(true)"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs cursor-pointer">
+          Request Subscription Cancellation
+        </button>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: Quota Details Breakdown            -->
+<!-- ========================================== -->
+@if (showQuotaDetails()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+            <i class="pi pi-chart-pie text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white m-0">Resource Quotas Breakdown</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 m-0">Real-time calculations for {{ currentPlanName() }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="showQuotaDetails.set(false)"
+          class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      @if (usage(); as u) {
+        <div class="space-y-4">
+          <!-- Documents Row -->
+          <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-file text-blue-500"></i>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Document Files</div>
+                <div class="text-[11px] text-slate-500">{{ u.currentDocuments }} of {{ u.maxDocuments | number }} consumed</div>
+              </div>
+            </div>
+            <span class="text-xs font-extrabold text-slate-900 dark:text-white">
+              {{ formatPercent(u.currentDocuments, u.maxDocuments) }}
+            </span>
+          </div>
+
+          <!-- Members Row -->
+          <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-users text-primary-500"></i>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Team Member Seats</div>
+                <div class="text-[11px] text-slate-500">{{ u.currentEmployees }} of {{ u.maxEmployees | number }} seats assigned</div>
+              </div>
+            </div>
+            <span class="text-xs font-extrabold text-slate-900 dark:text-white">
+              {{ formatPercent(u.currentEmployees, u.maxEmployees) }}
+            </span>
+          </div>
+
+          <!-- Storage Row -->
+          <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-database text-emerald-500"></i>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Object Byte Storage</div>
+                <div class="text-[11px] text-slate-500">{{ formatBytes(u.currentStorageBytes) }} of {{ formatBytes(u.maxStorageBytes) }}</div>
+              </div>
+            </div>
+            <span class="text-xs font-extrabold text-slate-900 dark:text-white">
+              {{ formatPercent(u.currentStorageBytes, u.maxStorageBytes) }}
+            </span>
           </div>
         </div>
       }
-    </div>
 
-    <!-- Accepted Payment Methods & Security Section -->
-    <!-- Accepted Payment Methods & Security Section -->
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div class="space-y-1.5 max-w-xl">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Accepted Payment Methods</span>
-          </div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white m-0">Supported Payment Methods</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 m-0 leading-relaxed">
-            All subscriptions are processed securely via PayU. We support UPI for local Indian payments (INR) and Credit &amp; Debit Cards for international and domestic payments.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-none lg:w-[50%]">
-          <!-- UPI -->
-          <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-none">
-              <i class="pi pi-qrcode text-sm"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <p class="text-xs font-bold text-slate-900 dark:text-white m-0">UPI</p>
-                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Local (INR)</span>
-              </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Google Pay, PhonePe, Paytm, BHIM, QR code</p>
-            </div>
-          </div>
-
-          <!-- Cards -->
-          <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80">
-            <div class="w-8 h-8 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center flex-none">
-              <i class="pi pi-credit-card text-sm"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <p class="text-xs font-bold text-slate-900 dark:text-white m-0">Credit &amp; Debit Cards</p>
-                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">International &amp; Domestic</span>
-              </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-0.5">Visa, Mastercard, RuPay, American Express, Diners</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Trust Badges Footer -->
-      <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
-        <div class="flex items-center gap-6 flex-wrap">
-          <div class="flex items-center gap-2">
-            <i class="pi pi-lock text-emerald-500 text-xs"></i>
-            <span>SHA-512 &amp; 256-Bit TLS Encryption</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <i class="pi pi-shield text-primary-500 text-xs"></i>
-            <span>PCI-DSS Level 1 Certified</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <i class="pi pi-file text-slate-400 text-xs"></i>
-            <span>Automated Itemized Tax Invoices</span>
-          </div>
-        </div>
-        <div class="text-[11px] text-slate-400">
-          Powered by <strong class="text-slate-700 dark:text-slate-300 font-semibold">PayU Checkout</strong>
-        </div>
+      <div class="pt-2 flex justify-end">
+        <button
+          type="button"
+          (click)="showQuotaDetails.set(false)"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 cursor-pointer">
+          Close
+        </button>
       </div>
     </div>
   </div>
-</div>
+}
+
+<!-- ========================================== -->
+<!-- MODAL: Downgrade Confirmation             -->
+<!-- ========================================== -->
+@if (showDowngradeModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5">
+      <div class="flex items-center gap-3 text-amber-600 dark:text-amber-400">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+          <i class="pi pi-exclamation-triangle text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white m-0">Confirm Plan Downgrade</h3>
+          <p class="text-xs text-slate-500 m-0">Changing to {{ pendingDowngradeTier() }} tier</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+        Downgrading will reduce your workspace document limits, team seats, and storage capacity at the start of your next billing cycle. Existing documents will not be deleted, but uploads above the new quota will be temporarily locked.
+      </p>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="showDowngradeModal.set(false)"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+          Keep Current Plan
+        </button>
+        <button
+          type="button"
+          (click)="confirmDowngrade()"
+          [disabled]="isUpdating()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-xs cursor-pointer disabled:opacity-50">
+          @if (isUpdating()) {
+            <i class="pi pi-spin pi-spinner mr-1"></i>
+            <span>Processing...</span>
+          } @else {
+            <span>Confirm Downgrade</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODAL: Cancel Subscription Flow           -->
+<!-- ========================================== -->
+@if (showCancelModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5">
+      <div class="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
+          <i class="pi pi-times-circle text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white m-0">Cancel Subscription</h3>
+          <p class="text-xs text-slate-500 m-0">We're sorry to see you go</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+        If you cancel your subscription, your workspace will maintain full access to its Enterprise benefits until
+        <strong>{{ renewalDateFormatted() | date:'mediumDate' }}</strong>. Afterwards, your account will transition to the Free plan.
+      </p>
+
+      <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
+        💡 <strong>Need lower pricing or custom quotas?</strong> Contact our billing team and we can tailor a plan that fits your organization's exact needs.
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="showCancelModal.set(false)"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+          Keep Subscription
+        </button>
+        <button
+          type="button"
+          (click)="openCustomerPortal(); showCancelModal.set(false)"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs cursor-pointer">
+          Manage in Portal
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODAL: Contact Support Form               -->
+<!-- ========================================== -->
+@if (showSupportModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+            <i class="pi pi-headphones text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white m-0">Contact Billing Support</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 m-0">Normora Enterprise Concierge Desk</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="showSupportModal.set(false)"
+          class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div class="space-y-1.5">
+          <label for="support-subject-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Subject
+          </label>
+          <input
+            id="support-subject-input"
+            type="text"
+            [ngModel]="supportSubject()"
+            (ngModelChange)="supportSubject.set($event)"
+            placeholder="e.g. Question about enterprise volume discounts or wire transfers"
+            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="support-message-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Message
+          </label>
+          <textarea
+            id="support-message-input"
+            rows="4"
+            [ngModel]="supportMessage()"
+            (ngModelChange)="supportMessage.set($event)"
+            placeholder="Please describe your billing question or request in detail..."
+            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="showSupportModal.set(false)"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="submitSupportRequest()"
+          [disabled]="isSubmittingSupport() || !supportMessage().trim()"
+          class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 shadow-xs cursor-pointer disabled:opacity-50">
+          @if (isSubmittingSupport()) {
+            <i class="pi pi-spin pi-spinner mr-1"></i>
+            <span>Sending...</span>
+          } @else {
+            <span>Send Message</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================== -->
+<!-- MODAL: Add Payment Method Modal           -->
+<!-- ========================================== -->
+@if (showAddPaymentModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+            <i class="pi pi-credit-card text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white m-0">Add Payment Method</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 m-0">PayU Secured Payment Vault</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="showAddPaymentModal.set(false)"
+          class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed m-0">
+          To add or update credit cards, debit cards, or UPI mandate tokens, PayU requires a zero or micro-verification transaction via their secure hosted payment window.
+        </p>
+
+        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
+          🔒 Your card credentials and CVV are never stored on Normora servers. All card data is tokenized directly with PayU PCI-DSS certified vault.
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="showAddPaymentModal.set(false)"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="openCustomerPortal(); showAddPaymentModal.set(false)"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-xs cursor-pointer">
+          Launch Secure Vault
+        </button>
+      </div>
+    </div>
+  </div>
+}
