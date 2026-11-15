@@ -1,8 +1,9 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TenantBrandingService } from '@core/services/tenant-branding.service';
 import { UserService } from '@core/services/user.service';
+import { DashboardService } from '@core/services/dashboard.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import {
   DsButtonComponent,
@@ -33,8 +34,9 @@ export interface ColorPalette {
   ],
   templateUrl: './branding.component.html',
 })
-export class BrandingComponent {
+export class BrandingComponent implements OnInit {
   private brandingService = inject(TenantBrandingService);
+  private dashboardService = inject(DashboardService);
   private messageService = inject(DsToastService);
   public userService = inject(UserService);
 
@@ -50,6 +52,18 @@ export class BrandingComponent {
   logoDarkPreviewUrl = signal<string | null>(null);
 
   isSaving = signal(false);
+
+  stats = signal([
+    { label: 'Documents', value: '12', delta: '+12%' },
+    { label: 'Conversations', value: '28', delta: '+8%' },
+    { label: 'Employees', value: '6', delta: '+4%' }
+  ]);
+
+  recentActivity = signal([
+    { icon: 'pi-file-pdf', label: 'Company Handbook.pdf', sub: 'Uploaded recently' },
+    { icon: 'pi-comments', label: 'Benefits & Leave Discussion', sub: 'Active inquiry' },
+    { icon: 'pi-user-plus', label: 'New employee joined', sub: 'Workspace member' }
+  ]);
 
   suggestedPalettes: ColorPalette[] = [
     { name: 'Indigo', primary: '#6366F1', secondary: '#8B5CF6' },
@@ -135,8 +149,40 @@ export class BrandingComponent {
     if (input.files?.length) this.faviconFile.set(input.files[0]);
   }
 
+  ngOnInit(): void {
+    this.dashboardService.getSummary().subscribe({
+      next: (res) => {
+        if (res.data?.stats) {
+          const s = res.data.stats;
+          this.stats.set([
+            { label: 'Documents', value: s.totalDocuments.toString(), delta: `${s.documentsTrend >= 0 ? '+' : ''}${s.documentsTrend}%` },
+            { label: 'Conversations', value: s.totalQuestions.toString(), delta: `${s.questionsTrend >= 0 ? '+' : ''}${s.questionsTrend}%` },
+            { label: 'Employees', value: s.totalEmployees.toString(), delta: `${s.employeesTrend >= 0 ? '+' : ''}${s.employeesTrend}%` }
+          ]);
+        }
+        if (res.data?.recentDocuments && res.data.recentDocuments.length > 0) {
+          this.recentActivity.set(res.data.recentDocuments.slice(0, 3).map(d => ({
+            icon: d.type === 'pdf' ? 'pi-file-pdf' : 'pi-file',
+            label: d.name,
+            sub: `${d.category} · ${d.status}`
+          })));
+        }
+      },
+      error: () => {}
+    });
+  }
+
   get userName(): string {
     return this.userService.currentUser()?.displayName || 'Workspace Admin';
+  }
+
+  get userInitials(): string {
+    const name = this.userService.currentUser()?.displayName?.trim() || 'Admin';
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   }
 
   save() {

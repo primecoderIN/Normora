@@ -269,8 +269,8 @@
                      [class.text-slate-500]="previewMode() === 'light'" [class.dark:text-slate-400]="previewMode() === 'light'"
                      [class.text-slate-400]="previewMode() === 'dark'"></i>
                 </div>
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold text-white"
-                     [style.background]="primaryColor()">JK</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold text-white uppercase"
+                     [style.background]="primaryColor()">{{ userInitials }}</div>
               </div>
             </div>
 
@@ -285,7 +285,7 @@
 
             <!-- Stats -->
             <div class="grid grid-cols-3 gap-2 mb-3">
-              @for (stat of [{label:'Documents',value:'124',delta:'+12%'},{label:'Conversations',value:'48',delta:'+8%'},{label:'Employees',value:'16',delta:'+4%'}]; track stat.label) {
+              @for (stat of stats(); track stat.label) {
                 <div class="rounded-lg p-2 border"
                      [class.bg-slate-50]="previewMode() === 'light'" [class.dark:bg-slate-950]="previewMode() === 'light'"
                      [class.border-slate-100]="previewMode() === 'light'" [class.dark:border-slate-800]="previewMode() === 'light'"
@@ -305,11 +305,7 @@
             <div class="text-[9px] font-semibold mb-1.5"
                  [class.text-slate-700]="previewMode() === 'light'" [class.dark:text-slate-200]="previewMode() === 'light'"
                  [class.text-slate-300]="previewMode() === 'dark'">Recent Activity</div>
-            @for (act of [
-              {icon:'pi-file-pdf', label:'Product Requirements.pdf', sub:'Uploaded 2 hours ago'},
-              {icon:'pi-comments', label:'Q3 Planning Discussion', sub:'New message · 4 hours ago'},
-              {icon:'pi-user-plus', label:'New employee added', sub:'john.doe@intel.com · 1 day ago'}
-            ]; track act.label) {
+            @for (act of recentActivity(); track act.label) {
               <div class="flex items-center gap-2 py-1.5 border-b last:border-0"
                    [class.border-slate-100]="previewMode() === 'light'" [class.dark:border-slate-800]="previewMode() === 'light'"
                    [class.border-slate-800]="previewMode() === 'dark'">

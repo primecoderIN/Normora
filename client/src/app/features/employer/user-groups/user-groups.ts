@@ -60,6 +60,14 @@ export class UserGroups implements OnInit {
     );
   });
 
+  totalMembersCount = computed(() => {
+    return this.groups().reduce((acc, g) => acc + (g.memberCount || 0), 0);
+  });
+
+  totalDepartmentsAssignedCount = computed(() => {
+    return this.groups().reduce((acc, g) => acc + (g.departmentCount || 0), 0);
+  });
+
   ngOnInit() {
     this.loadGroups();
     this.deptService.getAll().subscribe({ next: data => this.allDepartments.set(data ?? []) });

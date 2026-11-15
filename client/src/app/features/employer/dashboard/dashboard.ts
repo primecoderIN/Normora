@@ -227,7 +227,7 @@ export class Dashboard implements OnInit {
     return 'bg-purple-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20';
   }
 
-  showComingSoon() {
+  showRollingFilterNotice() {
     this.messageService.add({
       severity: 'info',
       summary: 'Trailing Rolling Activity',

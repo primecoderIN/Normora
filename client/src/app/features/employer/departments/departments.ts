@@ -3,6 +3,8 @@ import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DepartmentService, Department } from '@core/services/department.service';
+import { TenantService, TenantEmployeeDto } from '@core/services/tenant.service';
+import { DocumentService } from '@core/services/document.service';
 import { RealtimeStateService } from '@core/services/realtime-state.service';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
@@ -22,6 +24,8 @@ import { DsSkeletonComponent, DsInputComponent } from '@design-system';
 })
 export class Departments implements OnInit {
   private deptService = inject(DepartmentService);
+  private tenantService = inject(TenantService);
+  private documentService = inject(DocumentService);
   private realtimeStateService = inject(RealtimeStateService);
 
   constructor() {
@@ -34,6 +38,8 @@ export class Departments implements OnInit {
   }
 
   departments = signal<Department[]>([]);
+  assignedEmployeesCount = signal<number>(0);
+  scopedDocumentsCount = signal<number>(0);
   isLoading = signal(true);
 
   isSaving = signal(false);
@@ -60,6 +66,23 @@ export class Departments implements OnInit {
     this.deptService.getAll().subscribe({
       next: data => { this.departments.set(data ?? []); this.isLoading.set(false); },
       error: () => this.isLoading.set(false),
+    });
+
+    this.tenantService.getEmployees(1, 100).subscribe({
+      next: (res) => {
+        const list: TenantEmployeeDto[] = res.data?.items || [];
+        const count = list.filter((e: TenantEmployeeDto) => e.departments && e.departments.length > 0).length;
+        this.assignedEmployeesCount.set(count);
+      },
+      error: () => {}
+    });
+
+    this.documentService.getDocuments().subscribe({
+      next: (docs) => {
+        const count = (docs || []).filter(d => d.departmentIds && d.departmentIds.length > 0).length;
+        this.scopedDocumentsCount.set(count);
+      },
+      error: () => {}
     });
   }
 
