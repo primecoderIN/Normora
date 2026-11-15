@@ -64,6 +64,7 @@ public static class ConversationsModuleExtensions
         services.AddScoped<IActionCardBuilder, DocumentsListCardBuilder>();
         services.AddScoped<IActionCardBuilder, DocumentsMetricsCardBuilder>();
         services.AddScoped<IActionCardBuilder, DocumentsDeleteCardBuilder>();
+        services.AddScoped<IActionCardBuilder, DocumentsUploadGuideCardBuilder>();
         services.AddScoped<IActionCardBuilder, IntakeFormCardBuilder>();
         services.AddScoped<IActionCardBuilder, SavedAnswersCardBuilder>();
         services.AddScoped<IActionCardBuilder, ConversationsCardBuilder>();

@@ -42,6 +42,7 @@ public static class DocumentsModuleExtensions
         services.AddScoped<IAgentTool, DocumentsListTool>();
         services.AddScoped<IAgentTool, DocumentsGetMetricsTool>();
         services.AddScoped<IAgentTool, DocumentsDeleteTool>();
+        services.AddScoped<IAgentTool, DocumentsUploadGuideTool>();
 
         return services;
     }

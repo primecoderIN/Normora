@@ -36,7 +36,8 @@ public sealed class DocumentsListCardBuilder : IActionCardBuilder
                     {
                         ["Document ID"] = docId ?? "",
                         ["Retention Grace Period"] = "30 Days",
-                        ["Status"] = "Soft-Deleted"
+                        ["Status"] = "Soft-Deleted",
+                        ["route"] = "/employer/documents"
                     },
                     ConfirmButtonText: "Open Document Vault",
                     CancelButtonText: "Dismiss");
@@ -45,7 +46,8 @@ public sealed class DocumentsListCardBuilder : IActionCardBuilder
             var total = root.TryGetProperty("totalDocuments", out var t) ? t.GetInt32() : 0;
             var parameters = new Dictionary<string, string>
             {
-                ["Total Catalog Volume"] = total.ToString()
+                ["Total Catalog Volume"] = total.ToString(),
+                ["route"] = "/employer/documents"
             };
 
             if (root.TryGetProperty("documents", out var docsArray) && docsArray.ValueKind == JsonValueKind.Array)

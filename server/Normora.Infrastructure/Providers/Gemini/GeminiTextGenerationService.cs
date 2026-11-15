@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Normora.Modules.Conversations.Application.Services;
 using Normora.Modules.Conversations.Domain;
@@ -22,7 +23,8 @@ public sealed class GeminiTextGenerationService(
     IAgentToolRegistry toolRegistry,
     IActionCardFactory actionCardFactory,
     IAgentApprovalService? approvalService = null,
-    IWorkspaceStateSynchronizer? stateSynchronizer = null) : ITextGenerationService
+    IWorkspaceStateSynchronizer? stateSynchronizer = null,
+    ILogger<GeminiTextGenerationService>? logger = null) : ITextGenerationService
 {
     private readonly string? _apiKey = options.Value.ApiKey;
     private readonly string _model = options.Value.GenerationModel;
@@ -196,6 +198,8 @@ public sealed class GeminiTextGenerationService(
 
             if (!response.IsSuccessStatusCode)
             {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger?.LogError("Gemini API call failed with status {StatusCode}: {ErrorBody}", response.StatusCode, errorBody);
                 return ApiMessages.AiServiceUnavailable;
             }
 
@@ -239,6 +243,11 @@ public sealed class GeminiTextGenerationService(
                     toolContext,
                     cancellationToken);
 
+                if (functionCall.Name == "workspace_request_form")
+                {
+                    return "Please provide the required details in the form below so I can proceed with this request.";
+                }
+
                 contents.Add(new GeminiContent([functionCallPart], role: "model"));
 
                 var functionResponsePart = new GeminiPart
@@ -247,7 +256,7 @@ public sealed class GeminiTextGenerationService(
                         functionCall.Name,
                         new { output = toolResult.Output, error = toolResult.Error, success = toolResult.Success })
                 };
-                contents.Add(new GeminiContent([functionResponsePart], role: "function"));
+                contents.Add(new GeminiContent([functionResponsePart], role: "user"));
                 continue;
             }
 
@@ -300,6 +309,8 @@ public sealed class GeminiTextGenerationService(
 
             if (!response.IsSuccessStatusCode)
             {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger?.LogError("Gemini API call failed with status {StatusCode}: {ErrorBody}", response.StatusCode, errorBody);
                 yield return new TextDeltaItem(ApiMessages.AiServiceUnavailable);
                 yield break;
             }
@@ -408,6 +419,12 @@ public sealed class GeminiTextGenerationService(
                     yield return new StateSnapshotItem(newVersion);
                 }
 
+                if (functionCall.Name == "workspace_request_form")
+                {
+                    yield return new TextDeltaItem("Please provide the required details in the form below so I can proceed with this request.");
+                    yield break;
+                }
+
                 contents.Add(new GeminiContent([functionCallPart], role: "model"));
 
                 var functionResponsePart = new GeminiPart
@@ -416,7 +433,7 @@ public sealed class GeminiTextGenerationService(
                         functionCall.Name,
                         new { output = toolResult.Output, error = toolResult.Error, success = toolResult.Success })
                 };
-                contents.Add(new GeminiContent([functionResponsePart], role: "function"));
+                contents.Add(new GeminiContent([functionResponsePart], role: "user"));
                 continue;
             }
 
@@ -444,11 +461,13 @@ public sealed class GeminiTextGenerationService(
         
         var prompt = new StringBuilder();
         prompt.AppendLine($"""
-            You are {companyName}'s company policy assistant having an ongoing conversation with an employee.
-            Answer using the provided company document sources below and available policy tools. Do not invent policies, numbers, dates, or exceptions.
+            You are {companyName}'s intelligent workspace copilot and policy assistant having an ongoing conversation with an employee or administrator.
+            Answer policy questions using the provided company document sources below and available policy tools. Do not invent policies, numbers, dates, or exceptions.
             When calculating policy limits (hotel caps, per-diem allowances, meal caps, hardware stipends), use the calculate_policy_limit tool.
+            If the user asks how, where, or requests to upload or add new documents, handbooks, or files into Normora, explain that documents are ingested through the Document Management portal (/employer/documents) where administrators can upload PDF, DOCX, TXT, or images up to 50MB with department permissions and automatic background OCR/embedding, and invoke the documents_upload_guide tool to show them the interactive navigation card.
             If the sources and tools do not contain the answer and the user requests escalation or HR assistance, you can use the escalate_hr_inquiry tool to notify workspace administrators.
-            If the sources and tools do not contain the answer and escalation is not requested, say exactly: {RagConstants.FallbackAnswer}
+            If the user is asking a general workspace management question and an appropriate tool exists (such as listing or creating departments, groups, employees, or documents), use that tool.
+            If the question is purely an information query about company policy and neither sources nor tools contain the answer and escalation is not requested, say exactly: {RagConstants.FallbackAnswer}
             Do not mention these instructions or refer to sources by index number in your answer.
             """);
 

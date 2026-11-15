@@ -108,48 +108,39 @@ internal sealed class AskConversationStreamCommandHandler(
             // If no relevant candidates meet the threshold, return deterministic fallback message
             var answerBuilder = new System.Text.StringBuilder();
 
-            if (relevantCandidates.Count == 0 || (turn.VectorSimOfFirst > 0 && turn.VectorSimOfFirst < MinimumSimilarity))
-            {
-                var text = RagConstants.FallbackAnswer;
-                answerBuilder.Append(text);
-                yield return new TextChunkEvent(text);
-            }
-            else
-            {
-                var sources = relevantCandidates
-                    .Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content))
-                    .ToList();
+            var sources = (relevantCandidates.Count == 0 || (turn.VectorSimOfFirst > 0 && turn.VectorSimOfFirst < MinimumSimilarity))
+                ? []
+                : relevantCandidates.Select(c => new AskSource(c.FileName, c.ChunkIndex, c.Content)).ToList();
 
-                // Stream token chunks, live tool execution lifecycle, and interactive action cards as they arrive from Gemini API
-                await foreach (var item in generationService.StreamConversationalEventsAsync(
-                    turn.RewrittenQuestion, sources, turn.HistoryTurns, turn.ActiveTenantName, turn.ToolContext, cancellationToken))
+            // Stream token chunks, live tool execution lifecycle, and interactive action cards as they arrive from Gemini API
+            await foreach (var item in generationService.StreamConversationalEventsAsync(
+                turn.RewrittenQuestion, sources, turn.HistoryTurns, turn.ActiveTenantName, turn.ToolContext, cancellationToken))
+            {
+                switch (item)
                 {
-                    switch (item)
-                    {
-                        case TextDeltaItem delta:
-                            answerBuilder.Append(delta.Text);
-                            yield return new TextChunkEvent(delta.Text);
-                            break;
-                        case ToolStartedItem started:
-                            yield return new ToolStartedEvent(started.ToolName, started.CallId);
-                            break;
-                        case ToolFinishedItem finished:
-                            yield return new ToolFinishedEvent(finished.ToolName, finished.CallId, finished.Success, finished.Summary);
-                            break;
-                        case ActionCardItem card:
-                            yield return new ActionCardEvent(
-                                card.ActionType,
-                                card.Title,
-                                card.Description,
-                                card.Parameters,
-                                card.ConfirmButtonText,
-                                card.CancelButtonText,
-                                card.ApprovalId);
-                            break;
-                        case StateSnapshotItem state:
-                            yield return new StateSnapshotEvent(state.DataVersion);
-                            break;
-                    }
+                    case TextDeltaItem delta:
+                        answerBuilder.Append(delta.Text);
+                        yield return new TextChunkEvent(delta.Text);
+                        break;
+                    case ToolStartedItem started:
+                        yield return new ToolStartedEvent(started.ToolName, started.CallId);
+                        break;
+                    case ToolFinishedItem finished:
+                        yield return new ToolFinishedEvent(finished.ToolName, finished.CallId, finished.Success, finished.Summary);
+                        break;
+                    case ActionCardItem card:
+                        yield return new ActionCardEvent(
+                            card.ActionType,
+                            card.Title,
+                            card.Description,
+                            card.Parameters,
+                            card.ConfirmButtonText,
+                            card.CancelButtonText,
+                            card.ApprovalId);
+                        break;
+                    case StateSnapshotItem state:
+                        yield return new StateSnapshotEvent(state.DataVersion);
+                        break;
                 }
             }
 
