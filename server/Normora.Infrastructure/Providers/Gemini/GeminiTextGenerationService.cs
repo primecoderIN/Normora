@@ -114,6 +114,7 @@ public sealed class GeminiTextGenerationService(
         }
 
         var anyChunks = false;
+        yield return new AgentStatusItem("answering", "Composing response...");
         await foreach (var chunk in StreamGeminiAsync(fullPrompt, temperature: 0.1, cancellationToken))
         {
             anyChunks = true;
@@ -291,6 +292,12 @@ public sealed class GeminiTextGenerationService(
 
         for (var turn = 0; turn < maxTurns; turn++)
         {
+            yield return new AgentStatusItem(
+                "reasoning",
+                turn == 0
+                    ? "Gemini is analyzing question & deciding next action..."
+                    : "Evaluating tool results & synthesizing response...");
+
             var request = new GeminiGenerateRequest(
                 contents,
                 new GeminiGenerationConfig(temperature),
@@ -332,6 +339,9 @@ public sealed class GeminiTextGenerationService(
                     : "{}";
 
                 var targetTool = toolRegistry.FindTool(functionCall.Name);
+                var descriptor = toolRegistry.GetChipDescriptor(functionCall.Name);
+                var startLabel = descriptor?.StartLabel ?? $"Running {functionCall.Name.Replace('_', ' ')}...";
+
                 if (targetTool != null && targetTool.RequiresApproval)
                 {
                     Guid? approvalId = null;
@@ -348,7 +358,8 @@ public sealed class GeminiTextGenerationService(
                             cancellationToken);
                     }
 
-                    yield return new ToolStartedItem(functionCall.Name, callId);
+                    yield return new ToolStartedItem(functionCall.Name, callId, startLabel);
+                    yield return new AgentStatusItem("tool_calling", startLabel, functionCall.Name);
                     yield return new ToolFinishedItem(
                         functionCall.Name,
                         callId,
@@ -386,7 +397,8 @@ public sealed class GeminiTextGenerationService(
                     break;
                 }
 
-                yield return new ToolStartedItem(functionCall.Name, callId);
+                yield return new ToolStartedItem(functionCall.Name, callId, startLabel);
+                yield return new AgentStatusItem("tool_calling", startLabel, functionCall.Name);
 
                 var toolResult = await toolRegistry.ExecuteToolAsync(
                     functionCall.Name,
@@ -394,7 +406,6 @@ public sealed class GeminiTextGenerationService(
                     toolContext,
                     cancellationToken);
 
-                var descriptor = toolRegistry.GetChipDescriptor(functionCall.Name);
                 var summary = toolResult.Success
                     ? (!string.IsNullOrWhiteSpace(descriptor?.CompletedLabel)
                         ? descriptor.CompletedLabel
@@ -406,6 +417,10 @@ public sealed class GeminiTextGenerationService(
                         : toolResult.Error);
 
                 yield return new ToolFinishedItem(functionCall.Name, callId, toolResult.Success, summary);
+                yield return new AgentStatusItem(
+                    "tool_evaluating",
+                    $"Synthesizing findings from {descriptor?.CompletedLabel ?? functionCall.Name.Replace('_', ' ')}...",
+                    functionCall.Name);
 
                 var card = actionCardFactory.CreateCard(functionCall.Name, argsJson, toolResult);
                 if (card != null)
@@ -441,6 +456,7 @@ public sealed class GeminiTextGenerationService(
             if (!string.IsNullOrWhiteSpace(text))
             {
                 answered = true;
+                yield return new AgentStatusItem("answering", "Composing response...");
                 yield return new TextDeltaItem(text.Trim());
                 yield break;
             }

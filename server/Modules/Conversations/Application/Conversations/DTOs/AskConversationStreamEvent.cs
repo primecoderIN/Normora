@@ -7,6 +7,7 @@ namespace Normora.Modules.Conversations.Application.Conversations.DTOs;
 /// Base polymorphic record representing a Server-Sent Event (SSE) streamed during conversation responses.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(AgentStatusEvent), "status")]
 [JsonDerivedType(typeof(CitationsReadyEvent), "citations")]
 [JsonDerivedType(typeof(TextChunkEvent), "text")]
 [JsonDerivedType(typeof(ToolStartedEvent), "tool_started")]
@@ -15,6 +16,15 @@ namespace Normora.Modules.Conversations.Application.Conversations.DTOs;
 [JsonDerivedType(typeof(StateSnapshotEvent), "state_snapshot")]
 [JsonDerivedType(typeof(StreamFinishedEvent), "finished")]
 public abstract record AskConversationStreamEvent;
+
+/// <summary>
+/// Event emitted to communicate real-time agent lifecycle and background activity to the user.
+/// </summary>
+/// <param name="Stage">Current lifecycle stage (e.g. retrieval, reasoning, tool_calling, tool_evaluating, answering).</param>
+/// <param name="Message">Human-readable description of what the agent is currently doing.</param>
+/// <param name="ToolName">Optional identifier of the tool being executed or evaluated.</param>
+/// <param name="Detail">Optional contextual details.</param>
+public sealed record AgentStatusEvent(string Stage, string Message, string? ToolName = null, string? Detail = null) : AskConversationStreamEvent;
 
 /// <summary>
 /// Event emitted when retrieval citations and source documents have been resolved.
@@ -34,7 +44,8 @@ public sealed record TextChunkEvent(string Text) : AskConversationStreamEvent;
 /// </summary>
 /// <param name="ToolName">The identifier of the tool being executed (e.g. calculate_policy_limit).</param>
 /// <param name="ToolCallId">Unique identifier correlating start and finished events for this call.</param>
-public sealed record ToolStartedEvent(string ToolName, string ToolCallId) : AskConversationStreamEvent;
+/// <param name="Label">Optional human-readable label describing the action being performed.</param>
+public sealed record ToolStartedEvent(string ToolName, string ToolCallId, string? Label = null) : AskConversationStreamEvent;
 
 /// <summary>
 /// Event emitted when an autonomous agent tool completes execution.

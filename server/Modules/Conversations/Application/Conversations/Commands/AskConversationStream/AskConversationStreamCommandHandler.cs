@@ -47,6 +47,9 @@ internal sealed class AskConversationStreamCommandHandler(
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            // Initial Live Status: Thinking indicator immediately upon request receipt
+            yield return new AgentStatusEvent("thinking", "Thinking . . .");
+
             // Pipeline Step 1-5: Turn Preparation (IConversationTurnPreparer)
             // Executes conversation validation, BOLA ownership verification, user message persistence,
             // token-budgeted history assembly, LLM query rewriting, and cross-module hybrid retrieval (BM25 + pgvector).
@@ -103,6 +106,9 @@ internal sealed class AskConversationStreamCommandHandler(
             // Yield CitationsReadyEvent event across SSE stream
             yield return new CitationsReadyEvent(turn.UserMessage.Id, assistantMessageId, mappedSources);
 
+            // Live Status: Transition to reasoning / action planning
+            yield return new AgentStatusEvent("reasoning", "Gemini is analyzing question & determining next step...");
+
             // Pipeline Step 7: Streaming LLM Answer Generation
             // Grounded RAG with Hallucination Defense:
             // If no relevant candidates meet the threshold, return deterministic fallback message
@@ -118,12 +124,15 @@ internal sealed class AskConversationStreamCommandHandler(
             {
                 switch (item)
                 {
+                    case AgentStatusItem status:
+                        yield return new AgentStatusEvent(status.Stage, status.Message, status.ToolName, status.Detail);
+                        break;
                     case TextDeltaItem delta:
                         answerBuilder.Append(delta.Text);
                         yield return new TextChunkEvent(delta.Text);
                         break;
                     case ToolStartedItem started:
-                        yield return new ToolStartedEvent(started.ToolName, started.CallId);
+                        yield return new ToolStartedEvent(started.ToolName, started.CallId, started.Label);
                         break;
                     case ToolFinishedItem finished:
                         yield return new ToolFinishedEvent(finished.ToolName, finished.CallId, finished.Success, finished.Summary);

@@ -99,9 +99,18 @@ public abstract record TextGenerationStreamItem;
 public sealed record TextDeltaItem(string Text) : TextGenerationStreamItem;
 
 /// <summary>
+/// Autonomous agent status update informing the user of what the agent is doing in the background.
+/// </summary>
+/// <param name="Stage">Current lifecycle stage (e.g. retrieval, reasoning, tool_calling, tool_evaluating, answering).</param>
+/// <param name="Message">Human-readable description of the current action.</param>
+/// <param name="ToolName">Optional identifier of the tool being executed or evaluated.</param>
+/// <param name="Detail">Optional contextual details.</param>
+public sealed record AgentStatusItem(string Stage, string Message, string? ToolName = null, string? Detail = null) : TextGenerationStreamItem;
+
+/// <summary>
 /// Autonomous agent tool started execution.
 /// </summary>
-public sealed record ToolStartedItem(string ToolName, string CallId) : TextGenerationStreamItem;
+public sealed record ToolStartedItem(string ToolName, string CallId, string? Label = null) : TextGenerationStreamItem;
 
 /// <summary>
 /// Autonomous agent tool completed execution.
