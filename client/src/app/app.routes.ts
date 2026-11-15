@@ -75,6 +75,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/employee/conversations/shared-conversation').then(m => m.SharedConversationComponent)
           },
           {
+            path: 'saved-answers',
+            loadComponent: () => import('./features/employee/saved-answers/saved-answers').then(m => m.SavedAnswers)
+          },
+          {
             path: 'employees',
             loadComponent: () => import('./features/employer/employees/employees').then(m => m.Employees)
           },
