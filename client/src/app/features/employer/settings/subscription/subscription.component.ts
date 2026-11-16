@@ -1,156 +1,44 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SubscriptionService, SubscriptionUsageDto, PlanTierType, TenantInvoiceDto, TenantBillingDetailsDto } from '@core/services/subscription.service';
+import {
+  SubscriptionService,
+  SubscriptionUsageDto,
+  PlanTierType,
+  TenantBillingDetailsDto
+} from '@core/services/subscription.service';
 import { UserService } from '@core/services/user.service';
 import { ApiMessages } from '@core/constants/api-messages';
 import { DsToastService } from '@design-system';
+import {
+  BillingCycle,
+  BillingInvoiceItem,
+  CurrencyConfig,
+  PlanTierDefinition,
+  SubscriptionTab
+} from './models/subscription.models';
+import { SUPPORTED_CURRENCIES, detectLocalCurrency } from './helpers/subscription-currency.helper';
+import { createPlanTierDefinitions } from './helpers/subscription-plans.helper';
+import { SubscriptionOverviewComponent } from './components/subscription-overview/subscription-overview.component';
+import { SubscriptionInvoicesComponent } from './components/subscription-invoices/subscription-invoices.component';
+import { SubscriptionPaymentMethodsComponent } from './components/subscription-payment-methods/subscription-payment-methods.component';
+import { SubscriptionSettingsComponent } from './components/subscription-settings/subscription-settings.component';
+import { SubscriptionModalsComponent } from './components/subscription-modals/subscription-modals.component';
 
-export type SubscriptionTab = 'overview' | 'history' | 'payment-methods' | 'invoices' | 'settings';
-export type BillingCycle = 'monthly' | 'annual';
-
-export interface PlanTierDefinition {
-  tier: PlanTierType;
-  name: string;
-  price: string;
-  period: string;
-  description: string;
-  maxDocs: string;
-  maxMembers: string;
-  maxStorage: string;
-  features: string[];
-  isPopular?: boolean;
-}
-
-export interface CurrencyConfig {
-  code: string;
-  symbol: string;
-  label: string;
-  flag: string;
-  proPriceMonthly: string;
-  proPriceAnnual: string;
-  enterprisePriceMonthly: string;
-  enterprisePriceAnnual: string;
-  proNumericMonthly: number;
-  enterpriseNumericMonthly: number;
-}
-
-export interface BillingInvoiceItem {
-  id: string;
-  invoiceNumber: string;
-  date: Date;
-  tier: string;
-  amount: string;
-  currency: string;
-  cycle: string;
-  status: 'Paid' | 'Pending' | 'Failed';
-  pdfUrl?: string;
-}
-
-export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
-  {
-    code: 'INR',
-    symbol: '₹',
-    label: 'INR (₹)',
-    flag: '🇮🇳',
-    proPriceMonthly: '₹3,999',
-    proPriceAnnual: '₹3,199',
-    enterprisePriceMonthly: '₹19,999',
-    enterprisePriceAnnual: '₹15,999',
-    proNumericMonthly: 3999,
-    enterpriseNumericMonthly: 19999
-  },
-  {
-    code: 'USD',
-    symbol: '$',
-    label: 'USD ($)',
-    flag: '🇺🇸',
-    proPriceMonthly: '$49',
-    proPriceAnnual: '$39',
-    enterprisePriceMonthly: '$249',
-    enterprisePriceAnnual: '$199',
-    proNumericMonthly: 49,
-    enterpriseNumericMonthly: 249
-  },
-  {
-    code: 'EUR',
-    symbol: '€',
-    label: 'EUR (€)',
-    flag: '🇪🇺',
-    proPriceMonthly: '€45',
-    proPriceAnnual: '€36',
-    enterprisePriceMonthly: '€229',
-    enterprisePriceAnnual: '€183',
-    proNumericMonthly: 45,
-    enterpriseNumericMonthly: 229
-  },
-  {
-    code: 'GBP',
-    symbol: '£',
-    label: 'GBP (£)',
-    flag: '🇬🇧',
-    proPriceMonthly: '£39',
-    proPriceAnnual: '£31',
-    enterprisePriceMonthly: '£199',
-    enterprisePriceAnnual: '£159',
-    proNumericMonthly: 39,
-    enterpriseNumericMonthly: 199
-  },
-  {
-    code: 'CAD',
-    symbol: 'C$',
-    label: 'CAD (C$)',
-    flag: '🇨🇦',
-    proPriceMonthly: 'C$65',
-    proPriceAnnual: 'C$52',
-    enterprisePriceMonthly: 'C$329',
-    enterprisePriceAnnual: 'C$263',
-    proNumericMonthly: 65,
-    enterpriseNumericMonthly: 329
-  },
-  {
-    code: 'AUD',
-    symbol: 'A$',
-    label: 'AUD (A$)',
-    flag: '🇦🇺',
-    proPriceMonthly: 'A$75',
-    proPriceAnnual: 'A$60',
-    enterprisePriceMonthly: 'A$379',
-    enterprisePriceAnnual: 'A$303',
-    proNumericMonthly: 75,
-    enterpriseNumericMonthly: 379
-  },
-  {
-    code: 'JPY',
-    symbol: '¥',
-    label: 'JPY (¥)',
-    flag: '🇯🇵',
-    proPriceMonthly: '¥7,500',
-    proPriceAnnual: '¥6,000',
-    enterprisePriceMonthly: '¥38,000',
-    enterprisePriceAnnual: '¥30,400',
-    proNumericMonthly: 7500,
-    enterpriseNumericMonthly: 38000
-  },
-  {
-    code: 'SGD',
-    symbol: 'S$',
-    label: 'SGD (S$)',
-    flag: '🇸🇬',
-    proPriceMonthly: 'S$65',
-    proPriceAnnual: 'S$52',
-    enterprisePriceMonthly: 'S$329',
-    enterprisePriceAnnual: 'S$263',
-    proNumericMonthly: 65,
-    enterpriseNumericMonthly: 329
-  }
-];
+export type { SubscriptionTab, BillingCycle, PlanTierDefinition, CurrencyConfig, BillingInvoiceItem } from './models/subscription.models';
+export { SUPPORTED_CURRENCIES } from './helpers/subscription-currency.helper';
 
 @Component({
   selector: 'app-subscription',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [
+    CommonModule,
+    SubscriptionOverviewComponent,
+    SubscriptionInvoicesComponent,
+    SubscriptionPaymentMethodsComponent,
+    SubscriptionSettingsComponent,
+    SubscriptionModalsComponent
+  ],
   templateUrl: './subscription.component.html'
 })
 export class SubscriptionComponent implements OnInit {
@@ -176,7 +64,7 @@ export class SubscriptionComponent implements OnInit {
 
   // Currencies
   readonly currencies = SUPPORTED_CURRENCIES;
-  readonly selectedCurrency = signal<string>(this.detectLocalCurrency());
+  readonly selectedCurrency = signal<string>(detectLocalCurrency());
   readonly isDetectedCurrency = signal<boolean>(true);
   readonly isWorkspaceCurrency = signal<boolean>(false);
 
@@ -187,7 +75,6 @@ export class SubscriptionComponent implements OnInit {
   pendingDowngradeTier = signal<PlanTierType | null>(null);
   showSupportModal = signal(false);
   showAddPaymentModal = signal(false);
-  showCardMenu = signal(false);
 
   // Settings Form State
   billingEmail = signal('');
@@ -196,12 +83,7 @@ export class SubscriptionComponent implements OnInit {
   billingAddress = signal('');
   isSavingSettings = signal(false);
 
-  // Support Request State
-  supportSubject = signal('');
-  supportMessage = signal('');
-  isSubmittingSupport = signal(false);
-
-  // Initial fallback invoices (overridden dynamically by backend via loadInvoices())
+  // Invoices
   readonly invoices = signal<BillingInvoiceItem[]>([
     {
       id: 'inv_101',
@@ -287,113 +169,38 @@ export class SubscriptionComponent implements OnInit {
     if (u?.validUntil) {
       return u.validUntil;
     }
-    // Default fallback: 1 month from now
     const d = new Date();
     d.setMonth(d.getMonth() + 1);
     return d.toISOString();
   });
 
   readonly planDefinitions = computed<PlanTierDefinition[]>(() => {
-    const curr = this.activeCurrencyConfig();
-    const isAnnual = this.billingCycle() === 'annual';
-    return [
-      {
-        tier: 'Free',
-        name: 'Starter / Free',
-        price: `${curr.symbol}0`,
-        period: isAnnual ? '/ year' : '/ month',
-        description: 'Essential AI knowledge base for small teams getting started.',
-        maxDocs: '10 Documents',
-        maxMembers: '5 Team Members',
-        maxStorage: '50 MB Storage',
-        features: [
-          'Gemini Grounded RAG Answering',
-          'Source Citations & Chunk Previews',
-          'Company-wide Knowledge Base',
-          'Standard Ingestion Pipeline'
-        ]
-      },
-      {
-        tier: 'Pro',
-        name: 'Pro Workspace',
-        price: isAnnual ? curr.proPriceAnnual : curr.proPriceMonthly,
-        period: isAnnual ? '/ month, billed annually' : '/ month',
-        description: 'Expanded capacity with department scoping for growing organizations.',
-        maxDocs: '100 Documents',
-        maxMembers: '50 Team Members',
-        maxStorage: '5 GB Storage',
-        isPopular: true,
-        features: [
-          'Everything in Starter',
-          'Department & User Group Scoping',
-          'Document Version History & Outdated Alerts',
-          'Markdown, PDF & Word Export',
-          'Priority Hangfire Ingestion'
-        ]
-      },
-      {
-        tier: 'Enterprise',
-        name: 'Enterprise',
-        price: isAnnual ? curr.enterprisePriceAnnual : curr.enterprisePriceMonthly,
-        period: isAnnual ? '/ month, billed annually' : '/ month',
-        description: 'Maximum scale, custom quotas, and enterprise-grade compliance.',
-        maxDocs: '10,000 Documents',
-        maxMembers: '5,000 Team Members',
-        maxStorage: '500 GB Storage',
-        features: [
-          'Everything in Pro',
-          'Full Compliance Audit Logging',
-          'White-Label Branding & Custom Subdomains',
-          'Dedicated pgvector Search Indexing',
-          '99.9% Uptime SLA & Priority Support'
-        ]
-      }
-    ];
+    return createPlanTierDefinitions(this.activeCurrencyConfig(), this.billingCycle() === 'annual');
   });
 
-  // Resource percentages with exact precision
-  docPercent = computed(() => {
+  readonly docPercent = computed(() => {
     const u = this.usage();
     if (!u || !u.maxDocuments) return 0;
     return Math.min(100, (u.currentDocuments / u.maxDocuments) * 100);
   });
 
-  empPercent = computed(() => {
+  readonly empPercent = computed(() => {
     const u = this.usage();
     if (!u || !u.maxEmployees) return 0;
     return Math.min(100, (u.currentEmployees / u.maxEmployees) * 100);
   });
 
-  storagePercent = computed(() => {
+  readonly storagePercent = computed(() => {
     const u = this.usage();
     if (!u || !u.maxStorageBytes) return 0;
     return Math.min(100, (u.currentStorageBytes / u.maxStorageBytes) * 100);
   });
 
-  // Strict tier hierarchy ranking: Free (0) < Pro (1) < Enterprise (2)
   private readonly tierHierarchy: Record<PlanTierType, number> = {
     Free: 0,
     Pro: 1,
     Enterprise: 2
   };
-
-  getTierLevel(tier: PlanTierType): number {
-    return this.tierHierarchy[tier] ?? 0;
-  }
-
-  isTierCurrent(tier: PlanTierType): boolean {
-    return (this.usage()?.planTier ?? 'Enterprise') === tier;
-  }
-
-  isTierDowngrade(tier: PlanTierType): boolean {
-    const currentTier = this.usage()?.planTier ?? 'Enterprise';
-    return this.getTierLevel(tier) < this.getTierLevel(currentTier);
-  }
-
-  isTierUpgrade(tier: PlanTierType): boolean {
-    const currentTier = this.usage()?.planTier ?? 'Enterprise';
-    return this.getTierLevel(tier) > this.getTierLevel(currentTier);
-  }
 
   ngOnInit(): void {
     this.handleRouteParams();
@@ -449,56 +256,6 @@ export class SubscriptionComponent implements OnInit {
     }, 100);
   }
 
-  private detectLocalCurrency(): string {
-    try {
-      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      const tzLower = timeZone.toLowerCase();
-      const lang = (typeof navigator !== 'undefined' ? navigator.language : '').toLowerCase();
-
-      if (tzLower.includes('calcutta') || tzLower.includes('kolkata') || lang.includes('en-in') || lang.includes('hi')) {
-        return 'INR';
-      }
-      if (tzLower.includes('london') || lang.includes('en-gb')) {
-        return 'GBP';
-      }
-      if (
-        tzLower.includes('paris') ||
-        tzLower.includes('berlin') ||
-        tzLower.includes('rome') ||
-        tzLower.includes('madrid') ||
-        tzLower.includes('amsterdam') ||
-        tzLower.includes('dublin') ||
-        tzLower.includes('brussels') ||
-        tzLower.includes('vienna') ||
-        tzLower.includes('lisbon') ||
-        tzLower.includes('helsinki') ||
-        tzLower.includes('athens') ||
-        lang.includes('de') ||
-        lang.includes('fr') ||
-        lang.includes('it') ||
-        lang.includes('es') ||
-        lang.includes('nl')
-      ) {
-        return 'EUR';
-      }
-      if (tzLower.includes('toronto') || tzLower.includes('vancouver') || tzLower.includes('montreal') || lang.includes('en-ca') || lang.includes('fr-ca')) {
-        return 'CAD';
-      }
-      if (tzLower.includes('sydney') || tzLower.includes('melbourne') || tzLower.includes('brisbane') || tzLower.includes('perth') || lang.includes('en-au')) {
-        return 'AUD';
-      }
-      if (tzLower.includes('tokyo') || lang.includes('ja')) {
-        return 'JPY';
-      }
-      if (tzLower.includes('singapore') || lang.includes('en-sg')) {
-        return 'SGD';
-      }
-    } catch {
-      // fallback
-    }
-    return 'INR';
-  }
-
   private handleRouteParams(): void {
     const status = this.route.snapshot.queryParamMap.get('status');
     const error = this.route.snapshot.queryParamMap.get('error');
@@ -534,8 +291,6 @@ export class SubscriptionComponent implements OnInit {
 
     this.subscriptionService.getUsage().subscribe({
       next: (data) => {
-        // If data from backend has realistic usage, we adopt it.
-        // Fallback or enhance with enterprise demonstration values when unpopulated
         const enriched: SubscriptionUsageDto = {
           ...data,
           planTier: data.planTier || 'Enterprise',
@@ -543,8 +298,8 @@ export class SubscriptionComponent implements OnInit {
           currentDocuments: data.currentDocuments > 0 ? data.currentDocuments : 6,
           maxEmployees: data.maxEmployees || 5000,
           currentEmployees: data.currentEmployees > 0 ? data.currentEmployees : 1,
-          maxStorageBytes: data.maxStorageBytes || (500 * 1024 * 1024 * 1024), // 500 GB
-          currentStorageBytes: data.currentStorageBytes > 0 ? data.currentStorageBytes : (1.3 * 1024 * 1024), // 1.3 MB
+          maxStorageBytes: data.maxStorageBytes || (500 * 1024 * 1024 * 1024),
+          currentStorageBytes: data.currentStorageBytes > 0 ? data.currentStorageBytes : (1.3 * 1024 * 1024),
           hasActiveSubscription: true,
           subscriptionStatus: data.subscriptionStatus || 'active',
           currentPeriodEndUtc: data.currentPeriodEndUtc || new Date(2026, 11, 12).toISOString()
@@ -563,7 +318,6 @@ export class SubscriptionComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: () => {
-        // Fallback gracefully so the UI still displays the polished dashboard
         const fallback: SubscriptionUsageDto = {
           planTier: 'Enterprise',
           maxDocuments: 10000,
@@ -613,11 +367,10 @@ export class SubscriptionComponent implements OnInit {
   }
 
   selectPlan(tier: PlanTierType): void {
-    if (this.isTierCurrent(tier)) {
-      return;
-    }
+    const currentTier = this.activePlanTier();
+    if (currentTier === tier) return;
 
-    if (this.isTierDowngrade(tier)) {
+    if ((this.tierHierarchy[tier] ?? 0) < (this.tierHierarchy[currentTier] ?? 0)) {
       this.pendingDowngradeTier.set(tier);
       this.showDowngradeModal.set(true);
       return;
@@ -660,8 +413,8 @@ export class SubscriptionComponent implements OnInit {
         this.pendingDowngradeTier.set(null);
         this.messageService.add({
           severity: 'success',
-          summary: 'Plan Updated',
-          detail: `Workspace plan successfully adjusted to ${tier}.`
+          summary: ApiMessages.SubscriptionDowngradeSuccess.summary,
+          detail: ApiMessages.SubscriptionDowngradeSuccess.detail(tier)
         });
       },
       error: () => {
@@ -670,8 +423,8 @@ export class SubscriptionComponent implements OnInit {
         this.pendingDowngradeTier.set(null);
         this.messageService.add({
           severity: 'error',
-          summary: 'Update Failed',
-          detail: 'Unable to downgrade plan at this time. Please contact support.'
+          summary: ApiMessages.SubscriptionDowngradeFailed.summary,
+          detail: ApiMessages.SubscriptionDowngradeFailed.detail
         });
       }
     });
@@ -685,7 +438,6 @@ export class SubscriptionComponent implements OnInit {
           window.location.href = session.portalUrl;
         } else {
           this.isOpeningPortal.set(false);
-          // If no external URL returned, navigate to Payment Methods tab directly
           this.setTab('payment-methods');
         }
       },
@@ -694,8 +446,8 @@ export class SubscriptionComponent implements OnInit {
         this.setTab('payment-methods');
         this.messageService.add({
           severity: 'info',
-          summary: 'Billing Management',
-          detail: 'Manage payment methods and billing information directly in this portal.'
+          summary: ApiMessages.SubscriptionPortalInfo.summary,
+          detail: ApiMessages.SubscriptionPortalInfo.detail
         });
       }
     });
@@ -707,8 +459,8 @@ export class SubscriptionComponent implements OnInit {
 
     this.messageService.add({
       severity: 'info',
-      summary: 'Preparing Invoice',
-      detail: `Fetching ${invoiceNum}...`
+      summary: ApiMessages.InvoicePreparing.summary,
+      detail: ApiMessages.InvoicePreparing.detail(invoiceNum)
     });
 
     this.subscriptionService.downloadInvoiceFile(targetId).subscribe({
@@ -723,15 +475,15 @@ export class SubscriptionComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.messageService.add({
           severity: 'success',
-          summary: 'Invoice Downloaded',
-          detail: `Invoice ${invoiceNum} downloaded successfully.`
+          summary: ApiMessages.InvoiceDownloaded.summary,
+          detail: ApiMessages.InvoiceDownloaded.detail(invoiceNum)
         });
       },
       error: () => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Download Failed',
-          detail: 'Unable to download tax invoice at this time.'
+          summary: ApiMessages.InvoiceDownloadFailed.summary,
+          detail: ApiMessages.InvoiceDownloadFailed.detail
         });
       }
     });
@@ -754,29 +506,29 @@ export class SubscriptionComponent implements OnInit {
           window.URL.revokeObjectURL(url);
           this.messageService.add({
             severity: 'success',
-            summary: 'Invoice Downloaded',
-            detail: 'Latest tax invoice downloaded successfully.'
+            summary: ApiMessages.InvoiceDownloaded.summary,
+            detail: ApiMessages.InvoiceDownloaded.detail('tax-invoice-latest')
           });
         },
         error: () => {
           this.messageService.add({
             severity: 'error',
-            summary: 'Download Failed',
-            detail: 'Unable to download tax invoice at this time.'
+            summary: ApiMessages.InvoiceDownloadFailed.summary,
+            detail: ApiMessages.InvoiceDownloadFailed.detail
           });
         }
       });
     }
   }
 
-  saveBillingSettings(): void {
+  saveBillingSettings(details: {
+    billingEmail: string;
+    companyLegalName: string;
+    taxId: string;
+    billingAddress: string;
+  }): void {
     this.isSavingSettings.set(true);
-    const payload: TenantBillingDetailsDto = {
-      billingEmail: this.billingEmail(),
-      companyLegalName: this.companyLegalName(),
-      taxId: this.taxId(),
-      billingAddress: this.billingAddress()
-    };
+    const payload: TenantBillingDetailsDto = details;
 
     this.subscriptionService.updateBillingDetails(payload).subscribe({
       next: (updated) => {
@@ -789,63 +541,32 @@ export class SubscriptionComponent implements OnInit {
         }
         this.messageService.add({
           severity: 'success',
-          summary: 'Settings Saved',
-          detail: 'Billing contact details and tax preferences updated successfully.'
+          summary: ApiMessages.BillingSettingsSaved.summary,
+          detail: ApiMessages.BillingSettingsSaved.detail
         });
       },
       error: () => {
         this.isSavingSettings.set(false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Save Failed',
-          detail: 'Failed to update billing details. Please try again.'
+          summary: ApiMessages.BillingSettingsSaveFailed.summary,
+          detail: ApiMessages.BillingSettingsSaveFailed.detail
         });
       }
     });
   }
 
-  submitSupportRequest(): void {
-    if (!this.supportMessage().trim()) return;
-    this.isSubmittingSupport.set(true);
+  submitSupportRequest(req: { subject: string; message: string }): void {
+    if (!req.message.trim()) return;
+    this.isUpdating.set(true);
     setTimeout(() => {
-      this.isSubmittingSupport.set(false);
+      this.isUpdating.set(false);
       this.showSupportModal.set(false);
-      this.supportSubject.set('');
-      this.supportMessage.set('');
       this.messageService.add({
         severity: 'success',
-        summary: 'Message Received',
-        detail: 'Our dedicated enterprise billing team will contact you within 2 business hours.'
+        summary: ApiMessages.SupportRequestSubmitted.summary,
+        detail: ApiMessages.SupportRequestSubmitted.detail
       });
     }, 700);
-  }
-
-  formatPercent(current: number, max: number): string {
-    if (!max || max <= 0) return '0%';
-    if (current <= 0) return '0%';
-    const ratio = (current / max) * 100;
-    if (ratio < 0.01) return '< 0.01%';
-    if (ratio < 1) return ratio.toFixed(2) + '%';
-    return Math.round(ratio) + '%';
-  }
-
-  formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  }
-
-  getBarColorClass(percent: number): string {
-    if (percent >= 100) return 'bg-rose-500';
-    if (percent >= 80) return 'bg-amber-500';
-    return 'bg-linear-to-r from-primary-600 to-indigo-600';
-  }
-
-  getBadgeClass(percent: number): string {
-    if (percent >= 100) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20';
-    if (percent >= 80) return 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20';
-    return 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
   }
 }

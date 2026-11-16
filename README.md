@@ -44,7 +44,7 @@ flowchart TD
     subgraph Host ["API & BFF Host (Normora.Api)"]
         BFF["Duende BFF Middleware<br/>(HttpOnly, SameSite=Strict Cookies)"]
         TRM["TenantResolutionMiddleware<br/>(Cached Slug & RBAC Resolution)"]
-        Scalar["Scalar API Documentation<br/>(/scalar/v1)"]
+        Scalar["Scalar API Documentation<br/>(/scalar or /scalar/v1)"]
     end
 
     subgraph Modules ["Modular Monolith Bounded Contexts (server/Modules/)"]
@@ -187,7 +187,7 @@ To stop all containers without losing data volumes:
 |---|---|---|
 | **Client Application (Angular)** | `http://localhost:4200` | Main user and employer web portal |
 | **Backend API (.NET 10)** | `http://localhost:5000` | REST API, BFF endpoints, SignalR hubs |
-| **API Documentation (Scalar)** | `http://localhost:5000/scalar/v1` | Interactive OpenAPI / Scalar documentation |
+| **API Documentation (Scalar)** | `http://localhost:5000/scalar/v1` (or `/scalar`) | Interactive OpenAPI / Scalar documentation |
 | **Keycloak Admin Console** | `http://localhost:8080` | `admin` / `admin` (IAM realm management) |
 | **MinIO Console** | `http://localhost:9001` | `minioadmin` / `minioadmin` (S3 object browser) |
 | **pgAdmin (PostgreSQL UI)** | `http://localhost:5050` | `admin@normora.local` / `admin` |

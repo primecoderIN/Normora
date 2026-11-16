@@ -1,0 +1,111 @@
+<div class="space-y-6">
+  <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">Billing Settings &amp; Invoicing Details</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+          Configure company legal name, tax identification (GSTIN/VAT), and billing notification recipients.
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="onBackToOverview.emit()"
+        class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline self-start sm:self-auto cursor-pointer">
+        <i class="pi pi-arrow-left text-[10px]"></i>
+        <span>Back to Overview</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <!-- Billing Email -->
+      <div class="space-y-1.5">
+        <label for="billing-email-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+          Billing Email Address
+        </label>
+        <input
+          id="billing-email-input"
+          type="email"
+          [ngModel]="emailField()"
+          (ngModelChange)="emailField.set($event)"
+          placeholder="billing@yourcompany.com"
+          class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+        <p class="text-[11px] text-slate-400">All recurring payment invoices will be automatically dispatched to this address.</p>
+      </div>
+
+      <!-- Company Legal Name -->
+      <div class="space-y-1.5">
+        <label for="company-legal-name-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+          Organization Legal Name
+        </label>
+        <input
+          id="company-legal-name-input"
+          type="text"
+          [ngModel]="nameField()"
+          (ngModelChange)="nameField.set($event)"
+          placeholder="e.g. Normora Technologies Pvt Ltd"
+          class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+        <p class="text-[11px] text-slate-400">Printed on official tax receipts and legal invoices.</p>
+      </div>
+
+      <!-- Tax ID / GSTIN -->
+      <div class="space-y-1.5">
+        <label for="tax-id-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+          Tax ID / GSTIN / VAT Number
+        </label>
+        <input
+          id="tax-id-input"
+          type="text"
+          [ngModel]="taxIdField()"
+          (ngModelChange)="taxIdField.set($event)"
+          placeholder="e.g. 29ABCDE1234F1Z5"
+          class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+        <p class="text-[11px] text-slate-400">Used for input tax credit claims.</p>
+      </div>
+
+      <!-- Billing Address -->
+      <div class="space-y-1.5">
+        <label for="billing-address-input" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+          Registered Billing Address
+        </label>
+        <input
+          id="billing-address-input"
+          type="text"
+          [ngModel]="addressField()"
+          (ngModelChange)="addressField.set($event)"
+          placeholder="Street, City, Postal Code, Country"
+          class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+      </div>
+    </div>
+
+    <div class="pt-2">
+      <button
+        type="button"
+        (click)="save()"
+        [disabled]="isSavingSettings()"
+        class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 shadow-xs transition-all cursor-pointer disabled:opacity-50">
+        @if (isSavingSettings()) {
+          <i class="pi pi-spin pi-spinner mr-2"></i>
+          <span>Saving Changes...</span>
+        } @else {
+          <span>Save Invoicing Settings</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Danger Zone: Cancellation -->
+  <div class="rounded-3xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 p-6 sm:p-7 shadow-xs space-y-4">
+    <div>
+      <h3 class="text-base font-bold text-rose-900 dark:text-rose-200 m-0">Subscription Cancellation</h3>
+      <p class="text-xs text-rose-800/80 dark:text-rose-300/80 m-0 mt-0.5">
+        Cancelling your subscription will schedule reversion to the Free Starter plan at the end of your billing cycle.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="onOpenCancelModal.emit()"
+      class="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs cursor-pointer">
+      Request Subscription Cancellation
+    </button>
+  </div>
+</div>

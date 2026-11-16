@@ -799,6 +799,13 @@ Following a comprehensive senior architectural audit, the codebase implements st
   - Route guards (`workspace.guard.ts`, `role.guard.ts`) strictly type user profiles using `CurrentUser` and `UserTenantMembership`.
   - Paginated list components use typed `PagedResult<T>` and PrimeNG `PaginatorState`.
   - UI reactive state uses Angular Signals (`signal`, `computed`) and eliminates nested RxJS subscriptions.
+- **Eradication of God Components & Strict SRP (Single Responsibility Principle)**:
+  - Decomposed oversized legacy monolithic components into modular subcomponents (e.g. `SubscriptionComponent` reduced from ~2,100 lines down to a lean coordinator by extracting `SubscriptionOverviewComponent`, `SubscriptionInvoicesComponent`, `SubscriptionPaymentMethodsComponent`, `SubscriptionSettingsComponent`, and `SubscriptionModalsComponent`).
+  - Separated domain configuration and browser runtime detection into standalone helpers (`subscription-currency.helper.ts`, `subscription-plans.helper.ts`).
+  - Modularized `CopilotSidebarComponent` by extracting `CopilotHistoryComponent`, `CopilotInputComponent`, and delegating route-based context perception to `CopilotContextService`.
+- **DRY Unification of Server-Sent Events (SSE) Streaming & Message Rendering**:
+  - Centralized real-time byte stream reading across Copilot and conversation views into `ConversationStreamService`, eliminating duplicate SSE buffer assembly and JSON decoding.
+  - Promoted `ChatMessageBubbleComponent` to `@shared/components/chat-message-bubble/` as the single canonical renderer for user/assistant chat bubbles, autonomous tool chips, citations, A2UI action cards, and markdown rendering across the entire client.
 
 ## Deployment Topology & Operational Architecture
 

@@ -32,6 +32,7 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] **Architecture Boundary Fitness Tests**: Added xUnit architecture tests in `ModularMonolithArchitectureTests.cs` verifying that business modules do not reference each other, worker does not reference the API host, business modules contain no vendor provider adapters, and all external providers are owned by `Normora.Infrastructure`.
 
 ## ✅ Completed Enterprise Architecture Hardening & Security Audit Remediation
+- [x] **Scalar OpenAPI Endpoint Alignment & Port Parity**: Aligned `launchSettings.json` to port `5000` (`http://localhost:5000`) to match `docker-compose.yml`, Keycloak redirect URIs, and Angular proxy configuration; added automatic HTTP 302 redirect from `/scalar` to `/scalar/v1` in `Normora.Api/Program.cs`.
 - [x] **Middleware Pipeline & Identity Resolution**: Corrected pipeline execution order in `Normora.Api/Program.cs` so `UseRateLimiter()` executes strictly after `UseAuthentication()` and `UseBff()`, enabling user claim (`sub`) rate-limiting partitioning and preventing global DoS.
 - [x] **Broken Function Level Authorization (BFLA) Defense**: Enforced direct tier upgrade guards in `UpdateTenantPlanTierCommandHandler.cs` to prevent unauthorized self-escalation to `Pro`/`Enterprise` tiers without payment gateway checkout.
 - [x] **Open Redirect Defense**: Implemented URI scheme, host domain matching, and relative path verification in `CreateCustomerPortalSessionCommandHandler.cs`.
@@ -100,6 +101,31 @@ This document tracks all features, infrastructure, and tasks that have been succ
 - [x] **Compilation & Integrity Verification**:
   - Verified 100% green compilation with 0 errors across `server/Normora.slnx` (`dotnet build`).
   - Verified 100% clean production build with 0 errors across `client` (`npm run build`).
+
+## ✅ Completed Frontend God-File Elimination, DRY & SRP Refactoring
+- [x] **Decomposition of Subscription God Component**:
+  - Sliced `subscription.component.html` (1,291 lines) and `subscription.component.ts` (787 lines) into dedicated, single-responsibility subcomponents:
+    - `SubscriptionOverviewComponent`: Resource utilization gauges, active plan card, tier comparisons, billing cycle toggle, currency selector.
+    - `SubscriptionInvoicesComponent`: Unified billing transaction history and downloadable PDF tax invoice cards.
+    - `SubscriptionPaymentMethodsComponent`: Card payment methods, primary method badge, and secure vault entry.
+    - `SubscriptionSettingsComponent`: Company legal name, tax identification (GSTIN/VAT), billing email, and address form.
+    - `SubscriptionModalsComponent`: Resource quota breakdown, downgrade confirmation, cancellation flow, and enterprise support concierge request dialogs.
+    - `subscription-currency.helper.ts` & `subscription-plans.helper.ts`: Pure helper functions for currency tables, browser timezone detection, and tier matrix factories.
+  - Reduced main `SubscriptionComponent` into a lean coordinator orchestrating routing tabs and signal-based inputs/outputs.
+- [x] **Centralized Server-Sent Events (SSE) Stream Engine (`ConversationStreamService`)**:
+  - Extracted shared SSE streaming logic (`ConversationStreamService`) to eliminate ~300 lines of duplicate fetch and buffer decoding code between `CopilotService` and `Conversations`.
+  - Provides uniform event handling for `status`, `citations`, `tool_started`, `tool_completed`, `token`/`text`, `action_card`, and `done`/`finished` events with centralized rate-limit (429) and permission (403) handling.
+- [x] **Omnipresent Copilot Modularization**:
+  - Decomposed `CopilotSidebarComponent` (768 lines with inline template) by extracting:
+    - `CopilotHistoryComponent`: Past conversation threads drawer, search filter, new thread creation, and thread deletion.
+    - `CopilotInputComponent`: Chat input composer with auto-resize textarea, send triggers, and keyboard shortcuts.
+    - `CopilotContextService`: Extracted AG-UI route perception, active persona management, and contextual prompt suggestions out of `CopilotService`.
+- [x] **Single-Source Chat Message Bubble (`ChatMessageBubbleComponent`)**:
+  - Promoted `ChatMessageBubbleComponent` to `@shared/components/chat-message-bubble/` to serve as the unified renderer for user and assistant messages, autonomous agent tool chips, source citation pills, A2UI action cards, feedback rating, and markdown rendering across both full-page conversations and the Copilot drawer.
+- [x] **Zero Magic Strings Alignment**:
+  - Integrated all subscription downgrade, invoice preparation/download, and support request feedback messages into `ApiMessages` constants in `client/src/app/core/constants/api-messages.ts`.
+- [x] **100% Clean Angular Build**:
+  - Verified production bundle compilation with `npm run build` (`dist/client` generated with zero errors).
 
 ## ✅ Completed Refactoring & Code Organization
 - [x] Flattened backend directory structure (removed redundant `src` folder from `server`)

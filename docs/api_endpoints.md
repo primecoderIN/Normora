@@ -212,8 +212,8 @@ Implements the standard JSON-RPC 2.0 Model Context Protocol (specification v2024
 ## 📘 OpenAPI Documentation (Scalar UI)
 
 Normora automatically generates full OpenAPI (Swagger) specifications for all endpoints. 
-You can view the beautifully rendered interactive API documentation by navigating to:
-`http://localhost:5000/scalar` (or `/scalar` in production).
+You can view the beautifully rendered interactive API documentation in development mode by navigating to:
+`http://localhost:5000/scalar/v1` (or `http://localhost:5000/scalar`, which redirects to `/scalar/v1`).
 
 The documentation includes:
 - Request/Response JSON schemas mapped strictly to the `ApiResponse<T>` wrapper.

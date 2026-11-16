@@ -162,6 +162,42 @@ export const ApiMessages = {
   ExtractionServiceNotConfigured: 'Document processing requires an AI extraction service to be configured.',
   CopilotUnavailable: 'Copilot is unavailable in this workspace.',
   CopilotStreamFailed: 'Failed to stream response from Copilot. Please try again.',
-  CopilotRateLimited: 'You are sending messages too fast. Please wait a moment and try again.'
+  CopilotRateLimited: 'You are sending messages too fast. Please wait a moment and try again.',
+  SubscriptionDowngradeSuccess: {
+    summary: 'Plan Updated',
+    detail: (tier: string) => `Workspace plan successfully adjusted to ${tier}.`
+  },
+  SubscriptionDowngradeFailed: {
+    summary: 'Update Failed',
+    detail: 'Unable to downgrade plan at this time. Please contact support.'
+  },
+  SubscriptionPortalInfo: {
+    summary: 'Billing Management',
+    detail: 'Manage payment methods and billing information directly in this portal.'
+  },
+  InvoicePreparing: {
+    summary: 'Preparing Invoice',
+    detail: (num: string) => `Fetching ${num}...`
+  },
+  InvoiceDownloaded: {
+    summary: 'Invoice Downloaded',
+    detail: (num: string) => `Invoice ${num} downloaded successfully.`
+  },
+  InvoiceDownloadFailed: {
+    summary: 'Download Failed',
+    detail: 'Unable to download tax invoice at this time.'
+  },
+  BillingSettingsSaved: {
+    summary: 'Settings Saved',
+    detail: 'Billing contact details and tax preferences updated successfully.'
+  },
+  BillingSettingsSaveFailed: {
+    summary: 'Save Failed',
+    detail: 'Failed to update billing details. Please try again.'
+  },
+  SupportRequestSubmitted: {
+    summary: 'Message Received',
+    detail: 'Our dedicated enterprise billing team will contact you within 2 business hours.'
+  }
 } as const;
 

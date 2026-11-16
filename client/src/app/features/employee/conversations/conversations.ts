@@ -18,6 +18,7 @@ import { ConversationChatComponent } from './components/conversation-chat.compon
 import { UserService } from '@core/services/user.service';
 import { CopilotService, AgentLiveStatus } from '@core/services/copilot.service';
 import { RealtimeStateService } from '@core/services/realtime-state.service';
+import { ConversationStreamService } from '@core/services/conversation-stream.service';
 
 @Component({
   selector: 'app-conversations',
@@ -69,6 +70,7 @@ export class Conversations implements OnInit, AfterViewChecked {
   private userService = inject(UserService);
   public copilotService = inject(CopilotService);
   private realtimeStateService = inject(RealtimeStateService);
+  private streamService = inject(ConversationStreamService);
   @ViewChild(ConversationChatComponent) private chatComponent!: ConversationChatComponent;
 
   // ─── State ────────────────────────────────────────────────────────────────
@@ -266,231 +268,153 @@ export class Conversations implements OnInit, AfterViewChecked {
     this.shouldScrollToBottom = true;
 
     try {
-      const tenantId = this.userService.activeTenantId() || this.userService.activeTenant()?.tenantId;
-
-      // Duende BFF & Multi-Tenant Request Headers:
-      // - X-CSRF: 1: Mandatory anti-forgery header for Duende BFF on mutating POST endpoints.
-      // - X-Tenant-Id: Explicitly specifies the active workspace context for ambient tenant resolution.
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'X-CSRF': '1'
-      };
-      if (tenantId) {
-        headers['X-Tenant-Id'] = tenantId;
-      }
-
-      // Native Fetch for Readable Streams (Server-Sent Events):
-      // Angular's HttpClient buffers HTTP responses by default; native fetch with response.body.getReader()
-      // is required to process real-time token chunks incrementally as they are flushed by the backend.
-      const response = await fetch(`${this.conversationService.baseUrl}/${conversationId}/messages/stream`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ question: text, limit: 5 })
-      });
-
-      // HTTP Error Handling & Rate Limiting Toasts:
-      // Maps HTTP 429 to friendly backoff message and 403 to permission denial alerts.
-      if (!response.ok) {
-        const errorBody = await response.text().catch(() => '');
-        throw new Error(
-          response.status === 429
-            ? 'You are sending messages too fast. Please wait a moment.'
-            : response.status === 403
-            ? 'You do not have permission to ask questions in this workspace.'
-            : `Server error (${response.status}). Please try again.`
-        );
-      }
-
-      // SSE Chunk Stream Processing:
-      // Uses TextDecoder to assemble byte buffers across network packet boundaries,
-      // splitting by standard SSE double newlines ("\n\n").
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      
       let assistantMsg: MessageDto | null = null;
-      let buffer = '';
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      const ensureAssistantMsg = () => {
+        if (!assistantMsg) {
+          assistantMsg = {
+            id: crypto.randomUUID(),
+            role: 'Assistant',
+            content: '',
+            createdAt: new Date().toISOString(),
+            rewritten: false,
+            citations: [],
+            tools: []
+          };
+          this.activeConversation.update(c => c ? { ...c, messages: [...c.messages, { ...assistantMsg! }] } : c);
+          this.shouldScrollToBottom = true;
+        }
+      };
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n\n');
-          buffer = lines.pop() || '';
+      const syncAssistantMsg = () => {
+        if (assistantMsg) {
+          this.activeConversation.update(c => {
+            if (!c) return c;
+            const exists = c.messages.some(m => m.id === assistantMsg!.id);
+            if (!exists) return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
+            return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
+          });
+          this.shouldScrollToBottom = true;
+        }
+      };
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.substring(6);
-              try {
-                const evt = JSON.parse(jsonStr);
-                
-                // Event 0: AgentStatusEvent
-                if (evt.type === 'status') {
-                  this.currentLiveStatus.set({
-                    stage: evt.stage,
-                    message: evt.message,
-                    toolName: evt.toolName,
-                    detail: evt.detail
-                  });
-                } else if (evt.type === 'citations') {
-                  assistantMsg = {
-                    id: evt.assistantMessageId,
-                    role: 'Assistant',
-                    content: '',
-                    createdAt: new Date().toISOString(),
-                    rewritten: false,
-                    citations: (evt.sources ?? []).map((s: { documentId: string; documentChunkId?: string; fileName: string; score: number }) => ({
-                      documentId: s.documentId,
-                      documentChunkId: s.documentChunkId || '',
-                      fileName: s.fileName,
-                      score: s.score
-                    })),
-                    tools: []
-                  };
-                } else if (evt.type === 'tool_started') {
-                  if (evt.label) {
-                    this.currentLiveStatus.set({
-                      stage: 'tool_calling',
-                      message: evt.label,
-                      toolName: evt.toolName
-                    });
-                  }
-                  if (!assistantMsg) {
-                    assistantMsg = {
-                      id: crypto.randomUUID(),
-                      role: 'Assistant',
-                      content: '',
-                      createdAt: new Date().toISOString(),
-                      rewritten: false,
-                      citations: [],
-                      tools: []
-                    };
-                  }
-                  if (!assistantMsg.tools) assistantMsg.tools = [];
-                  const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
-                  if (existing) {
-                    existing.status = 'running';
-                    if (evt.label) existing.label = evt.label;
-                  } else {
-                    assistantMsg.tools = [
-                      ...assistantMsg.tools,
-                      {
-                        toolName: evt.toolName,
-                        toolCallId: evt.toolCallId,
-                        status: 'running',
-                        label: evt.label
-                      }
-                    ];
-                  }
-                  this.activeConversation.update(c => {
-                    if (!c) return c;
-                    const exists = c.messages.some(m => m.id === assistantMsg!.id);
-                    if (!exists) return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
-                    return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
-                  });
-                  this.shouldScrollToBottom = true;
-                } else if (evt.type === 'tool_finished') {
-                  if (evt.summary) {
-                    this.currentLiveStatus.set({
-                      stage: 'tool_evaluating',
-                      message: `Synthesizing results from ${evt.summary}...`,
-                      toolName: evt.toolName
-                    });
-                  }
-                  if (assistantMsg) {
-                    if (!assistantMsg.tools) assistantMsg.tools = [];
-                    const existing = assistantMsg.tools.find(t => t.toolCallId === evt.toolCallId);
-                    if (existing) {
-                      existing.status = evt.success ? 'completed' : 'failed';
-                      existing.summary = evt.summary;
-                    } else {
-                      assistantMsg.tools = [
-                        ...assistantMsg.tools,
-                        {
-                          toolName: evt.toolName,
-                          toolCallId: evt.toolCallId,
-                          status: evt.success ? 'completed' : 'failed',
-                          summary: evt.summary
-                        }
-                      ];
-                    }
-                    this.activeConversation.update(c => {
-                      if (!c) return c;
-                      const exists = c.messages.some(m => m.id === assistantMsg!.id);
-                      if (!exists) return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
-                      return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
-                    });
-                    this.shouldScrollToBottom = true;
-                  }
-                } else if (evt.type === 'action_card') {
-                  if (!assistantMsg) {
-                    assistantMsg = {
-                      id: crypto.randomUUID(),
-                      role: 'Assistant',
-                      content: '',
-                      createdAt: new Date().toISOString(),
-                      rewritten: false,
-                      citations: [],
-                      tools: []
-                    };
-                  }
-                  assistantMsg.actionCard = {
-                    actionType: evt.actionType,
-                    cardType: evt.actionType,
-                    title: evt.title,
-                    description: evt.description,
-                    parameters: evt.parameters || {},
-                    confirmButtonText: evt.confirmButtonText,
-                    cancelButtonText: evt.cancelButtonText,
-                    approvalId: evt.approvalId
-                  };
-                  this.activeConversation.update(c => {
-                    if (!c) return c;
-                    const exists = c.messages.some(m => m.id === assistantMsg!.id);
-                    if (!exists) return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
-                    return { ...c, messages: c.messages.map(m => (m.id === assistantMsg!.id ? { ...assistantMsg! } : m)) };
-                  });
-                  this.shouldScrollToBottom = true;
-                } else if (evt.type === 'state_snapshot') {
-                  this.realtimeStateService.handleStateSnapshot(evt.dataVersion);
-                } else if (evt.type === 'text') {
-                  this.currentLiveStatus.set(null);
-                  // Event 2: TextChunkEvent
-                  // Incrementally append new text tokens to assistantMsg.content
-                  // and update the reactive Signal in-place to trigger partial DOM re-renders.
-                  if (assistantMsg) {
-                    assistantMsg.content += evt.text;
-                    this.activeConversation.update(c => {
-                      if (!c) return c;
-                      const exists = c.messages.some(m => m.id === assistantMsg!.id);
-                      if (!exists) {
-                        return { ...c, messages: [...c.messages, { ...assistantMsg! }] };
-                      }
-                      const newMessages = [...c.messages];
-                      const idx = newMessages.findIndex(m => m.id === assistantMsg!.id);
-                      if (idx >= 0) newMessages[idx] = { ...assistantMsg! };
-                      return { ...c, messages: newMessages };
-                    });
-                    this.shouldScrollToBottom = true;
-                  }
-                } else if (evt.type === 'finished') {
-                  // Event 3: StreamFinishedEvent
-                  // Stream generation completed; title may have been asynchronously updated.
-                }
-              } catch (e) {
-                console.error('Failed to parse SSE chunk', e);
-              }
+      await this.streamService.streamMessage(
+        {
+          conversationId,
+          question: text,
+          limit: 5
+        },
+        {
+          onStatus: (status) => {
+            this.currentLiveStatus.set({
+              stage: status.stage as AgentLiveStatus['stage'],
+              message: status.message,
+              toolName: status.toolName,
+              detail: status.detail
+            });
+          },
+          onCitations: (data) => {
+            assistantMsg = {
+              id: data.assistantMessageId,
+              role: 'Assistant',
+              content: assistantMsg?.content || '',
+              createdAt: new Date().toISOString(),
+              rewritten: false,
+              citations: data.sources,
+              tools: assistantMsg?.tools || []
+            };
+            syncAssistantMsg();
+          },
+          onToolStarted: (tool) => {
+            if (tool.label) {
+              this.currentLiveStatus.set({
+                stage: 'tool_calling',
+                message: tool.label,
+                toolName: tool.toolName
+              });
             }
+            ensureAssistantMsg();
+            if (!assistantMsg!.tools) assistantMsg!.tools = [];
+            const existing = assistantMsg!.tools.find(t => t.toolCallId === tool.toolCallId);
+            if (existing) {
+              existing.status = 'running';
+              if (tool.label) existing.label = tool.label;
+            } else {
+              assistantMsg!.tools = [
+                ...assistantMsg!.tools,
+                {
+                  toolName: tool.toolName || 'tool',
+                  toolCallId: tool.toolCallId || crypto.randomUUID(),
+                  status: 'running',
+                  label: tool.label
+                }
+              ];
+            }
+            syncAssistantMsg();
+          },
+          onToolCompleted: (tool) => {
+            if (tool.summary) {
+              this.currentLiveStatus.set({
+                stage: 'tool_evaluating',
+                message: `Synthesizing results from ${tool.summary}...`,
+                toolName: tool.toolName
+              });
+            }
+            if (tool.changedData) {
+              this.realtimeStateService.notifyDataChanged();
+            }
+            if (assistantMsg) {
+              if (!assistantMsg.tools) assistantMsg.tools = [];
+              const existing = assistantMsg.tools.find(t => t.toolCallId === tool.toolCallId);
+              if (existing) {
+                existing.status = tool.success ? 'completed' : 'failed';
+                existing.summary = tool.summary;
+              } else {
+                assistantMsg.tools = [
+                  ...assistantMsg.tools,
+                  {
+                    toolName: tool.toolName || 'tool',
+                    toolCallId: tool.toolCallId,
+                    status: tool.success ? 'completed' : 'failed',
+                    summary: tool.summary
+                  }
+                ];
+              }
+              syncAssistantMsg();
+            }
+          },
+          onActionCard: (card) => {
+            ensureAssistantMsg();
+            assistantMsg!.actionCard = {
+              actionType: card.actionType,
+              cardType: card.cardType || card.actionType,
+              title: card.title,
+              description: card.description,
+              parameters: card.parameters || {},
+              confirmButtonText: card.confirmButtonText,
+              cancelButtonText: card.cancelButtonText,
+              approvalId: card.approvalId
+            };
+            syncAssistantMsg();
+          },
+          onToken: (chunk) => {
+            ensureAssistantMsg();
+            this.currentLiveStatus.set(null);
+            assistantMsg!.content += chunk;
+            syncAssistantMsg();
+          },
+          onDone: () => {
+            this.currentLiveStatus.set(null);
+          },
+          onError: (errMsg) => {
+            this.chatError.set(errMsg);
           }
         }
-      }
+      );
 
       // Re-fetch conversation roster to synchronize the auto-generated title
       this.loadConversations();
     } catch (err: unknown) {
-      // Optimistic Rollback on Network Failure:
-      // If the stream request fails, remove the optimistic user message bubble and display the error banner.
       const errorMsg = err instanceof Error ? err.message : 'Something went wrong while streaming the response.';
       this.chatError.set(errorMsg);
       this.activeConversation.update(c =>

@@ -1,23 +1,18 @@
 import {
   Component,
   inject,
-  signal,
-  computed,
   ViewChild,
   ElementRef,
   AfterViewChecked,
   HostListener
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { DsTooltipDirective } from '@design-system';
 import { CopilotService } from '@core/services/copilot.service';
-import { MarkdownSanitizerService } from '@core/services/markdown-sanitizer.service';
-import { ActionCardDto, ConversationService } from '@core/services/conversation.service';
 import { ChunkPreviewDrawerComponent } from '../chunk-preview-drawer/chunk-preview-drawer.component';
-import { ExpenseSimulatorCardComponent } from '../a2ui/expense-simulator-card.component';
-import { HrEscalationCardComponent } from '../a2ui/hr-escalation-card.component';
-import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
+import { ChatMessageBubbleComponent } from '../chat-message-bubble/chat-message-bubble.component';
+import { CopilotHistoryComponent } from './components/copilot-history.component';
+import { CopilotInputComponent } from './components/copilot-input.component';
 
 /**
  * Omnipresent Copilot Sidebar component implementing the CopilotKit / AG-UI architecture.
@@ -28,13 +23,12 @@ import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
   selector: 'app-copilot-sidebar',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    DsTooltipDirective, 
+    CommonModule,
+    DsTooltipDirective,
     ChunkPreviewDrawerComponent,
-    ExpenseSimulatorCardComponent,
-    HrEscalationCardComponent,
-    IntakeFormCardComponent
+    ChatMessageBubbleComponent,
+    CopilotHistoryComponent,
+    CopilotInputComponent
   ],
   template: `
     <!-- Floating Copilot Launch Trigger Pill -->
@@ -82,120 +76,42 @@ import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
     >
       <!-- History Drawer (Always visible in expanded mode, toggleable in docked mode) -->
       @if (copilotService.isExpanded() || copilotService.showHistoryPane()) {
-        <div class="w-64 sm:w-72 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 flex flex-col h-full transition-all">
-          <!-- History Header -->
-          <div class="flex items-center justify-between p-3.5 border-b border-slate-200/80 dark:border-slate-800">
-            <div class="flex items-center gap-2">
-              <i class="pi pi-history text-primary-600 text-xs"></i>
-              <span class="text-xs font-bold text-slate-800 dark:text-white">Past Threads</span>
-            </div>
-            <button
-              type="button"
-              (click)="resetThread()"
-              class="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-2xs cursor-pointer transition-all"
-            >
-              <i class="pi pi-plus text-[10px]"></i>
-              <span>New</span>
-            </button>
-          </div>
-
-          <!-- Search Threads -->
-          <div class="p-2.5 border-b border-slate-200/60 dark:border-slate-800/80">
-            <div class="relative flex items-center">
-              <i class="pi pi-search absolute left-2.5 text-[11px] text-slate-400"></i>
-              <input
-                type="text"
-                [ngModel]="searchHistoryTerm()"
-                (ngModelChange)="searchHistoryTerm.set($event)"
-                placeholder="Search threads..."
-                class="w-full pl-7 pr-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-primary-500 transition-all"
-              />
-            </div>
-          </div>
-
-          <!-- Threads List -->
-          <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-            @if (copilotService.isLoadingHistory() && copilotService.conversations().length === 0) {
-              <div class="flex items-center justify-center py-8 text-xs text-slate-400 gap-2">
-                <i class="pi pi-spin pi-spinner text-primary-500"></i>
-                <span>Loading threads...</span>
-              </div>
-            } @else if (filteredConversations().length === 0) {
-              <div class="text-center py-8 px-4 text-xs text-slate-400">
-                <i class="pi pi-comments text-lg block mb-1 text-slate-300 dark:text-slate-600"></i>
-                <span>No conversation threads found.</span>
-              </div>
-            } @else {
-              @for (conv of filteredConversations(); track conv.id) {
-                <div
-                  (click)="selectThread(conv.id)"
-                  class="group flex items-center justify-between p-2.5 rounded-xl text-xs transition-all cursor-pointer border"
-                  [class.bg-white]="copilotService.activeConversationId() === conv.id"
-                  [class.dark:bg-slate-900]="copilotService.activeConversationId() === conv.id"
-                  [class.border-primary-500]="copilotService.activeConversationId() === conv.id"
-                  [class.shadow-2xs]="copilotService.activeConversationId() === conv.id"
-                  [class.text-primary-700]="copilotService.activeConversationId() === conv.id"
-                  [class.dark:text-primary-300]="copilotService.activeConversationId() === conv.id"
-                  [class.border-transparent]="copilotService.activeConversationId() !== conv.id"
-                  [class.hover:bg-slate-100]="copilotService.activeConversationId() !== conv.id"
-                  [class.dark:hover:bg-slate-800/60]="copilotService.activeConversationId() !== conv.id"
-                  [class.text-slate-700]="copilotService.activeConversationId() !== conv.id"
-                  [class.dark:text-slate-300]="copilotService.activeConversationId() !== conv.id"
-                >
-                  <div class="min-w-0 flex-1 pr-1.5">
-                    <p class="font-medium truncate m-0">{{ conv.title || 'Conversation' }}</p>
-                    <span class="text-[10px] text-slate-400 block mt-0.5">{{ formatRelativeTime(conv.lastMessageAt || conv.createdAt) }}</span>
-                  </div>
-                  <button
-                    type="button"
-                    (click)="deleteThread($event, conv.id)"
-                    [dsTooltip]="'Delete thread'"
-                    dsTooltipPosition="left"
-                    class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-all cursor-pointer shrink-0"
-                  >
-                    <i class="pi pi-trash text-[11px]"></i>
-                  </button>
-                </div>
-              }
-            }
-          </div>
-        </div>
+        <app-copilot-history
+          [conversations]="copilotService.conversations()"
+          [activeConversationId]="copilotService.activeConversationId()"
+          [isLoadingHistory]="copilotService.isLoadingHistory()"
+          (onSelectThread)="selectThread($event)"
+          (onDeleteThread)="deleteThread($event)"
+          (onNewThread)="resetThread()"
+        />
       }
 
-      <!-- Main Chat Experience Pane -->
-      <div class="flex-1 flex flex-col h-full min-w-0 bg-white dark:bg-slate-900">
+      <!-- Main Copilot Chat Area -->
+      <div class="flex-1 flex flex-col h-full min-w-0">
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 backdrop-blur-sm shrink-0">
+        <div class="flex items-center justify-between p-3.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
           <div class="flex items-center gap-2.5 min-w-0">
-            <!-- History Toggle Button in Docked Mode -->
+            <!-- History Toggle Button (Docked Mode) -->
             @if (!copilotService.isExpanded()) {
               <button
                 type="button"
                 (click)="copilotService.toggleHistoryPane()"
-                [dsTooltip]="copilotService.showHistoryPane() ? 'Hide past threads' : 'Past threads'"
+                [dsTooltip]="copilotService.showHistoryPane() ? 'Hide past threads' : 'Show past threads'"
                 dsTooltipPosition="bottom"
-                class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
-                [class.text-primary-600]="copilotService.showHistoryPane()"
-                [class.bg-primary-50]="copilotService.showHistoryPane()"
-                [class.dark:bg-primary-950/40]="copilotService.showHistoryPane()"
-                [class.text-slate-400]="!copilotService.showHistoryPane()"
-                [class.hover:text-slate-700]="!copilotService.showHistoryPane()"
-                [class.dark:hover:text-slate-200]="!copilotService.showHistoryPane()"
-                [class.hover:bg-slate-200/50]="!copilotService.showHistoryPane()"
-                [class.dark:hover:bg-slate-800]="!copilotService.showHistoryPane()"
+                class="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer shrink-0"
               >
                 <i class="pi pi-history text-xs"></i>
               </button>
             }
 
-            <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-linear-to-br from-primary-500 to-indigo-600 text-white shadow-sm shrink-0">
-              <i class="pi pi-sparkles text-sm"></i>
+            <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-linear-to-br from-primary-600 to-indigo-600 text-white shrink-0 shadow-xs">
+              <i class="pi pi-sparkles text-xs"></i>
             </div>
+
             <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Normora Copilot</span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-900 dark:text-white truncate">Normora Copilot</span>
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 border border-primary-200/60 dark:border-primary-800/60 shrink-0">
                   AI
                 </span>
               </div>
@@ -270,269 +186,73 @@ import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
           }
         </div>
 
-      <!-- Messages Scroll Area -->
-      <div
-        #messageFeed
-        class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50/40 dark:bg-slate-950/30"
-      >
-        <!-- Empty State with Contextual Suggestions -->
-        @if (copilotService.messages().length === 0) {
-          <div class="flex flex-col items-center justify-center text-center py-8 px-2 space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-linear-to-br from-primary-500/20 to-indigo-500/20 border border-primary-500/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-inner">
-              <i class="pi pi-bolt text-xl"></i>
-            </div>
-            <div>
-              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Workspace Intelligence</h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">
-                Ask questions grounded in company policies, documents, or current page context.
-              </p>
-            </div>
-
-            <!-- Contextual Quick-Prompt Chips -->
-            <div class="w-full space-y-2 text-left pt-2">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
-                Suggested for {{ copilotService.activeContext().pageTitle }}
+        <!-- Messages Scroll Area -->
+        <div
+          #messageFeed
+          class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50/40 dark:bg-slate-950/30"
+        >
+          <!-- Empty State with Contextual Suggestions -->
+          @if (copilotService.messages().length === 0) {
+            <div class="flex flex-col items-center justify-center text-center py-8 px-2 space-y-4">
+              <div class="w-12 h-12 rounded-2xl bg-linear-to-br from-primary-500/20 to-indigo-500/20 border border-primary-500/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-inner">
+                <i class="pi pi-bolt text-xl"></i>
               </div>
-              @for (prompt of copilotService.activeContext().suggestedPrompts; track prompt) {
-                <button
-                  type="button"
-                  (click)="submitPrompt(prompt)"
-                  class="w-full text-left p-2.5 rounded-xl text-xs font-medium bg-white dark:bg-slate-800/80 hover:bg-primary-50 dark:hover:bg-primary-950/40 border border-slate-200 dark:border-slate-700/70 hover:border-primary-300 dark:hover:border-primary-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs flex items-center justify-between group"
-                >
-                  <span class="truncate pr-2">{{ prompt }}</span>
-                  <i class="pi pi-arrow-right text-[10px] text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all shrink-0"></i>
-                </button>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Message Bubbles -->
-        @for (message of copilotService.messages(); track message.id) {
-          <div
-            class="flex flex-col gap-1.5"
-            [class.items-end]="message.role === 'User'"
-            [class.items-start]="message.role === 'Assistant'"
-          >
-            <!-- Bubble Content -->
-            <div
-              class="px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed wrap-break-word shadow-2xs"
-              [class.bg-primary-600]="message.role === 'User'"
-              [class.text-white]="message.role === 'User'"
-              [class.rounded-br-xs]="message.role === 'User'"
-              [class.max-w-[85%]]="message.role === 'User'"
-              [class.bg-white]="message.role === 'Assistant'"
-              [class.dark:bg-slate-800]="message.role === 'Assistant'"
-              [class.text-slate-800]="message.role === 'Assistant'"
-              [class.dark:text-slate-100]="message.role === 'Assistant'"
-              [class.border]="message.role === 'Assistant'"
-              [class.border-slate-200]="message.role === 'Assistant'"
-              [class.dark:border-slate-700]="message.role === 'Assistant'"
-              [class.rounded-bl-xs]="message.role === 'Assistant'"
-              [class.max-w-[92%]]="message.role === 'Assistant'"
-            >
-              @if (message.role === 'User') {
-                <p class="m-0 whitespace-pre-wrap">{{ message.content }}</p>
-              } @else {
-                <div class="prose-normora text-xs leading-relaxed" [innerHTML]="sanitizer.render(message.content, false)"></div>
-              }
-            </div>
-
-            <!-- Autonomous Agent Tool Chips -->
-            @if (message.role === 'Assistant' && message.tools && message.tools.length > 0) {
-              <div class="flex flex-wrap gap-1.5 px-1 max-w-[92%]">
-                @for (tool of message.tools; track tool.toolCallId) {
-                  <div
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium border shadow-2xs transition-all"
-                    [class.bg-primary-50]="tool.status === 'running'"
-                    [class.dark:bg-primary-950/40]="tool.status === 'running'"
-                    [class.text-primary-700]="tool.status === 'running'"
-                    [class.dark:text-primary-300]="tool.status === 'running'"
-                    [class.border-primary-200]="tool.status === 'running'"
-                    [class.dark:border-primary-800]="tool.status === 'running'"
-                    [class.bg-emerald-50]="tool.status === 'completed'"
-                    [class.dark:bg-emerald-950/30]="tool.status === 'completed'"
-                    [class.text-emerald-700]="tool.status === 'completed'"
-                    [class.dark:text-emerald-300]="tool.status === 'completed'"
-                    [class.border-emerald-200]="tool.status === 'completed'"
-                    [class.dark:border-emerald-800]="tool.status === 'completed'"
-                    [class.bg-amber-50]="tool.status === 'failed'"
-                    [class.dark:bg-amber-950/30]="tool.status === 'failed'"
-                    [class.text-amber-700]="tool.status === 'failed'"
-                    [class.dark:text-amber-300]="tool.status === 'failed'"
-                    [class.border-amber-200]="tool.status === 'failed'"
-                    [class.dark:border-amber-800]="tool.status === 'failed'"
-                  >
-                    @if (tool.status === 'running') {
-                      <i class="pi pi-spin pi-spinner text-[10px] text-primary-500"></i>
-                      <span>{{ tool.label || getToolLabel(tool.toolName) }}...</span>
-                    } @else if (tool.status === 'completed') {
-                      <i class="pi pi-check text-[10px] text-emerald-500"></i>
-                      <span>{{ tool.summary || getToolLabel(tool.toolName) }}</span>
-                    } @else {
-                      <i class="pi pi-exclamation-triangle text-[10px] text-amber-500"></i>
-                      <span>{{ tool.summary || 'Tool execution failed' }}</span>
-                    }
-                  </div>
-                }
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Workspace Intelligence</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">
+                  Ask questions grounded in company policies, documents, or current page context.
+                </p>
               </div>
-            }
 
-            <!-- Interactive A2UI Action Card -->
-            @if (message.role === 'Assistant' && message.actionCard && !message.actionCard.isDismissed) {
-              @if (message.actionCard.actionType === 'policy_limit_card' || message.actionCard.cardType === 'policy_limit_card') {
-                <app-expense-simulator-card [card]="message.actionCard" />
-              } @else if (message.actionCard.actionType === 'hr_escalation_card' || message.actionCard.cardType === 'hr_escalation_card') {
-                <app-hr-escalation-card [card]="message.actionCard" />
-              } @else if (message.actionCard.actionType === 'intake_form_card') {
-                <app-intake-form-card [card]="message.actionCard" />
-              } @else {
-                <div class="p-3 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 max-w-[92%] shadow-xs space-y-2">
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <div class="flex items-center justify-center w-5 h-5 rounded-md bg-primary-100 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 shrink-0">
-                        <i class="pi pi-bolt text-[10px]"></i>
-                      </div>
-                      <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ message.actionCard.title }}</span>
-                    </div>
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200/60 dark:border-primary-800/60 shrink-0">
-                      Action
-                    </span>
-                  </div>
-
-                  <p class="text-[11px] text-slate-600 dark:text-slate-300 m-0 leading-relaxed">{{ message.actionCard.description }}</p>
-
-                  @if (getParamEntries(message.actionCard.parameters).length > 0) {
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
-                      @for (param of getParamEntries(message.actionCard.parameters); track param.key) {
-                        <div class="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 text-[10px]">
-                          <span class="text-slate-400 dark:text-slate-500 block font-medium truncate">{{ param.key }}</span>
-                          <span class="text-slate-800 dark:text-slate-200 font-semibold break-all">{{ param.value }}</span>
-                        </div>
-                      }
-                    </div>
-                  }
-
-                  <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
-                    @if (message.actionCard.isConfirmed) {
-                      <div class="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        <i class="pi pi-check-circle text-xs"></i>
-                        <span>Confirmed & Executed</span>
-                      </div>
-                    } @else if (message.actionCard.isDismissed) {
-                      <div class="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                        <i class="pi pi-times-circle text-xs"></i>
-                        <span>Dismissed</span>
-                      </div>
-                    } @else {
-                      @if (message.actionCard.confirmButtonText) {
-                        <button
-                          type="button"
-                          [disabled]="message.actionCard.isExecuting"
-                          (click)="confirmAction(message.actionCard)"
-                          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary-600 hover:bg-primary-500 text-white transition-all cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          @if (message.actionCard.isExecuting) {
-                            <i class="pi pi-spin pi-spinner text-[10px]"></i>
-                          }
-                          <span>{{ message.actionCard.confirmButtonText }}</span>
-                        </button>
-                      }
-                      @if (message.actionCard.cancelButtonText) {
-                        <button
-                          type="button"
-                          [disabled]="message.actionCard.isExecuting"
-                          (click)="dismissAction(message.actionCard)"
-                          class="px-2 py-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {{ message.actionCard.cancelButtonText }}
-                        </button>
-                      }
-                      @if (message.actionCard.executionError) {
-                        <span class="text-[10px] text-red-500 dark:text-red-400 font-medium">
-                          {{ message.actionCard.executionError }}
-                        </span>
-                      }
-                    }
-                  </div>
+              <!-- Contextual Quick-Prompt Chips -->
+              <div class="w-full space-y-2 text-left pt-2">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                  Suggested for {{ copilotService.activeContext().pageTitle }}
                 </div>
-              }
-            }
-
-            <!-- Citations / Sources -->
-            @if (message.role === 'Assistant' && message.citations.length > 0) {
-              <div class="flex flex-wrap items-center gap-1.5 px-1 max-w-[92%]">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sources:</span>
-                @for (cite of message.citations; track cite.documentId + cite.fileName) {
+                @for (prompt of copilotService.activeContext().suggestedPrompts; track prompt) {
                   <button
                     type="button"
-                    (click)="openCitation(cite.documentChunkId)"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-primary-400 dark:hover:border-primary-500 text-slate-600 dark:text-slate-300 shadow-2xs max-w-44 truncate cursor-pointer transition-colors"
-                    [dsTooltip]="'Preview source chunk from ' + cite.fileName"
-                    dsTooltipPosition="top"
+                    (click)="submitPrompt(prompt)"
+                    class="w-full text-left p-2.5 rounded-xl text-xs font-medium bg-white dark:bg-slate-800/80 hover:bg-primary-50 dark:hover:bg-primary-950/40 border border-slate-200 dark:border-slate-700/70 hover:border-primary-300 dark:hover:border-primary-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs flex items-center justify-between group"
                   >
-                    <i class="pi pi-file-pdf text-[10px] text-primary-500 flex-none"></i>
-                    <span class="truncate">{{ cite.fileName }}</span>
-                    <span class="text-primary-600 dark:text-primary-400 font-bold flex-none">{{ (cite.score * 100).toFixed(0) }}%</span>
+                    <span class="truncate pr-2">{{ prompt }}</span>
+                    <i class="pi pi-arrow-right text-[10px] text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all shrink-0"></i>
                   </button>
                 }
               </div>
-            }
-          </div>
-        }
+            </div>
+          }
 
-        <!-- Streaming Indicator -->
-        @if (copilotService.isSending() && !isReceivingTokens()) {
-          <div class="flex items-center gap-2.5 px-3.5 py-2 bg-white dark:bg-slate-800 rounded-xl border border-primary-200/80 dark:border-primary-800/60 w-fit text-xs text-slate-700 dark:text-slate-300 shadow-2xs animate-pulse">
-            <i class="pi pi-spin pi-spinner text-primary-600 dark:text-primary-400"></i>
-            <span class="font-medium">{{ copilotService.currentLiveStatus()?.message || 'Thinking . . .' }}</span>
-          </div>
-        }
+          <!-- Message Bubbles (Reusing unified ChatMessageBubbleComponent) -->
+          @for (message of copilotService.messages(); track message.id) {
+            <app-chat-message-bubble
+              [message]="message"
+              (onPreviewCitation)="openCitation($event)"
+            />
+          }
 
-        <!-- Error Notification -->
-        @if (copilotService.error()) {
-          <div class="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-xs text-red-700 dark:text-red-400 flex items-start gap-2 shadow-2xs">
-            <i class="pi pi-exclamation-circle text-sm shrink-0 mt-0.5"></i>
-            <span class="flex-1">{{ copilotService.error() }}</span>
-          </div>
-        }
-      </div>
+          <!-- Streaming Live Indicator -->
+          @if (copilotService.isSending() && copilotService.currentLiveStatus()) {
+            <div class="flex items-center gap-2.5 px-3.5 py-2 bg-white dark:bg-slate-800 rounded-xl border border-primary-200/80 dark:border-primary-800/60 w-fit text-xs text-slate-700 dark:text-slate-300 shadow-2xs animate-pulse">
+              <i class="pi pi-spin pi-spinner text-primary-600 dark:text-primary-400"></i>
+              <span class="font-medium">{{ copilotService.currentLiveStatus()?.message || 'Thinking . . .' }}</span>
+            </div>
+          }
 
-      <!-- Footer / Chat Input -->
-      <div class="p-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
-        <form (ngSubmit)="handleSend()" class="flex flex-col gap-2">
-          <div class="relative flex items-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all">
-            <textarea
-              #inputArea
-              [(ngModel)]="userInput"
-              name="copilotInput"
-              rows="2"
-              (keydown.enter)="handleKeyDown($event)"
-              placeholder="Ask anything about company policies..."
-              [disabled]="copilotService.isSending()"
-              class="w-full px-3.5 py-2.5 text-xs bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 resize-none border-none! outline-none! shadow-none!"
-            ></textarea>
-            
-            <button
-              type="submit"
-              [disabled]="!userInput.trim() || copilotService.isSending()"
-              aria-label="Send query"
-              class="absolute right-2.5 bottom-2.5 flex items-center justify-center w-7 h-7 rounded-lg bg-primary-600 hover:bg-primary-500 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm"
-            >
-              @if (copilotService.isSending()) {
-                <i class="pi pi-spin pi-spinner text-xs"></i>
-              } @else {
-                <i class="pi pi-arrow-up text-xs"></i>
-              }
-            </button>
-          </div>
+          <!-- Error Notification -->
+          @if (copilotService.error()) {
+            <div class="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-xs text-red-700 dark:text-red-400 flex items-start gap-2 shadow-2xs">
+              <i class="pi pi-exclamation-circle text-sm shrink-0 mt-0.5"></i>
+              <span class="flex-1">{{ copilotService.error() }}</span>
+            </div>
+          }
+        </div>
 
-          <div class="flex items-center justify-between px-1 text-[10px] text-slate-400">
-            <span>Enter to send • Shift+Enter for newline</span>
-            <span>Esc to close</span>
-          </div>
-        </form>
-      </div>
+        <!-- Input Composer -->
+        <app-copilot-input
+          [isSending]="copilotService.isSending()"
+          (onSubmitPrompt)="submitPrompt($event)"
+        />
       </div>
 
       <!-- Document Chunk Preview Drawer -->
@@ -542,27 +262,15 @@ import { IntakeFormCardComponent } from '../a2ui/intake-form-card.component';
 })
 export class CopilotSidebarComponent implements AfterViewChecked {
   public copilotService = inject(CopilotService);
-  public conversationService = inject(ConversationService);
-  public sanitizer = inject(MarkdownSanitizerService);
 
   @ViewChild('messageFeed') private messageFeed?: ElementRef<HTMLDivElement>;
-  @ViewChild('inputArea') private inputArea?: ElementRef<HTMLTextAreaElement>;
   @ViewChild('chunkDrawer') private chunkDrawer?: ChunkPreviewDrawerComponent;
 
-  userInput = '';
-  searchHistoryTerm = signal<string>('');
   private shouldScrollBottom = false;
 
   openCitation(chunkId: string): void {
     this.chunkDrawer?.open(chunkId);
   }
-
-  filteredConversations = computed(() => {
-    const term = this.searchHistoryTerm().trim().toLowerCase();
-    const list = this.copilotService.conversations();
-    if (!term) return list;
-    return list.filter(c => (c.title || '').toLowerCase().includes(term));
-  });
 
   selectThread(id: string): void {
     this.shouldScrollBottom = true;
@@ -572,70 +280,12 @@ export class CopilotSidebarComponent implements AfterViewChecked {
     }
   }
 
-  deleteThread(event: Event, id: string): void {
-    event.stopPropagation();
+  deleteThread(id: string): void {
     this.copilotService.deleteConversation(id);
   }
 
-  formatRelativeTime(isoDate?: string): string {
-    if (!isoDate) return '';
-    try {
-      const now = new Date().getTime();
-      const past = new Date(isoDate).getTime();
-      const diffMs = now - past;
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return new Date(isoDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    } catch {
-      return '';
-    }
-  }
-
-  @HostListener('window:keydown', ['$event'])
-  handleGlobalShortcuts(event: KeyboardEvent): void {
-    // Ctrl + J or Cmd + J opens/closes Copilot
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'j') {
-      event.preventDefault();
-      this.copilotService.toggle();
-      if (this.copilotService.isOpen()) {
-        setTimeout(() => this.inputArea?.nativeElement?.focus(), 150);
-      }
-      return;
-    }
-
-    // Esc closes Copilot when open
-    if (event.key === 'Escape' && this.copilotService.isOpen()) {
-      this.copilotService.close();
-    }
-  }
-
-  isReceivingTokens(): boolean {
-    const list = this.copilotService.messages();
-    if (list.length === 0) return false;
-    const last = list[list.length - 1];
-    return last.role === 'Assistant' && last.content.length > 0;
-  }
-
-  handleKeyDown(event: Event): void {
-    const keyEvent = event as KeyboardEvent;
-    if (!keyEvent.shiftKey) {
-      keyEvent.preventDefault();
-      this.handleSend();
-    }
-  }
-
-  handleSend(): void {
-    const query = this.userInput.trim();
-    if (!query || this.copilotService.isSending()) return;
-
-    this.userInput = '';
-    this.shouldScrollBottom = true;
-    this.copilotService.sendMessage(query);
+  resetThread(): void {
+    this.copilotService.resetConversation();
   }
 
   submitPrompt(prompt: string): void {
@@ -643,126 +293,20 @@ export class CopilotSidebarComponent implements AfterViewChecked {
     this.copilotService.sendMessage(prompt);
   }
 
-  resetThread(): void {
-    this.copilotService.resetConversation();
-    setTimeout(() => this.inputArea?.nativeElement?.focus(), 100);
-  }
-
-  getToolLabel(toolName: string): string {
-    const labels: Record<string, string> = {
-      // Conversations
-      calculate_policy_limit: 'Calculating Policy Limit',
-      escalate_hr_inquiry: 'Dispatching HR Escalation',
-      search_company_documents: 'Retrieving Policy Sources',
-      workspace_navigate: 'Navigating Workspace Portal',
-      workspace_request_form: 'Requesting Input Parameters',
-      suggestions_get_popular: 'Fetching Suggested Queries',
-      conversations_list: 'Retrieving Conversations',
-      conversations_share: 'Generating Shareable Link',
-      conversations_delete: 'Deleting Conversation Thread',
-      saved_answers_list: 'Retrieving Saved Answers',
-      saved_answers_save: 'Saving Answer to Notebook',
-      saved_answers_unsave: 'Removing Saved Answer',
-      // Documents
-      documents_search: 'Searching Documents',
-      documents_list: 'Listing Workspace Documents',
-      documents_get_metrics: 'Checking Storage & Metrics',
-      documents_delete: 'Deleting Document',
-      documents_upload_guide: 'Opening Document Uploader',
-      // Tenants & Workspace Admin
-      workspace_list_departments: 'Listing Departments',
-      workspace_create_department: 'Creating Department',
-      workspace_update_department: 'Updating Department',
-      workspace_delete_department: 'Deleting Department',
-      workspace_list_employees: 'Listing Workspace Employees',
-      workspace_invite_employee: 'Inviting Employee',
-      workspace_remove_employee: 'Revoking Employee Access',
-      workspace_update_employee_assignments: 'Updating Employee Assignments',
-      workspace_list_user_groups: 'Listing User Security Groups',
-      workspace_create_user_group: 'Creating User Group',
-      workspace_update_user_group: 'Updating User Group',
-      workspace_delete_user_group: 'Deleting User Group',
-      workspace_update_group_members: 'Synchronizing Group Members',
-      workspace_get_dashboard_summary: 'Loading Dashboard Analytics',
-      workspace_get_audit_logs: 'Reviewing Audit Logs',
-      workspace_get_subscription_usage: 'Checking Plan & Quotas',
-      workspace_get_branding: 'Inspecting White-Label Branding',
-      user_get_profile: 'Retrieving User Profile'
-    };
-
-    return labels[toolName] || toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  }
-
-  getParamEntries(params?: Record<string, string>): { key: string; value: string }[] {
-    if (!params) return [];
-    return Object.entries(params).map(([key, value]) => ({ key, value }));
-  }
-
-  confirmAction(card: ActionCardDto): void {
-    if (card.approvalId) {
-      card.isExecuting = true;
-      card.executionError = undefined;
-      this.conversationService.confirmApproval(card.approvalId).subscribe({
-        next: (res) => {
-          card.isExecuting = false;
-          if (res.success) {
-            card.isConfirmed = true;
-            this.handleActuationTriggers(card);
-          } else {
-            card.executionError = res.message || 'Execution failed.';
-          }
-        },
-        error: (err) => {
-          card.isExecuting = false;
-          card.executionError = err?.error?.message || 'Authorization failed.';
-        }
-      });
-    } else {
-      card.isConfirmed = true;
-      this.handleActuationTriggers(card);
-    }
-  }
-
-  private handleActuationTriggers(card: ActionCardDto): void {
-    const route = card.parameters?.['route'] || card.parameters?.['shareUrl'];
-    if (route) {
-      this.copilotService.navigateActuation(route);
-    } else if (card.parameters && card.parameters['modal']) {
-      this.copilotService.triggerModal(card.parameters['modal']);
-    }
-  }
-
-  dismissAction(card: ActionCardDto): void {
-    if (card.approvalId) {
-      card.isExecuting = true;
-      this.conversationService.dismissApproval(card.approvalId).subscribe({
-        next: () => {
-          card.isExecuting = false;
-          card.isDismissed = true;
-        },
-        error: () => {
-          card.isExecuting = false;
-          card.isDismissed = true;
-        }
-      });
-    } else {
-      card.isDismissed = true;
-    }
-  }
-
   ngAfterViewChecked(): void {
-    if (this.shouldScrollBottom || this.copilotService.isSending()) {
-      this.scrollToBottom();
+    if (this.shouldScrollBottom && this.messageFeed) {
+      this.messageFeed.nativeElement.scrollTop = this.messageFeed.nativeElement.scrollHeight;
       this.shouldScrollBottom = false;
     }
   }
 
-  private scrollToBottom(): void {
-    try {
-      if (this.messageFeed) {
-        this.messageFeed.nativeElement.scrollTop = this.messageFeed.nativeElement.scrollHeight;
-      }
-    } catch {}
+  @HostListener('window:keydown', ['$event'])
+  handleGlobalShortcuts(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'j') {
+      event.preventDefault();
+      this.copilotService.toggle();
+    } else if (event.key === 'Escape' && this.copilotService.isOpen()) {
+      this.copilotService.close();
+    }
   }
 }
-

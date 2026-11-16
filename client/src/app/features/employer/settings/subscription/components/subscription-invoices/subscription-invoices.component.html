@@ -1,0 +1,104 @@
+<div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-lg font-bold text-slate-900 dark:text-white m-0">{{ title() }}</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+        {{ description() }}
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="onBackToOverview.emit()"
+      class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline self-start sm:self-auto cursor-pointer">
+      <i class="pi pi-arrow-left text-[10px]"></i>
+      <span>Back to Overview</span>
+    </button>
+  </div>
+
+  @if (!isCardView()) {
+    <!-- Invoices Table View -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider font-bold">
+            <th class="py-3 px-4">Invoice #</th>
+            <th class="py-3 px-4">Date</th>
+            <th class="py-3 px-4">Plan Tier</th>
+            <th class="py-3 px-4">Amount</th>
+            <th class="py-3 px-4">Billing Cycle</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4 text-right">Receipt</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-200 font-medium">
+          @for (inv of invoices(); track inv.id) {
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                {{ inv.invoiceNumber }}
+              </td>
+              <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">
+                {{ inv.date | date:'mediumDate' }}
+              </td>
+              <td class="py-3.5 px-4">
+                {{ inv.tier }}
+              </td>
+              <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                {{ inv.amount }}
+              </td>
+              <td class="py-3.5 px-4">
+                {{ inv.cycle }}
+              </td>
+              <td class="py-3.5 px-4">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <i class="pi pi-check text-[9px]"></i>
+                  {{ inv.status }}
+                </span>
+              </td>
+              <td class="py-3.5 px-4 text-right">
+                <button
+                  type="button"
+                  (click)="onDownloadInvoice.emit(inv)"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer">
+                  <i class="pi pi-download text-[10px]"></i>
+                  <span>PDF</span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <!-- Invoices Card View -->
+    <div class="space-y-3">
+      @for (inv of invoices(); track inv.id) {
+        <div class="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+              <i class="pi pi-file-pdf text-base"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white">{{ inv.invoiceNumber }}</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                Issued on {{ inv.date | date:'mediumDate' }} &bull; {{ inv.tier }} &bull; {{ inv.amount }}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 self-end sm:self-auto">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              Paid
+            </span>
+            <button
+              type="button"
+              (click)="onDownloadInvoice.emit(inv)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-xs cursor-pointer">
+              <i class="pi pi-download text-xs"></i>
+              <span>Download PDF</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

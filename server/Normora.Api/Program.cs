@@ -53,7 +53,8 @@ app.Use(async (context, next) =>
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(); // API documentation UI
+    app.MapScalarApiReference(); // API documentation UI (/scalar/v1)
+    app.MapGet("/scalar", () => Results.Redirect("/scalar/v1")).ExcludeFromDescription();
 }
 
 // Global Exception Handler interceptor (returns ProblemDetails JSON instead of crashing)

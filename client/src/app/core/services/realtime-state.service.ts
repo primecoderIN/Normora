@@ -66,5 +66,11 @@ export class RealtimeStateService {
       this.lastMutationSource.set('agent_stream');
     }
   }
+
+  /** Triggers a local increment to notify all watching components that state was mutated. */
+  public notifyDataChanged(): void {
+    this.dataVersion.update(v => v + 1);
+    this.lastMutationSource.set('local_mutation');
+  }
 }
 
