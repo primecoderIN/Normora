@@ -42,8 +42,7 @@
           <span class="text-slate-400">Default for all recurring renewals</span>
           <button
             type="button"
-            (click)="onOpenCustomerPortal.emit()"
-            [disabled]="isOpeningPortal()"
+            (click)="onOpenAddPaymentModal.emit()"
             class="font-bold text-primary-600 dark:text-primary-400 hover:underline cursor-pointer">
             Edit Card
           </button>

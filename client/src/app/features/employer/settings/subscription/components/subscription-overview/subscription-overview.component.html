@@ -28,10 +28,17 @@
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   {{ currentPlanName() }}
                 </h2>
-                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
-                  <i class="pi pi-check text-[10px]"></i>
-                  <span>Active</span>
-                </span>
+                @if (usage()?.cancelAtPeriodEnd) {
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                    <i class="pi pi-clock text-[10px]"></i>
+                    <span>Cancelling at period end</span>
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                    <i class="pi pi-check text-[10px]"></i>
+                    <span>Active</span>
+                  </span>
+                }
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-md">
                 {{ currentPlanDescription() }}
@@ -96,7 +103,9 @@
               <i class="pi pi-calendar-plus text-base"></i>
             </div>
             <div>
-              <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Next Renewal</span>
+              <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
+                {{ usage()?.cancelAtPeriodEnd ? 'Access Until' : 'Next Renewal' }}
+              </span>
               <span class="text-sm font-bold text-slate-900 dark:text-white">
                 {{ renewalDateFormatted() | date:'mediumDate' }}
               </span>
@@ -538,16 +547,29 @@
           <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
         </button>
 
-        <button
-          type="button"
-          (click)="onOpenCancelModal.emit()"
-          class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer group">
-          <div class="flex items-center gap-2.5">
-            <i class="pi pi-times-circle text-rose-500 text-sm"></i>
-            <span>Cancel Subscription</span>
-          </div>
-          <i class="pi pi-chevron-right text-[10px] text-rose-400 group-hover:translate-x-0.5 transition-transform"></i>
-        </button>
+        @if (usage()?.cancelAtPeriodEnd) {
+          <button
+            type="button"
+            (click)="onReactivateSubscription.emit()"
+            class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-left text-xs font-semibold text-emerald-600 dark:text-emerald-400 transition-colors cursor-pointer group">
+            <div class="flex items-center gap-2.5">
+              <i class="pi pi-refresh text-emerald-500 text-sm"></i>
+              <span>Resume Subscription</span>
+            </div>
+            <i class="pi pi-chevron-right text-[10px] text-emerald-400 group-hover:translate-x-0.5 transition-transform"></i>
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="onOpenCancelModal.emit()"
+            class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer group">
+            <div class="flex items-center gap-2.5">
+              <i class="pi pi-times-circle text-rose-500 text-sm"></i>
+              <span>Cancel Subscription</span>
+            </div>
+            <i class="pi pi-chevron-right text-[10px] text-rose-400 group-hover:translate-x-0.5 transition-transform"></i>
+          </button>
+        }
       </div>
     </div>
 

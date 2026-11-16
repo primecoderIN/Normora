@@ -27,10 +27,12 @@ export class SubscriptionModalsComponent {
   onCloseDowngradeModal = output<void>();
   onConfirmDowngrade = output<void>();
   onCloseCancelModal = output<void>();
+  onConfirmCancel = output<void>();
   onOpenCustomerPortal = output<void>();
   onCloseSupportModal = output<void>();
   onSubmitSupport = output<{ subject: string; message: string }>();
   onCloseAddPaymentModal = output<void>();
+  onConfirmAddPayment = output<void>();
 
   supportSubject = signal('');
   supportMessage = signal('');

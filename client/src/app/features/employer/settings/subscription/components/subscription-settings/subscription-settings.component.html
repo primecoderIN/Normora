@@ -98,14 +98,27 @@
     <div>
       <h3 class="text-base font-bold text-rose-900 dark:text-rose-200 m-0">Subscription Cancellation</h3>
       <p class="text-xs text-rose-800/80 dark:text-rose-300/80 m-0 mt-0.5">
-        Cancelling your subscription will schedule reversion to the Free Starter plan at the end of your billing cycle.
+        @if (cancelAtPeriodEnd()) {
+          Your subscription is scheduled for cancellation at the end of the billing period. Benefits remain active until renewal date.
+        } @else {
+          Cancelling your subscription will schedule reversion to the Free Starter plan at the end of your billing cycle.
+        }
       </p>
     </div>
-    <button
-      type="button"
-      (click)="onOpenCancelModal.emit()"
-      class="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs cursor-pointer">
-      Request Subscription Cancellation
-    </button>
+    @if (cancelAtPeriodEnd()) {
+      <button
+        type="button"
+        (click)="onReactivateSubscription.emit()"
+        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs cursor-pointer">
+        Resume Subscription
+      </button>
+    } @else {
+      <button
+        type="button"
+        (click)="onOpenCancelModal.emit()"
+        class="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs cursor-pointer">
+        Request Subscription Cancellation
+      </button>
+    }
   </div>
 </div>

@@ -36,6 +36,7 @@ export class SubscriptionOverviewComponent {
   onSetTab = output<SubscriptionTab>();
   onOpenQuotaDetails = output<void>();
   onOpenCancelModal = output<void>();
+  onReactivateSubscription = output<void>();
   onOpenSupportModal = output<void>();
   onDownloadLatestInvoice = output<void>();
 

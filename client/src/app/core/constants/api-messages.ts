@@ -171,6 +171,26 @@ export const ApiMessages = {
     summary: 'Update Failed',
     detail: 'Unable to downgrade plan at this time. Please contact support.'
   },
+  SubscriptionCancelled: {
+    summary: 'Subscription Cancelled',
+    detail: 'Your subscription has been cancelled and will not renew.'
+  },
+  SubscriptionCancelFailed: {
+    summary: 'Cancellation Failed',
+    detail: 'Failed to cancel subscription. Please try again or contact support.'
+  },
+  SubscriptionReactivated: {
+    summary: 'Subscription Active',
+    detail: 'Your subscription renewal has been successfully resumed.'
+  },
+  SubscriptionReactivateFailed: {
+    summary: 'Reactivation Failed',
+    detail: 'Failed to reactivate subscription. Please try again.'
+  },
+  PaymentMethodUpdated: {
+    summary: 'Payment Method',
+    detail: 'Payment method updated successfully.'
+  },
   SubscriptionPortalInfo: {
     summary: 'Billing Management',
     detail: 'Manage payment methods and billing information directly in this portal.'

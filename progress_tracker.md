@@ -683,6 +683,27 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - Added `saved-answers` route under employer layout for complete workspace parity.
   - Wired navigation actuation in `ChatMessageBubbleComponent` so action card buttons in the main chat view trigger immediate, accurate routing.
 
+## ✅ Completed Subscription & Billing Lifecycle & Action Button Remediation
+- [x] **Dedicated Subscription Cancellation CQRS Operation**:
+  - Implemented `CancelSubscriptionCommand` and `CancelSubscriptionCommandHandler` in `server/Modules/Tenants/Application/Subscription/Commands/CancelSubscription/` implementing `IAuditableRequest`.
+  - Exposed `POST /api/subscription/cancel` in `SubscriptionController.cs` protected by `[RequireTenant(TenantRoles.Admin)]`.
+  - Sets `CancelAtPeriodEnd = true` and `SubscriptionStatus = "canceled"` so workspaces maintain benefits until current billing period expiration.
+  - Added optional immediate downgrade support to `PlanTier.Free` resetting quotas to Starter thresholds.
+- [x] **Subscription Reactivation / Resume Pipeline**:
+  - Implemented `ReactivateSubscriptionCommand` and `ReactivateSubscriptionCommandHandler` in `server/Modules/Tenants/Application/Subscription/Commands/ReactivateSubscription/`.
+  - Exposed `POST /api/subscription/reactivate` allowing tenants to resume recurring renewals at any point before period end.
+- [x] **Fixed BFLA Downgrade Self-Escalation Logic**:
+  - Refined `UpdateTenantPlanTierCommandHandler` to permit downgrades from `Enterprise` to `Pro` or `Free`, and from `Pro` to `Free`, while strictly blocking unpaid upgrades to higher tiers.
+- [x] **Eliminated Portal Page Reload Looping**:
+  - Enhanced `openCustomerPortal` in `subscription.component.ts` to detect internal vs external URLs; prevents full-page reloads when external customer portal is unconfigured, seamlessly navigating between management sub-tabs (`payment-methods`, `settings`, `invoices`).
+- [x] **Wired All Inactive Modal & Management Buttons**:
+  - Cancel Subscription modal: Primary button updated to "Confirm Cancellation", emitting `onConfirmCancel` and executing `confirmCancelSubscription()`.
+  - Payment Methods: "Edit Card" directly actuates `onOpenAddPaymentModal` instead of looping through portal session.
+  - Add Payment Method modal: Wired "Update Payment Method" to securely complete vault update and surface feedback toast.
+  - Angular 22 `linkedSignal`: Migrated `SubscriptionSettingsComponent` to `linkedSignal` for reactive form synchronization without effect writes.
+  - Zero Magic Strings: Added `SubscriptionCancelled`, `SubscriptionReactivated`, `BillingDetailsUpdated`, and `PaymentMethodUpdated` constants to `ApiMessages.cs` and `api-messages.ts`.
+
+
 
 
 

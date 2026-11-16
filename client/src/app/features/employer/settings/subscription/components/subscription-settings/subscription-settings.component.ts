@@ -1,4 +1,4 @@
-import { Component, input, output, signal, effect } from '@angular/core';
+import { Component, input, output, linkedSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -14,6 +14,7 @@ export class SubscriptionSettingsComponent {
   taxId = input<string>('');
   billingAddress = input<string>('');
   isSavingSettings = input<boolean>(false);
+  cancelAtPeriodEnd = input<boolean>(false);
 
   onSaveBillingSettings = output<{
     billingEmail: string;
@@ -22,28 +23,14 @@ export class SubscriptionSettingsComponent {
     billingAddress: string;
   }>();
   onOpenCancelModal = output<void>();
+  onReactivateSubscription = output<void>();
   onBackToOverview = output<void>();
 
-  // Local editable form fields
-  emailField = signal('');
-  nameField = signal('');
-  taxIdField = signal('');
-  addressField = signal('');
-
-  constructor() {
-    effect(() => {
-      this.emailField.set(this.billingEmail());
-    });
-    effect(() => {
-      this.nameField.set(this.companyLegalName());
-    });
-    effect(() => {
-      this.taxIdField.set(this.taxId());
-    });
-    effect(() => {
-      this.addressField.set(this.billingAddress());
-    });
-  }
+  // Local editable form fields cleanly linked to parent input signals
+  emailField = linkedSignal(() => this.billingEmail());
+  nameField = linkedSignal(() => this.companyLegalName());
+  taxIdField = linkedSignal(() => this.taxId());
+  addressField = linkedSignal(() => this.billingAddress());
 
   save(): void {
     this.onSaveBillingSettings.emit({

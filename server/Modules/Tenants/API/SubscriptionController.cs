@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Normora.Shared.Authorization;
 using Normora.Modules.Tenants.Application.Subscription.Commands;
+using Normora.Modules.Tenants.Application.Subscription.Commands.CancelSubscription;
+using Normora.Modules.Tenants.Application.Subscription.Commands.ReactivateSubscription;
 using Normora.Modules.Tenants.Application.Subscription.Commands.UpdateTenantBillingDetails;
 using Normora.Modules.Tenants.Application.Subscription.DTOs;
 using Normora.Modules.Tenants.Application.Subscription.Queries;
@@ -22,6 +24,7 @@ namespace Normora.Modules.Tenants.API;
 public record UpdatePlanTierRequest(PlanTier Tier);
 public record CreateCheckoutRequest(PlanTier Tier, string? Currency = null);
 public record CreatePortalRequest(string? ReturnUrl = null);
+public record CancelSubscriptionRequest(bool Immediate = false);
 
 /// <summary>
 /// Exposes tenant subscription usage, plan, checkout, callback, and billing portal endpoints.
@@ -167,6 +170,38 @@ public class SubscriptionController(
     }
 
     /// <summary>
+    /// Cancels the workspace subscription, setting CancelAtPeriodEnd and SubscriptionStatus to canceled.
+    /// BFLA: restricted strictly to tenant administrators.
+    /// </summary>
+    [HttpPost("cancel")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<SubscriptionUsageDto>))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> CancelSubscription([FromBody] CancelSubscriptionRequest? request, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new CancelSubscriptionCommand(request?.Immediate ?? false), cancellationToken);
+        return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, ApiMessages.SubscriptionCancelled));
+    }
+
+    /// <summary>
+    /// Reactivates or resumes a subscription previously scheduled for cancellation.
+    /// BFLA: restricted strictly to tenant administrators.
+    /// </summary>
+    [HttpPost("reactivate")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<SubscriptionUsageDto>))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> ReactivateSubscription(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new ReactivateSubscriptionCommand(), cancellationToken);
+        return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, ApiMessages.SubscriptionReactivated));
+    }
+
+    /// <summary>
     /// Retrieves historical itemized tax invoices for the active tenant.
     /// </summary>
     [HttpGet("invoices")]
@@ -222,6 +257,6 @@ public class SubscriptionController(
             request.BillingAddress
         ), cancellationToken);
 
-        return Ok(ApiResponse<TenantBillingDetailsDto>.Ok(result, "Billing details updated successfully."));
+        return Ok(ApiResponse<TenantBillingDetailsDto>.Ok(result, ApiMessages.BillingDetailsUpdated));
     }
 }

@@ -152,9 +152,15 @@
         </button>
         <button
           type="button"
-          (click)="onOpenCustomerPortal.emit(); onCloseCancelModal.emit()"
-          class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs cursor-pointer">
-          Manage in Portal
+          (click)="onConfirmCancel.emit()"
+          [disabled]="isUpdating()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs cursor-pointer disabled:opacity-50">
+          @if (isUpdating()) {
+            <i class="pi pi-spin pi-spinner mr-1"></i>
+            <span>Cancelling...</span>
+          } @else {
+            <span>Confirm Cancellation</span>
+          }
         </button>
       </div>
     </div>
@@ -276,9 +282,9 @@
         </button>
         <button
           type="button"
-          (click)="onOpenCustomerPortal.emit(); onCloseAddPaymentModal.emit()"
+          (click)="onConfirmAddPayment.emit()"
           class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-xs cursor-pointer">
-          Launch Secure Vault
+          Update Payment Method
         </button>
       </div>
     </div>

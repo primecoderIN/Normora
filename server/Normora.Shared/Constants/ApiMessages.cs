@@ -112,6 +112,10 @@ public static class ApiMessages
     public const string UserGroupDeleted = "User group deleted successfully.";
     public const string UserAssignmentsUpdated = "User assignments updated successfully.";
     public const string SubscriptionUpdated = "Subscription plan updated successfully.";
+    public const string SubscriptionCancelled = "Subscription cancelled successfully.";
+    public const string SubscriptionReactivated = "Subscription reactivated successfully.";
+    public const string BillingDetailsUpdated = "Billing details updated successfully.";
+    public const string PaymentMethodUpdated = "Payment method updated successfully.";
     public const string CheckoutSessionCreated = "Checkout session created successfully.";
     public const string CustomerPortalCreated = "Billing portal session created successfully.";
     public const string FreeTierCannotCheckout = "Free tier does not require payment processing.";

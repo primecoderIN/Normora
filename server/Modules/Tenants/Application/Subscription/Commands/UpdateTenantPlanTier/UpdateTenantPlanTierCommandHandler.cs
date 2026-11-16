@@ -25,17 +25,22 @@ public class UpdateTenantPlanTierCommandHandler(
         // Validates that plan tier updates operate on the current tenant workspace.
         var tenantId = tenantContext.TenantId ?? throw new InvalidOperationException(ApiMessages.TenantContextMissing);
 
-        // BFLA Guard: Only downgrading to the Free tier is permitted directly without a payment transaction.
-        // Paid tiers (Pro, Enterprise) must be acquired through the verified checkout flow.
-        if (request.Tier != PlanTier.Free)
-        {
-            throw new Normora.Shared.Exceptions.BflaException(ApiMessages.DirectTierUpgradeNotAllowed);
-        }
-
         // Plan Record Upsert Workflow:
         // Locate the existing tenant subscription record, or initialize a new default record if first time.
         var plan = await context.TenantPlans
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
+
+        // BFLA Guard: Direct tier selection without payment is strictly limited to downgrades (or Free tier).
+        // Upgrades to a higher paid tier must go through the verified payment checkout gateway.
+        if (plan != null && (int)request.Tier > (int)plan.PlanTier)
+        {
+            throw new Normora.Shared.Exceptions.BflaException(ApiMessages.DirectTierUpgradeNotAllowed);
+        }
+
+        if (plan == null && request.Tier != PlanTier.Free)
+        {
+            throw new Normora.Shared.Exceptions.BflaException(ApiMessages.DirectTierUpgradeNotAllowed);
+        }
 
         if (plan == null)
         {

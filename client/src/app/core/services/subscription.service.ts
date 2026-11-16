@@ -145,6 +145,24 @@ export class SubscriptionService {
   }
 
   /**
+   * Cancels the active subscription, scheduling plan reversion to Free tier at period end.
+   */
+  cancelSubscription(immediate: boolean = false): Observable<SubscriptionUsageDto> {
+    return this.http
+      .post<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/cancel`, { immediate })
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * Resumes or reactivates a subscription previously scheduled for cancellation.
+   */
+  reactivateSubscription(): Observable<SubscriptionUsageDto> {
+    return this.http
+      .post<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/reactivate`, {})
+      .pipe(map(res => res.data));
+  }
+
+  /**
    * Retrieves official itemized billing invoices for the current tenant.
    */
   getInvoices(): Observable<TenantInvoiceDto[]> {

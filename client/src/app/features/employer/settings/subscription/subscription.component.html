@@ -126,6 +126,7 @@
         (onSetTab)="setTab($event)"
         (onOpenQuotaDetails)="showQuotaDetails.set(true)"
         (onOpenCancelModal)="showCancelModal.set(true)"
+        (onReactivateSubscription)="reactivateSubscription()"
         (onOpenSupportModal)="showSupportModal.set(true)"
         (onDownloadLatestInvoice)="downloadLatestInvoice()"
       />
@@ -173,8 +174,10 @@
         [taxId]="taxId()"
         [billingAddress]="billingAddress()"
         [isSavingSettings]="isSavingSettings()"
+        [cancelAtPeriodEnd]="usage()?.cancelAtPeriodEnd ?? false"
         (onSaveBillingSettings)="saveBillingSettings($event)"
         (onOpenCancelModal)="showCancelModal.set(true)"
+        (onReactivateSubscription)="reactivateSubscription()"
         (onBackToOverview)="setTab('overview')"
       />
     }
@@ -198,8 +201,10 @@
   (onCloseDowngradeModal)="showDowngradeModal.set(false)"
   (onConfirmDowngrade)="confirmDowngrade()"
   (onCloseCancelModal)="showCancelModal.set(false)"
+  (onConfirmCancel)="confirmCancelSubscription()"
   (onOpenCustomerPortal)="openCustomerPortal()"
   (onCloseSupportModal)="showSupportModal.set(false)"
   (onSubmitSupport)="submitSupportRequest($event)"
   (onCloseAddPaymentModal)="showAddPaymentModal.set(false)"
+  (onConfirmAddPayment)="confirmAddPaymentMethod()"
 />

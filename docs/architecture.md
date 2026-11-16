@@ -714,10 +714,14 @@ The initial implementation `PayUPaymentService` integrates PayU India:
   - Rejects hash mismatches immediately with `ApiMessages.PayUHashMismatch`.
   - On verified `success`, updates workspace quota limits to the purchased tier, records `PaymentTransactionId` and `PaymentReferenceId`, updates `SubscriptionStatus = 'active'`, and records an immutable audit log entry.
   - Redirects the user back to the tenant-scoped subscription settings with `?status=success` or `?status=failed&error=...`.
-- **Tier Hierarchy & Action Locking**:
-  - The UI models a strict tier hierarchy: `Free` (0) < `Pro` (1) < `Enterprise` (2).
-  - When a workspace is subscribed to a tier (e.g., Enterprise), all lower/previous tier buttons are permanently disabled (`cursor-not-allowed`) and indicate `"Included in {Plan}"`.
-  - Only upgrade pathways to strictly higher tiers are selectable.
+- **Tier Hierarchy & Downgrade Safety**:
+  - The UI models a tier hierarchy: `Free` (0) < `Pro` (1) < `Enterprise` (2).
+  - Upgrades to higher tiers require hosted payment checkout via PayU (`CreateCheckoutSessionCommand`).
+  - Downgrades (e.g. `Enterprise` -> `Pro` or `Pro` -> `Free`) require confirmation modals and are processed via `UpdateTenantPlanTierCommand` with strict BFLA validation preventing self-escalation.
+- **Subscription Cancellation & Reactivation**:
+  - Cancellation (`POST /api/subscription/cancel`, `CancelSubscriptionCommand`): Directly updates the active workspace plan, setting `CancelAtPeriodEnd = true` and `SubscriptionStatus = 'canceled'`. Quotas remain active until the billing period end date.
+  - Reactivation (`POST /api/subscription/reactivate`, `ReactivateSubscriptionCommand`): Resumes active billing renewal, resetting `CancelAtPeriodEnd = false` and `SubscriptionStatus = 'active'`.
+  - In-App Management Parity: When an external customer portal is not configured, the frontend gracefully navigates to in-app billing sub-tabs (`payment-methods`, `settings`, `invoices`) without looping or reloading the application page. Form fields in `SubscriptionSettingsComponent` utilize Angular 22 `linkedSignal` for clean synchronization without signal-write side-effects.
 
 ---
 

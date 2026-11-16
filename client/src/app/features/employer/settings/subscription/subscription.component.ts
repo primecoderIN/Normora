@@ -430,26 +430,88 @@ export class SubscriptionComponent implements OnInit {
     });
   }
 
-  openCustomerPortal(): void {
+  openCustomerPortal(targetTab: SubscriptionTab = 'payment-methods'): void {
     this.isOpeningPortal.set(true);
     this.subscriptionService.createCustomerPortalSession().subscribe({
       next: (session) => {
-        if (session.portalUrl) {
+        this.isOpeningPortal.set(false);
+        if (session?.portalUrl && !session.portalUrl.includes(window.location.host)) {
           window.location.href = session.portalUrl;
         } else {
-          this.isOpeningPortal.set(false);
-          this.setTab('payment-methods');
+          this.setTab(targetTab);
+          this.messageService.add({
+            severity: 'info',
+            summary: ApiMessages.SubscriptionPortalInfo.summary,
+            detail: ApiMessages.SubscriptionPortalInfo.detail
+          });
         }
       },
       error: () => {
         this.isOpeningPortal.set(false);
-        this.setTab('payment-methods');
+        this.setTab(targetTab);
         this.messageService.add({
           severity: 'info',
           summary: ApiMessages.SubscriptionPortalInfo.summary,
           detail: ApiMessages.SubscriptionPortalInfo.detail
         });
       }
+    });
+  }
+
+  confirmCancelSubscription(): void {
+    this.isUpdating.set(true);
+    this.subscriptionService.cancelSubscription().subscribe({
+      next: (updated) => {
+        this.usage.set(updated);
+        this.isUpdating.set(false);
+        this.showCancelModal.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: ApiMessages.SubscriptionCancelled.summary,
+          detail: ApiMessages.SubscriptionCancelled.detail
+        });
+      },
+      error: () => {
+        this.isUpdating.set(false);
+        this.showCancelModal.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: ApiMessages.SubscriptionCancelFailed.summary,
+          detail: ApiMessages.SubscriptionCancelFailed.detail
+        });
+      }
+    });
+  }
+
+  reactivateSubscription(): void {
+    this.isUpdating.set(true);
+    this.subscriptionService.reactivateSubscription().subscribe({
+      next: (updated) => {
+        this.usage.set(updated);
+        this.isUpdating.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: ApiMessages.SubscriptionReactivated.summary,
+          detail: ApiMessages.SubscriptionReactivated.detail
+        });
+      },
+      error: () => {
+        this.isUpdating.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: ApiMessages.SubscriptionReactivateFailed.summary,
+          detail: ApiMessages.SubscriptionReactivateFailed.detail
+        });
+      }
+    });
+  }
+
+  confirmAddPaymentMethod(): void {
+    this.showAddPaymentModal.set(false);
+    this.messageService.add({
+      severity: 'success',
+      summary: ApiMessages.PaymentMethodUpdated.summary,
+      detail: ApiMessages.PaymentMethodUpdated.detail
     });
   }
 
