@@ -1,10 +1,11 @@
-import { Component, input, output, linkedSignal } from '@angular/core';
+import { Component, input, output, linkedSignal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-subscription-settings',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule],
   templateUrl: './subscription-settings.component.html'
 })

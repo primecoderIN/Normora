@@ -1,10 +1,11 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { BillingInvoiceItem } from '../../models/subscription.models';
 
 @Component({
   selector: 'app-subscription-invoices',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, DatePipe],
   templateUrl: './subscription-invoices.component.html'
 })

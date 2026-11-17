@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PlanTierType, SubscriptionUsageDto } from '@core/services/subscription.service';
@@ -6,6 +6,7 @@ import { PlanTierType, SubscriptionUsageDto } from '@core/services/subscription.
 @Component({
   selector: 'app-subscription-modals',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './subscription-modals.component.html'
 })

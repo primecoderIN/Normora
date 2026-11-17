@@ -700,8 +700,9 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - Replaced sidebar with authentic **PayU India Gateway & Processing** status card (PCI-DSS Level 1, 256-bit TLS, UPI, Netbanking, Cards, Zero-Card Storage per RBI guidelines).
   - Streamlined UI down to 4 focused, high-utility tabs: `Overview`, `Billing History`, `Invoices`, and `Settings`.
   - Modernized cancellation dialog with voluntary churn reason selectors ("Pricing / Budget", "Missing Features", "Temporary Pause", "Other") and zero data loss guarantees.
-
-
-
-
-
+- [x] **Subscription Page Smooth Scrolling & Layout Stabilization**:
+  - Eliminated component shaking and scroll stuttering caused by unbounded `transition-all` properties on cards and grid elements by adopting targeted `transition-colors` and `transition-[box-shadow,border-color]`.
+  - Promoted cards, gradients, and watermark SVGs to GPU composite layers using `transform-gpu` and `isolate`, preventing CPU re-rasterization of shadows and blur filters during scroll ticks.
+  - Standardized plan tier card borders to 1px across all tiers (replacing `border-2` on active plan with `ring-2 ring-purple-500/25`) to eliminate 1px subpixel box model layout shifts.
+  - Configured native smooth scrolling and overscroll containment (`scroll-smooth overscroll-y-contain`) on the `<main>` scroll container and enhanced `.custom-scrollbar` with momentum scrolling and dark-mode track styling.
+  - Migrated all five subscription components (`SubscriptionComponent`, `SubscriptionOverviewComponent`, `SubscriptionInvoicesComponent`, `SubscriptionSettingsComponent`, `SubscriptionModalsComponent`) to `ChangeDetectionStrategy.OnPush` to halt unnecessary Zone.js change detection sweeps on mouse and scroll events.

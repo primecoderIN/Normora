@@ -4,9 +4,9 @@
   <div class="xl:col-span-8 space-y-6">
 
     <!-- 1. Current Plan Hero Card -->
-    <div class="relative overflow-hidden rounded-3xl p-6 sm:p-7 border border-purple-200/80 dark:border-purple-800/60 bg-linear-to-r from-purple-50/90 via-indigo-50/40 to-purple-100/60 dark:from-purple-950/40 dark:via-slate-900 dark:to-indigo-950/30 shadow-xs">
+    <div class="relative isolate overflow-hidden rounded-3xl p-6 sm:p-7 border border-purple-200/80 dark:border-purple-800/60 bg-linear-to-r from-purple-50/90 via-indigo-50/40 to-purple-100/60 dark:from-purple-950/40 dark:via-slate-900 dark:to-indigo-950/30 shadow-xs transform-gpu">
       <!-- Decorative Crown Watermark -->
-      <svg class="opacity-10 dark:opacity-5 text-primary-600 dark:text-primary-400 absolute right-4 -bottom-6 w-36 h-36 pointer-events-none select-none" viewBox="0 0 24 24" fill="currentColor">
+      <svg class="opacity-10 dark:opacity-5 text-primary-600 dark:text-primary-400 absolute right-4 -bottom-6 w-36 h-36 pointer-events-none select-none transform-gpu" viewBox="0 0 24 24" fill="currentColor">
         <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
       </svg>
 
@@ -52,7 +52,7 @@
               <button
                 type="button"
                 (click)="onReactivateSubscription.emit()"
-                class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer">
                 <i class="pi pi-refresh text-xs"></i>
                 <span>Resume Subscription</span>
               </button>
@@ -60,7 +60,7 @@
               <button
                 type="button"
                 (click)="onSetTab.emit('settings')"
-                class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer">
                 <i class="pi pi-cog text-xs"></i>
                 <span>Billing Settings</span>
               </button>
@@ -69,7 +69,7 @@
             <button
               type="button"
               (click)="onScrollToPlanTiers.emit()"
-              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 transition-all shadow-xs flex items-center gap-2 cursor-pointer">
+              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 transition-opacity shadow-xs flex items-center gap-2 cursor-pointer">
               <i class="pi pi-arrow-right-arrow-left text-xs"></i>
               <span>Change Plan</span>
             </button>
@@ -156,7 +156,7 @@
       @if (usage(); as u) {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <!-- Documents Quota Card -->
-          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-all hover:shadow-md">
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700 transform-gpu">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
@@ -177,7 +177,7 @@
             <!-- Progress Bar -->
             <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
-                class="h-full rounded-full transition-all duration-500"
+                class="h-full rounded-full transition-[width] duration-300"
                 [ngClass]="getBarColorClass(docPercent())"
                 [style.width.%]="docPercent()"></div>
             </div>
@@ -188,7 +188,7 @@
           </div>
 
           <!-- Team Members Quota Card -->
-          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-all hover:shadow-md">
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700 transform-gpu">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
@@ -209,7 +209,7 @@
             <!-- Progress Bar -->
             <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
-                class="h-full rounded-full transition-all duration-500"
+                class="h-full rounded-full transition-[width] duration-300"
                 [ngClass]="getBarColorClass(empPercent())"
                 [style.width.%]="empPercent()"></div>
             </div>
@@ -220,7 +220,7 @@
           </div>
 
           <!-- Object Storage Quota Card -->
-          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-all hover:shadow-md">
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs relative transition-colors duration-200 hover:border-slate-300 dark:hover:border-slate-700 transform-gpu">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -241,7 +241,7 @@
             <!-- Progress Bar -->
             <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
-                class="h-full rounded-full transition-all duration-500"
+                class="h-full rounded-full transition-[width] duration-300"
                 [ngClass]="getBarColorClass(storagePercent())"
                 [style.width.%]="storagePercent()"></div>
             </div>
@@ -272,7 +272,7 @@
           <button
             type="button"
             (click)="onBillingCycleChange.emit('monthly')"
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer"
             [ngClass]="billingCycle() === 'monthly'
               ? 'bg-primary-600 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'">
@@ -281,7 +281,7 @@
           <button
             type="button"
             (click)="onBillingCycleChange.emit('annual')"
-            class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer"
             [ngClass]="billingCycle() === 'annual'
               ? 'bg-primary-600 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'">
@@ -297,12 +297,12 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         @for (plan of planDefinitions(); track plan.tier) {
           <div
-            class="rounded-3xl p-6 flex flex-col justify-between border transition-all duration-300 relative bg-white dark:bg-slate-900"
+            class="rounded-3xl p-6 flex flex-col justify-between border transition-colors duration-200 relative bg-white dark:bg-slate-900 transform-gpu"
             [ngClass]="[
               isTierCurrent(plan.tier)
-                ? 'border-2 border-purple-400 dark:border-purple-600 ring-2 ring-purple-500/20 shadow-md'
+                ? 'border-purple-500 dark:border-purple-500 ring-2 ring-purple-500/25 shadow-md'
                 : plan.isPopular
-                  ? 'border-slate-300 dark:border-slate-700 shadow-sm hover:border-primary-400 hover:shadow-md'
+                  ? 'border-slate-300 dark:border-slate-700 shadow-sm hover:border-primary-400 dark:hover:border-primary-500'
                   : 'border-slate-200 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700'
             ]">
 
@@ -401,7 +401,7 @@
                   type="button"
                   (click)="onSelectPlan.emit(plan.tier)"
                   [disabled]="isUpdating()"
-                  class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-xs cursor-pointer bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 disabled:opacity-50">
+                  class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white transition-opacity shadow-xs cursor-pointer bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 disabled:opacity-50">
                   @if (selectedTierLoading() === plan.tier) {
                     <i class="pi pi-spin pi-spinner mr-2"></i>
                     <span>Redirecting...</span>
@@ -470,7 +470,7 @@
               </div>
             </div>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse transform-gpu"></span>
               Active
             </span>
           </div>
@@ -511,7 +511,7 @@
             <i class="pi pi-download text-primary-600 dark:text-primary-400 text-sm"></i>
             <span>Download Latest Invoice</span>
           </div>
-          <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+          <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
         </button>
 
         <button
@@ -522,7 +522,7 @@
             <i class="pi pi-receipt text-primary-600 dark:text-primary-400 text-sm"></i>
             <span>View Billing History</span>
           </div>
-          <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+          <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
         </button>
 
         <button
@@ -533,7 +533,7 @@
             <i class="pi pi-pencil text-primary-600 dark:text-primary-400 text-sm"></i>
             <span>Update Billing Information</span>
           </div>
-          <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+          <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
         </button>
 
         @if (usage()?.cancelAtPeriodEnd) {
@@ -545,7 +545,7 @@
               <i class="pi pi-refresh text-emerald-500 text-sm"></i>
               <span>Resume Subscription</span>
             </div>
-            <i class="pi pi-chevron-right text-[10px] text-emerald-400 group-hover:translate-x-0.5 transition-transform"></i>
+            <i class="pi pi-chevron-right text-[10px] text-emerald-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
           </button>
         } @else {
           <button
@@ -556,15 +556,15 @@
               <i class="pi pi-times-circle text-rose-500 text-sm"></i>
               <span>Cancel Subscription</span>
             </div>
-            <i class="pi pi-chevron-right text-[10px] text-rose-400 group-hover:translate-x-0.5 transition-transform"></i>
+            <i class="pi pi-chevron-right text-[10px] text-rose-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
           </button>
         }
       </div>
     </div>
 
     <!-- Card 3: Need Help? -->
-    <div class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-3.5">
-      <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-linear-to-br from-purple-500/10 to-indigo-500/15 pointer-events-none blur-lg"></div>
+    <div class="relative isolate overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs space-y-3.5 transform-gpu">
+      <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-linear-to-br from-purple-500/10 to-indigo-500/15 pointer-events-none blur-lg transform-gpu"></div>
 
       <div class="relative z-10 space-y-3.5">
         <div class="flex items-center gap-2.5">

@@ -346,7 +346,7 @@
     </header>
 
     <!-- Main Scrollable Area -->
-    <main class="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+    <main class="flex-1 min-w-0 overflow-y-auto scroll-smooth overscroll-y-contain p-4 md:p-6 custom-scrollbar">
       @if (userService.currentUser()?.pendingInvitations; as invites) {
         @if (invites.length > 0) {
           <div class="bg-linear-to-r from-primary-600 to-indigo-700 rounded-xl p-3.5 mb-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md shadow-primary-500/20 border border-primary-500/40">
