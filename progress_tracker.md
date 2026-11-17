@@ -694,14 +694,12 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - Exposed `POST /api/subscription/reactivate` allowing tenants to resume recurring renewals at any point before period end.
 - [x] **Fixed BFLA Downgrade Self-Escalation Logic**:
   - Refined `UpdateTenantPlanTierCommandHandler` to permit downgrades from `Enterprise` to `Pro` or `Free`, and from `Pro` to `Free`, while strictly blocking unpaid upgrades to higher tiers.
-- [x] **Eliminated Portal Page Reload Looping**:
-  - Enhanced `openCustomerPortal` in `subscription.component.ts` to detect internal vs external URLs; prevents full-page reloads when external customer portal is unconfigured, seamlessly navigating between management sub-tabs (`payment-methods`, `settings`, `invoices`).
-- [x] **Wired All Inactive Modal & Management Buttons**:
-  - Cancel Subscription modal: Primary button updated to "Confirm Cancellation", emitting `onConfirmCancel` and executing `confirmCancelSubscription()`.
-  - Payment Methods: "Edit Card" directly actuates `onOpenAddPaymentModal` instead of looping through portal session.
-  - Add Payment Method modal: Wired "Update Payment Method" to securely complete vault update and surface feedback toast.
-  - Angular 22 `linkedSignal`: Migrated `SubscriptionSettingsComponent` to `linkedSignal` for reactive form synchronization without effect writes.
-  - Zero Magic Strings: Added `SubscriptionCancelled`, `SubscriptionReactivated`, `BillingDetailsUpdated`, and `PaymentMethodUpdated` constants to `ApiMessages.cs` and `api-messages.ts`.
+- [x] **PayU-Native Billing Architecture & Complete Mock/Dead-Code Removal**:
+  - Completely purged obsolete `CreateCustomerPortalSessionCommand`, `CreateCustomerPortalSessionCommandHandler`, `CustomerPortalResultDto`, and `POST /api/subscription/portal` from backend.
+  - Removed dummy `SubscriptionPaymentMethodsComponent`, mock "Visa •••• 4242" cards, and fake "Add Payment Method" vault modal from client.
+  - Replaced sidebar with authentic **PayU India Gateway & Processing** status card (PCI-DSS Level 1, 256-bit TLS, UPI, Netbanking, Cards, Zero-Card Storage per RBI guidelines).
+  - Streamlined UI down to 4 focused, high-utility tabs: `Overview`, `Billing History`, `Invoices`, and `Settings`.
+  - Modernized cancellation dialog with voluntary churn reason selectors ("Pricing / Budget", "Missing Features", "Temporary Pause", "Other") and zero data loss guarantees.
 
 
 

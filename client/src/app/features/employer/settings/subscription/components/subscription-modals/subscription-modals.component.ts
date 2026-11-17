@@ -14,7 +14,6 @@ export class SubscriptionModalsComponent {
   showDowngradeModal = input<boolean>(false);
   showCancelModal = input<boolean>(false);
   showSupportModal = input<boolean>(false);
-  showAddPaymentModal = input<boolean>(false);
 
   usage = input<SubscriptionUsageDto | null>(null);
   currentPlanName = input<string>('');
@@ -28,14 +27,13 @@ export class SubscriptionModalsComponent {
   onConfirmDowngrade = output<void>();
   onCloseCancelModal = output<void>();
   onConfirmCancel = output<void>();
-  onOpenCustomerPortal = output<void>();
   onCloseSupportModal = output<void>();
   onSubmitSupport = output<{ subject: string; message: string }>();
-  onCloseAddPaymentModal = output<void>();
-  onConfirmAddPayment = output<void>();
 
   supportSubject = signal('');
   supportMessage = signal('');
+  cancellationReason = signal('cost');
+  cancellationFeedback = signal('');
 
   formatPercent(current: number, max: number): string {
     if (!max || max <= 0 || current <= 0) return '0%';

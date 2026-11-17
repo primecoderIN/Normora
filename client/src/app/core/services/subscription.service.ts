@@ -31,10 +31,6 @@ export interface CheckoutSessionResult {
   params: Record<string, string>;
 }
 
-export interface CustomerPortalResult {
-  portalUrl: string;
-}
-
 export interface TenantInvoiceDto {
   id: string;
   invoiceNumber: string;
@@ -117,16 +113,6 @@ export class SubscriptionService {
    */
   submitPayUForm(session: CheckoutSessionResult): void {
     this.submitPaymentForm(session);
-  }
-
-  /**
-   * Opens the Stripe Billing Customer Portal session for managing payment methods,
-   * viewing invoices, or scheduling plan cancellations without orphan subscriptions.
-   */
-  createCustomerPortalSession(returnUrl?: string): Observable<CustomerPortalResult> {
-    return this.http
-      .post<ApiResponse<CustomerPortalResult>>(`${this.apiUrl}/portal`, { returnUrl })
-      .pipe(map(res => res.data));
   }
 
   /**

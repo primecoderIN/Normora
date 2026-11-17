@@ -21,7 +21,6 @@ export class SubscriptionOverviewComponent {
   currentPlanDescription = input<string>('');
   currentPlanPriceFormatted = input<string>('');
   renewalDateFormatted = input<string>('');
-  isOpeningPortal = input<boolean>(false);
   isUpdating = input<boolean>(false);
   selectedTierLoading = input<PlanTierType | null>(null);
   docPercent = input<number>(0);
@@ -31,7 +30,6 @@ export class SubscriptionOverviewComponent {
   onBillingCycleChange = output<BillingCycle>();
   onCurrencyChange = output<string>();
   onSelectPlan = output<PlanTierType>();
-  onOpenCustomerPortal = output<void>();
   onScrollToPlanTiers = output<void>();
   onSetTab = output<SubscriptionTab>();
   onOpenQuotaDetails = output<void>();
@@ -39,8 +37,6 @@ export class SubscriptionOverviewComponent {
   onReactivateSubscription = output<void>();
   onOpenSupportModal = output<void>();
   onDownloadLatestInvoice = output<void>();
-
-  showCardMenu = signal(false);
 
   private readonly tierHierarchy: Record<PlanTierType, number> = {
     Free: 0,

@@ -61,17 +61,6 @@
 
     <button
       type="button"
-      (click)="setTab('payment-methods')"
-      class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap cursor-pointer"
-      [ngClass]="activeTab() === 'payment-methods'
-        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 font-bold'
-        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
-      <i class="pi pi-credit-card text-xs"></i>
-      <span>Payment Methods</span>
-    </button>
-
-    <button
-      type="button"
       (click)="setTab('invoices')"
       class="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap cursor-pointer"
       [ngClass]="activeTab() === 'invoices'
@@ -112,7 +101,6 @@
         [currentPlanDescription]="currentPlanDescription()"
         [currentPlanPriceFormatted]="currentPlanPriceFormatted()"
         [renewalDateFormatted]="renewalDateFormatted()"
-        [isOpeningPortal]="isOpeningPortal()"
         [isUpdating]="isUpdating()"
         [selectedTierLoading]="selectedTierLoading()"
         [docPercent]="docPercent()"
@@ -121,7 +109,6 @@
         (onBillingCycleChange)="setBillingCycle($event)"
         (onCurrencyChange)="setCurrency($event)"
         (onSelectPlan)="selectPlan($event)"
-        (onOpenCustomerPortal)="openCustomerPortal()"
         (onScrollToPlanTiers)="scrollToPlanTiers()"
         (onSetTab)="setTab($event)"
         (onOpenQuotaDetails)="showQuotaDetails.set(true)"
@@ -144,17 +131,7 @@
       />
     }
 
-    <!-- TAB 3: PAYMENT METHODS -->
-    @if (activeTab() === 'payment-methods') {
-      <app-subscription-payment-methods
-        [isOpeningPortal]="isOpeningPortal()"
-        (onOpenCustomerPortal)="openCustomerPortal()"
-        (onOpenAddPaymentModal)="showAddPaymentModal.set(true)"
-        (onBackToOverview)="setTab('overview')"
-      />
-    }
-
-    <!-- TAB 4: INVOICES -->
+    <!-- TAB 3: INVOICES -->
     @if (activeTab() === 'invoices') {
       <app-subscription-invoices
         [invoices]="invoices()"
@@ -166,7 +143,7 @@
       />
     }
 
-    <!-- TAB 5: SETTINGS -->
+    <!-- TAB 4: SETTINGS -->
     @if (activeTab() === 'settings') {
       <app-subscription-settings
         [billingEmail]="billingEmail()"
@@ -191,7 +168,6 @@
   [showDowngradeModal]="showDowngradeModal()"
   [showCancelModal]="showCancelModal()"
   [showSupportModal]="showSupportModal()"
-  [showAddPaymentModal]="showAddPaymentModal()"
   [usage]="usage()"
   [currentPlanName]="currentPlanName()"
   [pendingDowngradeTier]="pendingDowngradeTier()"
@@ -202,9 +178,6 @@
   (onConfirmDowngrade)="confirmDowngrade()"
   (onCloseCancelModal)="showCancelModal.set(false)"
   (onConfirmCancel)="confirmCancelSubscription()"
-  (onOpenCustomerPortal)="openCustomerPortal()"
   (onCloseSupportModal)="showSupportModal.set(false)"
   (onSubmitSupport)="submitSupportRequest($event)"
-  (onCloseAddPaymentModal)="showAddPaymentModal.set(false)"
-  (onConfirmAddPayment)="confirmAddPaymentMethod()"
 />

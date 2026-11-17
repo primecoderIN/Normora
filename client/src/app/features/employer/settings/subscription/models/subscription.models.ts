@@ -1,6 +1,6 @@
 import { PlanTierType } from '@core/services/subscription.service';
 
-export type SubscriptionTab = 'overview' | 'history' | 'payment-methods' | 'invoices' | 'settings';
+export type SubscriptionTab = 'overview' | 'history' | 'invoices' | 'settings';
 export type BillingCycle = 'monthly' | 'annual';
 
 export interface PlanTierDefinition {

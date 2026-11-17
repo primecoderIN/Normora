@@ -23,11 +23,10 @@ namespace Normora.Modules.Tenants.API;
 /// <summary>Describes the requested subscription tier change.</summary>
 public record UpdatePlanTierRequest(PlanTier Tier);
 public record CreateCheckoutRequest(PlanTier Tier, string? Currency = null);
-public record CreatePortalRequest(string? ReturnUrl = null);
 public record CancelSubscriptionRequest(bool Immediate = false);
 
 /// <summary>
-/// Exposes tenant subscription usage, plan, checkout, callback, and billing portal endpoints.
+/// Exposes tenant subscription usage, plan, checkout, callback, cancellation, and invoicing endpoints.
 /// </summary>
 [ApiController]
 [Route("api/subscription")]
@@ -67,23 +66,6 @@ public class SubscriptionController(
     {
         var result = await mediator.Send(new CreateCheckoutSessionCommand(request.Tier, request.Currency), cancellationToken);
         return Ok(ApiResponse<CheckoutSessionResultDto>.Ok(result, ApiMessages.CheckoutSessionCreated));
-    }
-
-    /// <summary>
-    /// Directs user to workspace subscription and billing management overview.
-    /// BFLA: restricted strictly to tenant administrators.
-    /// </summary>
-    [HttpPost("portal")]
-    [Authorize]
-    [RequireTenant(TenantRoles.Admin)]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<CustomerPortalResultDto>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
-    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-    public async Task<IActionResult> CreatePortal([FromBody] CreatePortalRequest? request, CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(new CreateCustomerPortalSessionCommand(request?.ReturnUrl), cancellationToken);
-        return Ok(ApiResponse<CustomerPortalResultDto>.Ok(result, ApiMessages.CustomerPortalCreated));
     }
 
     /// <summary>

@@ -21,7 +21,6 @@ import { SUPPORTED_CURRENCIES, detectLocalCurrency } from './helpers/subscriptio
 import { createPlanTierDefinitions } from './helpers/subscription-plans.helper';
 import { SubscriptionOverviewComponent } from './components/subscription-overview/subscription-overview.component';
 import { SubscriptionInvoicesComponent } from './components/subscription-invoices/subscription-invoices.component';
-import { SubscriptionPaymentMethodsComponent } from './components/subscription-payment-methods/subscription-payment-methods.component';
 import { SubscriptionSettingsComponent } from './components/subscription-settings/subscription-settings.component';
 import { SubscriptionModalsComponent } from './components/subscription-modals/subscription-modals.component';
 
@@ -35,7 +34,6 @@ export { SUPPORTED_CURRENCIES } from './helpers/subscription-currency.helper';
     CommonModule,
     SubscriptionOverviewComponent,
     SubscriptionInvoicesComponent,
-    SubscriptionPaymentMethodsComponent,
     SubscriptionSettingsComponent,
     SubscriptionModalsComponent
   ],
@@ -58,7 +56,6 @@ export class SubscriptionComponent implements OnInit {
   usage = signal<SubscriptionUsageDto | null>(null);
   isLoading = signal(true);
   isUpdating = signal(false);
-  isOpeningPortal = signal(false);
   selectedTierLoading = signal<PlanTierType | null>(null);
   errorMessage = signal<string | null>(null);
 
@@ -74,7 +71,6 @@ export class SubscriptionComponent implements OnInit {
   showDowngradeModal = signal(false);
   pendingDowngradeTier = signal<PlanTierType | null>(null);
   showSupportModal = signal(false);
-  showAddPaymentModal = signal(false);
 
   // Settings Form State
   billingEmail = signal('');
@@ -430,34 +426,6 @@ export class SubscriptionComponent implements OnInit {
     });
   }
 
-  openCustomerPortal(targetTab: SubscriptionTab = 'payment-methods'): void {
-    this.isOpeningPortal.set(true);
-    this.subscriptionService.createCustomerPortalSession().subscribe({
-      next: (session) => {
-        this.isOpeningPortal.set(false);
-        if (session?.portalUrl && !session.portalUrl.includes(window.location.host)) {
-          window.location.href = session.portalUrl;
-        } else {
-          this.setTab(targetTab);
-          this.messageService.add({
-            severity: 'info',
-            summary: ApiMessages.SubscriptionPortalInfo.summary,
-            detail: ApiMessages.SubscriptionPortalInfo.detail
-          });
-        }
-      },
-      error: () => {
-        this.isOpeningPortal.set(false);
-        this.setTab(targetTab);
-        this.messageService.add({
-          severity: 'info',
-          summary: ApiMessages.SubscriptionPortalInfo.summary,
-          detail: ApiMessages.SubscriptionPortalInfo.detail
-        });
-      }
-    });
-  }
-
   confirmCancelSubscription(): void {
     this.isUpdating.set(true);
     this.subscriptionService.cancelSubscription().subscribe({
@@ -503,15 +471,6 @@ export class SubscriptionComponent implements OnInit {
           detail: ApiMessages.SubscriptionReactivateFailed.detail
         });
       }
-    });
-  }
-
-  confirmAddPaymentMethod(): void {
-    this.showAddPaymentModal.set(false);
-    this.messageService.add({
-      severity: 'success',
-      summary: ApiMessages.PaymentMethodUpdated.summary,
-      detail: ApiMessages.PaymentMethodUpdated.detail
     });
   }
 
