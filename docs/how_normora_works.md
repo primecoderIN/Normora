@@ -300,3 +300,56 @@ sequenceDiagram
 1. **Zero Manual Refresh**: The employer's open browser tabs automatically reload data in place without disturbing the user's ongoing interaction.
 2. **Dual-Channel Delivery**: Updates propagate through both the real-time SignalR WebSocket connection and the active SSE chat stream for instantaneous reactivity.
 
+---
+
+## 4. Subscription, Multi-Currency & PayU Checkout Lifecycle
+
+Normora delivers end-to-end multi-currency parity and billing lifecycle security. From persistent currency selection to cryptographic payment gateway fulfillment, subscriptions are managed through a centralized, tamper-proof pipeline.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as Workspace Admin
+    participant UI as Angular Subscription UI
+    participant API as Tenants Controller & CQRS
+    participant Catalog as TenantPlanPricingCatalog
+    participant DB as TenantsDbContext (PostgreSQL)
+    participant PayU as PayU India Hosted Gateway
+
+    Note over Admin, DB: Phase 1: Workspace Currency Selection
+    Admin->>UI: Selects currency (e.g. USD, EUR, INR)
+    UI->>API: PUT /api/subscription/currency { currency: "usd" }
+    API->>Catalog: Validate supported currency & normalize
+    API->>DB: Update TenantPlan.Currency = "usd", UpdatedAt = UtcNow
+    API-->>UI: 200 OK (ApiResponse.Success(CurrencyUpdated, usageMetrics))
+    UI->>UI: Signals update with authoritative localized pricing
+
+    Note over Admin, PayU: Phase 2: Checkout Initialization
+    Admin->>UI: Clicks "Upgrade • $468 / year" (Annual Pro)
+    UI->>API: POST /api/subscription/checkout { planTier: "Pro", billingCycle: "annual" }
+    API->>Catalog: GetPrice(PlanTier.Pro, "usd", "annual") -> $468.00
+    API->>API: Generate unique txnid & compute SHA-512 signature
+    Note over API: Injects ["currency"] = "USD" & udf3 = "usd:annual"
+    API-->>UI: 200 OK (actionUrl: test.payu.in/_payment, paramDict with SHA-512 hash)
+    UI->>PayU: Auto-submits signed hidden HTML form to PayU
+
+    Note over Admin, PayU: Phase 3: Secure Payment & Cryptographic Callback
+    Admin->>PayU: Completes payment in chosen currency ($468.00)
+    PayU->>API: POST /api/subscription/payu-callback (Browser Form Postback)
+    API->>API: Verify reverse SHA-512 hash against private MerchantSalt
+    API->>Catalog: Verify paid amount equals expected $468.00
+    API->>DB: Update TenantPlan (tier=Pro, status='active', PeriodEnd=+1 Year)
+    API->>DB: Insert TenantInvoice (amount=$468.00, currency="USD", cycle="Annual")
+    API->>DB: Record immutable AuditLog entry
+    API-->>PayU: HTTP 302 Redirect to /app/workspaces/{slug}/settings/subscription?status=success
+    PayU-->>UI: Loads subscription page with updated Pro quotas and invoice
+```
+
+### Key Mechanics & Invariants
+1. **Authoritative Pricing Catalog (`TenantPlanPricingCatalog`)**: Pricing is never calculated client-side or duplicated across handlers. The central catalog manages 8 supported currencies (`INR`, `USD`, `EUR`, `GBP`, `CAD`, `AUD`, `JPY`, `SGD`), monthly rates, and annual rates with 20% savings.
+2. **Explicit Gateway Currency Contract**: PayU India defaults transactions to `INR` unless the `currency` parameter is explicitly posted. `PayUPaymentService` injects `["currency"] = normalizedCurrency.ToUpperInvariant()`, guaranteeing international customers are billed in their exact chosen currency.
+3. **Billing Cycle Metadata Encoding**: The billing interval (`monthly` vs `annual`) is encoded into `udf3` (`$"{currency}:{billingCycle}"`) alongside the checkout transaction, allowing the callback handler to calculate subscription expiration accurately (`+1 Year` for annual vs `+1 Month` for monthly) and log correct invoice billing cycle headers.
+4. **Zero Synthetic Invoices on Free Tier**: Free tier workspaces that have never executed a paid transaction return zero synthetic invoices, completely eliminating confusing phantom invoices.
+5. **Free Plan Invariants & Cancellation Prevention**: Free tier workspaces have no recurring billing cycle or paid subscription to cancel. Both backend handlers (`CancelSubscriptionCommandHandler`, `ReactivateSubscriptionCommandHandler`) reject cancel and reactivate attempts on Free plans with `CannotCancelFreePlan` and `CannotReactivateFreePlan`. In the frontend UI, all cancellation buttons, danger zones, confirmation dialogs, and renewal countdowns are completely suppressed when on the Free tier.
+
+

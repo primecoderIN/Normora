@@ -692,36 +692,53 @@ To eliminate vendor lock-in, payment processing is decoupled behind the `IPaymen
 - **Agnostic Database Schema**: Workspace payment state in `TenantPlan` stores vendor-neutral columns `PaymentTransactionId` and `PaymentReferenceId` rather than provider-branded columns.
 - **Configurable Provider**: Configured in `appsettings.json` via `Payment:Provider` (e.g. `PayU`).
 
-### 5. PayU Hosted Checkout & Cryptographic SHA-512 Verification
-The initial implementation `PayUPaymentService` integrates PayU India:
+### 5. PayU Hosted Checkout, Multi-Currency Parity & Cryptographic SHA-512 Verification
+The initial implementation `PayUPaymentService` integrates PayU India with end-to-end multi-currency pricing parity:
+- **Authoritative Central Pricing Catalog (`TenantPlanPricingCatalog`)**:
+  - Serves as the sole source of truth for plan pricing across all 8 supported currencies (`INR`, `USD`, `EUR`, `GBP`, `CAD`, `AUD`, `JPY`, `SGD`).
+  - Supports both `Monthly` and `Annual` billing intervals. Annual billing includes an automated 20% savings calculation on total annual billing.
+  - Resolves currency symbols, formats amounts, and calculates billing totals consistently across checkout sessions, callback verification, invoice listings, and PDF downloads.
 - **Hosted Checkout Sessions (`POST /api/subscription/checkout`)**:
   - Eliminates PCI-DSS compliance scope by utilizing PayU India hosted checkout (`https://test.payu.in/_payment` in development, `https://secure.payu.in/_payment` in production).
-  - The server securely determines plan pricing based on the selected tier and workspace currency, assigns a unique transaction ID (`txnid`), and attaches User Defined Fields (`udf1` = tenantId, `udf2` = tier, `udf3` = currency, `udf4` = tenantSlug, `udf5` = userEmail).
+  - The server securely determines plan pricing using `TenantPlanPricingCatalog.GetPrice(tier, currency, billingCycle)`, assigns a unique transaction ID (`txnid`), and attaches User Defined Fields (`udf1` = tenantId, `udf2` = tier, `udf3` = `${currency}:${billingCycle}`, `udf4` = tenantSlug, `udf5` = userEmail).
+  - **Explicit PayU Currency Mapping**: Explicitly injects `["currency"] = normalizedCurrency.ToUpperInvariant()` into the PayU form parameters dictionary. This guarantees PayU opens in the client's chosen international currency (e.g. USD, EUR) instead of silently falling back to Indian Rupee (INR).
   - Computes a tamper-proof SHA-512 request hash:
     `sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT)`
   - The frontend dynamically constructs and automatically submits a signed hidden HTML form (`submitPayUForm`) to hand off to PayU.
 - **Local vs International Payment Support**:
   - **UPI (Local)**: Full UPI support (Google Pay, PhonePe, Paytm, BHIM, and QR code) for Indian Rupee (`inr`) transactions.
   - **Credit & Debit Cards (Global & Domestic)**: Cards (Visa, Mastercard, RuPay, American Express, Diners Club) supporting international payments in major currencies (`inr`, `usd`, `eur`, `gbp`, `cad`, `aud`, `jpy`, `sgd`) as well as domestic card payments.
-- **Workspace Currency Persistence**:
-  - The workspace billing currency is persisted in `TenantPlan.Currency` (defaulting to `"inr"`).
-  - When users travel abroad, the application retains the workspace's configured INR currency, preventing accidental foreign transaction markups and preserving local UPI options.
-- **Cryptographic Callback Verification (`POST /api/subscription/payu-callback`)**:
+- **Workspace Currency Persistence (`PUT /api/subscription/currency`)**:
+  - Currency selection is persistently saved in `TenantPlan.Currency` via `UpdateTenantCurrencyCommand`, guarded by `[RequireTenant(TenantRoles.Admin)]`.
+  - When users switch currencies in the UI, an explicit HTTP PUT updates the database, emits an audit log, and recalculates usage metrics, preventing client-side signal resets on page reload.
+  - Retains the workspace's configured currency consistently when users travel abroad, preventing accidental foreign transaction markups.
+- **Cryptographic Callback Verification & Period End Allocation (`POST /api/subscription/payu-callback`)**:
   - Public return endpoint (`[AllowAnonymous]` + `[IgnoreAntiforgeryToken]`) securely receives the browser postback from PayU (`surl` / `furl`).
   - Recomputes the reverse SHA-512 hash against the server's private `MerchantSalt`:
     - With additional charges: `sha512(additionalCharges|SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
     - Standard: `sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)`
   - Rejects hash mismatches immediately with `ApiMessages.PayUHashMismatch`.
+  - Validates the paid amount against `TenantPlanPricingCatalog.GetPrice(...)` to ensure no tampered amounts are accepted.
+  - Unpacks the billing cycle from `udf3`: sets `CurrentPeriodEndUtc` to `+1 Year` for annual subscriptions or `+1 Month` for monthly subscriptions, and sets `TenantInvoice.BillingCycle = "Annual"` or `"Monthly"`.
   - On verified `success`, updates workspace quota limits to the purchased tier, records `PaymentTransactionId` and `PaymentReferenceId`, updates `SubscriptionStatus = 'active'`, and records an immutable audit log entry.
   - Redirects the user back to the tenant-scoped subscription settings with `?status=success` or `?status=failed&error=...`.
+- **Invoicing Integrity & Zero Fake Records**:
+  - Free tier workspaces with no checkout transactions return an empty invoice list (`[]`) with a polished empty-state UI, eliminating synthetic invoices for unpurchased plans.
+  - Paid invoices dynamically format amounts, tax lines, and billing intervals according to `TenantPlanPricingCatalog`.
 - **Tier Hierarchy & Downgrade Safety**:
   - The UI models a tier hierarchy: `Free` (0) < `Pro` (1) < `Enterprise` (2).
   - Upgrades to higher tiers require hosted payment checkout via PayU (`CreateCheckoutSessionCommand`).
   - Downgrades (e.g. `Enterprise` -> `Pro` or `Pro` -> `Free`) require confirmation modals and are processed via `UpdateTenantPlanTierCommand` with strict BFLA validation preventing self-escalation.
 - **Subscription Cancellation & Reactivation**:
-  - Cancellation (`POST /api/subscription/cancel`, `CancelSubscriptionCommand`): Directly updates the active workspace plan, setting `CancelAtPeriodEnd = true` and `SubscriptionStatus = 'canceled'`. Quotas remain active until the billing period end date.
-  - Reactivation (`POST /api/subscription/reactivate`, `ReactivateSubscriptionCommand`): Resumes active billing renewal, resetting `CancelAtPeriodEnd = false` and `SubscriptionStatus = 'active'`.
+  - Cancellation (`POST /api/subscription/cancel`, `CancelSubscriptionCommand`): Directly updates the active workspace plan, setting `CancelAtPeriodEnd = true`, `AutoRenewEnabled = false`, and `SubscriptionStatus = 'canceled'`. Quotas remain active until the billing period end date.
+  - Reactivation (`POST /api/subscription/reactivate`, `ReactivateSubscriptionCommand`): Resumes active billing renewal, resetting `CancelAtPeriodEnd = false`, `SubscriptionStatus = 'active'`, and restoring `AutoRenewEnabled = true` if an active payment mandate exists.
+  - **Free Plan Cancellation & Reactivation Defense**: Free tier workspaces do not have an active paid subscription to cancel or resume. Both `CancelSubscriptionCommandHandler` and `ReactivateSubscriptionCommandHandler` validate plan tiers upfront and throw `InvalidOperationException` with `ApiMessages.CannotCancelFreePlan` and `ApiMessages.CannotReactivateFreePlan`. In the frontend UI, all cancellation buttons, danger zones, confirmation dialogs, and renewal countdowns are conditionally suppressed when `isFreePlan()` evaluates to true.
   - PayU Native In-App Lifecycle: Unlike Stripe which uses an external billing portal, PayU India operates strictly as a hosted checkout gateway. All subscription lifecycle events (cancellations, resumptions, plan downgrades, GSTIN updates, and official tax invoice downloads) are managed natively in-app across 4 streamlined tabs (`Overview`, `Billing History`, `Invoices`, `Settings`). All mock payment method cards and fake portal sessions have been retired. Form fields in `SubscriptionSettingsComponent` utilize Angular 22 `linkedSignal` for clean synchronization without signal-write side-effects.
+- **Automated Recurring Billing (PayU Standing Instructions & UPI AutoPay)**:
+  - **Mandate Registration (`si=1` / `si_details`)**: Checkout sessions generate RBI-compliant Standing Instructions parameters (`si="1"`, `api_version="7"`, and serialized JSON `si_details` defining billing caps, currency, and intervals). Hashes incorporate `si_details` into the SHA-512 sequence.
+  - **Mandate Token Preservation**: Upon verified payment callback, `authpayuid` (or `mihpayid`) is captured and persisted as `TenantPlan.MandateToken`, setting `TenantPlan.AutoRenewEnabled = true`.
+  - **Admin Control (`POST /api/subscription/auto-renew`)**: Workspace administrators can toggle auto-renewal ON or OFF via `ToggleAutoRenewCommand`. Disabling auto-renewal prevents automated debits while keeping benefits active through `CurrentPeriodEndUtc`.
+  - **Background Recurring Debit Pipeline (`HangfireSubscriptionAutoRenewJob`)**: An hourly background Hangfire job in `Normora.Worker` dispatches `ProcessSubscriptionRenewalsCommand`. The handler queries active plans where `CurrentPeriodEndUtc <= UtcNow` and `AutoRenewEnabled == true`, triggers PayU's server-to-server Recurring Payment API (`si_transaction` command with `authpayuid` via `PayUPaymentService.ExecuteRecurringPaymentAsync`), advances the billing period on success, records official itemized `TenantInvoices`, and logs structured audit entries.
 
 ---
 

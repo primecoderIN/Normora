@@ -706,3 +706,55 @@ This document tracks all features, infrastructure, and tasks that have been succ
   - Standardized plan tier card borders to 1px across all tiers (replacing `border-2` on active plan with `ring-2 ring-purple-500/25`) to eliminate 1px subpixel box model layout shifts.
   - Configured native smooth scrolling and overscroll containment (`scroll-smooth overscroll-y-contain`) on the `<main>` scroll container and enhanced `.custom-scrollbar` with momentum scrolling and dark-mode track styling.
   - Migrated all five subscription components (`SubscriptionComponent`, `SubscriptionOverviewComponent`, `SubscriptionInvoicesComponent`, `SubscriptionSettingsComponent`, `SubscriptionModalsComponent`) to `ChangeDetectionStrategy.OnPush` to halt unnecessary Zone.js change detection sweeps on mouse and scroll events.
+
+## ✅ Completed Multi-Currency Pricing Parity, Billing Cycle & PayU Gateway Alignment
+- [x] **Authoritative Centralized Pricing Catalog (`TenantPlanPricingCatalog`)**:
+  - Created centralized catalog in `server/Modules/Tenants/Domain/TenantPlanPricingCatalog.cs` governing 8 supported currencies (`INR`, `USD`, `EUR`, `GBP`, `CAD`, `AUD`, `JPY`, `SGD`).
+  - Defined canonical monthly prices and automated 20% annual discount totals across all tiers and currencies.
+  - Eliminated fragmented hardcoded price switches across `PayUPaymentService`, `GetTenantInvoicesQueryHandler`, and `DownloadInvoiceQueryHandler`.
+- [x] **Persistent Workspace Currency Switching (`PUT /api/subscription/currency`)**:
+  - Implemented `UpdateTenantCurrencyCommand`, `UpdateTenantCurrencyCommandHandler`, and `UpdateTenantCurrencyCommandValidator` in `server/Modules/Tenants/Application/Subscription/Commands/UpdateTenantCurrency/` implementing `IAuditableRequest`.
+  - Added `[HttpPut("currency")]` endpoint in `SubscriptionController.cs` protected by `[RequireTenant(TenantRoles.Admin)]` and BFLA authorization.
+  - Wired frontend `SubscriptionService.updateCurrency(code)` with toast alerts and usage re-evaluation, preventing UI currency resets on page reload.
+- [x] **PayU Gateway International Currency Contract Alignment**:
+  - Resolved critical gap where PayU defaulted to `INR` by explicitly injecting `["currency"] = normalizedCurrency.ToUpperInvariant()` into the hosted checkout form parameter dictionary.
+  - Extended `CreateCheckoutSessionCommand` to accept `billingCycle` (`monthly` vs `annual`).
+  - Encoded billing interval into transaction metadata `udf3` (`$"{normalizedCurrency}:{normalizedCycle}"`).
+  - In payment callback verification, dynamically verified paid amount against the catalog and allocated `CurrentPeriodEndUtc = +1 Year` for annual plans and `+1 Month` for monthly plans.
+- [x] **Invoicing & Downgrade Integrity Remediation**:
+  - Fixed `GetTenantInvoicesQueryHandler` which generated synthetic paid invoices for `PlanTier.Free` tenants; Free tier now returns an empty invoice list (`[]`) with an elegant empty-state UI.
+  - Fixed `DownloadInvoiceQueryHandler` fallback that previously forced non-EUR/GBP/USD currencies to INR.
+  - Fixed `UpdateTenantPlanTierCommandHandler` to retain existing `plan.Currency` when calculating new templates and cleanly reset payment transaction IDs upon downgrade to Free.
+- [x] **Frontend Transparent Pricing & Signal Alignment**:
+  - Extended `CurrencyConfig` and `PlanTierDefinition` with annual billing totals, savings labels, and checkout amounts.
+  - Upgraded `SubscriptionOverviewComponent` tier cards to show both monthly rates and total annual charges (e.g. `Billed annually at $468 / year (Save 20%)`).
+  - Removed mock usage data overrides in `SubscriptionComponent.loadUsage()` that forced hardcoded document counts and active subscription flags.
+  - Added comprehensive unit tests in `server/Normora.Architecture.Tests/SubscriptionPricingAndCurrencyTests.cs` verifying pricing matrix, symbol formatting, and command validation.
+- [x] **Free Plan Invariants & Cancellation Prevention Remediation**:
+  - Guarded backend `CancelSubscriptionCommandHandler` and `ReactivateSubscriptionCommandHandler` to reject cancellation/reactivation attempts on Free tier plans with `CannotCancelFreePlan` and `CannotReactivateFreePlan` exceptions.
+  - Sanitized `GetTenantSubscriptionUsageQueryHandler` to guarantee `cancelAtPeriodEnd = false`, `subscriptionStatus = "free"`, and `currentPeriodEndUtc = null` for all Free tier workspaces.
+  - Added centralized constants `CannotCancelFreePlan` and `CannotReactivateFreePlan` to `Normora.Shared.Constants.ApiMessages` and client `api-messages.ts`.
+  - Conditionalized UI in `SubscriptionOverviewComponent`, `SubscriptionSettingsComponent`, and `SubscriptionModalsComponent` to eliminate all cancel buttons, danger zones, cancellation confirmation modals, and renewal countdowns when `isFreePlan()` evaluates to true.
+
+## ✅ Completed Automated Recurring Billing, Standing Instructions (SI) & UPI AutoPay Integration
+- [x] **PayU Standing Instructions & Mandate Generation**:
+  - Extended `PayUPaymentService.CreatePaymentSessionAsync` to generate RBI-compliant Standing Instructions parameters (`si="1"`, `api_version="7"`, and serialized `si_details` JSON defining billing amount, currency, and cycle intervals).
+  - Calculated cryptographic SHA-512 payment hash incorporating `si_details` into the request signature sequence.
+- [x] **Mandate Token Capture & Database Persistence**:
+  - Added `MandateToken` (`varchar(150)`) and `AutoRenewEnabled` (`boolean`) to `TenantPlan` entity, EF Core mapping (`TenantPlanConfiguration`), and database migration `20261117212000_AddMandateTokenAndAutoRenewToTenantPlans`.
+  - In `PayUPaymentService.ProcessCallbackAsync`, extracted `authpayuid` and `mihpayid` on verified callback, persisted mandate tokens, and activated `AutoRenewEnabled = true`.
+- [x] **Admin Auto-Renewal Management CQRS Operation**:
+  - Implemented `ToggleAutoRenewCommand` and `ToggleAutoRenewCommandHandler` in `server/Modules/Tenants/Application/Subscription/Commands/ToggleAutoRenew/` implementing `IAuditableRequest`.
+  - Exposed `POST /api/subscription/auto-renew` endpoint in `SubscriptionController.cs` protected by `[RequireTenant(TenantRoles.Admin)]` and BFLA authorization.
+  - Guarded against enabling auto-renew without an active mandate token (`ApiMessages.AutoRenewNotAvailable`).
+  - Updated cancellation and reactivation handlers: cancellation disables `AutoRenewEnabled = false`; reactivation restores auto-renew if a mandate token exists.
+- [x] **Background Automated Renewal Pipeline (`Normora.Worker`)**:
+  - Implemented `ProcessSubscriptionRenewalsCommand` and handler in `server/Modules/Tenants/Application/Subscription/Commands/ProcessSubscriptionRenewals/` querying due subscriptions with active mandates.
+  - Implemented server-to-server recurring debit execution via PayU Post-Service API (`command: "si_transaction"`, `authpayuid`, and SHA-512 command hash) in `PayUPaymentService.ExecuteRecurringPaymentAsync`.
+  - Registered hourly Hangfire recurring job `HangfireSubscriptionAutoRenewJob` in `Normora.Infrastructure` and scheduled on `Normora.Worker`.
+  - On payment success: automatically extends `CurrentPeriodEndUtc`, generates official paid `TenantInvoice`, and logs audit trail.
+  - On failure: sets `SubscriptionStatus = "past_due"`, records error metadata, and logs audit trail.
+- [x] **Frontend Status & Control Integration**:
+  - Added `autoRenewEnabled` and `hasMandate` to `SubscriptionUsageDto` and created `SubscriptionService.toggleAutoRenew(enabled)`.
+  - Added live "Auto-Pay: On" / "Auto-Pay: Off" badge to `SubscriptionOverviewComponent` plan hero card.
+  - Added dedicated "Auto-Renewal & Payment Mandate" management section with toggle controls and RBI e-mandate protection badge in `SubscriptionSettingsComponent`.

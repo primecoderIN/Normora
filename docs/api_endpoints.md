@@ -128,10 +128,12 @@ All URLs are **lowercase**. All responses use **camelCase** JSON and the standar
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `GET` | `/subscription/usage` | RequireTenant | Fetch tenant resource usage (documents, member seats, storage bytes, subscription status, currency) compared against current plan limits. |
-| `POST` | `/subscription/checkout` | RequireTenant(Admin) | Generate PayU hosted checkout action URL and parameters signed with a SHA-512 cryptographic hash for upgrading to a paid tier (`Pro`, `Enterprise`) in specified currency. |
-| `POST` | `/subscription/portal` | RequireTenant(Admin) | Direct user to workspace subscription and billing management overview. Validates `returnUrl` to block open redirects. |
-| `POST` | `/subscription/payu-callback` | AllowAnonymous | Securely handle PayU hosted checkout return (`surl`/`furl`) with reverse SHA-512 hash verification, quota provisioning, and browser redirection. Protected under `"anon"` rate limiter policy (5 requests/minute per IP). |
+| `GET` | `/subscription/usage` | RequireTenant | Fetch tenant resource usage (documents, member seats, storage bytes, subscription status, currency, auto-renew status, mandate presence) compared against current plan limits. |
+| `POST` | `/subscription/checkout` | RequireTenant(Admin) | Generate PayU hosted checkout action URL and parameters signed with a SHA-512 cryptographic hash for upgrading to a paid tier (`Pro`, `Enterprise`) in specified currency and billing cycle, supporting Standing Instructions (`si=1`, `si_details`) for automated recurring payments. |
+| `POST` | `/subscription/auto-renew` | RequireTenant(Admin) | Enable or disable automatic recurring renewal debits (PayU Standing Instructions / UPI AutoPay) for the workspace subscription. |
+| `POST` | `/subscription/cancel` | RequireTenant(Admin) | Cancel subscription renewal at period end or immediately, disabling auto-renew. |
+| `POST` | `/subscription/reactivate` | RequireTenant(Admin) | Reactivate a cancelled subscription scheduled to expire at period end, restoring active auto-renewal if mandate exists. |
+| `POST` | `/subscription/payu-callback` | AllowAnonymous | Securely handle PayU hosted checkout return (`surl`/`furl`) with reverse SHA-512 hash verification, mandate token (`authpayuid`) registration, quota provisioning, and browser redirection. Protected under `"anon"` rate limiter policy (5 requests/minute per IP). |
 | `POST` | `/subscription/tier` | RequireTenant(Admin) | Upgrade or downgrade tenant subscription tier directly (free tier fallback). Direct upgrade to paid tiers is blocked by BFLA. |
 
 ---

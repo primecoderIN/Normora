@@ -144,6 +144,8 @@ Defines subscription tiers, quota boundaries, workspace billing currency, and Pa
 | `UpdatedAt` | `datetime2` | ✅ | UTC last update timestamp |
 | `PaymentTransactionId` | `varchar(100)` | ✅ | Payment gateway transaction ID |
 | `PaymentReferenceId` | `varchar(100)` | ✅ | Payment gateway reference / payment ID |
+| `MandateToken` | `varchar(150)` | ✅ | PayU recurring mandate authorization identifier (`authpayuid` / `mihpayid`) for Standing Instructions / UPI AutoPay |
+| `AutoRenewEnabled` | `boolean` | ❌ | True if automated recurring debits are active. Default: `false` |
 | `SubscriptionStatus` | `varchar(50)` | ✅ | Subscription status (`active`, `past_due`, `canceled`) |
 | `CurrentPeriodEndUtc` | `datetime2` | ✅ | Billing cycle renewal date |
 | `CancelAtPeriodEnd` | `boolean` | ❌ | True if cancellation is scheduled at end of current billing period |
