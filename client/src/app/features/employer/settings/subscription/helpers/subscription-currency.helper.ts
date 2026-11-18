@@ -11,7 +11,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: '₹19,999',
     enterprisePriceAnnual: '₹15,999',
     proNumericMonthly: 3999,
-    enterpriseNumericMonthly: 19999
+    enterpriseNumericMonthly: 19999,
+    proNumericAnnualTotal: 38388,
+    enterpriseNumericAnnualTotal: 191988,
+    proAnnualBilledTotal: '₹38,388',
+    enterpriseAnnualBilledTotal: '₹191,988'
   },
   {
     code: 'USD',
@@ -23,7 +27,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: '$249',
     enterprisePriceAnnual: '$199',
     proNumericMonthly: 49,
-    enterpriseNumericMonthly: 249
+    enterpriseNumericMonthly: 249,
+    proNumericAnnualTotal: 468,
+    enterpriseNumericAnnualTotal: 2388,
+    proAnnualBilledTotal: '$468',
+    enterpriseAnnualBilledTotal: '$2,388'
   },
   {
     code: 'EUR',
@@ -35,7 +43,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: '€229',
     enterprisePriceAnnual: '€183',
     proNumericMonthly: 45,
-    enterpriseNumericMonthly: 229
+    enterpriseNumericMonthly: 229,
+    proNumericAnnualTotal: 432,
+    enterpriseNumericAnnualTotal: 2196,
+    proAnnualBilledTotal: '€432',
+    enterpriseAnnualBilledTotal: '€2,196'
   },
   {
     code: 'GBP',
@@ -47,7 +59,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: '£199',
     enterprisePriceAnnual: '£159',
     proNumericMonthly: 39,
-    enterpriseNumericMonthly: 199
+    enterpriseNumericMonthly: 199,
+    proNumericAnnualTotal: 372,
+    enterpriseNumericAnnualTotal: 1908,
+    proAnnualBilledTotal: '£372',
+    enterpriseAnnualBilledTotal: '£1,908'
   },
   {
     code: 'CAD',
@@ -59,7 +75,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: 'C$329',
     enterprisePriceAnnual: 'C$263',
     proNumericMonthly: 65,
-    enterpriseNumericMonthly: 329
+    enterpriseNumericMonthly: 329,
+    proNumericAnnualTotal: 624,
+    enterpriseNumericAnnualTotal: 3156,
+    proAnnualBilledTotal: 'C$624',
+    enterpriseAnnualBilledTotal: 'C$3,156'
   },
   {
     code: 'AUD',
@@ -71,7 +91,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: 'A$379',
     enterprisePriceAnnual: 'A$303',
     proNumericMonthly: 75,
-    enterpriseNumericMonthly: 379
+    enterpriseNumericMonthly: 379,
+    proNumericAnnualTotal: 720,
+    enterpriseNumericAnnualTotal: 3636,
+    proAnnualBilledTotal: 'A$720',
+    enterpriseAnnualBilledTotal: 'A$3,636'
   },
   {
     code: 'JPY',
@@ -83,7 +107,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: '¥38,000',
     enterprisePriceAnnual: '¥30,400',
     proNumericMonthly: 7500,
-    enterpriseNumericMonthly: 38000
+    enterpriseNumericMonthly: 38000,
+    proNumericAnnualTotal: 72000,
+    enterpriseNumericAnnualTotal: 364800,
+    proAnnualBilledTotal: '¥72,000',
+    enterpriseAnnualBilledTotal: '¥364,800'
   },
   {
     code: 'SGD',
@@ -95,7 +123,11 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
     enterprisePriceMonthly: 'S$329',
     enterprisePriceAnnual: 'S$263',
     proNumericMonthly: 65,
-    enterpriseNumericMonthly: 329
+    enterpriseNumericMonthly: 329,
+    proNumericAnnualTotal: 624,
+    enterpriseNumericAnnualTotal: 3156,
+    proAnnualBilledTotal: 'S$624',
+    enterpriseAnnualBilledTotal: 'S$3,156'
   }
 ];
 

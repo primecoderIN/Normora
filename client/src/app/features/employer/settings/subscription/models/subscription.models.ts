@@ -8,6 +8,9 @@ export interface PlanTierDefinition {
   name: string;
   price: string;
   period: string;
+  billedTotalFormatted?: string;
+  billingTotalAmount: number;
+  priceLabel: string;
   description: string;
   maxDocs: string;
   maxMembers: string;
@@ -27,6 +30,10 @@ export interface CurrencyConfig {
   enterprisePriceAnnual: string;
   proNumericMonthly: number;
   enterpriseNumericMonthly: number;
+  proNumericAnnualTotal: number;
+  enterpriseNumericAnnualTotal: number;
+  proAnnualBilledTotal: string;
+  enterpriseAnnualBilledTotal: string;
 }
 
 export interface BillingInvoiceItem {

@@ -50,15 +50,9 @@ public class DownloadInvoiceQueryHandler(
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.TenantId == tenantId, cancellationToken);
 
-            var tier = plan?.PlanTier ?? PlanTier.Enterprise;
-            var currency = (plan?.Currency ?? "inr").ToUpperInvariant();
-            var price = currency.ToLowerInvariant() switch
-            {
-                "usd" => (tier == PlanTier.Enterprise ? 249m : 49m),
-                "eur" => (tier == PlanTier.Enterprise ? 229m : 45m),
-                "gbp" => (tier == PlanTier.Enterprise ? 199m : 39m),
-                _ => (tier == PlanTier.Enterprise ? 19999m : 3999m)
-            };
+            var tier = plan?.PlanTier ?? PlanTier.Pro;
+            var currency = TenantPlanPricingCatalog.NormalizeCurrency(plan?.Currency);
+            var price = TenantPlanPricingCatalog.GetPrice(tier, currency, "monthly");
 
             var defaultInvoice = new TenantInvoice
             {
@@ -67,7 +61,7 @@ public class DownloadInvoiceQueryHandler(
                 InvoiceDate = plan?.CreatedAt ?? DateTime.UtcNow,
                 PlanTier = tier.ToString(),
                 Amount = price,
-                Currency = currency,
+                Currency = currency.ToUpperInvariant(),
                 BillingCycle = "Monthly",
                 Status = "Paid",
                 PaymentTransactionId = plan?.PaymentTransactionId ?? $"txn_{tenantId.ToString("N")[..12]}",
@@ -180,7 +174,7 @@ public class DownloadInvoiceQueryHandler(
             <strong>Normora {invoice.PlanTier} Plan</strong>
             <div style=""font-size: 11px; color: #64748b; margin-top: 2px;"">Grounded enterprise RAG, high-scale pgvector retrieval, compliance audit logs</div>
           </td>
-          <td>1 Month</td>
+          <td>{(invoice.BillingCycle == "Annual" ? "1 Year" : "1 Month")}</td>
           <td style=""text-align: right; font-weight: 600;"">{invoice.Currency} {subtotal:N2}</td>
         </tr>
       </tbody>

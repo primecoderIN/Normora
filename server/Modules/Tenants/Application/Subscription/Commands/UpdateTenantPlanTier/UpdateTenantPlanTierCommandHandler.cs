@@ -53,11 +53,21 @@ public class UpdateTenantPlanTierCommandHandler(
             // Plan Tier Upgrade / Downgrade Invariants:
             // Recalculate tier quotas (MaxDocuments, MaxEmployees, MaxStorageBytes) from tier defaults.
             // Updates are immediate, and the updated timestamp is refreshed.
-            var template = TenantPlan.CreateDefault(tenantId, request.Tier);
+            var template = TenantPlan.CreateDefault(tenantId, request.Tier, plan.Currency);
             plan.PlanTier = request.Tier;
             plan.MaxDocuments = template.MaxDocuments;
             plan.MaxEmployees = template.MaxEmployees;
             plan.MaxStorageBytes = template.MaxStorageBytes;
+            if (request.Tier == PlanTier.Free)
+            {
+                plan.SubscriptionStatus = "free";
+                plan.CancelAtPeriodEnd = false;
+                plan.CurrentPeriodEndUtc = null;
+                plan.PaymentTransactionId = null;
+                plan.PaymentReferenceId = null;
+                plan.MandateToken = null;
+                plan.AutoRenewEnabled = false;
+            }
             plan.UpdatedAt = DateTime.UtcNow;
         }
 

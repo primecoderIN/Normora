@@ -120,8 +120,8 @@
   </div>
 }
 
-<!-- MODAL: Cancel Subscription Flow -->
-@if (showCancelModal()) {
+<!-- MODAL: Cancel Subscription Flow (Paid Plans Only) -->
+@if (showCancelModal() && !isFreePlan()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
     <div class="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 space-y-5">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">

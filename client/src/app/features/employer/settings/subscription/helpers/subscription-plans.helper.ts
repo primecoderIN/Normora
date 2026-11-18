@@ -7,6 +7,9 @@ export function createPlanTierDefinitions(curr: CurrencyConfig, isAnnual: boolea
       name: 'Starter / Free',
       price: `${curr.symbol}0`,
       period: isAnnual ? '/ year' : '/ month',
+      billedTotalFormatted: 'Free forever',
+      billingTotalAmount: 0,
+      priceLabel: `${curr.symbol}0`,
       description: 'Essential AI knowledge base for small teams getting started.',
       maxDocs: '10 Documents',
       maxMembers: '5 Team Members',
@@ -23,6 +26,11 @@ export function createPlanTierDefinitions(curr: CurrencyConfig, isAnnual: boolea
       name: 'Pro Workspace',
       price: isAnnual ? curr.proPriceAnnual : curr.proPriceMonthly,
       period: isAnnual ? '/ month, billed annually' : '/ month',
+      billedTotalFormatted: isAnnual
+        ? `Billed annually at ${curr.proAnnualBilledTotal} / year (Save 20%)`
+        : `Billed monthly at ${curr.proPriceMonthly} / month`,
+      billingTotalAmount: isAnnual ? curr.proNumericAnnualTotal : curr.proNumericMonthly,
+      priceLabel: isAnnual ? `${curr.proAnnualBilledTotal}/yr` : `${curr.proPriceMonthly}/mo`,
       description: 'Expanded capacity with department scoping for growing organizations.',
       maxDocs: '100 Documents',
       maxMembers: '50 Team Members',
@@ -41,6 +49,11 @@ export function createPlanTierDefinitions(curr: CurrencyConfig, isAnnual: boolea
       name: 'Enterprise',
       price: isAnnual ? curr.enterprisePriceAnnual : curr.enterprisePriceMonthly,
       period: isAnnual ? '/ month, billed annually' : '/ month',
+      billedTotalFormatted: isAnnual
+        ? `Billed annually at ${curr.enterpriseAnnualBilledTotal} / year (Save 20%)`
+        : `Billed monthly at ${curr.enterprisePriceMonthly} / month`,
+      billingTotalAmount: isAnnual ? curr.enterpriseNumericAnnualTotal : curr.enterpriseNumericMonthly,
+      priceLabel: isAnnual ? `${curr.enterpriseAnnualBilledTotal}/yr` : `${curr.enterprisePriceMonthly}/mo`,
       description: 'Maximum scale, custom quotas, and enterprise-grade compliance.',
       maxDocs: '10,000 Documents',
       maxMembers: '5,000 Team Members',

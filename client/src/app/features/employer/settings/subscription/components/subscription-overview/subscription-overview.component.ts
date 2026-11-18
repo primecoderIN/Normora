@@ -21,12 +21,13 @@ export class SubscriptionOverviewComponent {
   currentPlanName = input<string>('');
   currentPlanDescription = input<string>('');
   currentPlanPriceFormatted = input<string>('');
-  renewalDateFormatted = input<string>('');
+  renewalDateFormatted = input<string | null>(null);
   isUpdating = input<boolean>(false);
   selectedTierLoading = input<PlanTierType | null>(null);
   docPercent = input<number>(0);
   empPercent = input<number>(0);
   storagePercent = input<number>(0);
+  isFreePlan = input<boolean>(true);
 
   onBillingCycleChange = output<BillingCycle>();
   onCurrencyChange = output<string>();
@@ -46,7 +47,7 @@ export class SubscriptionOverviewComponent {
   };
 
   get activePlanTier(): PlanTierType {
-    return this.usage()?.planTier ?? 'Enterprise';
+    return this.usage()?.planTier ?? 'Free';
   }
 
   isTierCurrent(tier: PlanTierType): boolean {

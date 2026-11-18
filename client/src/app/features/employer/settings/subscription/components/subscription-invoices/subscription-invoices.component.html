@@ -15,7 +15,19 @@
     </button>
   </div>
 
-  @if (!isCardView()) {
+  @if (invoices().length === 0) {
+    <div class="py-12 flex flex-col items-center justify-center text-center gap-3 rounded-2xl bg-slate-50/50 dark:bg-slate-800/20 border border-dashed border-slate-200 dark:border-slate-800 p-8">
+      <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+        <i class="pi pi-receipt text-xl"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">No invoices yet</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+          When you upgrade to a paid workspace plan, your itemized tax receipts and billing invoices will appear here automatically.
+        </p>
+      </div>
+    </div>
+  } @else if (!isCardView()) {
     <!-- Invoices Table View -->
     <div class="overflow-x-auto custom-scrollbar">
       <table class="w-full text-left text-xs border-collapse">

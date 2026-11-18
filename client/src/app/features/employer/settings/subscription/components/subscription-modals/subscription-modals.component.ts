@@ -19,9 +19,10 @@ export class SubscriptionModalsComponent {
   usage = input<SubscriptionUsageDto | null>(null);
   currentPlanName = input<string>('');
   pendingDowngradeTier = input<PlanTierType | null>(null);
-  renewalDateFormatted = input<string>('');
+  renewalDateFormatted = input<string | null>(null);
   isUpdating = input<boolean>(false);
   isSubmittingSupport = input<boolean>(false);
+  isFreePlan = input<boolean>(false);
 
   onCloseQuotaDetails = output<void>();
   onCloseDowngradeModal = output<void>();
