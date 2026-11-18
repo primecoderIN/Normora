@@ -26,24 +26,32 @@ public class CancelSubscriptionCommandHandler(
         var plan = await context.TenantPlans
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
 
-        if (plan == null)
+        // A workspace on the Free tier has no active paid subscription to cancel
+        if (plan == null || plan.PlanTier == PlanTier.Free)
         {
-            plan = TenantPlan.CreateDefault(tenantId);
-            context.TenantPlans.Add(plan);
+            throw new InvalidOperationException(ApiMessages.CannotCancelFreePlan);
         }
 
-        // Mark cancellation flag and subscription status
+        // Mark cancellation flag, disable auto-renew, and set subscription status
         plan.CancelAtPeriodEnd = true;
+        plan.AutoRenewEnabled = false;
         plan.SubscriptionStatus = "canceled";
         plan.UpdatedAt = DateTime.UtcNow;
 
         if (request.Immediate)
         {
-            var freeTemplate = TenantPlan.CreateDefault(tenantId, PlanTier.Free);
+            var freeTemplate = TenantPlan.CreateDefault(tenantId, PlanTier.Free, plan.Currency);
             plan.PlanTier = PlanTier.Free;
             plan.MaxDocuments = freeTemplate.MaxDocuments;
             plan.MaxEmployees = freeTemplate.MaxEmployees;
             plan.MaxStorageBytes = freeTemplate.MaxStorageBytes;
+            plan.SubscriptionStatus = "free";
+            plan.CancelAtPeriodEnd = false;
+            plan.CurrentPeriodEndUtc = null;
+            plan.PaymentTransactionId = null;
+            plan.PaymentReferenceId = null;
+            plan.MandateToken = null;
+            plan.AutoRenewEnabled = false;
         }
 
         await context.SaveChangesAsync(cancellationToken);

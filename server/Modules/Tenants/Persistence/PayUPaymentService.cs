@@ -10,6 +10,7 @@ using Normora.Modules.Tenants.Application.Subscription;
 using Normora.Modules.Tenants.Domain;
 using Normora.Shared.Constants;
 using Normora.Modules.Tenants.Options;
+using System.Net.Http;
 using Normora.Shared.Options;
 
 namespace Normora.Modules.Tenants.Persistence;
@@ -19,6 +20,7 @@ public class PayUPaymentService(
     TenantsDbContext context,
     IOptions<PayUOptions> payUOptions,
     IOptions<AppOptions> appOptions,
+    IHttpClientFactory httpClientFactory,
     ILogger<PayUPaymentService> logger) : IPaymentService
 {
     private readonly PayUOptions _options = payUOptions.Value;
@@ -31,6 +33,8 @@ public class PayUPaymentService(
         string userEmail,
         PlanTier tier,
         string? currency = "inr",
+        string? billingCycle = "monthly",
+        bool enableAutoRenew = true,
         CancellationToken cancellationToken = default)
     {
         if (tier == PlanTier.Free)
@@ -41,16 +45,20 @@ public class PayUPaymentService(
         var plan = await context.TenantPlans
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
 
-        var normalizedCurrency = string.IsNullOrWhiteSpace(currency)
-            ? (!string.IsNullOrWhiteSpace(plan?.Currency) ? plan.Currency : "inr")
-            : currency.Trim().ToLowerInvariant();
+        var normalizedCurrency = TenantPlanPricingCatalog.NormalizeCurrency(
+            string.IsNullOrWhiteSpace(currency) ? plan?.Currency : currency);
 
-        // Calculate tier price
-        var amount = GetExpectedPrice(tier, normalizedCurrency);
+        var normalizedCycle = string.Equals(billingCycle, "annual", StringComparison.OrdinalIgnoreCase)
+            ? "annual"
+            : "monthly";
+
+        // Calculate tier price using authoritative domain pricing catalog
+        var amount = TenantPlanPricingCatalog.GetPrice(tier, normalizedCurrency, normalizedCycle);
 
         var amountString = amount.ToString("F2", CultureInfo.InvariantCulture);
         var txnid = "txn_" + Guid.NewGuid().ToString("N")[..18];
-        var productInfo = $"Normora {tier} Workspace";
+        var cycleLabel = normalizedCycle == "annual" ? "Annual" : "Monthly";
+        var productInfo = $"Normora {tier} Workspace ({cycleLabel})";
         var safeFirstName = string.IsNullOrWhiteSpace(tenantName) ? "Workspace" : tenantName.Trim();
         var safeEmail = string.IsNullOrWhiteSpace(userEmail) ? "billing@normora.internal" : userEmail.Trim();
         var phone = "9999999999";
@@ -58,15 +66,35 @@ public class PayUPaymentService(
         // PayU User Defined Fields (UDF) for state preservation
         var udf1 = tenantId.ToString();
         var udf2 = tier.ToString();
-        var udf3 = normalizedCurrency;
+        var udf3 = $"{normalizedCurrency}:{normalizedCycle}";
         var udf4 = tenantSlug;
         var udf5 = safeEmail;
 
         var callbackUrl = $"{_app.BaseUrl}/api/subscription/payu-callback";
 
+        string? siDetails = null;
+        if (enableAutoRenew)
+        {
+            var billingCycleEnum = normalizedCycle == "annual" ? "YEARLY" : "MONTHLY";
+            siDetails = JsonSerializer.Serialize(new
+            {
+                billingAmount = amountString,
+                billingCurrency = normalizedCurrency.ToUpperInvariant(),
+                billingCycle = billingCycleEnum,
+                billingInterval = 1,
+                paymentStartDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                paymentEndDate = DateTime.UtcNow.AddYears(5).ToString("yyyy-MM-dd")
+            });
+        }
+
         // Generate SHA-512 request hash:
+        // With Standing Instruction (SI / UPI AutoPay):
+        // sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||si_details|SALT)
+        // Without SI:
         // sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||SALT)
-        var hashSequence = $"{_options.MerchantKey}|{txnid}|{amountString}|{productInfo}|{safeFirstName}|{safeEmail}|{udf1}|{udf2}|{udf3}|{udf4}|{udf5}||||||{_options.MerchantSalt}";
+        var hashSequence = enableAutoRenew && siDetails != null
+            ? $"{_options.MerchantKey}|{txnid}|{amountString}|{productInfo}|{safeFirstName}|{safeEmail}|{udf1}|{udf2}|{udf3}|{udf4}|{udf5}||||||{siDetails}|{_options.MerchantSalt}"
+            : $"{_options.MerchantKey}|{txnid}|{amountString}|{productInfo}|{safeFirstName}|{safeEmail}|{udf1}|{udf2}|{udf3}|{udf4}|{udf5}||||||{_options.MerchantSalt}";
         var hash = ComputeSha512(hashSequence);
 
         var paramDict = new Dictionary<string, string>
@@ -74,6 +102,7 @@ public class PayUPaymentService(
             ["key"] = _options.MerchantKey,
             ["txnid"] = txnid,
             ["amount"] = amountString,
+            ["currency"] = normalizedCurrency.ToUpperInvariant(),
             ["productinfo"] = productInfo,
             ["firstname"] = safeFirstName,
             ["email"] = safeEmail,
@@ -88,8 +117,15 @@ public class PayUPaymentService(
             ["udf5"] = udf5
         };
 
-        logger.LogInformation("Generated PayU checkout session for Tenant {TenantId}, Tier {Tier}, TxnId {TxnId}, Amount {Amount} {Currency}",
-            tenantId, tier, txnid, amountString, normalizedCurrency);
+        if (enableAutoRenew && siDetails != null)
+        {
+            paramDict["si"] = "1";
+            paramDict["api_version"] = "7";
+            paramDict["si_details"] = siDetails;
+        }
+
+        logger.LogInformation("Generated PayU checkout session for Tenant {TenantId}, Tier {Tier}, Cycle {Cycle}, AutoRenew {AutoRenew}, TxnId {TxnId}, Amount {Amount} {Currency}",
+            tenantId, tier, normalizedCycle, enableAutoRenew, txnid, amountString, normalizedCurrency.ToUpperInvariant());
 
         return new PaymentCheckoutDto(_options.PaymentUrl, paramDict);
     }
@@ -171,8 +207,16 @@ public class PayUPaymentService(
             return new PaymentCallbackResultDto(false, tenantId, tenantSlug, tier, txnid, string.IsNullOrWhiteSpace(errorMessage) ? ApiMessages.PaymentProcessingFailed : errorMessage);
         }
 
-        // Amount verification: ensure the paid amount matches the tier price catalog
-        var expectedAmount = GetExpectedPrice(tier, udf3);
+        // Parse UDF3 containing normalized currency and billing cycle (e.g. "usd:annual" or legacy "usd")
+        var udf3Parts = udf3.Split(':');
+        var callbackCurrency = TenantPlanPricingCatalog.NormalizeCurrency(udf3Parts.Length > 0 ? udf3Parts[0] : "inr");
+        var callbackCycle = udf3Parts.Length > 1 && string.Equals(udf3Parts[1], "annual", StringComparison.OrdinalIgnoreCase)
+            ? "annual"
+            : "monthly";
+        var isAnnual = callbackCycle == "annual";
+
+        // Amount verification: ensure the paid amount matches the authoritative domain pricing catalog
+        var expectedAmount = TenantPlanPricingCatalog.GetPrice(tier, callbackCurrency, callbackCycle);
         if (!decimal.TryParse(amount, CultureInfo.InvariantCulture, out var parsedAmount) || Math.Abs(parsedAmount - expectedAmount) > 0.01m)
         {
             logger.LogWarning("PayU transaction {TxnId} amount mismatch. Expected: {Expected}, Received: {Received}",
@@ -192,7 +236,18 @@ public class PayUPaymentService(
             return new PaymentCallbackResultDto(true, tenantId, tenantSlug, tier, txnid, null);
         }
 
-        var template = TenantPlan.CreateDefault(tenantId, tier, udf3);
+        // Extract mandate tokens if a recurring Standing Instruction / UPI AutoPay was registered
+        var mihpayid = form["mihpayid"].ToString();
+        var authpayuid = form["authpayuid"].ToString();
+        var isStandingInstruction = string.Equals(form["IsStandingInstructionSet"].ToString(), "1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(form["si"].ToString(), "1", StringComparison.OrdinalIgnoreCase)
+            || !string.IsNullOrWhiteSpace(authpayuid);
+
+        var mandateToken = !string.IsNullOrWhiteSpace(authpayuid)
+            ? authpayuid
+            : (!string.IsNullOrWhiteSpace(mihpayid) ? mihpayid : null);
+
+        var template = TenantPlan.CreateDefault(tenantId, tier, callbackCurrency);
 
         if (plan == null)
         {
@@ -200,21 +255,31 @@ public class PayUPaymentService(
             plan.PaymentTransactionId = txnid;
             plan.PaymentReferenceId = payuMoneyId;
             plan.SubscriptionStatus = "active";
-            plan.Currency = string.IsNullOrWhiteSpace(udf3) ? "inr" : udf3.ToLowerInvariant();
-            plan.CurrentPeriodEndUtc = DateTime.UtcNow.AddMonths(1);
+            plan.Currency = callbackCurrency;
+            plan.CurrentPeriodEndUtc = isAnnual ? DateTime.UtcNow.AddYears(1) : DateTime.UtcNow.AddMonths(1);
+            if (isStandingInstruction && !string.IsNullOrWhiteSpace(mandateToken))
+            {
+                plan.MandateToken = mandateToken;
+                plan.AutoRenewEnabled = true;
+            }
             context.TenantPlans.Add(plan);
         }
         else
         {
             plan.PlanTier = tier;
-            plan.Currency = string.IsNullOrWhiteSpace(udf3) ? plan.Currency : udf3.ToLowerInvariant();
+            plan.Currency = callbackCurrency;
             plan.MaxDocuments = template.MaxDocuments;
             plan.MaxEmployees = template.MaxEmployees;
             plan.MaxStorageBytes = template.MaxStorageBytes;
             plan.PaymentTransactionId = txnid;
             plan.PaymentReferenceId = payuMoneyId;
             plan.SubscriptionStatus = "active";
-            plan.CurrentPeriodEndUtc = DateTime.UtcNow.AddMonths(1);
+            plan.CurrentPeriodEndUtc = isAnnual ? DateTime.UtcNow.AddYears(1) : DateTime.UtcNow.AddMonths(1);
+            if (isStandingInstruction && !string.IsNullOrWhiteSpace(mandateToken))
+            {
+                plan.MandateToken = mandateToken;
+                plan.AutoRenewEnabled = true;
+            }
             plan.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -226,8 +291,8 @@ public class PayUPaymentService(
             InvoiceDate = DateTime.UtcNow,
             PlanTier = tier.ToString(),
             Amount = parsedAmount,
-            Currency = (string.IsNullOrWhiteSpace(udf3) ? "inr" : udf3).ToUpperInvariant(),
-            BillingCycle = "Monthly",
+            Currency = callbackCurrency.ToUpperInvariant(),
+            BillingCycle = isAnnual ? "Annual" : "Monthly",
             Status = "Paid",
             PaymentTransactionId = txnid,
             CustomerName = firstname,
@@ -249,17 +314,111 @@ public class PayUPaymentService(
                 tier = tier.ToString(),
                 txnid,
                 amount,
-                currency = udf3,
+                currency = callbackCurrency,
+                billingCycle = callbackCycle,
                 payuMoneyId,
                 status
             })
         });
 
         await context.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Tenant {TenantId} successfully upgraded to {Tier} via PayU payment {TxnId}",
-            tenantId, tier, SanitizeLogValue(txnid));
+        logger.LogInformation("Tenant {TenantId} successfully upgraded to {Tier} ({Cycle}) via PayU payment {TxnId}",
+            tenantId, tier, callbackCycle, SanitizeLogValue(txnid));
 
-        return new PaymentCallbackResultDto(true, tenantId, tenantSlug, tier, txnid, null);
+        return new PaymentCallbackResultDto(true, tenantId, tenantSlug, tier, txnid, null, plan.MandateToken, plan.AutoRenewEnabled);
+    }
+
+    public async Task<RecurringPaymentResultDto> ExecuteRecurringPaymentAsync(
+        Guid tenantId,
+        decimal amount,
+        string mandateToken,
+        PlanTier tier,
+        string currency,
+        string userEmail,
+        string customerName,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(mandateToken))
+        {
+            return new RecurringPaymentResultDto(false, string.Empty, amount, "Mandate token is missing.");
+        }
+
+        var amountString = amount.ToString("F2", CultureInfo.InvariantCulture);
+        var txnid = "rec_" + Guid.NewGuid().ToString("N")[..18];
+        var invoiceNo = $"INV-{DateTime.UtcNow:yyyyMM}-{txnid[..Math.Min(txnid.Length, 8)]}";
+        var safeEmail = string.IsNullOrWhiteSpace(userEmail) ? "billing@normora.internal" : userEmail.Trim();
+
+        var var1Dict = new Dictionary<string, string>
+        {
+            ["authpayuid"] = mandateToken,
+            ["amount"] = amountString,
+            ["txnid"] = txnid,
+            ["phone"] = "9999999999",
+            ["email"] = safeEmail,
+            ["invoiceDisplayNumber"] = invoiceNo
+        };
+
+        var var1Json = JsonSerializer.Serialize(var1Dict);
+        // PayU si_transaction command hash: sha512(key|command|var1|salt)
+        var hashSequence = $"{_options.MerchantKey}|si_transaction|{var1Json}|{_options.MerchantSalt}";
+        var hash = ComputeSha512(hashSequence);
+
+        var formContent = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("form", "2"),
+            new KeyValuePair<string, string>("key", _options.MerchantKey),
+            new KeyValuePair<string, string>("command", "si_transaction"),
+            new KeyValuePair<string, string>("var1", var1Json),
+            new KeyValuePair<string, string>("hash", hash)
+        });
+
+        var client = httpClientFactory.CreateClient("PayU");
+        client.Timeout = TimeSpan.FromSeconds(30);
+
+        try
+        {
+            var response = await client.PostAsync(_options.PostServiceUrl, formContent, cancellationToken);
+            var responseString = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            logger.LogInformation("PayU recurring debit attempt for Tenant {TenantId}, TxnId {TxnId}, HTTP {StatusCode}",
+                tenantId, txnid, response.StatusCode);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning("PayU recurring debit returned HTTP error {StatusCode} for Tenant {TenantId}",
+                    response.StatusCode, tenantId);
+                return new RecurringPaymentResultDto(false, txnid, amount, $"PayU HTTP {response.StatusCode}");
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(responseString);
+                var root = doc.RootElement;
+                var status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetInt32() : 0;
+                var msg = root.TryGetProperty("msg", out var msgProp) ? msgProp.GetString() : null;
+
+                if (status == 1 || string.Equals(msg, "Transaction Successful", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new RecurringPaymentResultDto(true, txnid, amount, null);
+                }
+
+                return new RecurringPaymentResultDto(false, txnid, amount, msg ?? ApiMessages.PaymentProcessingFailed);
+            }
+            catch (JsonException)
+            {
+                if (response.IsSuccessStatusCode && responseString.Contains("success", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new RecurringPaymentResultDto(true, txnid, amount, null);
+                }
+
+                return new RecurringPaymentResultDto(false, txnid, amount, ApiMessages.PaymentProcessingFailed);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "PayU recurring debit exception for Tenant {TenantId}, TxnId {TxnId}", tenantId, txnid);
+            return new RecurringPaymentResultDto(false, txnid, amount, ApiMessages.PaymentProcessingFailed);
+        }
     }
 
     private static string ComputeSha512(string input)
@@ -267,39 +426,6 @@ public class PayUPaymentService(
         var bytes = Encoding.UTF8.GetBytes(input);
         var hashBytes = SHA512.HashData(bytes);
         return Convert.ToHexStringLower(hashBytes);
-    }
-
-    private static decimal GetExpectedPrice(PlanTier tier, string? currency)
-    {
-        var normalizedCurrency = string.IsNullOrWhiteSpace(currency) ? "inr" : currency.Trim().ToLowerInvariant();
-        return (tier, normalizedCurrency) switch
-        {
-            (PlanTier.Pro, "inr") => 3999.00m,
-            (PlanTier.Enterprise, "inr") => 19999.00m,
-
-            (PlanTier.Pro, "usd") => 49.00m,
-            (PlanTier.Enterprise, "usd") => 249.00m,
-
-            (PlanTier.Pro, "eur") => 45.00m,
-            (PlanTier.Enterprise, "eur") => 229.00m,
-
-            (PlanTier.Pro, "gbp") => 39.00m,
-            (PlanTier.Enterprise, "gbp") => 199.00m,
-
-            (PlanTier.Pro, "cad") => 65.00m,
-            (PlanTier.Enterprise, "cad") => 329.00m,
-
-            (PlanTier.Pro, "aud") => 75.00m,
-            (PlanTier.Enterprise, "aud") => 379.00m,
-
-            (PlanTier.Pro, "jpy") => 7500.00m,
-            (PlanTier.Enterprise, "jpy") => 38000.00m,
-
-            (PlanTier.Pro, "sgd") => 65.00m,
-            (PlanTier.Enterprise, "sgd") => 329.00m,
-
-            _ => tier == PlanTier.Pro ? 3999.00m : 19999.00m
-        };
     }
 
     private static string SanitizeLogValue(string value) =>

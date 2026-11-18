@@ -18,11 +18,13 @@ namespace Normora.Modules.Tenants.Application.Subscription.Commands;
 /// </remarks>
 /// <param name="Tier">The requested target subscription plan tier (Starter, Professional, Enterprise).</param>
 /// <param name="Currency">Target billing currency code, defaulting to "inr" (Indian Rupee) for PayU.</param>
-public record CreateCheckoutSessionCommand(PlanTier Tier, string? Currency = "inr") : IRequest<CheckoutSessionResultDto>, IAuditableRequest
+/// <param name="BillingCycle">Billing cycle schedule ("monthly" or "annual").</param>
+/// <param name="EnableAutoRenew">Whether to set up Standing Instructions (SI) / UPI AutoPay mandate for recurring renewals.</param>
+public record CreateCheckoutSessionCommand(PlanTier Tier, string? Currency = "inr", string? BillingCycle = "monthly", bool EnableAutoRenew = true) : IRequest<CheckoutSessionResultDto>, IAuditableRequest
 {
     public string Action => "Subscription.CheckoutInitiated";
     public string TargetType => "TenantPlan";
     public string? GetTargetId(object? response) => null;
-    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { tier = Tier.ToString(), currency = Currency });
+    public string? GetMetadata(object? response) => System.Text.Json.JsonSerializer.Serialize(new { tier = Tier.ToString(), currency = Currency, billingCycle = BillingCycle, enableAutoRenew = EnableAutoRenew });
 }
 

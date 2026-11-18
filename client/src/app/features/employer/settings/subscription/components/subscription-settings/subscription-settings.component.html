@@ -93,32 +93,107 @@
     </div>
   </div>
 
-  <!-- Danger Zone: Cancellation -->
-  <div class="rounded-3xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 p-6 sm:p-7 shadow-xs space-y-4">
-    <div>
-      <h3 class="text-base font-bold text-rose-900 dark:text-rose-200 m-0">Subscription Cancellation</h3>
-      <p class="text-xs text-rose-800/80 dark:text-rose-300/80 m-0 mt-0.5">
-        @if (cancelAtPeriodEnd()) {
-          Your subscription is scheduled for cancellation at the end of the billing period. Benefits remain active until renewal date.
+  <!-- Auto-Renewal & Payment Mandate Section -->
+  <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white m-0">Auto-Renewal &amp; Payment Mandate</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+          Manage automatic recurring debits (PayU Standing Instructions / UPI AutoPay) for seamless billing renewals.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        @if (hasMandate()) {
+          <button
+            type="button"
+            (click)="onToggleAutoRenew.emit(!autoRenewEnabled())"
+            [disabled]="isTogglingAutoRenew()"
+            class="px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            [ngClass]="autoRenewEnabled()
+              ? 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 hover:bg-rose-100 dark:hover:bg-rose-900/40'
+              : 'text-white bg-primary-600 hover:bg-primary-700'">
+            @if (isTogglingAutoRenew()) {
+              <i class="pi pi-spin pi-spinner text-xs"></i>
+            } @else {
+              <i class="pi" [ngClass]="autoRenewEnabled() ? 'pi-pause' : 'pi-play'"></i>
+            }
+            <span>{{ autoRenewEnabled() ? 'Disable Auto-Pay' : 'Enable Auto-Pay' }}</span>
+          </button>
         } @else {
-          Cancelling your subscription will schedule reversion to the Free Starter plan at the end of your billing cycle.
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+            <i class="pi pi-info-circle text-xs"></i>
+            <span>No Active Mandate</span>
+          </span>
         }
-      </p>
+      </div>
     </div>
-    @if (cancelAtPeriodEnd()) {
-      <button
-        type="button"
-        (click)="onReactivateSubscription.emit()"
-        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs cursor-pointer">
-        Resume Subscription
-      </button>
-    } @else {
-      <button
-        type="button"
-        (click)="onOpenCancelModal.emit()"
-        class="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs cursor-pointer">
-        Request Subscription Cancellation
-      </button>
-    }
+
+    <div class="text-xs text-slate-600 dark:text-slate-400 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 flex items-start gap-3">
+      <i class="pi pi-shield text-primary-600 dark:text-primary-400 text-sm mt-0.5 shrink-0"></i>
+      <div class="space-y-1">
+        <p class="font-bold text-slate-800 dark:text-slate-200 m-0">RBI e-Mandate Protection</p>
+        <p class="m-0 leading-relaxed text-[11px]">
+          @if (hasMandate()) {
+            Your workspace has a registered payment mandate. When enabled, your plan will renew automatically at the end of each billing cycle without manual action.
+          } @else {
+            Auto-Pay will be configured automatically during your next subscription upgrade checkout via PayU Standing Instructions or UPI AutoPay.
+          }
+        </p>
+      </div>
+    </div>
   </div>
+
+  <!-- Danger Zone: Cancellation (Paid Tiers Only) -->
+  @if (!isFreePlan()) {
+    <div class="rounded-3xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 p-6 sm:p-7 shadow-xs space-y-4">
+      <div>
+        <h3 class="text-base font-bold text-rose-900 dark:text-rose-200 m-0">Subscription Cancellation</h3>
+        <p class="text-xs text-rose-800/80 dark:text-rose-300/80 m-0 mt-0.5">
+          @if (cancelAtPeriodEnd()) {
+            Your subscription is scheduled for cancellation at the end of the billing period. Benefits remain active until renewal date.
+          } @else {
+            Cancelling your subscription will schedule reversion to the Free Starter plan at the end of your billing cycle.
+          }
+        </p>
+      </div>
+      @if (cancelAtPeriodEnd()) {
+        <button
+          type="button"
+          (click)="onReactivateSubscription.emit()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs cursor-pointer">
+          Resume Subscription
+        </button>
+      } @else {
+        <button
+          type="button"
+          (click)="onOpenCancelModal.emit()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shadow-xs cursor-pointer">
+          Request Subscription Cancellation
+        </button>
+      }
+    </div>
+  } @else {
+    <!-- Free Tier Status Note with Subscribe Action -->
+    <div class="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs space-y-4">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-sm">
+          <i class="pi pi-shield text-emerald-500"></i>
+          <span>Free Starter Plan Active</span>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 m-0 leading-relaxed">
+          Your workspace is currently on the Free Starter plan with no active recurring subscription or billing obligations. There is no subscription to cancel.
+        </p>
+      </div>
+      <div>
+        <button
+          type="button"
+          (click)="onBackToOverview.emit()"
+          class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 transition-all shadow-xs flex items-center gap-2 cursor-pointer">
+          <i class="pi pi-bolt text-xs"></i>
+          <span>Explore Plans &amp; Subscribe</span>
+        </button>
+      </div>
+    </div>
+  }
 </div>

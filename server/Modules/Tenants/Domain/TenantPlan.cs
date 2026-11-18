@@ -41,6 +41,10 @@ public class TenantPlan : Normora.Shared.Interfaces.ITenantEntity
     public string? PaymentTransactionId { get; set; }
     public string? PaymentReferenceId { get; set; }
 
+    // Recurring Payment Mandate integration (PayU Standing Instructions / UPI AutoPay)
+    public string? MandateToken { get; set; }
+    public bool AutoRenewEnabled { get; set; }
+
     public string? SubscriptionStatus { get; set; } // "active", "trialing", "past_due", "canceled"
     public DateTime? CurrentPeriodEndUtc { get; set; }
     public bool CancelAtPeriodEnd { get; set; }
@@ -80,6 +84,7 @@ public class TenantPlan : Normora.Shared.Interfaces.ITenantEntity
             MaxDocuments = 10,
             MaxEmployees = 5,
             MaxStorageBytes = 52_428_800, // 50 MB
+            SubscriptionStatus = "free",
             Currency = string.IsNullOrWhiteSpace(currency) ? "inr" : currency.ToLowerInvariant()
         }
     };

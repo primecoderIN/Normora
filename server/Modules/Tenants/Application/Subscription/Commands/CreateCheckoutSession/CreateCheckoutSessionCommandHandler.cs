@@ -39,6 +39,8 @@ public class CreateCheckoutSessionCommandHandler(
             userEmail,
             request.Tier,
             request.Currency,
+            request.BillingCycle,
+            request.EnableAutoRenew,
             cancellationToken);
 
         return new CheckoutSessionResultDto(session.ActionUrl, session.Params);

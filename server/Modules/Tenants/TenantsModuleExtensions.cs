@@ -39,6 +39,7 @@ public static class TenantsModuleExtensions
 
         // Payment Gateway Integration:
         // Registers PayU India hosted checkout integration for subscription plans, renewals, and webhook processing.
+        services.AddHttpClient();
         services.AddScoped<IPaymentService, PayUPaymentService>();
 
         // Autonomous Workspace Agent Tools:

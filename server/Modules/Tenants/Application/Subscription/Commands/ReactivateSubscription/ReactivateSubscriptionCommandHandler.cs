@@ -23,13 +23,20 @@ public class ReactivateSubscriptionCommandHandler(
         var plan = await context.TenantPlans
             .FirstOrDefaultAsync(p => p.TenantId == tenantId, cancellationToken);
 
-        if (plan != null)
+        // A workspace on the Free tier has no paid subscription to reactivate
+        if (plan == null || plan.PlanTier == PlanTier.Free)
         {
-            plan.CancelAtPeriodEnd = false;
-            plan.SubscriptionStatus = "active";
-            plan.UpdatedAt = DateTime.UtcNow;
-            await context.SaveChangesAsync(cancellationToken);
+            throw new InvalidOperationException(ApiMessages.CannotReactivateFreePlan);
         }
+
+        plan.CancelAtPeriodEnd = false;
+        plan.SubscriptionStatus = "active";
+        if (!string.IsNullOrWhiteSpace(plan.MandateToken))
+        {
+            plan.AutoRenewEnabled = true;
+        }
+        plan.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync(cancellationToken);
 
         return await mediator.Send(new GetTenantSubscriptionUsageQuery(), cancellationToken);
     }

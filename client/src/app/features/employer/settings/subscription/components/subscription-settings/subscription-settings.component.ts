@@ -16,6 +16,10 @@ export class SubscriptionSettingsComponent {
   billingAddress = input<string>('');
   isSavingSettings = input<boolean>(false);
   cancelAtPeriodEnd = input<boolean>(false);
+  autoRenewEnabled = input<boolean>(false);
+  hasMandate = input<boolean>(false);
+  isTogglingAutoRenew = input<boolean>(false);
+  isFreePlan = input<boolean>(true);
 
   onSaveBillingSettings = output<{
     billingEmail: string;
@@ -23,6 +27,7 @@ export class SubscriptionSettingsComponent {
     taxId: string;
     billingAddress: string;
   }>();
+  onToggleAutoRenew = output<boolean>();
   onOpenCancelModal = output<void>();
   onReactivateSubscription = output<void>();
   onBackToOverview = output<void>();

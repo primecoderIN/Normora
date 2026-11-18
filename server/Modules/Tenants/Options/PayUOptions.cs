@@ -28,6 +28,13 @@ public class PayUOptions
         : "https://test.payu.in/_payment";
 
     /// <summary>
+    /// PayU PostService API endpoint for server-to-server recurring debit transactions (Standing Instructions / UPI AutoPay).
+    /// </summary>
+    public string PostServiceUrl => IsProduction
+        ? "https://info.payu.in/merchant/postservice.php?form=2"
+        : "https://test.payu.in/merchant/postservice.php?form=2";
+
+    /// <summary>
     /// Indicates whether merchant key and salt have been configured.
     /// </summary>
     public bool IsConfigured => !string.IsNullOrWhiteSpace(MerchantKey) &&

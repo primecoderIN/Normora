@@ -79,40 +79,10 @@ export class SubscriptionComponent implements OnInit {
   taxId = signal('');
   billingAddress = signal('');
   isSavingSettings = signal(false);
+  isTogglingAutoRenew = signal(false);
 
   // Invoices
-  readonly invoices = signal<BillingInvoiceItem[]>([
-    {
-      id: 'inv_101',
-      invoiceNumber: 'INV-2026-11-001',
-      date: new Date('2026-11-12'),
-      tier: 'Enterprise',
-      amount: '₹19,999',
-      currency: 'INR',
-      cycle: 'Monthly',
-      status: 'Paid'
-    },
-    {
-      id: 'inv_100',
-      invoiceNumber: 'INV-2026-10-001',
-      date: new Date('2026-10-12'),
-      tier: 'Enterprise',
-      amount: '₹19,999',
-      currency: 'INR',
-      cycle: 'Monthly',
-      status: 'Paid'
-    },
-    {
-      id: 'inv_099',
-      invoiceNumber: 'INV-2026-09-001',
-      date: new Date('2026-09-12'),
-      tier: 'Pro Workspace',
-      amount: '₹3,999',
-      currency: 'INR',
-      cycle: 'Monthly',
-      status: 'Paid'
-    }
-  ]);
+  readonly invoices = signal<BillingInvoiceItem[]>([]);
 
   readonly activeCurrencyConfig = computed<CurrencyConfig>(() => {
     return this.currencies.find(c => c.code === this.selectedCurrency()) || this.currencies[0];
@@ -128,7 +98,7 @@ export class SubscriptionComponent implements OnInit {
   });
 
   readonly activePlanTier = computed<PlanTierType>(() => {
-    return this.usage()?.planTier ?? 'Enterprise';
+    return this.usage()?.planTier ?? 'Free';
   });
 
   readonly currentPlanName = computed(() => {
@@ -158,17 +128,27 @@ export class SubscriptionComponent implements OnInit {
     return `${curr.symbol}0 / month`;
   });
 
+  readonly isFreePlan = computed(() => {
+    const tier = this.usage()?.planTier;
+    return !tier || tier === 'Free';
+  });
+
+  readonly hasActiveSubscription = computed(() => {
+    return this.usage()?.hasActiveSubscription ?? false;
+  });
+
   readonly renewalDateFormatted = computed(() => {
     const u = this.usage();
+    if (this.isFreePlan() || !u?.hasActiveSubscription) {
+      return null;
+    }
     if (u?.currentPeriodEndUtc) {
       return u.currentPeriodEndUtc;
     }
     if (u?.validUntil) {
       return u.validUntil;
     }
-    const d = new Date();
-    d.setMonth(d.getMonth() + 1);
-    return d.toISOString();
+    return null;
   });
 
   readonly planDefinitions = computed<PlanTierDefinition[]>(() => {
@@ -238,9 +218,30 @@ export class SubscriptionComponent implements OnInit {
   }
 
   setCurrency(code: string): void {
+    if (this.selectedCurrency() === code) return;
     this.selectedCurrency.set(code);
     this.isDetectedCurrency.set(false);
-    this.isWorkspaceCurrency.set(false);
+    this.isWorkspaceCurrency.set(true);
+
+    this.subscriptionService.updateCurrency(code).subscribe({
+      next: (updated) => {
+        if (updated) {
+          this.usage.set(updated);
+        }
+        this.messageService.add({
+          severity: 'success',
+          summary: ApiMessages.CurrencyUpdated.summary,
+          detail: ApiMessages.CurrencyUpdated.detail(code)
+        });
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: ApiMessages.CurrencyUpdateFailed.summary,
+          detail: ApiMessages.CurrencyUpdateFailed.detail
+        });
+      }
+    });
   }
 
   scrollToPlanTiers(): void {
@@ -288,21 +289,7 @@ export class SubscriptionComponent implements OnInit {
 
     this.subscriptionService.getUsage().subscribe({
       next: (data) => {
-        const enriched: SubscriptionUsageDto = {
-          ...data,
-          planTier: data.planTier || 'Enterprise',
-          maxDocuments: data.maxDocuments || 10000,
-          currentDocuments: data.currentDocuments > 0 ? data.currentDocuments : 6,
-          maxEmployees: data.maxEmployees || 5000,
-          currentEmployees: data.currentEmployees > 0 ? data.currentEmployees : 1,
-          maxStorageBytes: data.maxStorageBytes || (500 * 1024 * 1024 * 1024),
-          currentStorageBytes: data.currentStorageBytes > 0 ? data.currentStorageBytes : (1.3 * 1024 * 1024),
-          hasActiveSubscription: true,
-          subscriptionStatus: data.subscriptionStatus || 'active',
-          currentPeriodEndUtc: data.currentPeriodEndUtc || new Date(2026, 11, 12).toISOString()
-        };
-
-        this.usage.set(enriched);
+        this.usage.set(data);
         if (data.currency) {
           const upper = data.currency.toUpperCase();
           const match = this.currencies.find(c => c.code === upper);
@@ -316,20 +303,20 @@ export class SubscriptionComponent implements OnInit {
       },
       error: () => {
         const fallback: SubscriptionUsageDto = {
-          planTier: 'Enterprise',
-          maxDocuments: 10000,
-          currentDocuments: 6,
-          maxEmployees: 5000,
+          planTier: 'Free',
+          maxDocuments: 10,
+          currentDocuments: 0,
+          maxEmployees: 5,
           currentEmployees: 1,
-          maxStorageBytes: 500 * 1024 * 1024 * 1024,
-          currentStorageBytes: 1.3 * 1024 * 1024,
-          validUntil: new Date(2026, 11, 12).toISOString(),
+          maxStorageBytes: 50 * 1024 * 1024,
+          currentStorageBytes: 0,
+          validUntil: null,
           isDocumentLimitReached: false,
           isEmployeeLimitReached: false,
           isStorageLimitReached: false,
-          hasActiveSubscription: true,
-          subscriptionStatus: 'active',
-          currentPeriodEndUtc: new Date(2026, 11, 12).toISOString(),
+          hasActiveSubscription: false,
+          subscriptionStatus: 'free',
+          currentPeriodEndUtc: null,
           cancelAtPeriodEnd: false,
           currency: 'inr'
         };
@@ -344,7 +331,7 @@ export class SubscriptionComponent implements OnInit {
   loadInvoices(): void {
     this.subscriptionService.getInvoices().subscribe({
       next: (invoiceList) => {
-        if (invoiceList && invoiceList.length > 0) {
+        if (invoiceList) {
           this.invoices.set(invoiceList.map(inv => ({
             id: inv.id,
             invoiceNumber: inv.invoiceNumber,
@@ -358,7 +345,7 @@ export class SubscriptionComponent implements OnInit {
         }
       },
       error: () => {
-        // Retain default demo invoices if network error
+        // Retain current invoices if network error
       }
     });
   }
@@ -376,25 +363,27 @@ export class SubscriptionComponent implements OnInit {
     this.isUpdating.set(true);
     this.selectedTierLoading.set(tier);
 
-    this.subscriptionService.createCheckoutSession(tier, this.selectedCurrency().toLowerCase()).subscribe({
-      next: (session) => {
-        if (session && session.actionUrl) {
-          this.subscriptionService.submitPaymentForm(session);
-        } else {
+    this.subscriptionService
+      .createCheckoutSession(tier, this.selectedCurrency().toLowerCase(), this.billingCycle())
+      .subscribe({
+        next: (session) => {
+          if (session && session.actionUrl) {
+            this.subscriptionService.submitPaymentForm(session);
+          } else {
+            this.isUpdating.set(false);
+            this.selectedTierLoading.set(null);
+          }
+        },
+        error: () => {
           this.isUpdating.set(false);
           this.selectedTierLoading.set(null);
+          this.messageService.add({
+            severity: 'error',
+            summary: ApiMessages.CheckoutFailed.summary,
+            detail: ApiMessages.CheckoutFailed.detail
+          });
         }
-      },
-      error: () => {
-        this.isUpdating.set(false);
-        this.selectedTierLoading.set(null);
-        this.messageService.add({
-          severity: 'error',
-          summary: ApiMessages.CheckoutFailed.summary,
-          detail: ApiMessages.CheckoutFailed.detail
-        });
-      }
-    });
+      });
   }
 
   confirmDowngrade(): void {
@@ -427,7 +416,28 @@ export class SubscriptionComponent implements OnInit {
     });
   }
 
+  openCancelModal(): void {
+    if (this.isFreePlan() || !this.hasActiveSubscription()) {
+      this.messageService.add({
+        severity: 'info',
+        summary: ApiMessages.CannotCancelFreePlan.summary,
+        detail: ApiMessages.CannotCancelFreePlan.detail
+      });
+      return;
+    }
+    this.showCancelModal.set(true);
+  }
+
   confirmCancelSubscription(): void {
+    if (this.isFreePlan() || !this.hasActiveSubscription()) {
+      this.showCancelModal.set(false);
+      this.messageService.add({
+        severity: 'info',
+        summary: ApiMessages.CannotCancelFreePlan.summary,
+        detail: ApiMessages.CannotCancelFreePlan.detail
+      });
+      return;
+    }
     this.isUpdating.set(true);
     this.subscriptionService.cancelSubscription().subscribe({
       next: (updated) => {
@@ -453,6 +463,14 @@ export class SubscriptionComponent implements OnInit {
   }
 
   reactivateSubscription(): void {
+    if (this.isFreePlan() || !this.hasActiveSubscription()) {
+      this.messageService.add({
+        severity: 'info',
+        summary: ApiMessages.CannotReactivateFreePlan.summary,
+        detail: ApiMessages.CannotReactivateFreePlan.detail
+      });
+      return;
+    }
     this.isUpdating.set(true);
     this.subscriptionService.reactivateSubscription().subscribe({
       next: (updated) => {
@@ -573,6 +591,31 @@ export class SubscriptionComponent implements OnInit {
           severity: 'error',
           summary: ApiMessages.BillingSettingsSaveFailed.summary,
           detail: ApiMessages.BillingSettingsSaveFailed.detail
+        });
+      }
+    });
+  }
+
+  toggleAutoRenew(enabled: boolean): void {
+    this.isTogglingAutoRenew.set(true);
+    this.subscriptionService.toggleAutoRenew(enabled).subscribe({
+      next: (updated) => {
+        this.isTogglingAutoRenew.set(false);
+        if (updated) {
+          this.usage.set(updated);
+        }
+        this.messageService.add({
+          severity: 'success',
+          summary: ApiMessages.AutoRenewUpdated.summary,
+          detail: ApiMessages.AutoRenewUpdated.detail
+        });
+      },
+      error: () => {
+        this.isTogglingAutoRenew.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: ApiMessages.AutoRenewFailed.summary,
+          detail: ApiMessages.AutoRenewFailed.detail
         });
       }
     });

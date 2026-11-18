@@ -24,6 +24,8 @@ export interface SubscriptionUsageDto {
   currentPeriodEndUtc: string | null;
   cancelAtPeriodEnd: boolean;
   currency?: string;
+  autoRenewEnabled?: boolean;
+  hasMandate?: boolean;
 }
 
 export interface CheckoutSessionResult {
@@ -65,10 +67,26 @@ export class SubscriptionService {
   }
 
   /**
-   * Initiates a PayU hosted checkout session for upgrading to a paid tier in specified currency.
+   * Updates workspace default billing currency preference.
+   */
+  updateCurrency(currency: string): Observable<SubscriptionUsageDto> {
+    return this.http
+      .put<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/currency`, {
+        currency: currency.toLowerCase()
+      })
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * Initiates a PayU hosted checkout session for upgrading to a paid tier in specified currency and billing cycle.
    * Returns action URL and parameters signed with SHA-512 cryptographic hash.
    */
-  createCheckoutSession(tier: PlanTierType, currency: string = 'inr'): Observable<CheckoutSessionResult> {
+  createCheckoutSession(
+    tier: PlanTierType,
+    currency: string = 'inr',
+    billingCycle: string = 'monthly',
+    enableAutoRenew: boolean = true
+  ): Observable<CheckoutSessionResult> {
     const tierEnumMap: Record<PlanTierType, number> = {
       Free: 0,
       Pro: 1,
@@ -78,8 +96,19 @@ export class SubscriptionService {
     return this.http
       .post<ApiResponse<CheckoutSessionResult>>(`${this.apiUrl}/checkout`, {
         tier: tierEnumMap[tier],
-        currency: currency.toLowerCase()
+        currency: currency.toLowerCase(),
+        billingCycle: billingCycle.toLowerCase(),
+        enableAutoRenew
       })
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * Toggles automated recurring renewal (Standing Instructions / UPI AutoPay) for the workspace.
+   */
+  toggleAutoRenew(enabled: boolean): Observable<SubscriptionUsageDto> {
+    return this.http
+      .post<ApiResponse<SubscriptionUsageDto>>(`${this.apiUrl}/auto-renew`, { enabled })
       .pipe(map(res => res.data));
   }
 

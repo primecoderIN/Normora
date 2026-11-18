@@ -114,6 +114,12 @@ public static class ApiMessages
     public const string SubscriptionUpdated = "Subscription plan updated successfully.";
     public const string SubscriptionCancelled = "Subscription cancelled successfully.";
     public const string SubscriptionReactivated = "Subscription reactivated successfully.";
+    public const string CannotCancelFreePlan = "Free plans do not have an active subscription to cancel.";
+    public const string CannotReactivateFreePlan = "Free plans do not have an active subscription to reactivate.";
+    public const string AutoRenewUpdated = "Subscription auto-renewal updated successfully.";
+    public const string AutoRenewNotAvailable = "Auto-renewal cannot be enabled without an active payment mandate.";
+    public const string CurrencyUpdated = "Workspace currency updated successfully.";
+    public const string InvalidCurrency = "The specified currency is not supported.";
     public const string BillingDetailsUpdated = "Billing details updated successfully.";
     public const string PaymentMethodUpdated = "Payment method updated successfully.";
     public const string CheckoutSessionCreated = "Checkout session created successfully.";

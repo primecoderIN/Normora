@@ -50,6 +50,22 @@ export const ApiMessages = {
     summary: 'Update Failed',
     detail: 'Could not change the subscription plan. Please try again.'
   },
+  AutoRenewUpdated: {
+    summary: 'Auto-Pay Updated',
+    detail: 'Subscription auto-renewal preference updated successfully.'
+  },
+  AutoRenewFailed: {
+    summary: 'Auto-Pay Update Failed',
+    detail: 'Failed to update auto-renewal settings. Please ensure an active mandate exists.'
+  },
+  CurrencyUpdated: {
+    summary: 'Currency Updated',
+    detail: (code: string) => `Workspace default billing currency changed to ${code}.`
+  },
+  CurrencyUpdateFailed: {
+    summary: 'Update Failed',
+    detail: 'Failed to update workspace currency. Please try again.'
+  },
   SubscriptionQuotaFailed: {
     summary: 'Failed to Load Quotas',
     detail: 'Failed to retrieve subscription quotas. Please try again.'
@@ -178,6 +194,14 @@ export const ApiMessages = {
   SubscriptionCancelFailed: {
     summary: 'Cancellation Failed',
     detail: 'Failed to cancel subscription. Please try again or contact support.'
+  },
+  CannotCancelFreePlan: {
+    summary: 'Free Plan Active',
+    detail: 'The Free Starter plan does not have an active subscription to cancel.'
+  },
+  CannotReactivateFreePlan: {
+    summary: 'Free Plan Active',
+    detail: 'The Free Starter plan does not have an active subscription to reactivate.'
   },
   SubscriptionReactivated: {
     summary: 'Subscription Active',

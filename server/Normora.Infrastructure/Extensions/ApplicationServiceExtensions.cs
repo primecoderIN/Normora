@@ -91,6 +91,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<HangfireDocumentProcessingOutboxDispatcher>();
         services.AddScoped<HangfireDocumentProcessingJob>();
         services.AddScoped<HangfirePurgeDeletedDocumentsJob>();
+        services.AddScoped<HangfireSubscriptionAutoRenewJob>();
 
         // Microsoft Agent Framework & AG-UI Hosting (CopilotKit protocol integration):
         services.AddAGUIServer();

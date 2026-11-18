@@ -28,16 +28,34 @@
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   {{ currentPlanName() }}
                 </h2>
-                @if (usage()?.cancelAtPeriodEnd) {
+                @if (!isFreePlan() && usage()?.cancelAtPeriodEnd) {
                   <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
                     <i class="pi pi-clock text-[10px]"></i>
                     <span>Cancelling at period end</span>
                   </span>
-                } @else {
+                } @else if (!isFreePlan()) {
                   <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
                     <i class="pi pi-check text-[10px]"></i>
                     <span>Active</span>
                   </span>
+                } @else {
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/25">
+                    <i class="pi pi-shield text-[10px]"></i>
+                    <span>Free Forever</span>
+                  </span>
+                }
+                @if (!isFreePlan()) {
+                  @if (usage()?.autoRenewEnabled) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/15 text-primary-600 dark:text-primary-400 border border-purple-500/25">
+                      <i class="pi pi-sync text-[10px]"></i>
+                      <span>Auto-Pay: On</span>
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/25">
+                      <i class="pi pi-minus-circle text-[10px]"></i>
+                      <span>Auto-Pay: Off</span>
+                    </span>
+                  }
                 }
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-md">
@@ -48,7 +66,7 @@
 
           <!-- Right: Hero Action Buttons -->
           <div class="flex items-center gap-2.5 self-start lg:self-auto flex-wrap">
-            @if (usage()?.cancelAtPeriodEnd) {
+            @if (!isFreePlan() && usage()?.cancelAtPeriodEnd) {
               <button
                 type="button"
                 (click)="onReactivateSubscription.emit()"
@@ -70,8 +88,13 @@
               type="button"
               (click)="onScrollToPlanTiers.emit()"
               class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 transition-opacity shadow-xs flex items-center gap-2 cursor-pointer">
-              <i class="pi pi-arrow-right-arrow-left text-xs"></i>
-              <span>Change Plan</span>
+              @if (isFreePlan()) {
+                <i class="pi pi-bolt text-xs"></i>
+                <span>Subscribe Now</span>
+              } @else {
+                <i class="pi pi-arrow-right-arrow-left text-xs"></i>
+                <span>Change Plan</span>
+              }
             </button>
           </div>
         </div>
@@ -114,10 +137,18 @@
             </div>
             <div>
               <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-                {{ usage()?.cancelAtPeriodEnd ? 'Access Until' : 'Next Renewal' }}
+                @if (isFreePlan()) {
+                  Billing Cycle
+                } @else {
+                  {{ usage()?.cancelAtPeriodEnd ? 'Access Until' : 'Next Renewal' }}
+                }
               </span>
               <span class="text-sm font-bold text-slate-900 dark:text-white">
-                {{ renewalDateFormatted() | date:'mediumDate' }}
+                @if (isFreePlan()) {
+                  Free Forever
+                } @else {
+                  {{ renewalDateFormatted() | date:'mediumDate' }}
+                }
               </span>
             </div>
           </div>
@@ -354,13 +385,20 @@
               </p>
 
               <!-- Price -->
-              <div class="flex items-baseline gap-1.5 pb-2 border-b border-slate-100 dark:border-slate-800">
-                <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {{ plan.price }}
-                </span>
-                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  / month
-                </span>
+              <div class="space-y-1 pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-baseline gap-1.5">
+                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    {{ plan.price }}
+                  </span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    / month
+                  </span>
+                </div>
+                @if (plan.billedTotalFormatted && plan.tier !== 'Free') {
+                  <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    {{ plan.billedTotalFormatted }}
+                  </div>
+                }
               </div>
 
               <!-- Quota Highlights (Checkmarks) -->
@@ -405,8 +443,10 @@
                   @if (selectedTierLoading() === plan.tier) {
                     <i class="pi pi-spin pi-spinner mr-2"></i>
                     <span>Redirecting...</span>
+                  } @else if (isFreePlan()) {
+                    <span>Subscribe • {{ plan.priceLabel }}</span>
                   } @else {
-                    <span>Upgrade</span>
+                    <span>Upgrade • {{ plan.priceLabel }}</span>
                   }
                 </button>
               }
@@ -536,27 +576,40 @@
           <i class="pi pi-chevron-right text-[10px] text-slate-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
         </button>
 
-        @if (usage()?.cancelAtPeriodEnd) {
-          <button
-            type="button"
-            (click)="onReactivateSubscription.emit()"
-            class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-left text-xs font-semibold text-emerald-600 dark:text-emerald-400 transition-colors cursor-pointer group">
-            <div class="flex items-center gap-2.5">
-              <i class="pi pi-refresh text-emerald-500 text-sm"></i>
-              <span>Resume Subscription</span>
-            </div>
-            <i class="pi pi-chevron-right text-[10px] text-emerald-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
-          </button>
+        @if (!isFreePlan() && usage()?.hasActiveSubscription) {
+          @if (usage()?.cancelAtPeriodEnd) {
+            <button
+              type="button"
+              (click)="onReactivateSubscription.emit()"
+              class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-left text-xs font-semibold text-emerald-600 dark:text-emerald-400 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-refresh text-emerald-500 text-sm"></i>
+                <span>Resume Subscription</span>
+              </div>
+              <i class="pi pi-chevron-right text-[10px] text-emerald-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
+            </button>
+          } @else {
+            <button
+              type="button"
+              (click)="onOpenCancelModal.emit()"
+              class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-times-circle text-rose-500 text-sm"></i>
+                <span>Cancel Subscription</span>
+              </div>
+              <i class="pi pi-chevron-right text-[10px] text-rose-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
+            </button>
+          }
         } @else {
           <button
             type="button"
-            (click)="onOpenCancelModal.emit()"
-            class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer group">
+            (click)="onScrollToPlanTiers.emit()"
+            class="w-full flex items-center justify-between p-3 rounded-xl bg-primary-50/70 dark:bg-primary-950/30 hover:bg-primary-100/80 dark:hover:bg-primary-900/40 text-left text-xs font-bold text-primary-600 dark:text-primary-400 transition-colors cursor-pointer group border border-primary-200/60 dark:border-primary-800/60">
             <div class="flex items-center gap-2.5">
-              <i class="pi pi-times-circle text-rose-500 text-sm"></i>
-              <span>Cancel Subscription</span>
+              <i class="pi pi-bolt text-primary-600 dark:text-primary-400 text-sm"></i>
+              <span>Subscribe to Pro / Upgrade</span>
             </div>
-            <i class="pi pi-chevron-right text-[10px] text-rose-400 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
+            <i class="pi pi-arrow-right text-[10px] text-primary-500 group-hover:translate-x-0.5 transition-transform duration-150 transform-gpu"></i>
           </button>
         }
       </div>

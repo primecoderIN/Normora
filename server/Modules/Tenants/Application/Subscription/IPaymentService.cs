@@ -34,7 +34,23 @@ public record PaymentCallbackResultDto(
     string TransactionId,
 
     // Error description if the payment failed or hash verification failed.
-    string? ErrorMessage
+    string? ErrorMessage,
+
+    // Mandate authorization identifier issued by PayU for future automated recurring debits.
+    string? MandateToken = null,
+
+    // Whether a recurring Standing Instruction / UPI AutoPay mandate was registered.
+    bool IsMandateRegistered = false
+);
+
+/// <summary>
+/// Encapsulates the execution result of an automated recurring charge against a registered PayU mandate.
+/// </summary>
+public record RecurringPaymentResultDto(
+    bool Success,
+    string TransactionId,
+    decimal Amount,
+    string? ErrorMessage = null
 );
 
 /// <summary>
@@ -52,6 +68,8 @@ public interface IPaymentService
     /// <param name="userEmail">Billing contact email address.</param>
     /// <param name="tier">The target subscription tier.</param>
     /// <param name="currency">Currency code (defaults to "inr").</param>
+    /// <param name="billingCycle">Billing cycle schedule ("monthly" or "annual").</param>
+    /// <param name="enableAutoRenew">Whether to set up Standing Instructions (SI) / UPI AutoPay for recurring auto-debit.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<PaymentCheckoutDto> CreatePaymentSessionAsync(
         Guid tenantId,
@@ -60,6 +78,21 @@ public interface IPaymentService
         string userEmail,
         PlanTier tier,
         string? currency = "inr",
+        string? billingCycle = "monthly",
+        bool enableAutoRenew = true,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes an automated recurring renewal debit against a registered PayU mandate (Standing Instructions / UPI AutoPay).
+    /// </summary>
+    Task<RecurringPaymentResultDto> ExecuteRecurringPaymentAsync(
+        Guid tenantId,
+        decimal amount,
+        string mandateToken,
+        PlanTier tier,
+        string currency,
+        string userEmail,
+        string customerName,
         CancellationToken cancellationToken = default);
 
     /// <summary>

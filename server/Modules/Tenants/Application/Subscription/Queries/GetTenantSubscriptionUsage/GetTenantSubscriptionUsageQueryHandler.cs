@@ -45,7 +45,14 @@ public class GetTenantSubscriptionUsageQueryHandler(
         var isDocLimitReached = docUsage.DocumentCount >= plan.MaxDocuments;
         var isEmpLimitReached = currentEmployees >= plan.MaxEmployees;
         var isStorageLimitReached = docUsage.TotalStorageBytes >= plan.MaxStorageBytes;
-        var hasActiveSubscription = !string.IsNullOrWhiteSpace(plan.PaymentTransactionId) && plan.PlanTier != PlanTier.Free;
+
+        var isFreeTier = plan.PlanTier == PlanTier.Free;
+        var hasActiveSubscription = !isFreeTier && !string.IsNullOrWhiteSpace(plan.PaymentTransactionId);
+        var cancelAtPeriodEnd = !isFreeTier && plan.CancelAtPeriodEnd;
+        var subscriptionStatus = isFreeTier ? "free" : (plan.SubscriptionStatus ?? "active");
+        var currentPeriodEndUtc = isFreeTier ? null : plan.CurrentPeriodEndUtc;
+        var autoRenewEnabled = !isFreeTier && plan.AutoRenewEnabled;
+        var hasMandate = !isFreeTier && !string.IsNullOrWhiteSpace(plan.MandateToken);
 
         return new SubscriptionUsageDto(
             plan.PlanTier.ToString(),
@@ -60,10 +67,12 @@ public class GetTenantSubscriptionUsageQueryHandler(
             isEmpLimitReached,
             isStorageLimitReached,
             hasActiveSubscription,
-            plan.SubscriptionStatus,
-            plan.CurrentPeriodEndUtc,
-            plan.CancelAtPeriodEnd,
-            string.IsNullOrWhiteSpace(plan.Currency) ? "inr" : plan.Currency.ToLowerInvariant()
+            subscriptionStatus,
+            currentPeriodEndUtc,
+            cancelAtPeriodEnd,
+            string.IsNullOrWhiteSpace(plan.Currency) ? "inr" : plan.Currency.ToLowerInvariant(),
+            autoRenewEnabled,
+            hasMandate
         );
     }
 }

@@ -51,6 +51,12 @@ public record SubscriptionUsageDto(
     bool CancelAtPeriodEnd,
 
     // Billing currency code (e.g. "inr").
-    string Currency
+    string Currency,
+
+    // Whether recurring auto-debit (Standing Instructions / UPI AutoPay) is active.
+    bool AutoRenewEnabled = false,
+
+    // Whether an authorized payment mandate token exists for this workspace.
+    bool HasMandate = false
 );
 

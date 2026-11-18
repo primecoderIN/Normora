@@ -7,7 +7,9 @@ using Normora.Shared.Authorization;
 using Normora.Modules.Tenants.Application.Subscription.Commands;
 using Normora.Modules.Tenants.Application.Subscription.Commands.CancelSubscription;
 using Normora.Modules.Tenants.Application.Subscription.Commands.ReactivateSubscription;
+using Normora.Modules.Tenants.Application.Subscription.Commands.ToggleAutoRenew;
 using Normora.Modules.Tenants.Application.Subscription.Commands.UpdateTenantBillingDetails;
+using Normora.Modules.Tenants.Application.Subscription.Commands.UpdateTenantCurrency;
 using Normora.Modules.Tenants.Application.Subscription.DTOs;
 using Normora.Modules.Tenants.Application.Subscription.Queries;
 using Normora.Modules.Tenants.Application.Subscription.Queries.DownloadInvoice;
@@ -22,7 +24,9 @@ namespace Normora.Modules.Tenants.API;
 
 /// <summary>Describes the requested subscription tier change.</summary>
 public record UpdatePlanTierRequest(PlanTier Tier);
-public record CreateCheckoutRequest(PlanTier Tier, string? Currency = null);
+public record CreateCheckoutRequest(PlanTier Tier, string? Currency = null, string? BillingCycle = "monthly", bool EnableAutoRenew = true);
+public record ToggleAutoRenewRequest(bool Enabled);
+public record UpdateTenantCurrencyRequest(string Currency);
 public record CancelSubscriptionRequest(bool Immediate = false);
 
 /// <summary>
@@ -52,6 +56,23 @@ public class SubscriptionController(
     }
 
     /// <summary>
+    /// Updates the default workspace billing currency preference.
+    /// BFLA: restricted strictly to tenant administrators.
+    /// </summary>
+    [HttpPut("currency")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<SubscriptionUsageDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> UpdateCurrency([FromBody] UpdateTenantCurrencyRequest request, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new UpdateTenantCurrencyCommand(request.Currency), cancellationToken);
+        return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, ApiMessages.CurrencyUpdated));
+    }
+
+    /// <summary>
     /// Generates PayU checkout parameters and cryptographic SHA-512 signature for upgrading to a paid tier.
     /// BFLA: restricted strictly to tenant administrators.
     /// </summary>
@@ -64,7 +85,7 @@ public class SubscriptionController(
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
     public async Task<IActionResult> CreateCheckout([FromBody] CreateCheckoutRequest request, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new CreateCheckoutSessionCommand(request.Tier, request.Currency), cancellationToken);
+        var result = await mediator.Send(new CreateCheckoutSessionCommand(request.Tier, request.Currency, request.BillingCycle, request.EnableAutoRenew), cancellationToken);
         return Ok(ApiResponse<CheckoutSessionResultDto>.Ok(result, ApiMessages.CheckoutSessionCreated));
     }
 
@@ -181,6 +202,23 @@ public class SubscriptionController(
     {
         var result = await mediator.Send(new ReactivateSubscriptionCommand(), cancellationToken);
         return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, ApiMessages.SubscriptionReactivated));
+    }
+
+    /// <summary>
+    /// Enables or disables automated recurring renewals for the workspace subscription.
+    /// BFLA: restricted strictly to tenant administrators.
+    /// </summary>
+    [HttpPost("auto-renew")]
+    [Authorize]
+    [RequireTenant(TenantRoles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse<SubscriptionUsageDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+    public async Task<IActionResult> ToggleAutoRenew([FromBody] ToggleAutoRenewRequest request, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new ToggleAutoRenewCommand(request.Enabled), cancellationToken);
+        return Ok(ApiResponse<SubscriptionUsageDto>.Ok(result, ApiMessages.AutoRenewUpdated));
     }
 
     /// <summary>

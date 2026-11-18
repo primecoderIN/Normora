@@ -396,6 +396,11 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
                     b.Property<bool>("CancelAtPeriodEnd")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("AutoRenewEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -417,6 +422,10 @@ namespace Normora.Modules.Tenants.Persistence.Migrations
 
                     b.Property<long>("MaxStorageBytes")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("MandateToken")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("PaymentReferenceId")
                         .HasMaxLength(100)

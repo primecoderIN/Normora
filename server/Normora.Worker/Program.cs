@@ -38,4 +38,9 @@ recurringJobs.AddOrUpdate<HangfireDocumentProcessingOutboxDispatcher>(
     job => job.DispatchPendingAsync(CancellationToken.None),
     Cron.Minutely());
 
+recurringJobs.AddOrUpdate<HangfireSubscriptionAutoRenewJob>(
+    "renew-active-subscriptions",
+    job => job.ExecuteAsync(CancellationToken.None),
+    Cron.Hourly());
+
 await host.RunAsync();

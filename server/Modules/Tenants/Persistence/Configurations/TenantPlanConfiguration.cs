@@ -30,6 +30,8 @@ public class TenantPlanConfiguration : IEntityTypeConfiguration<TenantPlan>
         builder.Property(p => p.Currency).HasMaxLength(10).HasDefaultValue("inr");
         builder.Property(p => p.PaymentTransactionId).HasMaxLength(100);
         builder.Property(p => p.PaymentReferenceId).HasMaxLength(100);
+        builder.Property(p => p.MandateToken).HasMaxLength(150);
+        builder.Property(p => p.AutoRenewEnabled).HasDefaultValue(false);
         builder.Property(p => p.SubscriptionStatus).HasMaxLength(50);
 
         // Foreign Key Relationship:
